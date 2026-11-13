@@ -1445,6 +1445,71 @@ public class ModelStateDictionaryTest
     }
 
     [Fact]
+    public void GetEnumerable_ReturnsWideTreeInBreadthFirstOrder()
+    {
+        var dictionary = new ModelStateDictionary();
+        dictionary.SetModelValue("Items", "items", "items");
+        dictionary.SetModelValue("Other", "other", "other");
+        var expected = new List<string> { "Items" };
+        var names = new List<string>();
+        var cities = new List<string>();
+        for (var i = 0; i < 16; i++)
+        {
+            var key = $"Items[{i:D2}]";
+            dictionary.SetModelValue(key, "item", "item");
+            dictionary.SetModelValue(key + ".Name", "name", "name");
+            dictionary.SetModelValue(key + ".Address.City", "city", "city");
+            expected.Add(key);
+            names.Add(key + ".Name");
+            cities.Add(key + ".Address.City");
+        }
+        expected.AddRange(names);
+        expected.AddRange(cities);
+
+        var entries = dictionary.FindKeysWithPrefix("Items").ToArray();
+
+        Assert.Equal(expected, entries.Select(entry => entry.Key));
+        Assert.All(entries, entry => Assert.Same(dictionary[entry.Key], entry.Value));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GetEnumerable_ResetRestartsWideTree(bool readToEnd)
+    {
+        var dictionary = new ModelStateDictionary();
+        var expected = new List<string>();
+        for (var i = 0; i < 16; i++)
+        {
+            var key = $"Items[{i:D2}].Name";
+            dictionary.SetModelValue(key, "name", "name");
+            expected.Add(key);
+        }
+
+        var enumerator = dictionary.GetEnumerator();
+        var visited = 0;
+        while (enumerator.MoveNext())
+        {
+            visited++;
+            if (!readToEnd)
+            {
+                break;
+            }
+        }
+        Assert.Equal(readToEnd ? expected.Count : 1, visited);
+
+        enumerator.Reset();
+        var keys = new List<string>();
+        while (enumerator.MoveNext())
+        {
+            keys.Add(enumerator.Current.Key);
+        }
+
+        Assert.Equal(expected, keys);
+        Assert.False(enumerator.MoveNext());
+    }
+
+    [Fact]
     public void GetEnumerable_WorksCorrectlyWhenSiblingIsAPrefix()
     {
         // Arrange

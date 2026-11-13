@@ -1004,7 +1004,7 @@ public class ModelStateDictionary : IReadOnlyDictionary<string, ModelStateEntry?
     {
         private readonly ModelStateNode? _rootNode;
         private ModelStateNode _modelStateNode;
-        private List<ModelStateNode>? _nodes;
+        private Queue<ModelStateNode>? _nodes;
         private int _index;
         private bool _visitedRoot;
 
@@ -1050,7 +1050,8 @@ public class ModelStateDictionary : IReadOnlyDictionary<string, ModelStateEntry?
                 _visitedRoot = true;
                 if (_rootNode.ChildNodes?.Count > 0)
                 {
-                    _nodes = new List<ModelStateNode> { _rootNode };
+                    _nodes = new Queue<ModelStateNode>();
+                    _nodes.Enqueue(_rootNode);
                 }
 
                 if (!_rootNode.IsContainerNode)
@@ -1067,11 +1068,11 @@ public class ModelStateDictionary : IReadOnlyDictionary<string, ModelStateEntry?
 
             while (_nodes.Count > 0)
             {
-                var node = _nodes[0];
+                var node = _nodes.Peek();
                 if (_index == node.ChildNodes!.Count - 1)
                 {
                     // We've exhausted the current sublist.
-                    _nodes.RemoveAt(0);
+                    _nodes.Dequeue();
                     _index = -1;
                     continue;
                 }
@@ -1083,7 +1084,7 @@ public class ModelStateDictionary : IReadOnlyDictionary<string, ModelStateEntry?
                 var currentChild = node.ChildNodes[_index];
                 if (currentChild.ChildNodes?.Count > 0)
                 {
-                    _nodes.Add(currentChild);
+                    _nodes.Enqueue(currentChild);
                 }
 
                 if (!currentChild.IsContainerNode)
