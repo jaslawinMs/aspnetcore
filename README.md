@@ -21,6 +21,7 @@ well as the largest speedup.
 | Candidate | Evaluation |
 |---|---|
 | F068 | [ModelState breadth-first enumeration](F068/README.md) |
+| F127 | [Rewrite equality-only string comparisons](F127/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
 microbenchmark observations, not production throughput or universal performance

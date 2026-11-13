@@ -3363,13 +3363,15 @@
         "compatibility_notes": "Both comparison modes selected by this class have matching equality overloads on supported targets. Preserve success/failure objects and null behavior, and leave all ordering branches unchanged. No public API change is required.",
         "evidence_boundary": "source-only"
       },
-      "status": "investigating",
+      "status": "validated",
       "notes": [
-        "Proceeding after F068 publication; current origin/main remains37e809ead5824bc753a1c3d56f11615bdb1296c5. Acceptance: change only equality ordering to matching ordinal Equals, preserve null/case/Unicode and all genuine ordering branches, run before/after owning tests, benchmark actual StringMatch with matching and nonmatching controls and at most3 measured comparisons."
+        "Proceeding after F068 publication; current origin/main remains37e809ead5824bc753a1c3d56f11615bdb1296c5. Acceptance: change only equality ordering to matching ordinal Equals, preserve null/case/Unicode and all genuine ordering branches, run before/after owning tests, benchmark actual StringMatch with matching and nonmatching controls and at most3 measured comparisons.",
+        "Only equality branch changed from Compare==0 to matching ordinal Equals. Original compatibility16/16 and changed full owning tests486/486 pass; smoke24 cases each variant passes. Product formatting passes; the sole test-file CHARSET warning reproduces identically on baseline and is left unchanged. Existing dotnet/aspnetcore#70556 changes negation and still uses Compare for equality, so not an exact duplicate.",
+        "Stopped after1 of at most3 measured comparisons:24 cases, all0B/op. At256 chars ignoring case, equality267.74->20.97ns(-92.17%), length mismatch266.55->5.36ns(-97.99%). Eight control cases regress, including ordinal first mismatch+50-59% (about2-3ns); report every case. Original16/16 and changed owning486/486 tests pass, unchanged baseline CHARSET diagnostic retained. Real production matcher, byte-identical harness."
       ],
-      "branch": null,
+      "branch": "autoperf/F127-rewrite-string-equality",
       "pr_url": null,
-      "updated_at": "2026-11-13T15:23:14.7974641-08:00"
+      "updated_at": "2026-11-13T15:46:24.1219352-08:00"
     },
     {
       "id": "F128",
