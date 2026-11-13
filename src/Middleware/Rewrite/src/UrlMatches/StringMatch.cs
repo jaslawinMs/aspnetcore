@@ -28,7 +28,7 @@ internal sealed class StringMatch : UrlMatch
         switch (_operation)
         {
             case StringOperationType.Equal:
-                return string.Compare(input, _value, _stringComparison) == 0 ? MatchResults.EmptySuccess : MatchResults.EmptyFailure;
+                return string.Equals(input, _value, _stringComparison) ? MatchResults.EmptySuccess : MatchResults.EmptyFailure;
             case StringOperationType.Greater:
                 return string.Compare(input, _value, _stringComparison) > 0 ? MatchResults.EmptySuccess : MatchResults.EmptyFailure;
             case StringOperationType.GreaterEqual:
