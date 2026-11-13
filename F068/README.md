@@ -1,5 +1,7 @@
 # F068: ModelState breadth-first enumeration
 
+[Draft proposal: jaslawinMs/aspnetcore#2](https://github.com/jaslawinMs/aspnetcore/pull/2).
+
 **Proposal:** use `Queue<ModelStateNode>` instead of removing element zero from
 a `List<ModelStateNode>` while traversing pending ModelState nodes. Repeated
 front removal shifts the remaining references in wide nested trees. Traversal

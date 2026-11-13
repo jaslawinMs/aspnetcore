@@ -1888,16 +1888,17 @@
         "compatibility_notes": "Preserve visitation order, root/container handling, Reset semantics, enumeration over mutations and struct-copy behavior. Queue APIs work across supported runtimes. Do not batch user-visible operations or introduce a new public API; this is an internal representation suggestion only.",
         "evidence_boundary": "source-only"
       },
-      "status": "validated",
+      "status": "drafted",
       "notes": [
         "Prioritizing real ModelState breadth-first traversal. Current main still uses List.RemoveAt(0). A flat dictionary has no repeated growing queue; nested collection keys are required for a faithful workload.",
         "No matching performance PR/issue found in targeted current searches. Optimization will replace private pending-node list with Queue, preserving breadth-first visitation, child order, container handling and Reset; flat dictionaries and nested collection graphs will be benchmarked separately.",
         "Original traversal compatibility coverage: 6/6 passed, including each new Reset theory row. Changed implementation: all 253 owning Abstractions tests pass. Eight flat/nested smoke cases pass for both snapshots. The isolated source-linked harness avoids the existing runner merging an unbounded default job with CLI jobs; SDK and runtime are pinned identically, and logs identify the actual local production assembly and MVID.",
-        "Three valid interleaved comparisons completed. Nested1000 median paired time reduction85.52%; flat1/10/100 regressions6.32/4.44/3.84%, +8B per enumeration in seven cases, noisy flat1000 first-round slowdown retained. Original traversal coverage6/6 and changed owning suite253/253 pass; benchmark build and changed-source/benchmark formatting pass. Ten test-file formatter diagnostics exactly match baseline untouched lines. Published as a tradeoff-bearing draft, not a universal win."
+        "Three valid interleaved comparisons completed. Nested1000 median paired time reduction85.52%; flat1/10/100 regressions6.32/4.44/3.84%, +8B per enumeration in seven cases, noisy flat1000 first-round slowdown retained. Original traversal coverage6/6 and changed owning suite253/253 pass; benchmark build and changed-source/benchmark formatting pass. Ten test-file formatter diagnostics exactly match baseline untouched lines. Published as a tradeoff-bearing draft, not a universal win.",
+        "Fork-only draft PR2 created and immediately opened in the default browser. Source357aa1c928de7eb38a26007ce52fc881b776c0ca; immutable initial results e214fec8831900de2031d2b3e560c7d8ed0fde86; tracking issue1. Remote API confirms draft=true, fork/main base, exactly3 changed files."
       ],
       "branch": "autoperf/F068-modelstate-enumeration",
-      "pr_url": null,
-      "updated_at": "2026-11-13T15:17:26.2450241-08:00"
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/2",
+      "updated_at": "2026-11-13T15:21:57.8002295-08:00"
     },
     {
       "id": "F069",
@@ -3362,11 +3363,13 @@
         "compatibility_notes": "Both comparison modes selected by this class have matching equality overloads on supported targets. Preserve success/failure objects and null behavior, and leave all ordering branches unchanged. No public API change is required.",
         "evidence_boundary": "source-only"
       },
-      "status": "pending",
-      "notes": [],
+      "status": "investigating",
+      "notes": [
+        "Proceeding after F068 publication; current origin/main remains37e809ead5824bc753a1c3d56f11615bdb1296c5. Acceptance: change only equality ordering to matching ordinal Equals, preserve null/case/Unicode and all genuine ordering branches, run before/after owning tests, benchmark actual StringMatch with matching and nonmatching controls and at most3 measured comparisons."
+      ],
       "branch": null,
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T15:23:14.7974641-08:00"
     },
     {
       "id": "F128",
