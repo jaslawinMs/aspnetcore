@@ -26,7 +26,7 @@ well as the largest speedup.
 | F034 (also F119) | No-gain; duplicate consolidated | [Concrete Rewrite condition enumeration](F034/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
-| F090 | Validated; draft being prepared | [Literal validation-message Boolean strings](F090/README.md) |
+| F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are

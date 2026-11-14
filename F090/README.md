@@ -3,6 +3,8 @@
 Source proposal: `72b916d1df6a9ddaa3348dbf2d81b541fe4e5553`.
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
+Draft: [jaslawinMs/aspnetcore#14](https://github.com/jaslawinMs/aspnetcore/pull/14).
+Issue: [jaslawinMs/aspnetcore#13](https://github.com/jaslawinMs/aspnetcore/issues/13).
 
 All eight affected cases allocated **32 fewer bytes per generated message**
 and had **4.52-10.21% lower median paired generator time** across three
