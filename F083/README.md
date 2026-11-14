@@ -1,5 +1,7 @@
 # F083: avoid transient lowercase strings in rewrite-map lookup
 
+[Draft proposal: jaslawinMs/aspnetcore#6](https://github.com/jaslawinMs/aspnetcore/pull/6).
+
 Proposal: `acf0117ed66dd908bb547a2bb6143b23e3a801f8`, branch
 `autoperf/F083-rewrite-map-lookup`.
 Baseline: `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
