@@ -1,0 +1,67 @@
+{
+  "candidate": "F110",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "scope": "Private per-render membership indexing for caller-provided List<string>; the normal GetCurrentValues HashSet path is not an optimization target.",
+  "final_eligibility": {
+    "current_values": "Exact List<string>, at least 32 entries",
+    "options": "Materialized exact List<SelectListItem> or SelectListItem[], at least 32 options",
+    "comparer": "StringComparer.Ordinal",
+    "lifetime": "One render; no retained metadata or collection cache"
+  },
+  "requirement_coverage": [
+    {
+      "requirement": "Ordinal matching, overriding SelectListItem.Selected, complete ordered grouped/ungrouped HTML",
+      "test": "GenerateSelect_CurrentValuesList_PreservesOrdinalMatchingAndGrouping",
+      "rows": [false, true]
+    },
+    {
+      "requirement": "Existing ordinal and ordinal-ignore-case HashSet comparers remain authoritative",
+      "test": "GenerateSelect_CurrentValuesHashSet_PreservesComparer",
+      "rows": [false, true]
+    },
+    {
+      "requirement": "A List subclass can reimplement ICollection.Contains; preserve its case-insensitive result and all 32 calls",
+      "test": "GenerateSelect_CurrentValuesListSubclass_PreservesContainsImplementation"
+    },
+    {
+      "requirement": "Opaque ICollection.Contains remains authoritative without any added enumeration or Count access",
+      "test": "GenerateSelect_CurrentValuesCollection_PreservesContainsWithoutEnumeration"
+    },
+    {
+      "requirement": "Actual lazy option enumeration can update selected values before membership indexing",
+      "test": "GenerateSelect_CurrentValuesList_ObservesOptionEnumerationUpdates"
+    },
+    {
+      "requirement": "Actual custom option indexer can update selected values during option selection",
+      "test": "GenerateSelect_CurrentValuesList_ObservesCustomOptionIndexerUpdates"
+    }
+  ],
+  "compatibility": {
+    "before_passed": 2601,
+    "prototype_passed": 2601,
+    "final_passed": 2601,
+    "failed": 0,
+    "skipped": 0,
+    "individual_new_rows_per_variant": 8,
+    "all_new_rows_passed": true,
+    "independent_full_html_oracle_cases_per_variant": 32,
+    "all_full_receipts_equal": true,
+    "actual_normal_producer": "CollectionModelBinder<string> and GetCurrentValues",
+    "observed_boundary": "Public GenerateSelect, HtmlEncoder.Default, complete rendered HTML",
+    "functional_bug_fix_red_green_claim": false
+  },
+  "tuning": {
+    "round_1_threshold": 16,
+    "reason": "The 16-option/16-value hit case was 6.06% slower with an extra 539 B/op in the first pair.",
+    "final_threshold": 32,
+    "first_prototype_retained": true,
+    "final_statistics_rounds": [2, 3],
+    "different_implementations_must_not_be_aggregated": true
+  },
+  "excluded_claims": [
+    "No default MVC-path speedup claim",
+    "No production or weighted overall throughput claim",
+    "No behavior change, new public API, process-wide metadata cache or Hot Reload handler",
+    "No browser, HTTP-hosted, concurrent-mutation or production workload validation"
+  ]
+}

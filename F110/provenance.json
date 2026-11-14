@@ -1,0 +1,47 @@
+{
+  "candidate": "F110",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "cc6b5bc4f181f26d7d1bffe1053b4aafbac18323",
+  "source_branch": "autoperf/F110-select-value-membership",
+  "source_hashes": [
+    {
+      "path": "src\\Mvc\\Mvc.ViewFeatures\\src\\DefaultHtmlGenerator.cs",
+      "sha256": "B67C215CCE1D361B411638A6B27C71C06BA73420EBBF2E84F77406510026B78B"
+    },
+    {
+      "path": "src\\Mvc\\Mvc.ViewFeatures\\test\\DefaultHtmlGeneratorTest.cs",
+      "sha256": "7BEEF64786455189DF48660F834FCDAD6D05044C9A9857A3B570D74B993CF3A7"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "benchmark_boundary": "Actual public DefaultHtmlGenerator.GenerateSelect followed by WriteTo(HtmlEncoder.Default) and StringWriter.ToString",
+  "expected_case_count": 32,
+  "final_summary_rounds": [
+    2,
+    3
+  ],
+  "tuning_changes": [
+    "Raise both count gates from 16 to 32 after the first pair's small hit-case time/allocation regression; preserve all first-prototype results and source."
+  ],
+  "eligibility": "Exact List<string> with >=32 entries and materialized exact List<SelectListItem> or SelectListItem[] with >=32 options",
+  "normal_path": "Actual CollectionModelBinder<string> then GetCurrentValues supplies an existing case-insensitive HashSet; it remains non-indexed.",
+  "correctness_boundary": "All 32 full encoded HTML oracle receipts agree in before, first prototype and final builds; all eight new test outcomes and all 2601 owning outcomes pass in every source variant.",
+  "producer_reachability": "The permanent lazy-enumeration and custom-indexer tests invoke those real option producers before/during membership; the benchmark setup also invokes the actual binder/GetCurrentValues producers.",
+  "timing_limit": "Lazy/indexer updates occur during the first setup render; timing measures their established steady input, not a fresh mutation on every iteration.",
+  "indexer_control_limit": "The identical measured Indexer control retains Moq invocations. An untimed final-snapshot actual-render diagnostic observes 131 additional retained calls per render and storage growth from capacity 256 to 16384 across 64 renders. This is not a steady-state allocation control and its measured 44145 B/op increase in round 3 is not quantitatively attributed or dismissed. All raw results remain; no indexer performance improvement is claimed.",
+  "array_control_limit": "Array_1024_512 is intentionally not indexed and has highly variable original means/SDs. Its apparent final median improvement is not attributed to this optimization; all eight samples and the large original round-3 SD are retained.",
+  "runtime_limit": "Pinned prerelease .NET 12 SDK/runtime, BenchmarkDotNet 0.13.0, in-process server GC, shared Windows host, serial measurements; not production throughput.",
+  "test_limit": "Compatibility evidence is not functional bug-fix red/green proof; no browser/hosted application or concurrent mutation test.",
+  "source_capture_limit": "Immutable manifests truthfully retain the baseline HEAD and dirty source/test/report state at capture; final commit is verified separately by source hashes.",
+  "history": [
+    "339c63d143482313e0c80cf55c386aba940aba66",
+    "ecedbd5372a8460055eefd269938d0b26e826d3c"
+  ],
+  "documentation": "Current IHtmlGenerator.GenerateSelect XML documentation permits arbitrary caller-provided ICollection<string>; narrow GitHub searches did not identify an overlap and are not an exhaustive-coverage claim."
+}

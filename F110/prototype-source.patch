@@ -1,0 +1,20 @@
+diff --git a/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs b/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
+index 9674433ba5..8a3e045f28 100644
+--- a/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
++++ b/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
+@@ -1572,6 +1572,15 @@ public class DefaultHtmlGenerator : IHtmlGenerator
+             return HtmlString.Empty;
+         }
+ 
++        // Custom collection lookups and option indexers may have observable behavior.
++        if (currentValues is List<string> { Count: >= 16 } values &&
++            values.GetType() == typeof(List<string>) &&
++            (itemsList.GetType() == typeof(List<SelectListItem>) || itemsList is SelectListItem[]) &&
++            itemsList.Count >= 16)
++        {
++            currentValues = new HashSet<string>(values, StringComparer.Ordinal);
++        }
++
+         var listItemBuilder = new HtmlContentBuilder(count);
+ 
+         // Make optionLabel the first item that gets rendered.
