@@ -3,6 +3,8 @@
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 Source: `0e72208e9e659c3de730314721ff0717e6836d76`.
+Draft: [jaslawinMs/aspnetcore#16](https://github.com/jaslawinMs/aspnetcore/pull/16).
+Issue: [jaslawinMs/aspnetcore#15](https://github.com/jaslawinMs/aspnetcore/issues/15).
 This branch does **not** include F090's Boolean-string optimization.
 
 ## What changed and why it is equivalent
