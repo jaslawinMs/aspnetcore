@@ -5,6 +5,7 @@ using System.Collections;
 using System.Net.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Moq;
 
 namespace Microsoft.AspNetCore.Owin;
 
@@ -124,6 +125,114 @@ public class OwinEnvironmentTests
 
         Assert.Equal(CancellationToken.None, env["owin.CallCancelled"]);
         Assert.Equal("1.0", env["owin.Version"]);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(0, 1)]
+    [InlineData(0, 2)]
+    [InlineData(1, 0)]
+    [InlineData(1, 1)]
+    [InlineData(1, 2)]
+    [InlineData(2, 0)]
+    [InlineData(2, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 0)]
+    [InlineData(3, 1)]
+    [InlineData(3, 2)]
+    [InlineData(4, 0)]
+    [InlineData(4, 1)]
+    [InlineData(4, 2)]
+    public void OwinEnvironmentCancellationDefaultPreservesItemValues(int valueKind, int dictionaryKind)
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var context = new DefaultHttpContext();
+        context.Items = dictionaryKind switch
+        {
+            0 => context.Items,
+            1 => new Dictionary<object, object>(),
+            2 => new SortedDictionary<object, object>(),
+            _ => throw new ArgumentOutOfRangeException(nameof(dictionaryKind))
+        };
+        var unrelated = new object();
+        context.Items["unrelated"] = unrelated;
+        context.Items["owin.Version"] = "9.0";
+        object existing = valueKind switch
+        {
+            0 or 3 => null,
+            1 => CancellationToken.None,
+            2 => cancellation.Token,
+            4 => new object(),
+            _ => throw new ArgumentOutOfRangeException(nameof(valueKind))
+        };
+        if (valueKind is not 0)
+        {
+            context.Items["owin.CallCancelled"] = existing;
+        }
+
+        IDictionary<string, object> environment = new OwinEnvironment(context);
+
+        Assert.True(context.Items.TryGetValue("owin.CallCancelled", out var actual));
+        Assert.True(environment.TryGetValue("owin.CallCancelled", out var exposed));
+        if (valueKind is 0)
+        {
+            Assert.Equal(CancellationToken.None, Assert.IsType<CancellationToken>(actual));
+        }
+        else
+        {
+            Assert.Same(existing, actual);
+        }
+        Assert.Same(actual, exposed);
+        Assert.Same(unrelated, context.Items["unrelated"]);
+        Assert.Equal("9.0", environment["owin.Version"]);
+        Assert.Same(context, context.Items[typeof(HttpContext).FullName]);
+        Assert.Equal(4, context.Items.Count);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OwinEnvironmentCancellationDefaultPreservesLifetimeFeature(bool cancelled)
+    {
+        using var cancellation = new CancellationTokenSource();
+        if (cancelled)
+        {
+            cancellation.Cancel();
+        }
+        var context = new DefaultHttpContext();
+        context.RequestAborted = cancellation.Token;
+
+        IDictionary<string, object> environment = new OwinEnvironment(context);
+
+        Assert.Equal(CancellationToken.None, Assert.IsType<CancellationToken>(context.Items["owin.CallCancelled"]));
+        Assert.Equal(cancellation.Token, Assert.IsType<CancellationToken>(environment["owin.CallCancelled"]));
+        Assert.Equal(cancelled, ((CancellationToken)environment["owin.CallCancelled"]).IsCancellationRequested);
+        Assert.Equal("1.0", environment["owin.Version"]);
+    }
+
+    [Fact]
+    public void OwinEnvironmentCancellationDefaultPreservesItemsSetterException()
+    {
+        var expected = new InvalidOperationException("items setter");
+        var values = new Dictionary<object, object>();
+        var items = new Mock<IDictionary<object, object>>(MockBehavior.Strict);
+        items.Setup(dictionary => dictionary.ContainsKey(It.IsAny<object>()))
+            .Returns((object key) => values.ContainsKey(key));
+        items.Setup(dictionary => dictionary.Add(It.IsAny<object>(), It.IsAny<object>()))
+            .Callback((object key, object value) => values.Add(key, value));
+        items.SetupSet(dictionary => dictionary["owin.CallCancelled"] = It.IsAny<object>())
+            .Throws(expected);
+        items.SetupSet(dictionary => dictionary["owin.Version"] = It.IsAny<object>())
+            .Callback((object key, object value) => values[key] = value);
+        items.SetupSet(dictionary => dictionary[typeof(HttpContext).FullName] = It.IsAny<object>())
+            .Callback((object key, object value) => values[key] = value);
+        var context = new DefaultHttpContext { Items = items.Object };
+
+        var actual = Assert.Throws<InvalidOperationException>(() => new OwinEnvironment(context));
+
+        Assert.Same(expected, actual);
+        Assert.Empty(values);
     }
 
     [Fact]
