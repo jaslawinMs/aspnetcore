@@ -2273,11 +2273,16 @@
         "compatibility_notes": "StringComparer APIs are cross-target. Invariant lowercasing plus ordinal comparison is not universally interchangeable with OrdinalIgnoreCase over Unicode. Preserve insertion overwrite behavior, null/empty checks, missing-key null results, and parsed-map lifetime. This is not a public API change recommendation.",
         "evidence_boundary": "source-only"
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "validated",
+      "notes": [
+        "Investigating actual IIS rewrite-map producer/consumer and Unicode normalization compatibility before choosing an optimization; do not assume OrdinalIgnoreCase is equivalent to ToLowerInvariant followed by ordinal lookup.",
+        "Acceptance before implementation: retain exact ToLowerInvariant-then-ordinal lookup semantics, distinct Greek sigma/final-sigma keys and parser last-write-wins behavior; empty/missing and supplementary-Unicode keys stay compatible. Add real XML-parser/actual-segment coverage including lengths around any stack-buffer boundary, verify each row on original/candidate, full owning suite/formatting, and measure real segment with lowercase/miss/long-key controls. Exported API and parser normalization unchanged. At most3 paired comparisons; measured regression/tradeoffs disclosed or no-gain. A bare OrdinalIgnoreCase comparer change is not assumed compatible.",
+        "Original20 focused cases passed individually; candidate full496 tests passed with all20 map cases, zero skips. Real XML factory plus real initial regex captures and map evaluator passed27 Dry scenarios on both immutable DLLs. Production formatter passed; test sole CHARSET(1,1) matches archived baseline exactly. Measuring bounded span lookup without changing invariant normalization or the ordinal dictionary comparer.",
+        "3 comparisons complete,27 real capture-produced map scenarios/launch. UpperHit_8/64/256 median paired CPU -15.98%/-24.18%/-28.00%; heap120->80,344->192,1112->576 B/op. Nine CPU regressions retained, including LowerHit_8+8.26% and long controls.20 original map cases and496 candidate suite green; source formatting passes and test encoding diagnostic matches baseline. Proposal acf0117ed66dd908bb547a2bb6143b23e3a801f8; public API/comparer/parser semantics unchanged. Preparing fork-only draft."
+      ],
+      "branch": "autoperf/F083-rewrite-map-lookup",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T16:58:28.6050141-08:00"
     },
     {
       "id": "F084",

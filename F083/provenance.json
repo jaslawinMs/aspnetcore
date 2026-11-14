@@ -1,0 +1,29 @@
+{
+  "candidate": "F083",
+  "baseline_commit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "proposal_commit": "acf0117ed66dd908bb547a2bb6143b23e3a801f8",
+  "proposal_branch": "autoperf/F083-rewrite-map-lookup",
+  "production_source_hashes": [
+    {
+      "path": "src\\Middleware\\Rewrite\\src\\PatternSegments\\RewriteMapSegment.cs",
+      "sha256": "E514E46B8EE6E5DC570BE4031EBB76DF5F16B5FC60838440D1D19ECD5527E517"
+    },
+    {
+      "path": "src\\Middleware\\Rewrite\\src\\IISUrlRewrite\\IISRewriteMap.cs",
+      "sha256": "22F656EEA21E6D64D4C0C0A3516B694B238BBDFB04B8468B7CED474253AA6596"
+    }
+  ],
+  "compatibility_test_source_sha256": "75ED48A8C01F3D8A1D90541E1E7ED00C53F6B14B38BDD0CB49D410A6D57F7001",
+  "comparisons": 3,
+  "measured_launches": 6,
+  "benchmark_cases_per_launch": 27,
+  "retained_measurements_per_case": 8,
+  "tuning_changes": 0,
+  "raw_binaries_published": false,
+  "stack_buffer_utf16_characters": 256,
+  "public_exported_api_changed": false,
+  "minimum_runtime_feature": "Dictionary alternate ReadOnlySpan<char> lookup (.NET9+); the shipping project and measurements target the repository pinned net12.0.",
+  "correctness_boundary": "Public IIS XML parser, actual initial regex matcher producing R:1 captures, actual map/capture segments, invariant-lowercase then ordinal lookup; no injected map state or copied lookup algorithm.",
+  "snapshot_note": "Snapshots captured before final commit at baseline HEAD plus recorded dirty changes. Both final committed production files match the measured after hashes. Identical benchmark/runtime/dependency hashes across variants; production DLL hashes differ.",
+  "tradeoffs": "Nine slower median paired cases, including LowerHit_8(+8.26%), MixedHit_257(+7.20%), UpperHit_1024(+6.85%); all long-key allocations unchanged. UpperMiss_1024 first-round+19.34% retained. B/op excludes the bounded stack buffer. No HTTP, native IIS, per-request regex, outer action, AOT or other-runtime throughput claim."
+}
