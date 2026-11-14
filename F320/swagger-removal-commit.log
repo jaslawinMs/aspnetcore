@@ -1,0 +1,56 @@
+commit 39e1ac975cf138c56fff984dd824ab651a448367
+Author:     Youssef Fahmy <youssefvictor00@gmail.com>
+AuthorDate: Tue Jul 21 21:32:54 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Jul 21 21:32:54 2026 +0200
+
+    Drop Microsoft.AspNetCore.Grpc.Swagger (#67919)
+    
+    * Drop Microsoft.AspNetCore.Grpc.Swagger
+    
+    * Fix test asset build
+
+ AspNetCore.slnx                                                                                                       |   2 -
+ eng/ProjectReferences.props                                                                                           |   1 -
+ eng/RequiresDelayedBuildProjects.props                                                                                |   2 -
+ eng/ShippingAssemblies.props                                                                                          |   1 -
+ src/Grpc/Grpc.slnf                                                                                                    |   2 -
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/GrpcSwaggerGenOptionsExtensions.cs                     |  78 --------------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/GrpcSwaggerServiceExtensions.cs                        |  63 --------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/GrpcDataContractResolver.cs                   | 120 -------------------------------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/GrpcJsonTranscodingDescriptionProvider.cs     | 205 ------------------------------------------------------------------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/GrpcModelMetadata.cs                          |  54 ----------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/MessageDescriptorHelpers.cs                   |  70 -----------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/XmlComments/GrpcXmlCommentsDocumentFilter.cs  |  79 ---------------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/XmlComments/GrpcXmlCommentsOperationFilter.cs | 111 ----------------------------------------------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Microsoft.AspNetCore.Grpc.Swagger.csproj               |  27 -----------
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/PublicAPI.Shipped.txt                                  |   8 ----
+ src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/PublicAPI.Unshipped.txt                                |   1 -
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Binding/BodyTests.cs                            |  82 ----------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Binding/ParametersTests.cs                      | 186 ----------------------------------------------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Binding/ResponseBodyTests.cs                    |  92 --------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/GrpcSwaggerServiceExtensionsTests.cs            |  99 -----------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Infrastructure/OpenApiTestHelpers.cs            |  49 --------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Infrastructure/TestWebHostEnvironment.cs        |  17 -------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Microsoft.AspNetCore.Grpc.Swagger.Tests.csproj  |  20 ---------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/body.proto                                |  54 ----------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/counter.proto                             |  25 -----------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/greeter.proto                             |  30 -------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/messages.proto                            | 117 ------------------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/parameters.proto                          | 138 ---------------------------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/responsebody.proto                        |  61 -------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Proto/xmldoc.proto                              |  70 -----------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/SchemaGeneratorIntegrationTests.cs              | 210 --------------------------------------------------------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/BodyService.cs                         |  10 -----
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/GreeterService.cs                      |  24 ----------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/ParametersService.cs                   |  30 -------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/ResponseBodyService.cs                 |   8 ----
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/XmlDocService.cs                       |  33 --------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/Services/XmlDocServiceWithComments.cs           |  48 --------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/XmlComments/XmlCommentsDocumentFilterTests.cs   |  72 ------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/XmlComments/XmlDocumentationIntegrationTests.cs | 149 -------------------------------------------------------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/google/api/annotations.proto                    |  31 -------------
+ src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.Swagger.Tests/google/api/http.proto                           | 376 ----------------------------------------------------------------------------------------------------------------------------------------------------------
+ src/Grpc/JsonTranscoding/test/testassets/Sandbox/Sandbox.csproj                                                       |   1 -
+ src/Grpc/JsonTranscoding/test/testassets/Sandbox/Startup.cs                                                           |  21 ---------
+ 43 files changed, 2877 deletions(-)

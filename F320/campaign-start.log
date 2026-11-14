@@ -1,0 +1,29 @@
+{
+  "id": "F320",
+  "finding": {
+    "card_id": "uncached-reflection-in-hot-path",
+    "file": "src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs",
+    "line_start": 424,
+    "line_end": 425,
+    "project": "Microsoft.AspNetCore.Grpc.JsonTranscoding",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "informational",
+    "confidence": "high",
+    "classification": "informational",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "Body-field PropertyInfo is rediscovered for each descriptor resolution.",
+    "explanation": "ResolveBodyDescriptor derives the CLR property name and calls Type.GetProperty each time the body descriptor is resolved, with no metadata cache. Descriptor resolution occurs during endpoint setup, so this is retained as a cold-path informational occurrence.",
+    "snippet": "var propertyName = FormatUnderscoreName(bodyDescriptor.Name, pascalCase: true, preservePeriod: false);\nvar propertyInfo = bodyDescriptor.ContainingType.ClrType.GetProperty(propertyName);",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Independent fresh main37e809; trace actual ResolveBodyDescriptor body-field PropertyInfo consumer/frequency and metadata/cold-start lifetime before acceptance. No combination with F319/F295/F321."
+  ],
+  "branch": "autoperf/F320-grpc-body-property",
+  "pr_url": null,
+  "updated_at": "2026-11-14T17:39:40.4372613+00:00"
+}

@@ -1,0 +1,94 @@
+{
+  "candidate": "F320",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "fa079e6c0ef9aa82d40dfba63dc7217617a47ea2",
+  "source_branch": "autoperf/F320-grpc-body-property",
+  "source_hashes": [
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\src\\Shared\\ServiceDescriptorHelpers.cs",
+      "sha256": "438EDFEBC231F300DCB366027730233E1E4E71B9986022E2CB563013A5E3268F"
+    },
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\test\\Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests\\ServiceDescriptorHelpersTests.cs",
+      "sha256": "B2FEEF0F508B9128E85516F9C70B741FABDED0A071EF7403DBF3BE7607B84D54"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "finding_classification": "Informational cold endpoint-setup reflection occurrence, not a per-request hot-path defect.",
+  "implementation": "Delete only named-body property name projection/GetProperty and two unused constructor arguments; retain branch structure and BodyDescriptorInfo shape/defaults.",
+  "former_consumer_removed_in": "39e1ac975cf138c56fff984dd824ab651a448367",
+  "former_consumer_pr": "dotnet/aspnetcore#67919",
+  "former_consumer_path": "src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.Swagger/Internal/GrpcJsonTranscodingDescriptionProvider.cs",
+  "owner_audit": {
+    "method_definitions": 496,
+    "il_bodies": 490,
+    "bodyless_methods": 6,
+    "actual_caller": "JsonTranscodingProviderServiceBinder<TService>.CreateDescriptorInfo",
+    "property_info_getter_calls": 0,
+    "parameter_info_getter_calls": 0,
+    "arbitrary_external_reflection_excluded": false
+  },
+  "recursive_owner_only_dll_json_closure": 86,
+  "same_original_harness_runtime_and_dependencies": true,
+  "complete_fixed_case_matrix": 16,
+  "measured_outcomes": 96,
+  "measured_setup_request_handler_outcomes": 288,
+  "focused_descriptor_contract_rows_original_and_after": 10,
+  "original_compatibility_passed": 315,
+  "after_compatibility_passed": 315,
+  "existing_original_startup_passed": 12,
+  "supported_benefit": {
+    "helper_sub_median_time_percent": -41.3,
+    "helper_repeated_median_time_percent": -78.1,
+    "helper_sub_bytes_before_after": [
+      224,
+      136
+    ],
+    "helper_repeated_bytes_before_after": [
+      776,
+      160
+    ],
+    "six_full_parse_allocation_savings_bytes": [
+      88,
+      232,
+      616,
+      672,
+      360,
+      920
+    ],
+    "three_of_six_full_parse_time_cases_improve_every_pair": true
+  },
+  "non_wins": {
+    "parse_sub_first_pair_percent": 3.15,
+    "parse_subdata_third_pair_percent": 10.24,
+    "parse_repeated_message_third_pair_percent": 9.58,
+    "four_of_six_unchanged_control_medians_higher": true,
+    "wildcard_control_third_pair_percent": 13.98,
+    "map_greeter1_third_pair_percent": -51.87,
+    "map_greeter1_third_pair_attributable": false,
+    "unchanged_colon_startup_also_faster_every_pair": true,
+    "startup_heap_magnitude_changes_not_attributed": true
+  },
+  "producer_fixture_boundary": "Real generated protobuf descriptor/provider/binder/MapGrpcService-produced RequestDelegate/HTTP JSON/body-query precedence/generated service/JSON response; no downstream descriptor injection.",
+  "request_fixture_route_matching": false,
+  "parse_wrapper": "Expression-compiled call to actual private static ParseRoute, with identical ValueTuple boxing in both variants.",
+  "extra_named_field_cases": "SubData, repeated messages/map/wrappers use real generated field descriptors with diagnostic named-body selectors; the current Greeter HTTP annotations name sub and repeated_strings.",
+  "new_metadata_cache": false,
+  "wildcard_f321_reflection_untouched": true,
+  "public_api_change": false,
+  "per_request_speedup_measured": false,
+  "cold_first_process_measured": false,
+  "trimmed_native_aot_and_live_edit_runtime_validated": false,
+  "arbitrary_external_reflection_and_malformed_custom_clr_metadata_excluded": false,
+  "shared_host": true,
+  "serial_measurements": true,
+  "outliers_removed": false,
+  "all_three_comparisons_published": true,
+  "repeatability_note": "Medians of paired mean ratios, not pooled independent samples. Startup/control shifts cannot be attributed from this shared-box comparison."
+}
