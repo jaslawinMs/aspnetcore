@@ -3037,16 +3037,17 @@
         "snippet": "if (currentValues != null)\n{\n    var value = item.Value ?? item.Text;\n    selected = currentValues.Contains(value);\n}",
         "suppressed": false
       },
-      "status": "validated",
+      "status": "drafted",
       "notes": [
         "Independent baseline 37e809. Evaluate public GenerateSelect caller-provided List membership versus normal HashSet controls; preserve custom ICollection.Contains comparers/side effects, input materialization, grouped output, null/text fallback and existing full HTML behavior. No metadata cache or public API-shape change.",
         "Baseline 2601/2601 MVC ViewFeatures tests and all eight new public GenerateSelect compatibility rows individually pass. All 32 full-rendered-HTML benchmark setups pass against an independent oracle, including actual CollectionModelBinder/GetCurrentValues producers, custom Contains/List-subclass and lazy/indexer updates. Evaluate per-render HashSet only for sufficiently large exact List selected values and known option-list/array indexers.",
         "Round 1: seven larger List/grouped cases improved 56.73-91.52%, but the 16/16 hit case regressed 6.06% and added 539 B/op; all first-prototype results/source retained. One tune raises both exact-list/known-option count gates to 32. All 32 complete HTML/producer receipts agree in baseline/prototype/final; all 2601 owning tests and every one of eight new rows pass in every variant. Only ViewFeatures DLL differs in byte-identical harness/config/dependency closure. Final opposite-order comparisons 2-3 running; no fourth comparison permitted.",
-        "Source cc6b5bc4f181f26d7d1bffe1053b4aafbac18323: nine shipping lines, 166 focused test/helper lines, no existing-line changes. Three pairs consumed; final rounds 2-3 only. Seven larger list/grouped medians 39.87-84.11% lower in both pairs; all 12 indexed cases allocate more, one indexed median +1.21%. Twenty controls retained, including default bound path +7.68% and non-steady Moq-indexer memory. All 2601/2601 owning outcomes, every new row and all 32 full-HTML contracts pass. Workload-specific proposal, not universal throughput/heap improvement."
+        "Source cc6b5bc4f181f26d7d1bffe1053b4aafbac18323: nine shipping lines, 166 focused test/helper lines, no existing-line changes. Three pairs consumed; final rounds 2-3 only. Seven larger list/grouped medians 39.87-84.11% lower in both pairs; all 12 indexed cases allocate more, one indexed median +1.21%. Twenty controls retained, including default bound path +7.68% and non-steady Moq-indexer memory. All 2601/2601 owning outcomes, every new row and all 32 full-HTML contracts pass. Workload-specific proposal, not universal throughput/heap improvement.",
+        "Completed fork issue 21/draft 22, immediately opened and verified OPEN/draft/main/exact source cc6b5bc4f181f26d7d1bffe1053b4aafbac18323, two files 175 additions/zero removals and template-preserving body. Complete evidence pinned at 357aaaef9234f9fd52849d474be6972df38e18f6. All source/closure/correctness and three-pair measurement acceptance verified; all heap/control trade-offs and non-steady mock-indexer limitation disclosed. Browser-open requested; rendered page is not independently verified."
       ],
       "branch": "autoperf/F110-select-value-membership",
-      "pr_url": null,
-      "updated_at": "2026-11-14T00:09:55.3840068-08:00"
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/22",
+      "updated_at": "2026-11-14T00:18:39.112521-08:00"
     },
     {
       "id": "F111",

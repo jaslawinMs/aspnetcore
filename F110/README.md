@@ -1,6 +1,8 @@
 # F110: index larger caller-provided select-value lists
 
 **Measured workload-specific proposal, with extra heap and control regressions.**
+[Draft jaslawinMs/aspnetcore#22](https://github.com/jaslawinMs/aspnetcore/pull/22).
+Proposal issue: [jaslawinMs/aspnetcore#21](https://github.com/jaslawinMs/aspnetcore/issues/21).
 Source: `cc6b5bc4f181f26d7d1bffe1053b4aafbac18323`.
 Branch: `autoperf/F110-select-value-membership`.
 Independent upstream baseline:
