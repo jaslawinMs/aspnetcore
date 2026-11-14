@@ -1,0 +1,73 @@
+``` ini
+
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+
+OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+
+```
+|                    Method | OtherFields |                 Case |       Mean |      Error |     StdDev |  Gen 0 |  Gen 1 |  Gen 2 | Allocated |
+|-------------------------- |------------ |--------------------- |-----------:|-----------:|-----------:|-------:|-------:|-------:|----------:|
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [23]** |   **8.098 ns** |  **0.1076 ns** |  **0.0563 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)Empty [22]** |   **8.049 ns** |  **0.1711 ns** |  **0.0895 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)_Null [21]** |   **7.997 ns** |  **0.0969 ns** |  **0.0507 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [24]** | **137.717 ns** |  **8.6409 ns** |  **4.5194 ns** | **0.0085** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)Empty [23]** | **142.046 ns** | **11.8128 ns** |  **6.1783 ns** | **0.0085** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)_Null [22]** | **135.100 ns** |  **4.6979 ns** |  **2.4571 ns** | **0.0083** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [22]** |  **17.576 ns** |  **0.2802 ns** |  **0.1465 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)Empty [21]** |  **17.738 ns** |  **0.2640 ns** |  **0.1381 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **ClientOff_Valid_Null** |  **17.685 ns** |  **0.2456 ns** |  **0.1284 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [22]** | **192.586 ns** | **13.5817 ns** |  **7.1035 ns** | **0.0076** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)Empty [21]** | **160.024 ns** |  **8.8424 ns** |  **4.6247 ns** | **0.0050** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |           **0** | **ClientOn_Absent_Null** | **160.291 ns** |  **4.3526 ns** |  **2.2765 ns** | **0.0050** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [23]** | **235.952 ns** |  **5.9637 ns** |  **3.1191 ns** | **0.0095** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)Empty [22]** | **235.966 ns** |  **8.6007 ns** |  **4.4983 ns** | **0.0096** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)_Null [21]** | **238.311 ns** | **22.5168 ns** | **11.7767 ns** | **0.0094** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |           **0** | **Clien(...)ustom [21]** | **195.270 ns** |  **3.2273 ns** |  **1.6879 ns** | **0.0080** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |           **0** | **ClientOn_Valid_Empty** | **166.471 ns** | **13.4868 ns** |  **7.0539 ns** | **0.0050** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |           **0** |  **ClientOn_Valid_Null** | **167.099 ns** |  **2.3285 ns** |  **1.2179 ns** | **0.0051** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |           **0** | **Overr(...)ustom [23]** | **334.887 ns** |  **7.9833 ns** |  **4.1754 ns** | **0.0102** |      **-** |      **-** |     **432 B** |
+| **GenerateValidationMessage** |           **0** | **Overr(...)_Null [21]** | **336.739 ns** |  **9.3663 ns** |  **4.8988 ns** | **0.0101** |      **-** |      **-** |     **432 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [23]** |  **20.969 ns** |  **0.4365 ns** |  **0.2283 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)Empty [22]** |  **20.839 ns** |  **0.2660 ns** |  **0.1391 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)_Null [21]** |  **20.811 ns** |  **0.3489 ns** |  **0.1825 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [24]** | **145.944 ns** |  **5.8413 ns** |  **3.0551 ns** | **0.0090** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)Empty [23]** | **148.130 ns** |  **5.0705 ns** |  **2.6520 ns** | **0.0090** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)_Null [22]** | **144.741 ns** |  **3.5675 ns** |  **1.8659 ns** | **0.0088** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [22]** |  **26.265 ns** |  **0.2530 ns** |  **0.1323 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)Empty [21]** |  **26.025 ns** |  **0.2422 ns** |  **0.1267 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **ClientOff_Valid_Null** |  **26.622 ns** |  **0.8534 ns** |  **0.4463 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [22]** | **201.533 ns** |  **6.2942 ns** |  **3.2920 ns** | **0.0082** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)Empty [21]** | **169.588 ns** |  **2.6762 ns** |  **1.3997 ns** | **0.0052** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |          **63** | **ClientOn_Absent_Null** | **172.765 ns** |  **2.9119 ns** |  **1.5230 ns** | **0.0053** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [23]** | **245.900 ns** |  **4.5616 ns** |  **2.3858 ns** | **0.0100** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)Empty [22]** | **246.235 ns** |  **6.2907 ns** |  **3.2901 ns** | **0.0099** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)_Null [21]** | **248.182 ns** | **19.6669 ns** | **10.2862 ns** | **0.0099** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |          **63** | **Clien(...)ustom [21]** | **204.675 ns** | **11.4396 ns** |  **5.9831 ns** | **0.0084** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |          **63** | **ClientOn_Valid_Empty** | **173.647 ns** |  **2.5386 ns** |  **1.3277 ns** | **0.0053** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |          **63** |  **ClientOn_Valid_Null** | **174.516 ns** |  **2.9289 ns** |  **1.5319 ns** | **0.0054** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |          **63** | **Overr(...)ustom [23]** | **342.633 ns** |  **6.3850 ns** |  **3.3395 ns** | **0.0103** |      **-** |      **-** |     **432 B** |
+| **GenerateValidationMessage** |          **63** | **Overr(...)_Null [21]** | **341.980 ns** | **14.7356 ns** |  **7.7070 ns** | **0.0103** |      **-** |      **-** |     **432 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [23]** |  **23.926 ns** |  **0.2640 ns** |  **0.1381 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)Empty [22]** |  **24.065 ns** |  **0.4787 ns** |  **0.2504 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)_Null [21]** |  **23.912 ns** |  **0.1620 ns** |  **0.0847 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [24]** | **146.382 ns** |  **5.6006 ns** |  **2.9292 ns** | **0.0087** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)Empty [23]** | **148.283 ns** |  **5.2586 ns** |  **2.7503 ns** | **0.0089** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)_Null [22]** | **150.459 ns** |  **9.0555 ns** |  **4.7362 ns** | **0.0090** |      **-** |      **-** |     **344 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [22]** |  **29.252 ns** |  **0.3641 ns** |  **0.1904 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)Empty [21]** |  **29.135 ns** |  **0.1386 ns** |  **0.0725 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **ClientOff_Valid_Null** |  **29.416 ns** |  **0.2254 ns** |  **0.1179 ns** |      **-** |      **-** |      **-** |         **-** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [22]** | **205.712 ns** | **15.0715 ns** |  **7.8827 ns** | **0.0083** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)Empty [21]** | **173.619 ns** |  **3.8254 ns** |  **2.0007 ns** | **0.0053** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |         **255** | **ClientOn_Absent_Null** | **175.543 ns** |  **3.5124 ns** |  **1.8371 ns** | **0.0054** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [23]** | **247.921 ns** |  **6.6022 ns** |  **3.4531 ns** | **0.0100** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)Empty [22]** | **247.722 ns** |  **3.5310 ns** |  **1.8468 ns** | **0.0100** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)_Null [21]** | **248.941 ns** |  **4.2756 ns** |  **2.2362 ns** | **0.0101** |      **-** |      **-** |     **376 B** |
+| **GenerateValidationMessage** |         **255** | **Clien(...)ustom [21]** | **208.046 ns** |  **6.9208 ns** |  **3.6197 ns** | **0.0084** |      **-** |      **-** |     **336 B** |
+| **GenerateValidationMessage** |         **255** | **ClientOn_Valid_Empty** | **179.306 ns** |  **5.6366 ns** |  **2.9481 ns** | **0.0055** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |         **255** |  **ClientOn_Valid_Null** | **188.509 ns** | **53.3603 ns** | **27.9085 ns** | **0.0054** |      **-** |      **-** |     **224 B** |
+| **GenerateValidationMessage** |         **255** | **Overr(...)ustom [23]** | **346.973 ns** |  **6.8211 ns** |  **3.5676 ns** | **0.0174** | **0.0069** | **0.0069** |     **432 B** |
+| **GenerateValidationMessage** |         **255** | **Overr(...)_Null [21]** | **346.507 ns** |  **8.5162 ns** |  **4.4541 ns** | **0.0103** |      **-** |      **-** |     **432 B** |

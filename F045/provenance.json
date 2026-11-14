@@ -1,0 +1,48 @@
+{
+  "candidate": "F045",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "0e72208e9e659c3de730314721ff0717e6836d76",
+  "source_branch": "autoperf/F045-validation-message-lookup",
+  "source_hashes": [
+    {
+      "sha256": "777ACBC04EDD86F3FA0CD78E0287060D4BC61268C5C223DBC138F056EB249D2C",
+      "path": "src\\Mvc\\Mvc.ViewFeatures\\src\\DefaultHtmlGenerator.cs"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "final_comparison_rounds": [
+    1,
+    2,
+    3
+  ],
+  "cases_per_launch": 60,
+  "launch_order": [
+    "original/changed",
+    "changed/original",
+    "original/changed"
+  ],
+  "timing_scope": "Warmed actual public DefaultHtmlGenerator.GenerateValidationMessage after real SimpleTypeModelBinder/FormValueProvider production;complete HTML checked outside timing.",
+  "correctness": "2593 owning tests pass both versions;all8 exact-HTML tests individually pass both;all60 real binder-to-HTML setups and Dry cases pass both;0 skipped.",
+  "change_scope": "One production file,2 additions/2 deletions;existing TryGetValue local moved above existing early guard and reused;branches/otherlocals/rendering preserved;no test/dependency/API/cache changes. Independent of F090.",
+  "affected_cases": "All51 double-lookup scenarios have3.48-48.02 percent lower median paired time;48 improve in every pair. Largest wins are client-disabled valid calls returning no tag.",
+  "affected_regressions": "Three client-enabled absent-target cases withzero otherfields regress inround3:custom+3.47 percent,empty+1.81 percent,null+0.23 percent;medians still improve.",
+  "controls": "Nine already-single-lookup cases retained. Zero-other-fields custom/empty/null medians+4.09/+3.06/+1.94 percent;other6 medians-3.94 to-0.20 percent.",
+  "unresolved_performance_boundary": "ClientOff_Absent_Custom withOtherFields0 isunstable:original8.03/40.42/7.78ns,changed8.20/51.69/8.10ns;round2+27.87 percent. Unexplained;not discarded or diagnosed as harmless noise.",
+  "allocation_scope": "All60 warmed managed-heap B/op results unchanged.",
+  "raw_report_identity": "Full raw benchmark identities retained and used when BDN display labels truncate;no raw report edits.",
+  "history": "Lookup pattern introduced withIHtmlGenerator in339c63d143482313e0c80cf55c386aba940aba66;related dotnet/aspnetcore#65568 doesnot changeDefaultHtmlGenerator.cs.",
+  "unverified": [
+    "Nested-key workloads",
+    "First-render metadata/error-collection initialization",
+    "HTTP throughput",
+    "Browser workflows",
+    "Native IIS/ANCM",
+    "Other runtimes",
+    "Composition with other independent branches"
+  ],
+  "reproduction": "See README.md exact commands and complete standalone project;AspNetCoreRoot selects the source checkout."
+}

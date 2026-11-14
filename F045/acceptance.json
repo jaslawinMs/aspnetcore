@@ -1,0 +1,25 @@
+{
+  "candidate": "F045",
+  "defined_before_implementation": true,
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F045-validation-message-lookup",
+  "production_change": "Reuse the existing TryGetValue result in the existing early-return guard; preserve the explanatory local, branch structure and all subsequent rendering logic. Do not include F090.",
+  "compatibility": [
+    "All existing exact HTML-helper validation-message tests and owning ViewFeatures suite pass original and changed source.",
+    "Actual SimpleTypeModelBinder and FormValueProvider produce valid, invalid and absent target values; no ModelState errors are injected.",
+    "Actual binding also produces 0,63 or255 unrelated ModelState entries outside timing.",
+    "All60 setups check target entry existence, attempted value, model-binding success, aggregate state/error counts and complete rendered HTML or null.",
+    "Null/empty/custom messages, client enabled/disabled and caller attribute overrides preserve exact behavior."
+  ],
+  "measurement": {
+    "expected_cases": 60,
+    "maximum_comparisons": 3,
+    "minimum_measurements_per_case": 8,
+    "outliers": "DontRemove",
+    "actual_target": "Microsoft.AspNetCore.Mvc.ViewFeatures.DefaultHtmlGenerator.GenerateValidationMessage",
+    "controls": "Client-disabled absent-target cases already perform one lookup and return early in the original implementation.",
+    "policy": "Stop early only for clear large wins;otherwise use at most3 complete pairs. Preserve all cases and regressions;no speculative PR without grounded benefit."
+  },
+  "excluded": ["HTTP throughput", "Browser workflows", "Native IIS/ANCM", "Other runtimes", "Composition with other independent branches"],
+  "new_exported_api": false
+}
