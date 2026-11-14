@@ -1,0 +1,21 @@
+diff --git a/src/Http/Routing/src/Constraints/MaxRouteConstraint.cs b/src/Http/Routing/src/Constraints/MaxRouteConstraint.cs
+index cb33a89fcb..3167089d89 100644
+--- a/src/Http/Routing/src/Constraints/MaxRouteConstraint.cs
++++ b/src/Http/Routing/src/Constraints/MaxRouteConstraint.cs
+@@ -54,6 +54,16 @@ internal class MaxRouteConstraint : IRouteConstraint
+ 
+         if (values.TryGetValue(routeKey, out var value) && value != null)
+         {
++            if (value is long longValue)
++            {
++                return longValue <= Max;
++            }
++
++            if (value is int intValue)
++            {
++                return intValue <= Max;
++            }
++
+             var valueString = Convert.ToString(value, CultureInfo.InvariantCulture);
+             return CheckConstraintCore(valueString);
+         }

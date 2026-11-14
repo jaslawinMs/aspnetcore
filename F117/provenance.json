@@ -1,0 +1,70 @@
+{
+  "candidate": "F117",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "573ad997602a5c1a0cbbaa01b6b92fc06f68c070",
+  "source_branch": "autoperf/F117-max-route-numeric-values",
+  "source_hashes": [
+    {
+      "path": "src\\Components\\Components\\test\\Routing\\MaxRouteConstraintTests.cs",
+      "sha256": "8AA99EC918F073FA4EB9221E16320FA83103047C9A75F9C9B7FC1561E561D43F"
+    },
+    {
+      "path": "src\\Http\\Routing\\src\\Constraints\\MaxRouteConstraint.cs",
+      "sha256": "188D272A42B6E8B45DF589E3DB8D253F63F3CCDD9BC948B9A87D92266DF1B7F4"
+    },
+    {
+      "path": "src\\Http\\Routing\\test\\UnitTests\\Constraints\\MaxRouteConstraintTests.cs",
+      "sha256": "F53FB61FF57C22CAB5C07A3A15C1F13DAC3148A2D28F0C2106FAA841EFF7CE36"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "expected_case_count": 35,
+  "tunes": 1,
+  "final_statistics_rounds": [
+    2,
+    3
+  ],
+  "prototype_rounds": [
+    1
+  ],
+  "protocol": {
+    "sdk": "12.0.100-alpha.1.26557.102",
+    "runtime": "12.0.0-alpha.1.26562.105",
+    "benchmarkdotnet": "0.13.0",
+    "job": "Short",
+    "in_process": true,
+    "server_gc": true,
+    "warmup_iterations": 3,
+    "measured_iterations": 8,
+    "iteration_time_ms": 100,
+    "outliers": "DontRemove",
+    "serial_shared_windows_host": true
+  },
+  "boundary": "Actual public MaxRouteConstraint with real boxed CLR RouteValueDictionary inputs, literal policy, and parsed default max-policy endpoint plus DI-resolved named LinkGenerator. Complete booleans/path/null and input identities checked. Typed/string component gains are not a universal, HTTP-hosted, browser or production throughput claim.",
+  "shared_source_consumer": {
+    "assembly": "Microsoft.AspNetCore.Components",
+    "source_include": "src\\Components\\Components\\src\\Microsoft.AspNetCore.Components.Routing.targets",
+    "original_passed": 1320,
+    "final_passed": 1320,
+    "preexisting_skipped_each": 8,
+    "new_focused_rows_each": 16,
+    "receipt": "components-correctness.json",
+    "boundary": "Managed internal shared MaxRouteConstraint and full Components unit suite; not timed and no browser/render/navigation behavior claim."
+  },
+  "retained_limits": [
+    "One numeric-only prototype slowed all six string cases 4.52-26.09%; its exact source and all first-pair values remain separately.",
+    "The string-first tune is measured twice in opposite orders; only rounds 2-3 feed final statistics.",
+    "All 12 direct typed cases and six direct string cases improve in both final pairs. Eight typed cases save 32-64 B/op; four small cached-number cases already allocate zero.",
+    "Full named-link hit cases are near zero and mixed sign; no stable accepted-link throughput gain is claimed.",
+    "Fallback/control regressions remain, including named/unnamed enum and custom formattable cases. All final allocations are no higher.",
+    "Decimal_Integral has an unstable original third-round mean 77.74 ns and SD 63.63 ns versus original second-round mean 32.53 ns and SD 1.56 ns; raw samples remain without cause attribution or decimal speedup claim.",
+    "Literal, missing and null control improvements are not attributed as target gains.",
+    "Three-comparison budget exhausted. No fourth comparison."
+  ]
+}

@@ -1,0 +1,37 @@
+| Parameters | Before ns/op by round | After ns/op by round | Median paired time change | Before B/op | After B/op |
+|---|---:|---:|---:|---:|---:|
+| Case=Decimal_Integral | 31.10 | 32.42 | 4.22% | 32.00 | 32.00 |
+| Case=Decimal_Scaled | 39.15 | 39.89 | 1.89% | 32.00 | 32.00 |
+| Case=Double_Integral | 63.95 | 65.29 | 2.09% | 32.00 | 32.00 |
+| Case=Double_Scientific | 68.31 | 69.44 | 1.66% | 32.00 | 32.00 |
+| Case=Enum_Named | 21.98 | 22.01 | 0.11% | 0.00 | 0.00 |
+| Case=Enum_Unnamed | 21.77 | 24.15 | 10.93% | 0.00 | 0.00 |
+| Case=Formattable | 12.54 | 14.19 | 13.18% | 0.00 | 0.00 |
+| Case=Int32_Hit | 11.81 | 3.57 | -69.77% | 0.00 | 0.00 |
+| Case=Int32_Max | 35.99 | 3.58 | -90.05% | 48.00 | 0.00 |
+| Case=Int32_Min | 36.12 | 3.56 | -90.13% | 48.00 | 0.00 |
+| Case=Int32_Miss | 11.86 | 3.59 | -69.73% | 0.00 | 0.00 |
+| Case=Int32_Negative | 25.25 | 3.58 | -85.82% | 32.00 | 0.00 |
+| Case=Int64_Hit | 12.93 | 3.25 | -74.83% | 0.00 | 0.00 |
+| Case=Int64_Large | 53.73 | 3.27 | -93.92% | 64.00 | 0.00 |
+| Case=Int64_Max | 53.87 | 3.27 | -93.93% | 64.00 | 0.00 |
+| Case=Int64_MaxRejected | 54.23 | 3.27 | -93.97% | 64.00 | 0.00 |
+| Case=Int64_Min | 55.25 | 3.25 | -94.11% | 64.00 | 0.00 |
+| Case=Int64_Miss | 12.93 | 3.25 | -74.82% | 0.00 | 0.00 |
+| Case=Int64_Negative | 55.98 | 3.26 | -94.17% | 64.00 | 0.00 |
+| Case=Link_Int32_Hit | 278.91 | 250.04 | -10.35% | 272.00 | 272.00 |
+| Case=Link_Int32_Miss | 144.99 | 132.85 | -8.37% | 224.00 | 224.00 |
+| Case=Link_Int64_Hit | 279.63 | 253.32 | -9.41% | 272.00 | 272.00 |
+| Case=Link_Int64_Miss | 145.03 | 131.43 | -9.38% | 224.00 | 224.00 |
+| Case=Literal_Max | 24.45 | 24.43 | -0.07% | 0.00 | 0.00 |
+| Case=Literal_Miss | 7.33 | 7.28 | -0.68% | 0.00 | 0.00 |
+| Case=Missing | 2.28 | 2.28 | 0.07% | 0.00 | 0.00 |
+| Case=Null | 2.29 | 2.39 | 4.23% | 0.00 | 0.00 |
+| Case=String_Fraction | 16.64 | 18.08 | 8.65% | 0.00 | 0.00 |
+| Case=String_Hit | 9.64 | 11.10 | 15.14% | 0.00 | 0.00 |
+| Case=String_Max | 26.55 | 28.43 | 7.05% | 0.00 | 0.00 |
+| Case=String_Miss | 9.74 | 11.21 | 15.06% | 0.00 | 0.00 |
+| Case=String_Overflow | 27.47 | 28.71 | 4.52% | 0.00 | 0.00 |
+| Case=String_Padded | 18.13 | 22.86 | 26.09% | 0.00 | 0.00 |
+| Case=UInt64_Max | 52.91 | 53.33 | 0.79% | 64.00 | 64.00 |
+| Case=UInt64_Overflow | 52.72 | 52.71 | -0.02% | 64.00 | 64.00 |

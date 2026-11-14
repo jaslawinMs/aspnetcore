@@ -34,6 +34,7 @@ well as the largest speedup.
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
+| F117 | Validated proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
 | F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
 
