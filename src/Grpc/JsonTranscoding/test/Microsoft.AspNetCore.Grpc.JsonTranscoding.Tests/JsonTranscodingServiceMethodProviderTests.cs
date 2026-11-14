@@ -1,8 +1,11 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Text;
+using System.Text.Json;
 using Grpc.AspNetCore.Server;
 using Grpc.AspNetCore.Server.Model;
+using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Grpc.JsonTranscoding.Internal;
 using Microsoft.AspNetCore.Grpc.JsonTranscoding.Internal.Binding;
@@ -13,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Transcoding;
 
 namespace Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests;
 
@@ -218,6 +222,92 @@ public class JsonTranscodingServiceMethodProviderTests
         Assert.Equal("Error binding BadPattern on JsonTranscodingInvalidPatternGreeterService to HTTP API.", ex.InnerException!.InnerException!.Message);
         Assert.Equal("Error parsing path template 'v1/greeter/{name}'.", ex.InnerException!.InnerException!.InnerException!.Message);
         Assert.Equal("Path template must start with a '/'.", ex.InnerException!.InnerException!.InnerException!.InnerException!.Message);
+    }
+
+    [Fact]
+    public Task AddMethod_WildcardBody_InvokesGeneratedHandler()
+    {
+        return InvokeBody(new BodyGreeterService());
+    }
+
+    [Fact]
+    public Task AddMethod_WildcardBody_RenamedRequestParameter_InvokesGeneratedHandler()
+    {
+        return InvokeBody(new RenamedBodyGreeterService());
+    }
+
+    [Fact]
+    public Task AddMethod_WildcardBody_OverloadedServiceMethod_InvokesGeneratedHandler()
+    {
+        return InvokeBody(new OverloadedBodyGreeterService());
+    }
+
+    private static async Task InvokeBody<TService>(TService service) where TService : BodyGreeterService
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(service);
+        var grpc = services.AddGrpc();
+        services.RemoveAll(typeof(IServiceMethodProvider<>));
+        grpc.AddJsonTranscoding();
+        using var provider = services.BuildServiceProvider();
+        IEndpointRouteBuilder builder = new TestEndpointRouteBuilder(provider);
+        builder.MapGrpcService<TService>();
+        var endpoint = Assert.Single(FindGrpcEndpoints(builder.DataSources.Single().Endpoints, nameof(BodyGreeterService.Body)));
+        var metadata = endpoint.Metadata.GetMetadata<GrpcJsonTranscodingMetadata>();
+        Assert.NotNull(metadata);
+        Assert.Equal("*", metadata.HttpRule.Body);
+        Assert.Same(JsonTranscodingGreeter.Descriptor.FindMethodByName("Body"), metadata.MethodDescriptor);
+        using var input = new MemoryStream(Encoding.UTF8.GetBytes("""{"name":"BodyName","sub":{"subfield":"Whole!"},"repeatedStrings":["One","Two"]}"""));
+        using var output = new MemoryStream();
+        var context = new DefaultHttpContext { RequestServices = provider };
+        context.SetEndpoint(endpoint);
+        context.Request.Method = "POST";
+        context.Request.Path = "/v1/greeter";
+        context.Request.QueryString = new QueryString("?name=QueryName&sub.subfield=QuerySub");
+        context.Request.ContentType = "application/json";
+        context.Request.Body = input;
+        context.Response.Body = output;
+        Assert.NotNull(endpoint.RequestDelegate);
+
+        await endpoint.RequestDelegate(context);
+
+        Assert.NotNull(service.Request);
+        Assert.Equal("BodyName", service.Request.Name);
+        Assert.Equal("Whole!", service.Request.Sub.Subfield);
+        Assert.Equal(new[] { "One", "Two" }, service.Request.RepeatedStrings);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        output.Position = 0;
+        using var response = JsonDocument.Parse(output);
+        Assert.Equal("BodyName", response.RootElement.GetProperty("message").GetString());
+    }
+
+    private class BodyGreeterService : JsonTranscodingGreeterService
+    {
+        public HelloRequest? Request { get; private set; }
+
+        public override Task<HelloReply> Body(HelloRequest request, ServerCallContext context)
+        {
+            Request = request;
+
+            return Task.FromResult(new HelloReply { Message = request.Name });
+        }
+    }
+
+    private sealed class RenamedBodyGreeterService : BodyGreeterService
+    {
+        public override Task<HelloReply> Body(HelloRequest value, ServerCallContext context)
+        {
+            return base.Body(value, context);
+        }
+    }
+
+    private sealed class OverloadedBodyGreeterService : BodyGreeterService
+    {
+        public Task<HelloReply> Body(HelloRequest request)
+        {
+            throw new InvalidOperationException("The unrelated overload must not be invoked.");
+        }
     }
 
     private static RouteEndpoint FindGrpcEndpoint(IReadOnlyList<Endpoint> endpoints, string methodName)

@@ -241,7 +241,7 @@ internal sealed partial class JsonTranscodingProviderServiceBinder<TService> : S
     {
         var routeParameterDescriptors = ServiceDescriptorHelpers.ResolveRouteParameterDescriptors(routeAdapter.HttpRoutePattern.Variables, methodDescriptor.InputType);
 
-        var bodyDescriptor = ServiceDescriptorHelpers.ResolveBodyDescriptor(body, typeof(TService), methodDescriptor);
+        var bodyDescriptor = ServiceDescriptorHelpers.ResolveBodyDescriptor(body, methodDescriptor);
         var responseBodyDescriptor = ServiceDescriptorHelpers.ResolveResponseBodyDescriptor(responseBody, methodDescriptor);
 
         var descriptorInfo = new CallHandlerDescriptorInfo(
