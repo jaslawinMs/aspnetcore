@@ -732,12 +732,12 @@ public class DefaultHtmlGenerator : IHtmlGenerator
         }
 
         var formContext = viewContext.ClientValidationEnabled ? viewContext.FormContext : null;
-        if (!viewContext.ViewData.ModelState.ContainsKey(fullName) && formContext == null)
+        var tryGetModelStateResult = viewContext.ViewData.ModelState.TryGetValue(fullName, out var entry);
+        if (!tryGetModelStateResult && formContext == null)
         {
             return null;
         }
 
-        var tryGetModelStateResult = viewContext.ViewData.ModelState.TryGetValue(fullName, out var entry);
         var modelErrors = tryGetModelStateResult ? entry.Errors : null;
 
         ModelError modelError = null;
