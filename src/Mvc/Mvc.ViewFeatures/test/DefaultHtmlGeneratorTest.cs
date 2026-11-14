@@ -602,6 +602,39 @@ public class DefaultHtmlGeneratorTest
     }
 
     [Theory]
+    [InlineData("Aliases")]
+    [InlineData("UndefinedNumeric")]
+    [InlineData("Invalid")]
+    public void GetCurrentValues_CollectionPreservesEnumAliasesAndInvalidValues(string scenario)
+    {
+        (string[] RawValues, string[] Expected) data = scenario switch
+        {
+            "Aliases" => (
+                [nameof(AliasedEnum.First), nameof(AliasedEnum.Alias), nameof(AliasedEnum.Second), nameof(AliasedEnum.First)],
+                ["1", nameof(AliasedEnum.First), nameof(AliasedEnum.Alias), "2", nameof(AliasedEnum.Second)]),
+            "UndefinedNumeric" => (
+                ["1", "1", "2", "500"],
+                ["1", nameof(AliasedEnum.First), nameof(AliasedEnum.Alias), "2", nameof(AliasedEnum.Second), "500"]),
+            "Invalid" => (
+                [nameof(AliasedEnum.First), "not-an-enum", "not-an-enum", "not-an-enum"],
+                ["1", nameof(AliasedEnum.First), nameof(AliasedEnum.Alias), "not-an-enum"]),
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, message: null),
+        };
+        var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+        var htmlGenerator = GetGenerator(metadataProvider);
+        var viewContext = GetViewContext<Model>(model: null, metadataProvider: metadataProvider);
+        viewContext.ModelState.SetModelValue(nameof(Model.AliasedEnum), data.RawValues, attemptedValue: null);
+
+        var result = htmlGenerator.GetCurrentValues(
+            viewContext,
+            modelExplorer: null,
+            expression: nameof(Model.AliasedEnum),
+            allowMultiple: true);
+
+        Assert.Equal(data.Expected.Order(StringComparer.Ordinal), result.Order(StringComparer.Ordinal));
+    }
+
+    [Theory]
     [MemberData(nameof(GetCurrentValues_CollectionData))]
     public void GetCurrentValues_WithModelStateEntryModelExplorerAndViewData_ReturnsModelStateEntry(
         string[] rawValue,
@@ -1063,6 +1096,13 @@ public class DefaultHtmlGeneratorTest
         All = -1,
     }
 
+    private enum AliasedEnum
+    {
+        First = 1,
+        Alias = First,
+        Second = 2,
+    }
+
     private class ModelWithMaxLengthMetadata
     {
         internal const int MaxLengthAttributeValue = 77;
@@ -1092,6 +1132,8 @@ public class DefaultHtmlGeneratorTest
         public FlagsEnum FlagsEnum { get; set; }
 
         public RegularEnum? NullableEnum { get; set; }
+
+        public AliasedEnum AliasedEnum { get; set; }
 
         public List<string> Collection { get; } = new List<string>();
     }

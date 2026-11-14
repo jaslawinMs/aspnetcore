@@ -966,6 +966,8 @@ public class DefaultHtmlGenerator : IHtmlGenerator
         Debug.Assert(isTargetEnum ^ enumNames == null);
 
         var innerType = metadata.UnderlyingOrModelType;
+        bool? useEnumNamesLookup = null;
+        ILookup<string, string> enumNamesLookup = null;
 
         // Convert raw value collection to strings.
         var currentValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1010,10 +1012,20 @@ public class DefaultHtmlGenerator : IHtmlGenerator
                 // contains enum values and property has type int or string.
                 if (isTargetEnum)
                 {
+                    useEnumNamesLookup ??= rawValues is ICollection { Count: var rawValueCount } &&
+                        rawValueCount > 1 && rawValueCount >= enumNames.Count &&
+                        (!viewContext.ViewData.ModelState.TryGetValue(fullName, out var entry) ||
+                            entry.ValidationState is not ModelValidationState.Invalid);
+
                     // Add all simple names for this value.
-                    var matchingNames = enumNames
-                        .Where(kvp => string.Equals(integerString, kvp.Value, StringComparison.Ordinal))
-                        .Select(kvp => kvp.Key);
+                    var matchingNames = useEnumNamesLookup.Value
+                        ? (enumNamesLookup ??= enumNames.ToLookup(
+                            static kvp => kvp.Value,
+                            static kvp => kvp.Key,
+                            StringComparer.Ordinal))[integerString]
+                        : enumNames
+                            .Where(kvp => string.Equals(integerString, kvp.Value, StringComparison.Ordinal))
+                            .Select(kvp => kvp.Key);
                     foreach (var name in matchingNames)
                     {
                         currentValues.Add(name);
