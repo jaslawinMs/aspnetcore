@@ -21,7 +21,16 @@ public static class MultipartSectionConverterExtensions
 
         try
         {
-            return new FileMultipartSection(section);
+            var header = section.GetContentDispositionHeader();
+            // Leave filename decoding and final validation to the constructor.
+            if (header is null || !header.DispositionType.Equals("form-data") ||
+                (NameValueHeaderValue.Find(header.Parameters, "filename") is null &&
+                 NameValueHeaderValue.Find(header.Parameters, "filename*") is null))
+            {
+                return null;
+            }
+
+            return new FileMultipartSection(section, header);
         }
         catch
         {
