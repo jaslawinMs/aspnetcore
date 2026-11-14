@@ -1,6 +1,7 @@
 # F025: pool BSON TempData serialization buffers
 
 **Measured, fork-only text/allocation proposal with retained CPU trade-offs.**
+[Draft jaslawinMs/aspnetcore#20](https://github.com/jaslawinMs/aspnetcore/pull/20).
 Source: `bb78b3d6b097895c85dcd006bc2fad50908ac43d`.
 Independent baseline: `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 

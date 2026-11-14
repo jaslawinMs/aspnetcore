@@ -22,7 +22,7 @@ well as the largest speedup.
 |---|---|---|
 | F009 | Draft proposal | [Validation-summary metadata membership](F009/README.md) |
 | F021 | Draft proposal | [Enum conversion during select rendering](F021/README.md) |
-| F025 | Measured proposal; workload trade-offs and unstable case retained | [Pooled BSON TempData buffers](F025/README.md) |
+| F025 | Draft proposal; workload trade-offs and unstable case retained | [Pooled BSON TempData buffers](F025/README.md) |
 | F027 | Draft proposal; unstable control disclosed | [Pooled JSON Patch conversion](F027/README.md) |
 | F034 (also F119) | No-gain; duplicate consolidated | [Concrete Rewrite condition enumeration](F034/README.md) |
 | F045 | Draft proposal; unstable control disclosed | [Single validation-message ModelState lookup](F045/README.md) |
