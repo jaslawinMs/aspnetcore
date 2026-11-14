@@ -17,7 +17,9 @@ internal sealed class ListValueConverter<TMessage> : SettingsConverterBase<TMess
 
     public override TMessage? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var message = new TMessage();
+        var message = typeof(TMessage) == typeof(ListValue)
+            ? (TMessage)(IMessage)new ListValue()
+            : new TMessage();
         JsonConverterHelper.PopulateList(ref reader, options, message, message.Descriptor.Fields[ListValue.ValuesFieldNumber]);
 
         return message;

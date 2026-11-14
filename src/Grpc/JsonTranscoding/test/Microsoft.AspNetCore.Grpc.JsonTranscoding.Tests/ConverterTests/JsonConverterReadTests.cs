@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.Infrastructure;
 using Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.TestObjects.ProtobufMessages;
 using Transcoding;
 using Xunit.Abstractions;
+using CustomListValue = Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.TestObjects.CustomWellKnown.ListValue;
 
 namespace Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.ConverterTests;
 
@@ -423,6 +424,63 @@ public class JsonConverterReadTests
 ]";
 
         AssertReadJson<ListValue>(json);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("[true,\"value\"]")]
+    [InlineData("[null,true,1.5,\"text\",{\"a\":[false]},[2]]")]
+    public void ListValue_Read_PreservesValuesAndFreshCollections(string json)
+    {
+        var registry = new DescriptorRegistry();
+        registry.RegisterFileDescriptor(ListValue.Descriptor.File);
+        var options = CreateSerializerOptions(settings: null, typeRegistery: null, descriptorRegistry: registry);
+        var expected = JsonParser.Default.Parse<ListValue>(json);
+
+        var first = JsonSerializer.Deserialize<ListValue>(json, options)!;
+        var second = JsonSerializer.Deserialize<ListValue>(json, options)!;
+
+        Assert.Equal(expected, first);
+        Assert.Equal(expected, second);
+        Assert.NotSame(first, second);
+        first.Values.Add(Value.ForString("changed"));
+        Assert.Equal(expected, second);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("[null,true,1.5,\"text\",{\"a\":[false]},[2]]")]
+    public void ListValue_CustomClrType_PreservesGeneratedContract(string json)
+    {
+        var expected = CustomListValue.Parser.ParseFrom(JsonParser.Default.Parse<ListValue>(json).ToByteString());
+
+        var result = AssertReadJson<CustomListValue>(json, serializeOld: false);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void ListValue_NullRoot_PreservesNullResult()
+    {
+        var registry = new DescriptorRegistry();
+        registry.RegisterFileDescriptor(ListValue.Descriptor.File);
+        var options = CreateSerializerOptions(settings: null, typeRegistery: null, descriptorRegistry: registry);
+
+        var result = JsonSerializer.Deserialize<ListValue>("null", options);
+
+        Assert.Null(result);
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("1")]
+    public void ListValue_InvalidRoot_PreservesJsonException(string json)
+    {
+        var registry = new DescriptorRegistry();
+        registry.RegisterFileDescriptor(ListValue.Descriptor.File);
+        var options = CreateSerializerOptions(settings: null, typeRegistery: null, descriptorRegistry: registry);
+
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ListValue>(json, options));
     }
 
     [Fact]

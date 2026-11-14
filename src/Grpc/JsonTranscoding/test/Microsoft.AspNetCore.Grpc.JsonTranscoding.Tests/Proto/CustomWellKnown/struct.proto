@@ -1,0 +1,30 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+syntax = "proto3";
+
+package google.protobuf;
+option csharp_namespace = "Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.TestObjects.CustomWellKnown";
+
+message Struct {
+  map<string, Value> fields = 1;
+}
+
+message Value {
+  oneof kind {
+    NullValue null_value = 1;
+    double number_value = 2;
+    string string_value = 3;
+    bool bool_value = 4;
+    Struct struct_value = 5;
+    ListValue list_value = 6;
+  }
+}
+
+message ListValue {
+  repeated Value values = 1;
+}
+
+enum NullValue {
+  NULL_VALUE = 0;
+}
