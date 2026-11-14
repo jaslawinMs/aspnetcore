@@ -1,0 +1,20 @@
+{
+  "id": "F090",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "target": "DefaultHtmlGenerator.GenerateValidationMessage known Boolean ToString().ToLowerInvariant()",
+  "planned_change": "Preserve the explanatory Boolean local and surrounding branches; replace only its string conversion with literal true/false selection.",
+  "producer": "Actual SimpleTypeModelBinder consumes a FormValueProvider; actual public validation-message generator produces the TagBuilder, whose complete HTML is checked outside timing.",
+  "compatibility": [
+    "All existing8 HTML-helper validation-message tests assert complete true/false attribute output; pass original and changed source without duplicating constant-only tests.",
+    "All14 setup cases preserve complete rendered HTML, error/no-error states, null/empty/custom messages, client-enabled/disabled and caller attribute overrides.",
+    "Full owning ViewFeatures suite passes; no exported API/default/metadata cache changes.",
+    "No repository dependency manifest or NuGet configuration changes."
+  ],
+  "measurement": {
+    "owner": "Actual public DefaultHtmlGenerator.GenerateValidationMessage; no copied Boolean conversion.",
+    "expected_cases": 14,
+    "maximum_paired_comparisons": 3,
+    "early_stop": "A clear large improvement in affected cases may stop early; otherwise use at most3 comparisons and retain all controls/regressions/allocations.",
+    "scope": "Generator CPU and managed allocations, with actual HTML assertions in setup; no HTTP/browser throughput claim."
+  }
+}
