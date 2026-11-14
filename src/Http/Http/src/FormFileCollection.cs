@@ -28,16 +28,17 @@ public class FormFileCollection : List<IFormFile>, IFormFileCollection
     /// <inheritdoc />
     public IReadOnlyList<IFormFile> GetFiles(string name)
     {
-        var files = new List<IFormFile>();
+        List<IFormFile>? files = null;
 
         foreach (var file in this)
         {
             if (string.Equals(name, file.Name, StringComparison.OrdinalIgnoreCase))
             {
+                files ??= new List<IFormFile>();
                 files.Add(file);
             }
         }
 
-        return files;
+        return files is not null ? files : Array.Empty<IFormFile>();
     }
 }
