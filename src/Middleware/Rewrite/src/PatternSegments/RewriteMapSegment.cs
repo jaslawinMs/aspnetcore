@@ -7,6 +7,7 @@ namespace Microsoft.AspNetCore.Rewrite.PatternSegments;
 
 internal sealed class RewriteMapSegment : PatternSegment
 {
+    private const int StackAllocThreshold = 256;
     private readonly IISRewriteMap _rewriteMap;
     private readonly Pattern _pattern;
 
@@ -18,7 +19,14 @@ internal sealed class RewriteMapSegment : PatternSegment
 
     public override string? Evaluate(RewriteContext context, BackReferenceCollection? ruleBackReferences, BackReferenceCollection? conditionBackReferences)
     {
-        var key = _pattern.Evaluate(context, ruleBackReferences, conditionBackReferences).ToLowerInvariant();
-        return _rewriteMap[key];
+        var key = _pattern.Evaluate(context, ruleBackReferences, conditionBackReferences);
+        if (key.Length <= StackAllocThreshold)
+        {
+            Span<char> lowerKey = stackalloc char[StackAllocThreshold];
+            var written = key.AsSpan().ToLowerInvariant(lowerKey);
+            return _rewriteMap[lowerKey[..written]];
+        }
+
+        return _rewriteMap[key.ToLowerInvariant()];
     }
 }
