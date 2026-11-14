@@ -1,0 +1,98 @@
+{
+  "candidate": "F241",
+  "disposition": "validated-with-disclosed-tradeoffs",
+  "scope": "Complete view-component metadata discovery, not request processing or full application startup.",
+  "baseline_default_verified": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "acceptance_defined_before_implementation": "F241-acceptance.md",
+  "tune_defined_before_implementation": "tuning-criteria.md",
+  "initial_threshold": 32,
+  "final_threshold": 256,
+  "comparisons": 3,
+  "final_summary_rounds": [2, 3],
+  "initial_summary_rounds": [1],
+  "all_measured_launches": 6,
+  "cases_per_launch": 25,
+  "minimum_iterations_per_case": 8,
+  "all_raw_results_retained": true,
+  "only_owning_dll_differs": true,
+  "exact_original_harness_pdb_runtime_and_dependency_configuration_reused": true,
+  "source_and_test_formatting_passed": true,
+  "original_final_suites": {
+    "before_passed": 2607,
+    "after_passed": 2607,
+    "failed": 0,
+    "skipped": 0,
+    "focused_rows_each": 16,
+    "new_rows": 14
+  },
+  "initial_suites": {
+    "before_passed": 2604,
+    "after_passed": 2604,
+    "focused_rows_each": 13,
+    "archived_before_tuning": true
+  },
+  "requirement_coverage": [
+    {
+      "requirement": "Same ordered list, retained existing duplicates, first-new order, actual repeated runtime AssemblyPart producer, null/non-type parts and threshold boundaries",
+      "test": "PopulateFeature_PreservesAssemblyOrderAndExistingDuplicates",
+      "rows": [31, 32, 33, 255, 256, 257]
+    },
+    {
+      "requirement": "Actual custom type enumeration preserves live add/remove/replace membership with 300 preexisting entries",
+      "test": "PopulateFeature_PreservesCustomPartListMutations",
+      "rows": ["add", "remove", "replace"]
+    },
+    {
+      "requirement": "Derived AssemblyPart interface reimplementation preserves producer mutation at 256 preexisting entries",
+      "test": "PopulateFeature_PreservesReimplementedAssemblyPartTypes"
+    },
+    {
+      "requirement": "Custom Assembly.DefinedTypes mutation preserves live membership and single enumeration at 256 entries",
+      "test": "PopulateFeature_PreservesCustomAssemblyTypeEnumeration"
+    },
+    {
+      "requirement": "Arbitrary parts producer remains single-pass and its list mutation is observed",
+      "test": "PopulateFeature_PreservesSinglePassPartsEnumeration"
+    },
+    {
+      "requirement": "Null parts/feature errors retain exception type and parameter identity",
+      "test": "PopulateFeature_PreservesNullArgumentErrors",
+      "rows": [true, false]
+    },
+    {
+      "requirement": "Existing convention and attributed discovery",
+      "tests": ["GetDescriptor_DefaultConventions", "GetDescriptor_WithAttribute"]
+    }
+  ],
+  "producer_validation": {
+    "all_complete_ordered_setup_receipts_match": 25,
+    "actual_loaded_owning_dll_and_mvid_recorded_each_launch": true,
+    "final_index_reachable_cases": 5,
+    "reachability_boundary": "Derived from exact final source, actual producer receipts and unchanged scenario part counts; not direct private index-creation instrumentation. The unchanged harness diagnostic describes the initial 32-entry prototype."
+  },
+  "measurement_verdict": {
+    "five_indexed_cases_improve_both_final_pairs": true,
+    "three_1024_component_median_gains_percent": [30.03, 32.56, 33.71],
+    "two_256_component_median_gains_percent": [5.53, 7.97],
+    "indexed_median_extra_reported_bytes_per_operation_range": [5976, 44613],
+    "non_index_cases": 20,
+    "non_index_cases_with_higher_final_median": 18,
+    "empty_median_regression_percent": 10.49,
+    "array_fallback_median_regression_percent": 21.32,
+    "array_fallback_pair_3_regression_percent": 42.82,
+    "array_fallback_pair_3_after_mean_ns": 147369.05,
+    "array_fallback_pair_3_after_sd_ns": 55930.90,
+    "variance_cause": "Unverified; no harmless-noise or index-cost attribution for non-index paths."
+  },
+  "functional_bug_fix_red_green_claim": false,
+  "public_signature_default_or_convention_change_intended": false,
+  "new_process_wide_metadata_cache": false,
+  "dependency_manifests_or_machine_settings_changed": false,
+  "excluded_or_unverified": [
+    "Full application startup or hosted HTTP/request throughput",
+    "Cold runtime, first-use metadata and assembly-loading cost",
+    "Concurrent discovery, concurrent metadata updates or pressure",
+    "Other runtimes, architectures and composition with other optimization branches",
+    "Production workload distribution and cause of control variance"
+  ]
+}
