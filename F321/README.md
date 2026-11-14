@@ -1,5 +1,8 @@
 # F321: stop constructing unused wildcard request metadata
 
+**Draft [jaslawinMs/aspnetcore#43](https://github.com/jaslawinMs/aspnetcore/pull/43)**;
+originating issue [jaslawinMs/aspnetcore#42](https://github.com/jaslawinMs/aspnetcore/issues/42).
+
 **Measured cold-setup proposal, with a verified discovery bug fix.** The two
 complete wildcard body helpers are consistently 68.56-69.43% faster and save
 40 B/op. Full wildcard `ParseRoute` saves 40 B/op; ordinary wildcard timing is
