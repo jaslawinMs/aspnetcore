@@ -29,6 +29,7 @@ well as the largest speedup.
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
+| F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
 microbenchmark observations, not production throughput or universal performance

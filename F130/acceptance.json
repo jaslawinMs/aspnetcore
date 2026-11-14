@@ -1,0 +1,24 @@
+{
+  "candidate": "F130",
+  "defined_before_implementation": true,
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F130-input-type-membership",
+  "production_change": "Replace two fixed seven/six-type LINQ membership tests with equivalent constant-pattern predicates;remove only directly unused private arrays and retain their specification comments at the changed seam. Preserve suppliedTypeString,branches and protected hook calls.",
+  "compatibility": [
+    "Original/final owning ViewFeatures suites and every focused DefaultHtmlGenerator test pass.",
+    "Actual AddMvcCore/AddDataAnnotations metadata production recognizes Display.Prompt,MaxLength32 andStringLength16;plain metadata lacks these.",
+    "40 actual public GenerateTextBox scenarios assert complete encoded HTML outside timing,including all seven admitted types,nonmembers,case-sensitive variants,null/empty/default type and caller attribute overrides.",
+    "Client validation is disabled;normal model metadata,view data,formatting,attributes and output production remain actual framework mechanisms.",
+    "No new public/protected API,cache,dependency or metadata mutation."
+  ],
+  "measurement": {
+    "expected_cases": 40,
+    "maximum_comparisons": 3,
+    "minimum_measurements_per_case": 8,
+    "outliers": "DontRemove",
+    "actual_target": "Microsoft.AspNetCore.Mvc.ViewFeatures.DefaultHtmlGenerator.GenerateTextBox",
+    "policy": "No claim of a runtime gain from structural LINQ dispatch alone;measure actual generator,retain every regression,record no-gain if not supported."
+  },
+  "excluded": ["HTTP throughput", "Browser workflows", "First-render metadata initialization", "Native IIS/ANCM", "Other runtimes", "Composition with independent branches"],
+  "new_exported_api": false
+}
