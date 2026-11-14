@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <Optimize>true</Optimize>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\tools\CodeGenerator\CodeGenerator.csproj" />
+    <Content Include="..\contract-oracles.json" Link="contract-oracles.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\contract-oracles.json')" />
+    <Content Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Internal\Http\HttpHeaders.Generated.cs" Link="golden\HttpHeaders.Generated.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Internal\Http\HttpProtocol.Generated.cs" Link="golden\HttpProtocol.Generated.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Internal\Infrastructure\HttpUtilities.Generated.cs" Link="golden\HttpUtilities.Generated.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(AspNetCoreRoot)\src\Servers\Kestrel\shared\TransportMultiplexedConnection.Generated.cs" Link="golden\TransportMultiplexedConnection.Generated.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(AspNetCoreRoot)\src\Servers\Kestrel\shared\TransportConnection.Generated.cs" Link="golden\TransportConnection.Generated.cs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,161 @@
+diff --git a/src/Servers/Kestrel/Core/test/KnownHeadersTests.cs b/src/Servers/Kestrel/Core/test/KnownHeadersTests.cs
+new file mode 100644
+index 0000000000..af8b010017
+--- /dev/null
++++ b/src/Servers/Kestrel/Core/test/KnownHeadersTests.cs
+@@ -0,0 +1,136 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Reflection;
++using CodeGenerator;
++using Xunit;
++
++namespace Microsoft.AspNetCore.Server.Kestrel.Core.Tests;
++
++public class KnownHeadersTests
++{
++    private static readonly Func<IEnumerable<int>, Func<int, string>, string> Each =
++        GetEachMethod(2).CreateDelegate<Func<IEnumerable<int>, Func<int, string>, string>>();
++    private static readonly Func<IEnumerable<int>, Func<int, int, string>, string> IndexedEach =
++        GetEachMethod(3).CreateDelegate<Func<IEnumerable<int>, Func<int, int, string>, string>>();
++
++    [Theory]
++    [InlineData(false, new int[0], "")]
++    [InlineData(true, new int[0], "")]
++    [InlineData(false, new[] { 7 }, "[7]")]
++    [InlineData(true, new[] { 7 }, "[0:7]")]
++    [InlineData(false, new[] { 7, 8, 9 }, "[7][8][9]")]
++    [InlineData(true, new[] { 7, 8, 9 }, "[0:7][1:8][2:9]")]
++    public void Each_PreservesOrderedFragments(bool indexed, int[] values, string expected)
++    {
++        var result = indexed
++            ? IndexedEach(values, (value, index) => $"[{index}:{value}]")
++            : Each(values, value => $"[{value}]");
++
++        Assert.Equal(expected, result);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void Each_EmptyValues_DoesNotInvokeOrValidateFormatter(bool indexed)
++    {
++        var result = indexed
++            ? IndexedEach(Array.Empty<int>(), null)
++            : Each(Array.Empty<int>(), null);
++
++        Assert.Empty(result);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void Each_SingleFragment_PreservesInstance(bool indexed)
++    {
++        var fragment = new string('x', 64);
++        var result = indexed
++            ? IndexedEach(new[] { 1 }, (value, index) => fragment)
++            : Each(new[] { 1 }, value => fragment);
++
++        Assert.Same(fragment, result);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void Each_PropagatesFormatterException_AfterPriorFragments(bool indexed)
++    {
++        var values = new[] { 4, 5, 6 };
++        var visited = new List<int>();
++        var expected = new InvalidOperationException("Formatter failed.");
++        string Format(int value)
++        {
++            visited.Add(value);
++            if (value == 5)
++            {
++                throw expected;
++            }
++
++            return $"[{value}]";
++        }
++
++        var exception = Assert.Throws<InvalidOperationException>(() =>
++        {
++            if (indexed)
++            {
++                IndexedEach(values, (value, index) => Format(value));
++            }
++            else
++            {
++                Each(values, Format);
++            }
++        });
++
++        Assert.Same(expected, exception);
++        Assert.Equal(new[] { 4, 5 }, visited);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void Each_EmptyFragments_PreservesOutput(bool indexed)
++    {
++        var values = new[] { 0, 1, 2 };
++        var result = indexed
++            ? IndexedEach(values, (value, index) => value == 1 ? "#" : "")
++            : Each(values, value => value == 1 ? "#" : "");
++
++        Assert.Equal("#", result);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void Each_NullSource_PreservesException(bool indexed)
++    {
++        var exception = Assert.Throws<ArgumentNullException>(() =>
++        {
++            if (indexed)
++            {
++                IndexedEach(null, (value, index) => "");
++            }
++            else
++            {
++                Each(null, value => "");
++            }
++        });
++
++        Assert.Equal("source", exception.ParamName);
++    }
++
++    private static MethodInfo GetEachMethod(int formatterTypeArguments)
++    {
++        return typeof(KnownHeaders).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
++            .Single(method => method.Name == nameof(Each) && method.IsGenericMethodDefinition &&
++                method.GetParameters()[1].ParameterType.GetGenericArguments().Length == formatterTypeArguments)
++            .MakeGenericMethod(typeof(int));
++    }
++}
+diff --git a/src/Servers/Kestrel/shared/KnownHeaders.cs b/src/Servers/Kestrel/shared/KnownHeaders.cs
+index b7c98376a6..1f2b6b82d8 100644
+--- a/src/Servers/Kestrel/shared/KnownHeaders.cs
++++ b/src/Servers/Kestrel/shared/KnownHeaders.cs
+@@ -307,12 +307,12 @@ public class KnownHeaders
+ 
+     static string Each<T>(IEnumerable<T> values, Func<T, string> formatter)
+     {
+-        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
++        return values.Any() ? string.Concat(values.Select(formatter)) : "";
+     }
+ 
+     static string Each<T>(IEnumerable<T> values, Func<T, int, string> formatter)
+     {
+-        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
++        return values.Any() ? string.Concat(values.Select(formatter)) : "";
+     }
+ 
+     static string AppendSwitch(IEnumerable<IGrouping<int, KnownHeader>> values) =>

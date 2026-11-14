@@ -1,0 +1,63 @@
+{
+  "candidate": "F301",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "fdf31c416447d377c63217b441d3eb0534dd5cac",
+  "source_branch": "autoperf/F301-kestrel-codegen-concat",
+  "source_hashes": [
+    {
+      "path": "src\\Servers\\Kestrel\\Core\\test\\KnownHeadersTests.cs",
+      "sha256": "65656983FC0FAA55B33B1D0C168B3432B45B629358B262BBB255AEA7F9979E2E"
+    },
+    {
+      "path": "src\\Servers\\Kestrel\\shared\\KnownHeaders.cs",
+      "sha256": "52DFDE88DA3C193631A487AA502450DCBDBC311626460823F44BCF09F4CCEE2C"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "actual_boundary": "Actual complete CodeGenerator.KnownHeaders.GeneratedFile and actual CodeGenerator.Program.Run with five existing generated files, plus real private header generation partitions and two unchanged complete generator controls.",
+  "actual_fresh_cli_boundary": "Real fresh-process CodeGenerator main with five explicit output paths, captured before and after; all five complete UTF-8 files match byte-for-byte and match the original tracked generated files.",
+  "fixed_cases": 15,
+  "raw_benchmark_outcomes": 90,
+  "actual_producer_receipts": 90,
+  "recorded_test_outcomes": 1854,
+  "new_individual_test_rows_per_variant": 16,
+  "measured_tuning_iterations": 0,
+  "original_header_state_records": 42,
+  "state_reset": "Record actual response/trailer header BytesOffset/BytesCount defaults once and restore only those two fields before each operation; identical reset cost is included for every A/B case.",
+  "repeated_generation_fidelity": "Every setup produces each full output three times and compares against the original complete output oracle. Full header output additionally matches fresh CLI output. Actual Program.Run verifies all five persisted files after each setup repetition.",
+  "warm_program_contract": "Five files are seeded outside measurement with the real original output; actual Program.Run generates all five texts and compares existing file contents. Standard output is suppressed and restored by try/finally inside the measured operation. No changed-file write or new-process cost is claimed.",
+  "consumer": "Complete actual output strings are generated and their length is consumed; setup verifies complete output hashes. Warm Program.Run returns the setup-observed total original output characters after performing its real generation and file comparison.",
+  "private_adapters": "Typed private method delegates and expression-compiled grouped-switch calls are created once outside measurement; no reflection invocation, object-array wrapper or duplicate generator implementation per operation.",
+  "source_statements_changed": 2,
+  "shipping_generated_files_changed": 0,
+  "new_shipping_cache": false,
+  "new_external_api": false,
+  "F258_F259_table_initialization_changes_included": false,
+  "recursive_closure_files": 91,
+  "identical_golden_files": 5,
+  "all_ninety_receipts_match_original_oracles": true,
+  "private_callback_null_result_and_one_shot_inputs_claimed_equivalent": false,
+  "current_private_formatter_inputs": "Current template callbacks return non-null interpolated fragments from reusable actual arrays/LINQ/group sequences.",
+  "shared_machine": true,
+  "serialized_builds_and_measurements": true,
+  "build_maximum_nodes": 2,
+  "unexplained_nonwin_boundaries_retained": [
+    "EmptySwitch pair3 +224.10%, unchanged 128 B/op and low within-launch CV; no attribution or fourth comparison",
+    "OneSwitch pair1 +5.48%, mixed signs overall and unchanged heap",
+    "Untouched ProtocolControl median +6.41%, pair2 +18.72%, small reported heap variation",
+    "HeaderLookup maximum within-launch CV25.30% and complete HeadersFull maximum CV14.00%"
+  ],
+  "unverified_boundaries": [
+    "End-to-end clean-build wall-clock cost and cold first-process/JIT",
+    "Generated request processing performance or production throughput",
+    "Changed-file write cost, parallel generators or malformed/custom mutable metadata",
+    "Arbitrary singleton-null callbacks and exhausted one-shot enumerables at the private helper",
+    "Other runtimes/platforms, trimming/Native AOT, native/JIT or causal attribution of control differences"
+  ]
+}
