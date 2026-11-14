@@ -44,6 +44,7 @@ well as the largest speedup.
 | F172 | Rejected; caller version setter exception changes, all allocations unchanged and single-pair variance retained | [OWIN version-default TryAdd experiment](F172/README.md) |
 | F181 | [Draft jaslawinMs/aspnetcore#35](https://github.com/jaslawinMs/aspnetcore/pull/35); three repeatable complete-build targets, small-workload regressions and grouped variance retained | [DFA complex-literal pair enumeration](F181/README.md) |
 | F241 | [Draft jaslawinMs/aspnetcore#33](https://github.com/jaslawinMs/aspnetcore/pull/33); larger discovery gains, extra heap and small/fallback regressions retained | [Bounded view-component discovery membership](F241/README.md) |
+| F272 | No supported net win; complete descriptor/word-start results mixed, direct lower-branch gain and control/heap variance retained | [Invariant gRPC character casing](F272/README.md) |
 | F295 | [Draft jaslawinMs/aspnetcore#37](https://github.com/jaslawinMs/aspnetcore/pull/37); complete body-descriptor gains, tiny/no-output time regressions and large no-output heap boundary retained | [Bounded gRPC name formatting](F295/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
