@@ -1,0 +1,16 @@
+diff --git a/src/Http/Owin/src/OwinEnvironment.cs b/src/Http/Owin/src/OwinEnvironment.cs
+index 32322fb4d0..ee2ec29e87 100644
+--- a/src/Http/Owin/src/OwinEnvironment.cs
++++ b/src/Http/Owin/src/OwinEnvironment.cs
+@@ -54,10 +54,7 @@ public class OwinEnvironment : IDictionary<string, object>
+         }
+ 
+         // owin.Version is required.
+-        if (!context.Items.ContainsKey(OwinConstants.OwinVersion))
+-        {
+-            _context.Items[OwinConstants.OwinVersion] = "1.0";
+-        }
++        _context.Items.TryAdd(OwinConstants.OwinVersion, "1.0");
+ 
+         _context.Items[typeof(HttpContext).FullName] = _context; // Store for lookup when we transition back out of OWIN
+ 

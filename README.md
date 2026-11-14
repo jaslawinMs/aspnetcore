@@ -41,6 +41,7 @@ well as the largest speedup.
 | F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
 | F131 | [Draft jaslawinMs/aspnetcore#31](https://github.com/jaslawinMs/aspnetcore/pull/31); small/mixed pipeline effects, extra app-lifetime index and unstable case disclosed | [Private OWIN feature-map lookup index](F131/README.md) |
 | F171 | Rejected; caller Items setter exception changes and all existing-key cases add 24 B/op | [OWIN cancellation-default TryAdd experiment](F171/README.md) |
+| F172 | Rejected; caller version setter exception changes, all allocations unchanged and single-pair variance retained | [OWIN version-default TryAdd experiment](F172/README.md) |
 | F181 | [Draft jaslawinMs/aspnetcore#35](https://github.com/jaslawinMs/aspnetcore/pull/35); three repeatable complete-build targets, small-workload regressions and grouped variance retained | [DFA complex-literal pair enumeration](F181/README.md) |
 | F241 | [Draft jaslawinMs/aspnetcore#33](https://github.com/jaslawinMs/aspnetcore/pull/33); larger discovery gains, extra heap and small/fallback regressions retained | [Bounded view-component discovery membership](F241/README.md) |
 
