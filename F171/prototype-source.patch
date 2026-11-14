@@ -1,0 +1,16 @@
+diff --git a/src/Http/Owin/src/OwinEnvironment.cs b/src/Http/Owin/src/OwinEnvironment.cs
+index 32322fb4d0..92f8c82a81 100644
+--- a/src/Http/Owin/src/OwinEnvironment.cs
++++ b/src/Http/Owin/src/OwinEnvironment.cs
+@@ -48,10 +48,7 @@ public class OwinEnvironment : IDictionary<string, object>
+         }
+ 
+         _context = context;
+-        if (!_context.Items.ContainsKey(OwinConstants.CallCancelled))
+-        {
+-            _context.Items[OwinConstants.CallCancelled] = CancellationToken.None;
+-        }
++        _context.Items.TryAdd(OwinConstants.CallCancelled, CancellationToken.None);
+ 
+         // owin.Version is required.
+         if (!context.Items.ContainsKey(OwinConstants.OwinVersion))
