@@ -1,5 +1,7 @@
 # F027: avoid temporary JSON DOMs in patch conversion
 
+[Draft proposal: jaslawinMs/aspnetcore#12](https://github.com/jaslawinMs/aspnetcore/pull/12).
+
 Source proposal: `26967f4651973322869fe8c6c202c31c8ab21e15`.
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
