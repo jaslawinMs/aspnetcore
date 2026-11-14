@@ -1,0 +1,43 @@
+{
+  "candidate": "F079",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "7998aa5d782616f3f8f1dbebbff7722c6a960bd3",
+  "source_branch": "autoperf/F079-cookie-header-concat",
+  "source_hashes": [
+    {
+      "sha256": "723D5F997EF549261B5AE065B9726E3E77B941D43A306328CC7AC21BAD897E58",
+      "path": "src\\Http\\Headers\\src\\CookieHeaderValue.cs"
+    },
+    {
+      "sha256": "8295A0F75AA257FA26EDFCB9DC8423B1AF047DF34FF2DD8E01C044E0A7BE1162",
+      "path": "src\\Http\\Headers\\test\\CookieHeaderValueTest.cs"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 1,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "expected_case_count": 24,
+  "benchmark_boundary": "Actual CookieHeaderValue.ToString complete request Cookie header string; three unchanged SetCookieHeaderValue.ToString controls",
+  "producer_boundary": "Actual constructors over full strings/nonzero StringSegment slices and actual CookieHeaderValue.Parse over a bounded source slice. Empty parsed values are canonically StringSegment.Empty, not fabricated offset-bearing values.",
+  "correctness_boundary": "All 24 complete strings, hashes, producer identities and offsets agree across immutable builds; original/final owning Headers suites each 1856 passed, all eight new rows individually passed, zero skipped.",
+  "timing_scope": "Header formatting only; validation, construction, parsing, oracle/hashing and receipt logging occur outside timing.",
+  "protocol": "One original/changed Short comparison, eight retained measured samples per case, three warmups, no outlier removal; clear large win early stop, no tuning or repeat.",
+  "affected_summary": "All 21 affected cases improve time 47.19-75.15% and heap 50.36-74.29%; 104-8352 fewer B/op. All three unchanged SetCookie controls have higher time in this pair, 2.44-7.59%, with exactly equal allocations.",
+  "production_limit": "Not a production/net throughput or Request.Cookies parser-path claim. Related dotnet/aspnetcore#31258 removes these objects from ordinary Request.Cookies parsing.",
+  "sampling_limit": "Only one A/B pair on a shared Windows host; no repeated/opposite-order evidence. Control regressions are retained, not dismissed or causally explained.",
+  "validation_limit": "Serialization API output is the observed faithful boundary; no browser/HTTP-hosted workflow, concurrent setter mutation or maximum-string-size test.",
+  "source_capture_limit": "Manifests retain actual baseline HEAD and dirty test/source/report capture state; final committed source hashes are verified separately.",
+  "prior_art": [
+    "MediaTypeHeaderValue uses string.Concat(span, separator, span)",
+    "ContentDispositionHeaderValue uses three-span string.Concat"
+  ],
+  "history": [
+    "54c11225823ce579dbd505a4e87904164b18ba71",
+    "23dc2a5de0359434befd4c49f10c6202dfeaec95",
+    "dotnet/aspnetcore#31258"
+  ]
+}

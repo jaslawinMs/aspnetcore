@@ -1,0 +1,46 @@
+{
+  "candidate": "F079",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "scope": "Actual public CookieHeaderValue.ToString; no Request.Cookies parser throughput or exported API change.",
+  "requirement_coverage": [
+    {
+      "requirement": "Actual nonzero constructor name/value slices, exact casing/empty/quoted/embedded-equals serialized output",
+      "test": "CookieHeaderValue_ToString_PreservesStringSegmentSlices",
+      "rows": ["empty", "value", "quoted", "embedded-equals"],
+      "source_buffers_and_offsets_asserted": true
+    },
+    {
+      "requirement": "Actual bounded CookieHeaderValue.Parse input, preserved source slices/canonical empty value and complete serialized output",
+      "test": "CookieHeaderValue_ToString_PreservesParsedSegment",
+      "rows": ["empty", "value", "quoted", "embedded-equals"],
+      "actual_parser_invoked": true
+    }
+  ],
+  "compatibility": {
+    "before_passed": 1856,
+    "after_passed": 1856,
+    "failed": 0,
+    "skipped": 0,
+    "new_individual_rows_per_variant": 8,
+    "all_new_rows_passed": true,
+    "full_header_oracle_cases_per_variant": 24,
+    "all_output_and_producer_receipts_equal": true,
+    "functional_bug_fix_red_green_claim": false
+  },
+  "protocol": {
+    "comparisons_consumed": 1,
+    "maximum_comparisons": 3,
+    "tuning_changes": 0,
+    "early_stop_reason": "All 21 affected cases improve time 47.19-75.15% and allocation 50.36-74.29%; 19 time improvements exceed 50%. Clear large win permits one comparison.",
+    "all_three_setcookie_controls_retained": true,
+    "control_time_regressions_percent": [2.44, 5.31, 7.59]
+  },
+  "fixture_correction_before_measurement": "The initial preflight incorrectly required an offset-bearing empty parsed value. Actual GetCookieValue returns StringSegment.Empty. The corrected tests/preflight assert that canonical state; no shipping parser change, snapshot or timed comparison was made for the failed assumption.",
+  "excluded_claims": [
+    "No universal/net production throughput claim",
+    "No performance improvement to ordinary Request.Cookies parsing",
+    "No parser/construction throughput claim; setup is outside timing",
+    "No browser/hosted application, concurrent setter or maximum-string-size validation",
+    "No repeated/opposite-order measured comparison"
+  ]
+}

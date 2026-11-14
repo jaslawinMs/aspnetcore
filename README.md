@@ -29,6 +29,7 @@ well as the largest speedup.
 | F045 | Draft proposal; unstable control disclosed | [Single validation-message ModelState lookup](F045/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
+| F079 | Validated proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
