@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.Net.Http.Headers;
@@ -88,13 +87,7 @@ public class CookieHeaderValue
     // name="val ue";
     public override string ToString()
     {
-        var header = new StringBuilder();
-
-        header.Append(_name.AsSpan());
-        header.Append('=');
-        header.Append(_value.AsSpan());
-
-        return header.ToString();
+        return string.Concat(_name.AsSpan(), "=", _value.AsSpan());
     }
 
     /// <summary>

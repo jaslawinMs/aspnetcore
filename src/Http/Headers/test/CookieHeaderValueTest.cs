@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.Extensions.Primitives;
+
 namespace Microsoft.Net.Http.Headers;
 
 public class CookieHeaderValueTest
@@ -214,6 +216,53 @@ public class CookieHeaderValueTest
     public void CookieHeaderValue_ToString(CookieHeaderValue input, string expectedValue)
     {
         Assert.Equal(expectedValue, input.ToString());
+    }
+
+    [Theory]
+    [InlineData("", "NaMe=")]
+    [InlineData("value", "NaMe=value")]
+    [InlineData("\"quoted\"", "NaMe=\"quoted\"")]
+    [InlineData("one=two&three=four", "NaMe=one=two&three=four")]
+    public void CookieHeaderValue_ToString_PreservesStringSegmentSlices(string value, string expected)
+    {
+        const string prefix = "prefix";
+        const string name = "NaMe";
+        var nameBuffer = $"{prefix}{name}suffix";
+        var valueBuffer = $"{prefix}{value}suffix";
+        var header = new CookieHeaderValue(
+            new StringSegment(nameBuffer, prefix.Length, name.Length),
+            new StringSegment(valueBuffer, prefix.Length, value.Length));
+
+        Assert.Same(nameBuffer, header.Name.Buffer);
+        Assert.Same(valueBuffer, header.Value.Buffer);
+        Assert.Equal(prefix.Length, header.Name.Offset);
+        Assert.Equal(prefix.Length, header.Value.Offset);
+        Assert.Equal(expected, header.ToString());
+    }
+
+    [Theory]
+    [InlineData("NaMe=")]
+    [InlineData("NaMe=value")]
+    [InlineData("NaMe=\"quoted\"")]
+    [InlineData("NaMe=one=two&three=four")]
+    public void CookieHeaderValue_ToString_PreservesParsedSegment(string expected)
+    {
+        const string prefix = "prefix";
+        var buffer = $"{prefix}{expected}suffix";
+        var header = CookieHeaderValue.Parse(new StringSegment(buffer, prefix.Length, expected.Length));
+
+        Assert.Same(buffer, header.Name.Buffer);
+        if (expected == "NaMe=")
+        {
+            Assert.Equal(StringSegment.Empty, header.Value);
+        }
+        else
+        {
+            Assert.Same(buffer, header.Value.Buffer);
+        }
+
+        Assert.Equal(prefix.Length, header.Name.Offset);
+        Assert.Equal(expected, header.ToString());
     }
 
     [Theory]
