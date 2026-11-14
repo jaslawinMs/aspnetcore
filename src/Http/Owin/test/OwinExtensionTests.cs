@@ -1,9 +1,12 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Net.WebSockets;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace Microsoft.AspNetCore.Owin;
 
@@ -149,6 +152,54 @@ public class OwinExtensionTests
         Assert.Equal(context, value);
         Assert.False(environment.ContainsKey("websocket.Accept"));
         Assert.False(environment.ContainsKey("websocket.AcceptAlt"));
+    }
+
+    [Fact]
+    public async Task UseOwin_PreservesDefaultWebSocketAdaptationAndFrames()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var builder = new ApplicationBuilder(services);
+        var context = new DefaultHttpContext();
+        using var transport = new MemoryStream();
+        using var server = WebSocket.CreateFromStream(transport, isServer: true,
+            subProtocol: null, keepAliveInterval: Timeout.InfiniteTimeSpan);
+        var feature = new Mock<IHttpWebSocketFeature>(MockBehavior.Strict);
+        feature.SetupGet(f => f.IsWebSocketRequest).Returns(true);
+        feature.Setup(f => f.AcceptAsync(It.IsAny<WebSocketAcceptContext>())).Returns(Task.FromResult(server));
+        context.Features.Set<IHttpWebSocketFeature>(feature.Object);
+        byte[] payload = [1, 2, 3];
+        var callbackCalls = 0;
+        builder.UseOwin(add =>
+        {
+            add(next => environment =>
+            {
+                var accept = Assert.IsType<Action<IDictionary<string, object>, AppFunc>>(environment["websocket.Accept"]);
+                accept(null, async socketEnvironment =>
+                {
+                    callbackCalls++;
+                    Assert.Same(server, socketEnvironment[typeof(WebSocket).FullName]);
+                    var send = Assert.IsType<Func<ArraySegment<byte>, int, bool, CancellationToken, Task>>(socketEnvironment["websocket.SendAsync"]);
+                    await send(new ArraySegment<byte>(payload), 2, true, CancellationToken.None);
+                });
+                return Task.CompletedTask;
+            });
+        });
+
+        await builder.Build().Invoke(context);
+
+        Assert.Equal(101, context.Response.StatusCode);
+        Assert.Equal(1, callbackCalls);
+        Assert.Equal(WebSocketState.Aborted, server.State);
+        feature.Verify(f => f.AcceptAsync(It.IsAny<WebSocketAcceptContext>()), Times.Once);
+        using var frames = new MemoryStream(transport.ToArray());
+        using var client = WebSocket.CreateFromStream(frames, isServer: false,
+            subProtocol: null, keepAliveInterval: Timeout.InfiniteTimeSpan);
+        var received = new byte[16];
+        var result = await client.ReceiveAsync(new ArraySegment<byte>(received), CancellationToken.None);
+        Assert.Equal(WebSocketMessageType.Binary, result.MessageType);
+        Assert.True(result.EndOfMessage);
+        Assert.Equal(payload.Length, result.Count);
+        Assert.Equal(payload, received[..result.Count]);
     }
 
     private class FakeService

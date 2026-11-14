@@ -63,9 +63,9 @@ public class WebSocketAcceptAdapter
         return async environment =>
         {
             object accept;
-            if (environment.TryGetValue(OwinConstants.WebSocket.AcceptAlt, out accept) && accept is WebSocketAcceptAlt)
+            if (environment.TryGetValue(OwinConstants.WebSocket.AcceptAlt, out accept) && accept is WebSocketAcceptAlt acceptAlt)
             {
-                var adapter = new WebSocketAcceptAdapter(environment, (WebSocketAcceptAlt)accept);
+                var adapter = new WebSocketAcceptAdapter(environment, acceptAlt);
 
                 environment[OwinConstants.WebSocket.Accept] = new WebSocketAccept(adapter.AcceptWebSocket);
                 await next(environment);
