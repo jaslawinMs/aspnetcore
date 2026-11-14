@@ -5,6 +5,7 @@ using System.Collections;
 using System.Net.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Moq;
 
 namespace Microsoft.AspNetCore.Owin;
 
@@ -124,6 +125,117 @@ public class OwinEnvironmentTests
 
         Assert.Equal(CancellationToken.None, env["owin.CallCancelled"]);
         Assert.Equal("1.0", env["owin.Version"]);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(0, 1)]
+    [InlineData(0, 2)]
+    [InlineData(1, 0)]
+    [InlineData(1, 1)]
+    [InlineData(1, 2)]
+    [InlineData(2, 0)]
+    [InlineData(2, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 0)]
+    [InlineData(3, 1)]
+    [InlineData(3, 2)]
+    [InlineData(4, 0)]
+    [InlineData(4, 1)]
+    [InlineData(4, 2)]
+    [InlineData(5, 0)]
+    [InlineData(5, 1)]
+    [InlineData(5, 2)]
+    public void OwinEnvironmentVersionDefaultPreservesItemValues(int valueKind, int dictionaryKind)
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var context = new DefaultHttpContext();
+        context.Items = dictionaryKind switch
+        {
+            0 => context.Items,
+            1 => new Dictionary<object, object>(),
+            2 => new SortedDictionary<object, object>(),
+            _ => throw new ArgumentOutOfRangeException(nameof(dictionaryKind))
+        };
+        object token = cancellation.Token;
+        var unrelated = new object();
+        context.Items["owin.CallCancelled"] = token;
+        context.Items["unrelated"] = unrelated;
+        object existing = valueKind switch
+        {
+            0 or 3 => null,
+            1 => "9.0",
+            2 => string.Empty,
+            4 => new object(),
+            5 => "1.0",
+            _ => throw new ArgumentOutOfRangeException(nameof(valueKind))
+        };
+        if (valueKind is not 0)
+        {
+            context.Items["owin.Version"] = existing;
+        }
+
+        IDictionary<string, object> environment = new OwinEnvironment(context);
+
+        Assert.True(context.Items.TryGetValue("owin.Version", out var actual));
+        Assert.True(environment.TryGetValue("owin.Version", out var exposed));
+        if (valueKind is 0)
+        {
+            Assert.Equal("1.0", Assert.IsType<string>(actual));
+        }
+        else
+        {
+            Assert.Same(existing, actual);
+        }
+        Assert.Same(actual, exposed);
+        Assert.Same(token, context.Items["owin.CallCancelled"]);
+        Assert.Same(token, environment["owin.CallCancelled"]);
+        Assert.Same(unrelated, context.Items["unrelated"]);
+        Assert.Same(context, context.Items[typeof(HttpContext).FullName]);
+        Assert.Equal(4, context.Items.Count);
+    }
+
+    [Fact]
+    public void OwinEnvironmentVersionDefaultPreservesItemsSetterException()
+    {
+        var expected = new InvalidOperationException("version setter");
+        var values = new Dictionary<object, object> { ["owin.CallCancelled"] = CancellationToken.None };
+        var items = new Mock<IDictionary<object, object>>(MockBehavior.Strict);
+        items.Setup(dictionary => dictionary.ContainsKey(It.IsAny<object>()))
+            .Returns((object key) => values.ContainsKey(key));
+        items.Setup(dictionary => dictionary.Add(It.IsAny<object>(), It.IsAny<object>()))
+            .Callback((object key, object value) => values.Add(key, value));
+        items.SetupSet(dictionary => dictionary["owin.Version"] = It.IsAny<object>())
+            .Throws(expected);
+        items.SetupSet(dictionary => dictionary[typeof(HttpContext).FullName] = It.IsAny<object>())
+            .Callback((object key, object value) => values[key] = value);
+        var context = new DefaultHttpContext { Items = items.Object };
+
+        var actual = Assert.Throws<InvalidOperationException>(() => new OwinEnvironment(context));
+
+        Assert.Same(expected, actual);
+        Assert.Single(values);
+        Assert.Equal(CancellationToken.None, values["owin.CallCancelled"]);
+    }
+
+    [Fact]
+    public void OwinEnvironmentVersionDefaultPreservesRepeatedContext()
+    {
+        var context = new DefaultHttpContext();
+        IDictionary<string, object> first = new OwinEnvironment(context);
+        var version = context.Items["owin.Version"];
+        var token = context.Items["owin.CallCancelled"];
+
+        IDictionary<string, object> second = new OwinEnvironment(context);
+
+        Assert.NotSame(first, second);
+        Assert.Equal("1.0", version);
+        Assert.Same(version, second["owin.Version"]);
+        Assert.Same(version, context.Items["owin.Version"]);
+        Assert.Same(token, second["owin.CallCancelled"]);
+        Assert.Same(context, second[typeof(HttpContext).FullName]);
+        Assert.Equal(3, context.Items.Count);
     }
 
     [Fact]
