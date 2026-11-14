@@ -17,6 +17,102 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Tests;
 
 public class HttpRequestHeadersTests
 {
+    [Theory]
+    [InlineData(new[] { "a=0", "b=1" }, "a=0; b=1")]
+    [InlineData(new[] { "", "b=1", "" }, "; b=1; ")]
+    [InlineData(new[] { "a=0", "a=0", "b=1" }, "a=0; a=0; b=1")]
+    [InlineData(new[] { "a=\"A; B\"", "b=1" }, "a=\"A; B\"; b=1")]
+    [InlineData(new[] { "", "" }, "; ")]
+    public void MergeCookies_AppendedValues_PreservesOrderAndSeparators(string[] values, string expected)
+    {
+        var headers = new HttpRequestHeaders();
+        var cookieName = Encoding.ASCII.GetBytes(HeaderNames.Cookie);
+        foreach (var value in values)
+        {
+            headers.Append(cookieName, Encoding.ASCII.GetBytes(value), checkForNewlineChars: false);
+        }
+        headers.OnHeadersComplete();
+        var originalValues = ((IHeaderDictionary)headers).Cookie;
+        Assert.Equal(values, originalValues);
+
+        headers.MergeCookies();
+
+        var merged = Assert.Single(((IHeaderDictionary)headers).Cookie);
+        Assert.Equal(expected, merged);
+        Assert.Equal(values, originalValues);
+        headers.MergeCookies();
+        Assert.Same(merged, Assert.Single(((IHeaderDictionary)headers).Cookie));
+    }
+
+    [Theory]
+    [InlineData(new string[] { null, "b=1", null }, "; b=1; ")]
+    [InlineData(new string[] { "a=0", null, "c=2" }, "a=0; ; c=2")]
+    [InlineData(new string[] { null, null }, "; ")]
+    public void MergeCookies_ProgrammaticValues_PreservesNullEntries(string[] values, string expected)
+    {
+        var originalValues = (string[])values.Clone();
+        var headers = new HttpRequestHeaders();
+        ((IHeaderDictionary)headers).Cookie = new StringValues(values);
+
+        headers.MergeCookies();
+
+        Assert.Equal(expected, Assert.Single(((IHeaderDictionary)headers).Cookie));
+        Assert.Equal(originalValues, values);
+    }
+
+    [Theory]
+    [InlineData(new string[0], 0)]
+    [InlineData(new[] { "" }, 1)]
+    [InlineData(new[] { "a=0" }, 1)]
+    public void MergeCookies_AtMostOneValue_PreservesHeaderAndBackingValue(string[] values, int expectedCount)
+    {
+        var headers = new HttpRequestHeaders();
+        ((IHeaderDictionary)headers).Cookie = new StringValues(values);
+        var originalValues = ((IHeaderDictionary)headers).Cookie;
+        var wasPresent = ((IHeaderDictionary)headers).ContainsKey(HeaderNames.Cookie);
+
+        headers.MergeCookies();
+
+        Assert.Equal(wasPresent, ((IHeaderDictionary)headers).ContainsKey(HeaderNames.Cookie));
+        Assert.Equal(expectedCount, ((IHeaderDictionary)headers).Cookie.Count);
+        Assert.Equal(originalValues, ((IHeaderDictionary)headers).Cookie);
+        Assert.Same(originalValues.ToArray(), ((IHeaderDictionary)headers).Cookie.ToArray());
+    }
+
+    [Fact]
+    public void MergeCookies_NoCookie_PreservesOtherHeaders()
+    {
+        var headers = new HttpRequestHeaders();
+        ((IHeaderDictionary)headers).Host = "example.test";
+
+        headers.MergeCookies();
+
+        Assert.False(((IHeaderDictionary)headers).ContainsKey(HeaderNames.Cookie));
+        Assert.Equal("example.test", Assert.Single(((IHeaderDictionary)headers).Host));
+        Assert.Equal(HeaderNames.Host, Assert.Single((IHeaderDictionary)headers).Key);
+    }
+
+    [Fact]
+    public void MergeCookies_ReusedHeaders_DoesNotRetainPreviousCookies()
+    {
+        var headers = new HttpRequestHeaders();
+        var cookieName = Encoding.ASCII.GetBytes(HeaderNames.Cookie);
+        foreach (var value in new[] { "a=0", "b=1" })
+        {
+            headers.Append(cookieName, Encoding.ASCII.GetBytes(value), checkForNewlineChars: false);
+        }
+        headers.OnHeadersComplete();
+        headers.MergeCookies();
+        Assert.Equal("a=0; b=1", Assert.Single(((IHeaderDictionary)headers).Cookie));
+
+        ((IHeaderDictionary)headers).Clear();
+        headers.Append(cookieName, "c=2"u8, checkForNewlineChars: false);
+        headers.OnHeadersComplete();
+        headers.MergeCookies();
+
+        Assert.Equal("c=2", Assert.Single(((IHeaderDictionary)headers).Cookie));
+    }
+
     [Fact]
     public void InitialDictionaryIsEmpty()
     {
