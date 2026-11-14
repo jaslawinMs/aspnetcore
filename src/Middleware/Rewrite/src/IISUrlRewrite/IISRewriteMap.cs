@@ -28,4 +28,12 @@ internal sealed class IISRewriteMap
             _map[key] = value;
         }
     }
+
+    public string? this[ReadOnlySpan<char> key]
+    {
+        get
+        {
+            return _map.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(key, out var value) ? value : null;
+        }
+    }
 }
