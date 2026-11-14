@@ -1,0 +1,246 @@
+diff --git a/src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.JsonTranscoding/Internal/Binding/JsonTranscodingProviderServiceBinder.cs b/src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.JsonTranscoding/Internal/Binding/JsonTranscodingProviderServiceBinder.cs
+index 81325c33a8..b27aee3f18 100644
+--- a/src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.JsonTranscoding/Internal/Binding/JsonTranscodingProviderServiceBinder.cs
++++ b/src/Grpc/JsonTranscoding/src/Microsoft.AspNetCore.Grpc.JsonTranscoding/Internal/Binding/JsonTranscodingProviderServiceBinder.cs
+@@ -241,7 +241,7 @@ internal sealed partial class JsonTranscodingProviderServiceBinder<TService> : S
+     {
+         var routeParameterDescriptors = ServiceDescriptorHelpers.ResolveRouteParameterDescriptors(routeAdapter.HttpRoutePattern.Variables, methodDescriptor.InputType);
+ 
+-        var bodyDescriptor = ServiceDescriptorHelpers.ResolveBodyDescriptor(body, typeof(TService), methodDescriptor);
++        var bodyDescriptor = ServiceDescriptorHelpers.ResolveBodyDescriptor(body, methodDescriptor);
+         var responseBodyDescriptor = ServiceDescriptorHelpers.ResolveResponseBodyDescriptor(responseBody, methodDescriptor);
+ 
+         var descriptorInfo = new CallHandlerDescriptorInfo(
+diff --git a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+index 6010fd7500..4db69964c7 100644
+--- a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
++++ b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+@@ -405,7 +405,7 @@ internal static class ServiceDescriptorHelpers
+         return routeParameterDescriptors;
+     }
+ 
+-    public static BodyDescriptorInfo? ResolveBodyDescriptor(string body, Type serviceType, MethodDescriptor methodDescriptor)
++    public static BodyDescriptorInfo? ResolveBodyDescriptor(string body, MethodDescriptor methodDescriptor)
+     {
+         if (!string.IsNullOrEmpty(body))
+         {
+@@ -437,14 +437,7 @@ internal static class ServiceDescriptorHelpers
+             }
+             else
+             {
+-                ParameterInfo? requestParameter = null;
+-                var methodInfo = serviceType.GetMethod(methodDescriptor.Name);
+-                if (methodInfo != null)
+-                {
+-                    requestParameter = methodInfo.GetParameters().SingleOrDefault(p => p.Name == "request");
+-                }
+-
+-                return new BodyDescriptorInfo(methodDescriptor.InputType, fieldDescriptor: null, isDescriptorRepeated: false, parameterInfo: requestParameter);
++                return new BodyDescriptorInfo(methodDescriptor.InputType, fieldDescriptor: null, isDescriptorRepeated: false);
+             }
+         }
+ 
+diff --git a/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/JsonTranscodingServiceMethodProviderTests.cs b/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/JsonTranscodingServiceMethodProviderTests.cs
+index b20e026176..496e5cbb7d 100644
+--- a/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/JsonTranscodingServiceMethodProviderTests.cs
++++ b/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/JsonTranscodingServiceMethodProviderTests.cs
+@@ -1,8 +1,11 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using System.Text;
++using System.Text.Json;
+ using Grpc.AspNetCore.Server;
+ using Grpc.AspNetCore.Server.Model;
++using Grpc.Core;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.Grpc.JsonTranscoding.Internal;
+ using Microsoft.AspNetCore.Grpc.JsonTranscoding.Internal.Binding;
+@@ -13,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.DependencyInjection.Extensions;
+ using Microsoft.Extensions.Logging;
+ using Microsoft.Extensions.Logging.Testing;
++using Transcoding;
+ 
+ namespace Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests;
+ 
+@@ -220,6 +224,92 @@ public class JsonTranscodingServiceMethodProviderTests
+         Assert.Equal("Path template must start with a '/'.", ex.InnerException!.InnerException!.InnerException!.InnerException!.Message);
+     }
+ 
++    [Fact]
++    public Task AddMethod_WildcardBody_InvokesGeneratedHandler()
++    {
++        return InvokeBody(new BodyGreeterService());
++    }
++
++    [Fact]
++    public Task AddMethod_WildcardBody_RenamedRequestParameter_InvokesGeneratedHandler()
++    {
++        return InvokeBody(new RenamedBodyGreeterService());
++    }
++
++    [Fact]
++    public Task AddMethod_WildcardBody_OverloadedServiceMethod_InvokesGeneratedHandler()
++    {
++        return InvokeBody(new OverloadedBodyGreeterService());
++    }
++
++    private static async Task InvokeBody<TService>(TService service) where TService : BodyGreeterService
++    {
++        var services = new ServiceCollection();
++        services.AddLogging();
++        services.AddSingleton(service);
++        var grpc = services.AddGrpc();
++        services.RemoveAll(typeof(IServiceMethodProvider<>));
++        grpc.AddJsonTranscoding();
++        using var provider = services.BuildServiceProvider();
++        IEndpointRouteBuilder builder = new TestEndpointRouteBuilder(provider);
++        builder.MapGrpcService<TService>();
++        var endpoint = Assert.Single(FindGrpcEndpoints(builder.DataSources.Single().Endpoints, nameof(BodyGreeterService.Body)));
++        var metadata = endpoint.Metadata.GetMetadata<GrpcJsonTranscodingMetadata>();
++        Assert.NotNull(metadata);
++        Assert.Equal("*", metadata.HttpRule.Body);
++        Assert.Same(JsonTranscodingGreeter.Descriptor.FindMethodByName("Body"), metadata.MethodDescriptor);
++        using var input = new MemoryStream(Encoding.UTF8.GetBytes("""{"name":"BodyName","sub":{"subfield":"Whole!"},"repeatedStrings":["One","Two"]}"""));
++        using var output = new MemoryStream();
++        var context = new DefaultHttpContext { RequestServices = provider };
++        context.SetEndpoint(endpoint);
++        context.Request.Method = "POST";
++        context.Request.Path = "/v1/greeter";
++        context.Request.QueryString = new QueryString("?name=QueryName&sub.subfield=QuerySub");
++        context.Request.ContentType = "application/json";
++        context.Request.Body = input;
++        context.Response.Body = output;
++        Assert.NotNull(endpoint.RequestDelegate);
++
++        await endpoint.RequestDelegate(context);
++
++        Assert.NotNull(service.Request);
++        Assert.Equal("BodyName", service.Request.Name);
++        Assert.Equal("Whole!", service.Request.Sub.Subfield);
++        Assert.Equal(new[] { "One", "Two" }, service.Request.RepeatedStrings);
++        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
++        output.Position = 0;
++        using var response = JsonDocument.Parse(output);
++        Assert.Equal("BodyName", response.RootElement.GetProperty("message").GetString());
++    }
++
++    private class BodyGreeterService : JsonTranscodingGreeterService
++    {
++        public HelloRequest? Request { get; private set; }
++
++        public override Task<HelloReply> Body(HelloRequest request, ServerCallContext context)
++        {
++            Request = request;
++
++            return Task.FromResult(new HelloReply { Message = request.Name });
++        }
++    }
++
++    private sealed class RenamedBodyGreeterService : BodyGreeterService
++    {
++        public override Task<HelloReply> Body(HelloRequest value, ServerCallContext context)
++        {
++            return base.Body(value, context);
++        }
++    }
++
++    private sealed class OverloadedBodyGreeterService : BodyGreeterService
++    {
++        public Task<HelloReply> Body(HelloRequest request)
++        {
++            throw new InvalidOperationException("The unrelated overload must not be invoked.");
++        }
++    }
++
+     private static RouteEndpoint FindGrpcEndpoint(IReadOnlyList<Endpoint> endpoints, string methodName)
+     {
+         var e = FindGrpcEndpoints(endpoints, methodName).SingleOrDefault();
+diff --git a/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/ServiceDescriptorHelpersTests.cs b/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/ServiceDescriptorHelpersTests.cs
+index 5f11e1615d..c197fde8df 100644
+--- a/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/ServiceDescriptorHelpersTests.cs
++++ b/src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/ServiceDescriptorHelpersTests.cs
+@@ -3,6 +3,7 @@
+ 
+ using Custom.Http.Rule;
+ using Grpc.Shared;
++using Transcoding;
+ 
+ namespace Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests;
+ 
+@@ -21,4 +22,74 @@ public class ServiceDescriptorHelpersTests
+         Assert.Equal("/say", httpRule.Post);
+         Assert.Equal("*", httpRule.Body);
+     }
++
++    [Fact]
++    public void ResolveBodyDescriptor_Wildcard_PreservesMessageDescriptor()
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++
++        var body = ServiceDescriptorHelpers.ResolveBodyDescriptor("*", method);
++
++        Assert.NotNull(body);
++        Assert.Same(method.InputType, body.Descriptor);
++        Assert.Null(body.FieldDescriptor);
++        Assert.False(body.IsDescriptorRepeated);
++    }
++
++    [Theory]
++    [InlineData("sub", false, nameof(HelloRequest.Sub))]
++    [InlineData("repeated_strings", true, nameof(HelloRequest.RepeatedStrings))]
++    public void ResolveBodyDescriptor_NamedField_PreservesBindingMetadata(string name, bool repeated, string propertyName)
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++        var field = method.InputType.FindFieldByName(name);
++
++        var body = ServiceDescriptorHelpers.ResolveBodyDescriptor(name, method);
++
++        Assert.NotNull(body);
++        Assert.Same(repeated ? method.InputType : field.MessageType, body.Descriptor);
++        Assert.Same(field, body.FieldDescriptor);
++        Assert.Equal(repeated, body.IsDescriptorRepeated);
++        Assert.Equal(propertyName, body.PropertyInfo?.Name);
++        Assert.Null(body.ParameterInfo);
++    }
++
++    [Fact]
++    public void ResolveBodyDescriptor_EmptyBody_PreservesNoBody()
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++
++        Assert.Null(ServiceDescriptorHelpers.ResolveBodyDescriptor("", method));
++    }
++
++    [Fact]
++    public void ResolveBodyDescriptor_MissingField_PreservesException()
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++
++        var exception = Assert.Throws<InvalidOperationException>(() =>
++            ServiceDescriptorHelpers.ResolveBodyDescriptor("NoMatch", method));
++
++        Assert.Equal("Couldn't find matching field for body 'NoMatch' on HelloRequest.", exception.Message);
++    }
++
++    [Fact]
++    public void ResolveBodyDescriptor_NestedField_PreservesException()
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++
++        var exception = Assert.Throws<InvalidOperationException>(() =>
++            ServiceDescriptorHelpers.ResolveBodyDescriptor("sub.subfield", method));
++
++        Assert.Equal("The body field 'sub.subfield' references a nested field. The body field name must be on the top-level request message.", exception.Message);
++    }
++
++    [Fact]
++    public void ResolveBodyDescriptor_ScalarField_PreservesException()
++    {
++        var method = JsonTranscodingGreeter.Descriptor.FindMethodByName("Body");
++
++        Assert.Throws<InvalidOperationException>(() =>
++            ServiceDescriptorHelpers.ResolveBodyDescriptor("name", method));
++    }
+ }

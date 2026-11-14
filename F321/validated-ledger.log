@@ -1,0 +1,31 @@
+{
+  "id": "F321",
+  "finding": {
+    "card_id": "uncached-reflection-in-hot-path",
+    "file": "src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs",
+    "line_start": 440,
+    "line_end": 444,
+    "project": "Microsoft.AspNetCore.Grpc.JsonTranscoding",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "informational",
+    "confidence": "high",
+    "classification": "informational",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "Service method and request ParameterInfo are rediscovered during body descriptor resolution.",
+    "explanation": "ResolveBodyDescriptor calls Type.GetMethod and MethodInfo.GetParameters for each wildcard-body endpoint without caching the results. This is uncached reflection in setup code, which the card retains as informational rather than a hot-path defect.",
+    "snippet": "var methodInfo = serviceType.GetMethod(methodDescriptor.Name);\nrequestParameter = methodInfo.GetParameters().SingleOrDefault(p => p.Name == \"request\");",
+    "suppressed": false
+  },
+  "status": "validated",
+  "notes": [
+    "Fresh main37e809, independent from F320. Trace actual wildcard request-method reflection/ParameterInfo producer, removed former Swagger consumer and reachable exceptions before deciding elimination vs cache. No F321 shipping edits/measurements yet.",
+    "Actual original315-row owner suite314pass/one expected AmbiguousMatch failure; original314preservation/after315full/all10new rows green.16actual helper/ParseRoute/fresh startup cases frozen with common direct-call adaptive internal-signature delegate; original/proposed owner audits496/495methods, no metadata getter consumers; all86recursive DLL/JSON files differ only in owner; scoped four-file format green. Three-pair maximum, no cache, F320 named-property work unchanged.",
+    "Three16-case pairs/96benchmarks/96actual producer receipts/288setup request checks complete; two wildcard helpers consistently-68.56/-69.43%,96to56B; full Parse_Wild-5.44%median/allthree faster/40Bsaved, Parse_Renamedmixed-5.98%median/+3.78%pair3. Full startup/control non-wins including colon+27.84%median/+46.91%pair2 retained; no startup/request gain attribution. Original315-row suite314pass/one exact expected overload AmbiguousMatch fail; original314preservation and after315full green/all10new rows; compiler-required unused internal parameter removed without suppression, one binder caller updated. Exact source committed/pushed, four files, no cache/public API/F320 change."
+  ],
+  "branch": "autoperf/F321-grpc-request-parameter",
+  "pr_url": null,
+  "updated_at": "2026-11-14T19:07:18.1857735+00:00"
+}
