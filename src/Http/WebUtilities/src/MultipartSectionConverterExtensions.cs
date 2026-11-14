@@ -40,7 +40,14 @@ public static class MultipartSectionConverterExtensions
 
         try
         {
-            return new FormMultipartSection(section);
+            var header = section.GetContentDispositionHeader();
+            // Leave filename-star decoding and final validation to the constructor.
+            if (header is null || !header.DispositionType.Equals("form-data") || header.FileName.Length > 0)
+            {
+                return null;
+            }
+
+            return new FormMultipartSection(section, header);
         }
         catch
         {
