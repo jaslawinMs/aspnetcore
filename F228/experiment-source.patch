@@ -1,0 +1,22 @@
+diff --git a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+index 6010fd7500..ecd726cf9a 100644
+--- a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
++++ b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+@@ -477,7 +477,7 @@ internal static class ServiceDescriptorHelpers
+         MessageDescriptor? bodyDescriptor,
+         FieldDescriptor? bodyFieldDescriptor)
+     {
+-        var existingParameters = new List<FieldDescriptor>();
++        var existingParameters = new HashSet<FieldDescriptor>();
+ 
+         foreach (var routeParameter in routeParameters)
+         {
+@@ -505,7 +505,7 @@ internal static class ServiceDescriptorHelpers
+         RecursiveVisitMessages(queryParameters, existingParameters, methodDescriptor.InputType, new List<FieldDescriptor>());
+         return queryParameters;
+ 
+-        static void RecursiveVisitMessages(Dictionary<string, FieldDescriptor> queryParameters, List<FieldDescriptor> existingParameters, MessageDescriptor messageDescriptor, List<FieldDescriptor> path)
++        static void RecursiveVisitMessages(Dictionary<string, FieldDescriptor> queryParameters, HashSet<FieldDescriptor> existingParameters, MessageDescriptor messageDescriptor, List<FieldDescriptor> path)
+         {
+             var messageFields = messageDescriptor.Fields.InFieldNumberOrder();
+ 
