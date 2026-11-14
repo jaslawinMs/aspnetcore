@@ -457,6 +457,9 @@ public class OwinEnvironment : IDictionary<string, object>
                 }
             });
 
+        // Keep the original map's enumeration and context-copy order.
+        private static readonly IReadOnlyDictionary<string, FeatureMap> _lookupEntries = new Dictionary<string, FeatureMap>(_entries, StringComparer.Ordinal);
+
         /// <remarks>
         /// Will be used, only if <see cref="FeatureMaps"/> or <see cref="Clear"/> is called from user-code.
         /// Is a deep-copy of the singleton <see cref="_entries"/>
@@ -523,7 +526,7 @@ public class OwinEnvironment : IDictionary<string, object>
                 return false;
             }
 
-            if (_entries.TryGetValue(key, out entry))
+            if (_lookupEntries.TryGetValue(key, out entry))
             {
                 return true;
             }
@@ -543,7 +546,7 @@ public class OwinEnvironment : IDictionary<string, object>
                 return false;
             }
 
-            return _entries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key);
+            return _lookupEntries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key);
         }
 
         public bool Remove(string key)
@@ -553,7 +556,7 @@ public class OwinEnvironment : IDictionary<string, object>
                 return _contextEntries.Remove(key);
             }
 
-            if (_entries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key))
+            if (_lookupEntries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key))
             {
                 _deletedKeys ??= new HashSet<string>(StringComparer.Ordinal);
                 return _deletedKeys.Add(key);
