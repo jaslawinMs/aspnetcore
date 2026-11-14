@@ -1,5 +1,7 @@
 # F021: avoid reflective enum conversion during select rendering
 
+[Draft proposal: jaslawinMs/aspnetcore#10](https://github.com/jaslawinMs/aspnetcore/pull/10).
+
 Source proposal: `84991004fbc1662da291f3d0f1bdff6c85f3dbfc`.
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
