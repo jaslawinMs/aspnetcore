@@ -1572,6 +1572,15 @@ public class DefaultHtmlGenerator : IHtmlGenerator
             return HtmlString.Empty;
         }
 
+        // Custom collection lookups and option indexers may have observable behavior.
+        if (currentValues is List<string> { Count: >= 32 } values &&
+            values.GetType() == typeof(List<string>) &&
+            (itemsList.GetType() == typeof(List<SelectListItem>) || itemsList is SelectListItem[]) &&
+            itemsList.Count >= 32)
+        {
+            currentValues = new HashSet<string>(values, StringComparer.Ordinal);
+        }
+
         var listItemBuilder = new HtmlContentBuilder(count);
 
         // Make optionLabel the first item that gets rendered.
