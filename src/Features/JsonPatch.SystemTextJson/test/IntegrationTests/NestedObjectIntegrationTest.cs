@@ -5,6 +5,7 @@ using System;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Exceptions;
 using Microsoft.AspNetCore.Shared;
 using Xunit;
 
@@ -258,6 +259,76 @@ public class NestedObjectIntegrationTest
         Assert.NotSame(targetObject.SimpleObject, targetObject.InheritedObject);
     }
 
+    [Theory]
+    [InlineData(42, false, true)]
+    [InlineData("42", true, true)]
+    [InlineData("42", false, false)]
+    [InlineData("invalid", true, false)]
+    public void Replace_PreservesSerializerConversion(object value, bool allowReadingFromString, bool canConvert)
+    {
+        var target = new ConversionTarget { Number = 7 };
+        var patch = new JsonPatchDocument
+        {
+            SerializerOptions = new JsonSerializerOptions(JsonSerializerOptions.Default)
+            {
+                NumberHandling = allowReadingFromString
+                    ? JsonNumberHandling.AllowReadingFromString
+                    : JsonNumberHandling.Strict
+            }
+        };
+        patch.Replace(nameof(ConversionTarget.Number), value);
+
+        if (canConvert)
+        {
+            patch.ApplyTo(target);
+
+            Assert.Equal(42, target.Number);
+        }
+        else
+        {
+            Assert.Throws<JsonPatchException>(() => patch.ApplyTo(target));
+            Assert.Equal(7, target.Number);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Copy_PreservesSerializerReferenceHandling(bool preserveReferences)
+    {
+        var child = new CopyChild { Text = "original" };
+        var source = new CopyValue { Left = child, Right = child };
+        var target = new CopyTarget { Source = source };
+        var patch = new JsonPatchDocument
+        {
+            SerializerOptions = new JsonSerializerOptions(JsonSerializerOptions.Default)
+            {
+                ReferenceHandler = preserveReferences ? ReferenceHandler.Preserve : null
+            }
+        };
+        patch.Copy(nameof(CopyTarget.Source), nameof(CopyTarget.Target));
+
+        patch.ApplyTo(target);
+
+        Assert.NotSame(source, target.Target);
+        Assert.NotSame(child, target.Target.Left);
+        Assert.Equal("original", target.Target.Left.Text);
+        Assert.Equal("original", target.Target.Right.Text);
+        if (preserveReferences)
+        {
+            Assert.Same(target.Target.Left, target.Target.Right);
+        }
+        else
+        {
+            Assert.NotSame(target.Target.Left, target.Target.Right);
+        }
+
+        target.Target.Left.Text = "changed";
+
+        Assert.Equal("original", source.Left.Text);
+        Assert.Equal("original", source.Right.Text);
+    }
+
     [Fact]
     public void MoveIntegerValue_ToAnotherIntegerProperty()
     {
@@ -313,6 +384,30 @@ public class NestedObjectIntegrationTest
         Assert.Equal("D", targetObject.SimpleObject.AnotherStringProperty);
         Assert.Same(iDto, targetObject.SimpleObject);
         Assert.Null(targetObject.InheritedObject);
+    }
+
+    private class ConversionTarget
+    {
+        public long Number { get; set; }
+    }
+
+    private class CopyTarget
+    {
+        public CopyValue Source { get; set; }
+
+        public CopyValue Target { get; set; }
+    }
+
+    private class CopyValue
+    {
+        public CopyChild Left { get; set; }
+
+        public CopyChild Right { get; set; }
+    }
+
+    private class CopyChild
+    {
+        public string Text { get; set; }
     }
 
     private class SimpleObjectWithNullCheck
