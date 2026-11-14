@@ -26,7 +26,15 @@ foreach ($round in 1..3)
     foreach ($variant in @('before', 'after'))
     {
         $label = "round-$round-$variant"
-        $file = @(Get-ChildItem (Join-Path $run "$label\results") -Filter '*full*.json')
+        $sourceReports = Join-Path $run "$label\results"
+        $file = if (Test-Path -LiteralPath $sourceReports)
+        {
+            @(Get-ChildItem -LiteralPath $sourceReports -Filter '*full*.json')
+        }
+        else
+        {
+            @(Get-Item -LiteralPath (Join-Path $run "$label\results.json"))
+        }
         if ($file.Count -ne 1)
         {
             throw "Ambiguous raw report for $label."
