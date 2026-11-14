@@ -5,6 +5,11 @@ Only three of fifteen successful-membership cases improve in every allowed
 comparison: optional fragments, long prefixes and Unicode literals. All three
 comparisons are consumed; no tuning, discarded launch or fourth run.
 
+[Draft jaslawinMs/aspnetcore#35](https://github.com/jaslawinMs/aspnetcore/pull/35),
+[origin jaslawinMs/aspnetcore#34](https://github.com/jaslawinMs/aspnetcore/issues/34).
+The new draft was immediately browser-open requested; that is not a rendered-page
+verification. It is fork-only, with no upstream submission or request for review.
+
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 [Measured source and compatibility tests](https://github.com/jaslawinMs/aspnetcore/commit/609489170dffb859f50172977fcf20bb49cf6c51):

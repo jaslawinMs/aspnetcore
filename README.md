@@ -40,7 +40,7 @@ well as the largest speedup.
 | F128 | No supported material win; small gains and control regressions retained | [OWIN alternate accept delegate capture](F128/README.md) |
 | F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
 | F131 | [Draft jaslawinMs/aspnetcore#31](https://github.com/jaslawinMs/aspnetcore/pull/31); small/mixed pipeline effects, extra app-lifetime index and unstable case disclosed | [Private OWIN feature-map lookup index](F131/README.md) |
-| F181 | Qualified complete-build proposal; three repeatable targets, small-workload regressions and grouped variance retained | [DFA complex-literal pair enumeration](F181/README.md) |
+| F181 | [Draft jaslawinMs/aspnetcore#35](https://github.com/jaslawinMs/aspnetcore/pull/35); three repeatable complete-build targets, small-workload regressions and grouped variance retained | [DFA complex-literal pair enumeration](F181/README.md) |
 | F241 | [Draft jaslawinMs/aspnetcore#33](https://github.com/jaslawinMs/aspnetcore/pull/33); larger discovery gains, extra heap and small/fallback regressions retained | [Bounded view-component discovery membership](F241/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
