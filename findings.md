@@ -10,7 +10,7 @@ Measurements are local microbenchmarks on a shared Windows box, not production t
 
 ## Additional semantic consolidations
 
-- F119: Exact semantic duplicate of F034: same custom-collection-interface-foreach-enumerator card, ConditionCollection.GetEnumerator implementation and concrete ConditionEvaluator consumer; only recorded end line differs63 versus64. Consolidate evaluation and any proposal under F034 rather than duplicate branches, benchmark budgets or PRs.
+- F119: Consolidated under F034, same card/method/consumer. F034 completed all3 comparisons with no established gain; no separate benchmark budget or PR. Evidence: https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F034/README.md
 
 | ID | Status | Finding | Source at scan revision | Draft PR |
 |---|---|---|---|---|
@@ -45,7 +45,7 @@ Measurements are local microbenchmarks on a shared Windows box, not production t
 | F031 | pending | MVC template rendering synchronously blocks on asynchronous view rendering. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs#L123-L124) | - |
 | F032 | pending | Synchronous response flushing blocks on asynchronous response-start work. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Servers/HttpSys/src/ResponseStream.cs#L48-L48) | - |
 | F033 | pending | Synchronous response writes block on asynchronous response-start work. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Servers/HttpSys/src/ResponseStream.cs#L60-L60) | - |
-| F034 | investigating | Concrete rewrite-condition iteration boxes the List enumerator behind IEnumerator. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/Rewrite/src/IISUrlRewrite/ConditionCollection.cs#L61-L64) | - |
+| F034 | no-gain | Concrete rewrite-condition iteration boxes the List enumerator behind IEnumerator. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/Rewrite/src/IISUrlRewrite/ConditionCollection.cs#L61-L64) | - |
 | F035 | pending | Concrete ValueProviderResult enumeration is forced through an interface enumerator. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Mvc/Mvc.Abstractions/src/ModelBinding/ValueProviderResult.cs#L132-L135) | - |
 | F036 | pending | Concrete ViewDataDictionary iteration is forced through interface-returning enumerators. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs#L586-L594) | - |
 | F038 | pending | Render-tree keyed lookup re-probes each new sibling key when inserting or updating it. | [source](https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs#L354-L368) | - |

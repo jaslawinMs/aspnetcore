@@ -1138,13 +1138,16 @@
         "compatibility_notes": "Pattern-based foreach and List<T>.Enumerator are supported across relevant runtimes. Preserve iteration order, mutation/version checks, Current and Dispose semantics. The owning collection is internal, so the proposed concrete path does not alter the exported framework API. Interface consumers still box; the benefit applies to the inspected concrete evaluator loop. No runtime benchmark was run.",
         "evidence_boundary": "source-only"
       },
-      "status": "investigating",
+      "status": "no-gain",
       "notes": [
-        "Default branch37e809... retains interface-returning GetEnumerator on internal ConditionCollection. F119 is an additional exact semantic duplicate of this same method and card. Acceptance: preserve concrete and both interface enumeration contracts, order, version/mutation checks and Dispose, no exported API changes; benchmark the actual ConditionEvaluator using real producer-created conditions, plus interface controls, at most3 measured comparisons."
+        "Default branch37e809... retains interface-returning GetEnumerator on internal ConditionCollection. F119 is an additional exact semantic duplicate of this same method and card. Acceptance: preserve concrete and both interface enumeration contracts, order, version/mutation checks and Dispose, no exported API changes; benchmark the actual ConditionEvaluator using real producer-created conditions, plus interface controls, at most3 measured comparisons.",
+        "Acceptance: preserve concrete and both interface traversal order/identity plus mutation invalidation (four compatibility cases already green on unchanged current main); full owning Rewrite suite green; all27 real parser/evaluator/interface-control setups green on both DLLs; unchanged public exported API and nongeneric adapter; only publish if at most3 paired real-consumer measurements establish a meaningful CPU and/or allocation benefit with regressions and boundary disclosed. Compatibility tests are not claimed as a red functional regression.",
+        "Four compatibility cases passed individually on original main; full changed Rewrite suite passed481/481 with zero skips; actual XML producer plus evaluator and interface controls passed27/27 Dry cases on both immutable DLL snapshots. Source formatter reports only original CHARSET(1,1), reproduced on original archived file; new test formatter passes. Measuring one comparison first and evaluating before using the remaining two allowed comparisons.",
+        "Completed3 interleaved comparisons,27 cases per launch: actual evaluator allocation unchanged in every paired case; median paired CPU mixed(-8.14% to+7.95%), not a sufficiently consistent gain. Full481-test suite and all4 final compatibility cases on original/candidate green. Experiment preserved at e1551d3fcde0c030e1addccd8c8309810b2f307a; no PR. Evidence: https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F034/README.md"
       ],
       "branch": "autoperf/F034-rewrite-condition-enumeration",
       "pr_url": null,
-      "updated_at": "2026-11-13T15:55:12.5709392-08:00"
+      "updated_at": "2026-11-13T16:30:02.4266627-08:00"
     },
     {
       "id": "F035",
@@ -3191,11 +3194,12 @@
       },
       "status": "duplicate",
       "notes": [
-        "Exact semantic duplicate of F034: same custom-collection-interface-foreach-enumerator card, ConditionCollection.GetEnumerator implementation and concrete ConditionEvaluator consumer; only recorded end line differs63 versus64. Consolidate evaluation and any proposal under F034 rather than duplicate branches, benchmark budgets or PRs."
+        "Exact semantic duplicate of F034: same custom-collection-interface-foreach-enumerator card, ConditionCollection.GetEnumerator implementation and concrete ConditionEvaluator consumer; only recorded end line differs63 versus64. Consolidate evaluation and any proposal under F034 rather than duplicate branches, benchmark budgets or PRs.",
+        "Consolidated under F034, same card/method/consumer. F034 completed all3 comparisons with no established gain; no separate benchmark budget or PR. Evidence: https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F034/README.md"
       ],
-      "branch": null,
+      "branch": "autoperf/F034-rewrite-condition-enumeration",
       "pr_url": null,
-      "updated_at": "2026-11-13T16:02:42.9489682-08:00"
+      "updated_at": "2026-11-13T16:30:02.5515901-08:00"
     },
     {
       "id": "F120",

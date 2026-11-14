@@ -1,0 +1,25 @@
+{
+  "candidate": "F034",
+  "related_duplicate_ids": [
+    "F119"
+  ],
+  "disposition": "no-gain",
+  "baseline_commit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "experiment_commit": "e1551d3fcde0c030e1addccd8c8309810b2f307a",
+  "experiment_branch": "autoperf/F034-rewrite-condition-enumeration",
+  "measured_production_change_commit": "114c45dcbba4fdf533df8c19c93c21c50a390c93",
+  "production_source_sha256": "8DBF9C0C4DC2F530FB5F439AFF34A1C8E821877C595416D179FD327BFF51B5E5",
+  "compatibility_test_source_sha256": "EDBE34C24F7A6502C4DECDC452FD76FA804FD6EA3109DF9551178F4522CCC8A9",
+  "comparisons": 3,
+  "measured_launches": 6,
+  "benchmark_cases_per_launch": 27,
+  "evaluator_cases": 24,
+  "unchanged_interface_controls": 3,
+  "paired_allocation_comparisons": 81,
+  "paired_allocation_differences": 0,
+  "raw_binaries_published": false,
+  "disposition_reason": "No allocation benefit in any paired case and mixed median paired evaluator timing changes from-8.14% to+7.95%; no sufficiently consistent gain was established within the allowed comparisons. No optimization PR.",
+  "compatibility_note": "Final unit coverage explicitly traverses the nongeneric adapter rather than LINQ Cast, which can select the generic path. The final four cases were rerun individually on original production source (verified against before source hash), then the full481-test suite was rerun on candidate source (verified against after hash). This test-only refinement did not change production or benchmark code and did not add measured comparisons.",
+  "snapshot_note": "Source snapshots precede final commits; final production source matches measured after SHA256. The harness/runtime/dependency hashes are identical between variants. Native IIS and HTTP request throughput are outside the boundary.",
+  "controller_note": "All six saved benchmark launch exit codes were0. After the final comparison the PowerShell loop counter hit the validated Round parameter when incrementing beyond3; the counter was separated from that parameter and all162 measured cases were audited without rerunning. The guard still rejects requests beyond3 before launching dotnet."
+}
