@@ -1,0 +1,222 @@
+diff --git a/src/Http/Owin/src/OwinEnvironment.cs b/src/Http/Owin/src/OwinEnvironment.cs
+index 32322fb4d0..6a56ac6c99 100644
+--- a/src/Http/Owin/src/OwinEnvironment.cs
++++ b/src/Http/Owin/src/OwinEnvironment.cs
+@@ -2,6 +2,7 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Collections;
++using System.Collections.Frozen;
+ using System.Collections.Immutable;
+ using System.Globalization;
+ using System.Linq;
+@@ -457,6 +458,9 @@ public class OwinEnvironment : IDictionary<string, object>
+                 }
+             });
+ 
++        // Keep the original map's enumeration and context-copy order.
++        private static readonly FrozenDictionary<string, FeatureMap> _lookupEntries = _entries.ToFrozenDictionary(StringComparer.Ordinal);
++
+         /// <remarks>
+         /// Will be used, only if <see cref="FeatureMaps"/> or <see cref="Clear"/> is called from user-code.
+         /// Is a deep-copy of the singleton <see cref="_entries"/>
+@@ -523,7 +527,7 @@ public class OwinEnvironment : IDictionary<string, object>
+                 return false;
+             }
+ 
+-            if (_entries.TryGetValue(key, out entry))
++            if (_lookupEntries.TryGetValue(key, out entry))
+             {
+                 return true;
+             }
+@@ -543,7 +547,7 @@ public class OwinEnvironment : IDictionary<string, object>
+                 return false;
+             }
+ 
+-            return _entries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key);
++            return _lookupEntries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key);
+         }
+ 
+         public bool Remove(string key)
+@@ -553,7 +557,7 @@ public class OwinEnvironment : IDictionary<string, object>
+                 return _contextEntries.Remove(key);
+             }
+ 
+-            if (_entries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key))
++            if (_lookupEntries.ContainsKey(key) || _contextDependentEntries.ContainsKey(key))
+             {
+                 _deletedKeys ??= new HashSet<string>(StringComparer.Ordinal);
+                 return _deletedKeys.Add(key);
+diff --git a/src/Http/Owin/test/OwinEnvironmentTests.cs b/src/Http/Owin/test/OwinEnvironmentTests.cs
+index 272f61c257..1e8b547478 100644
+--- a/src/Http/Owin/test/OwinEnvironmentTests.cs
++++ b/src/Http/Owin/test/OwinEnvironmentTests.cs
+@@ -2,9 +2,11 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Collections;
++using System.Net;
+ using System.Net.Http;
+ using System.Security.Claims;
+ using Microsoft.AspNetCore.Http;
++using Microsoft.AspNetCore.Http.Features;
+ 
+ namespace Microsoft.AspNetCore.Owin;
+ 
+@@ -217,6 +219,156 @@ public class OwinEnvironmentTests
+         responseBody.Equals(httpContext.Response.Body);
+     }
+ 
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void OwinEnvironmentPreservesMappedAndItemsLookupEquality(bool materializeMaps)
++    {
++        var context = CreateContext();
++        context.Request.Method = "GET";
++        context.Request.Path = "/orders";
++        context.Items["server.LocalPort"] = "fallback";
++        var wrapper = new OwinEnvironment(context);
++        IDictionary<string, object> environment = wrapper;
++        if (materializeMaps)
++        {
++            _ = wrapper.FeatureMaps;
++        }
++
++        Assert.Equal("GET", environment["owin.RequestMethod"]);
++        Assert.True(environment.TryGetValue("owin.RequestPath", out var path));
++        Assert.Equal("/orders", path);
++        Assert.Equal("fallback", environment["server.LocalPort"]);
++        Assert.False(environment.ContainsKey("OWIN.RequestMethod"));
++        Assert.False(environment.TryGetValue("owin.Unknown", out _));
++        Assert.Throws<InvalidOperationException>(() => environment.Add("owin.RequestMethod", "POST"));
++        environment["OWIN.RequestMethod"] = "item";
++        Assert.Equal("item", context.Items["OWIN.RequestMethod"]);
++        Assert.Equal("item", environment["OWIN.RequestMethod"]);
++        Assert.Equal("GET", context.Request.Method);
++        environment["owin.RequestMethod"] = "PATCH";
++        Assert.Equal("PATCH", context.Request.Method);
++        Assert.Equal("PATCH", environment["owin.RequestMethod"]);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void OwinEnvironmentPreservesRemovalFallbackAndNextRequest(bool materializeMaps)
++    {
++        var context = CreateContext();
++        context.Request.Method = "GET";
++        var wrapper = new OwinEnvironment(context);
++        IDictionary<string, object> environment = wrapper;
++        IDictionary<string, OwinEnvironment.FeatureMap> maps = null;
++        if (materializeMaps)
++        {
++            maps = wrapper.FeatureMaps;
++        }
++        var count = environment.Count;
++
++        Assert.True(environment.Remove("owin.RequestMethod"));
++        Assert.Equal(count - 1, environment.Count);
++        Assert.False(environment.Remove("owin.RequestMethod"));
++        Assert.False(environment.TryGetValue("owin.RequestMethod", out _));
++        environment.Add("owin.RequestMethod", "item");
++        Assert.Equal("item", environment["owin.RequestMethod"]);
++        Assert.Equal("GET", context.Request.Method);
++        maps ??= wrapper.FeatureMaps;
++        Assert.DoesNotContain("owin.RequestMethod", maps.Keys);
++        Assert.Equal("item", environment["owin.RequestMethod"]);
++        var nextContext = CreateContext();
++        nextContext.Request.Method = "NEXT";
++        IDictionary<string, object> nextEnvironment = new OwinEnvironment(nextContext);
++        Assert.Equal("NEXT", nextEnvironment["owin.RequestMethod"]);
++    }
++
++    [Fact]
++    public void OwinEnvironmentPreservesCopyOrderCustomizationAndContextBody()
++    {
++        var context = CreateContext();
++        context.Request.Method = "GET";
++        context.Request.Protocol = "HTTP/1.1";
++        context.Connection.Id = "connection";
++        context.Connection.LocalIpAddress = IPAddress.Loopback;
++        context.Connection.RemoteIpAddress = IPAddress.IPv6Loopback;
++        using var originalBody = new MemoryStream();
++        context.Response.Body = originalBody;
++        var wrapper = new OwinEnvironment(context);
++        IDictionary<string, object> environment = wrapper;
++        var originalOrder = environment.Select(pair => pair.Key).ToArray();
++
++        var maps = wrapper.FeatureMaps;
++
++        Assert.Equal(originalOrder, environment.Select(pair => pair.Key));
++        var originalMethodMap = maps["owin.RequestMethod"];
++        var nextContext = CreateContext();
++        nextContext.Request.Method = "NEXT";
++        var nextWrapper = new OwinEnvironment(nextContext);
++        Assert.Same(originalMethodMap, nextWrapper.FeatureMaps["owin.RequestMethod"]);
++        maps["owin.RequestMethod"] = new OwinEnvironment.FeatureMap<IHttpRequestFeature>(
++            feature => feature.Protocol, (feature, value) => feature.Protocol = (string)value);
++        Assert.Equal("HTTP/1.1", environment["owin.RequestMethod"]);
++        environment["owin.RequestMethod"] = "HTTP/2";
++        Assert.Equal("HTTP/2", context.Request.Protocol);
++        Assert.Equal("GET", context.Request.Method);
++        Assert.Equal("NEXT", ((IDictionary<string, object>)nextWrapper)["owin.RequestMethod"]);
++        using var replacementBody = new MemoryStream();
++        environment["owin.ResponseBody"] = replacementBody;
++        Assert.Same(replacementBody, context.Response.Body);
++        Assert.Same(replacementBody, environment["owin.ResponseBody"]);
++        Assert.Same(Stream.Null, ((IDictionary<string, object>)nextWrapper)["owin.ResponseBody"]);
++        Assert.Equal(originalOrder, environment.Keys);
++        var copy = new KeyValuePair<string, object>[environment.Count];
++        environment.CopyTo(copy, 0);
++        Assert.Equal(originalOrder, copy.Take(originalOrder.Length).Select(pair => pair.Key));
++    }
++
++    [Fact]
++    public void OwinEnvironmentPreservesReadOnlyMapReplacement()
++    {
++        var context = CreateContext();
++        IDictionary<string, object> environment = new OwinEnvironment(context);
++        var replacement = new object();
++        var originalCount = environment.Count;
++
++        environment["server.OnSendingHeaders"] = replacement;
++
++        Assert.Same(replacement, context.Items["server.OnSendingHeaders"]);
++        Assert.True(environment.TryGetValue("server.OnSendingHeaders", out var value));
++        Assert.Same(replacement, value);
++        Assert.Equal(originalCount, environment.Count);
++        Assert.True(environment.Remove("server.OnSendingHeaders"));
++        Assert.False(environment.ContainsKey("server.OnSendingHeaders"));
++    }
++
++    [Theory]
++    [InlineData("TryGet")]
++    [InlineData("Get")]
++    [InlineData("Set")]
++    [InlineData("Contains")]
++    [InlineData("Add")]
++    [InlineData("Remove")]
++    public void OwinEnvironmentPreservesNullKeyErrors(string operation)
++    {
++        IDictionary<string, object> environment = new OwinEnvironment(CreateContext());
++        string key = null;
++        Action invoke = operation switch
++        {
++            "TryGet" => () => environment.TryGetValue(key, out _),
++            "Get" => () => _ = environment[key],
++            "Set" => () => environment[key] = "value",
++            "Contains" => () => environment.ContainsKey(key),
++            "Add" => () => environment.Add(key, "value"),
++            "Remove" => () => environment.Remove(key),
++            _ => throw new ArgumentException("Unknown operation.", nameof(operation)),
++        };
++
++        var exception = Assert.Throws<ArgumentNullException>(invoke);
++
++        Assert.Equal(nameof(key), exception.ParamName);
++    }
++
+     private HttpContext CreateContext()
+     {
+         var context = new DefaultHttpContext();

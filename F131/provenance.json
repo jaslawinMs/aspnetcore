@@ -1,0 +1,58 @@
+{
+  "candidate": "F131",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "fb2946a78adb33150ae345b5154d5557cb11275c",
+  "source_branch": "autoperf/F131-owin-feature-map",
+  "source_hashes": [
+    {
+      "path": "src\\Http\\Owin\\src\\OwinEnvironment.cs",
+      "sha256": "8106F4BAD238950B65F36E724081BD5A2CC4AD00CE5231E227E699E5AD0DFDA3"
+    },
+    {
+      "path": "src\\Http\\Owin\\test\\OwinEnvironmentTests.cs",
+      "sha256": "CF7937A1C863F82C165B57D53E7EC727320B0F61DB41B024F27AD8DEAB20636A"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "disposition": "measured draft proposal",
+  "final_comparison_rounds": [
+    2,
+    3
+  ],
+  "initial_prototype_rounds": [
+    1
+  ],
+  "cases_per_launch": 29,
+  "total_complete_case_reports": 174,
+  "source_tuning_count": 1,
+  "launch_order": [
+    "original/frozen",
+    "dictionary/original",
+    "original/dictionary"
+  ],
+  "timing_scope": "Complete warmed public OwinEnvironment reads/writes/AddRemove/enumeration/copy/materialization/construction and actual UseOwin default pipelines over real DefaultHttpContext feature state.",
+  "production_seam": "Three stable-map probes use one privateIReadOnlyDictionary index backed by a once-builtOrdinalDictionary. OriginalImmutable map/count/enumeration/copy and per-context/deletion/body mechanisms are untouched.",
+  "correctness": "Original/frozen/final31Owin tests pass without skips, including all12 new individual cases. Original/frozen/final29 complete actual producer/mutation/pipeline/status/order/body receipts agree. Exact-final-owner untimed storage checks original25FeatureMap references/ordinal comparer/private field/public copy order/no static alias/context isolation.",
+  "final_targeted_results": "All21 affected cases have lower final paired medians;17 improve both pairs. Common ordinary GET/TryGET/SetRead method medians5.38-5.61percent lower; query7.10,requestheaders7.73,status9.44,body14.09,Items13.97,unknown16.97,case-variantItems18.87. Allocations unchanged for every29case/pair.",
+  "full_pipeline_boundary": "Five actual UseOwin final medians1.82-3.06percent lower, but PortsPresent andReadHeaders are0.65/0.44percent higher inround3; NoRead andReadCommon second gains only0.46/0.40percent. These are small/mixed warmed observations, not a stable broad pipeline or production throughput gain.",
+  "controls": "Eight controls do not use the new index in their measured execution. Six have higher medians0.07-4.07percent; Removed_Method lower7.25percent bothpairs and Enumerate mixed/lower1.42median. No noise/cause diagnosis or index-benefit claim from controls.",
+  "unresolved_variance": "AddRemove originalround3mean184.16ns/SD126.72ns/N8 versus round2mean71.18/SD0.43; final60.06/56.34ns. Apparent42.52percent median/69.41percent round3 drop retained, not used as headline benefit or diagnosed as harmless noise. No fourth measurement.",
+  "initial_frozen_prototype": "Round1 common MethodGET/Try/Contains/SetRead regress6.73/16.33/23.64/21.10percent despite gains elsewhere. Complete frozen source/acceptance/storage/tests/29pairs preserved separately. One source-only private dictionary tune; no timing-harness changes.",
+  "extra_initialization_cost": "Originalimmutable ordering map remains plus one additional25entry lookup table. Startup construction and retained size are unmeasured; warm per-context constructor is a control, not cold-static evidence.",
+  "diagnostic_boundary": "Reflection only in untimed storage probes. Original benchmark--verify-storage is frozen-prototype-specific; final standalone storage-check project validates the private read-only-interface dictionary against the exact owning DLL without modifying the measured harness.",
+  "unverified": [
+    "Cold static initialization and retained-memory size",
+    "Hosted HTTP/network throughput",
+    "Other runtimes/architectures",
+    "Concurrent pressure",
+    "Composition with other branches",
+    "Cause of AddRemove/control variance"
+  ],
+  "reproduction": "Standalone benchmark and separate final storage-check sources plus exact successful commands in README; all original/frozen/final raw reports preserved."
+}

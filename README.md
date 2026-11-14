@@ -39,6 +39,7 @@ well as the largest speedup.
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
 | F128 | No supported material win; small gains and control regressions retained | [OWIN alternate accept delegate capture](F128/README.md) |
 | F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
+| F131 | Measured proposal; small/mixed pipeline effects, extra app-lifetime index and unstable case disclosed | [Private OWIN feature-map lookup index](F131/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
 microbenchmark observations, not production throughput or universal performance
