@@ -1,6 +1,7 @@
 # F106: per-call enum-name reverse lookup
 
 **Measured, fork-only proposal with substantial workload trade-offs.**
+[Draft jaslawinMs/aspnetcore#18](https://github.com/jaslawinMs/aspnetcore/pull/18).
 Source: `aed53fce5281e7f3d9a54c2e0ba6a45a42c234f5`.
 
 Independent upstream baseline:
