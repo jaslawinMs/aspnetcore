@@ -421,18 +421,15 @@ internal static class ServiceDescriptorHelpers
                     throw new InvalidOperationException($"Couldn't find matching field for body '{body}' on {methodDescriptor.InputType.Name}.");
                 }
 
-                var propertyName = FormatUnderscoreName(bodyDescriptor.Name, pascalCase: true, preservePeriod: false);
-                var propertyInfo = bodyDescriptor.ContainingType.ClrType.GetProperty(propertyName);
-
                 if (bodyDescriptor.IsRepeated)
                 {
                     // A repeating field isn't a message type. The JSON parser will parse using the containing
                     // type to get the repeating collection.
-                    return new BodyDescriptorInfo(bodyDescriptor.ContainingType, bodyDescriptor, isDescriptorRepeated: true, propertyInfo);
+                    return new BodyDescriptorInfo(bodyDescriptor.ContainingType, bodyDescriptor, isDescriptorRepeated: true);
                 }
                 else
                 {
-                    return new BodyDescriptorInfo(bodyDescriptor.MessageType, bodyDescriptor, isDescriptorRepeated: false, propertyInfo);
+                    return new BodyDescriptorInfo(bodyDescriptor.MessageType, bodyDescriptor, isDescriptorRepeated: false);
                 }
             }
             else
