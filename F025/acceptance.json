@@ -1,0 +1,36 @@
+{
+  "candidate": "F025",
+  "defined_before_implementation": true,
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F025-bson-tempdata-stream",
+  "production_change": "Evaluate the existing shared PooledMemoryStream instead of a growable MemoryStream during BSON TempData serialization. Retain the independently owned byte-array result, validation, empty/null fast paths, writer lifetime and existing serializer settings. Do not impose a new payload limit.",
+  "history": "The original stream/ToArray seam dates to cookie TempData support in 89bd6dc1cd188772f9b85eb75ec0d79506a3bf2f (2016-09-07). Newtonsoft.Json.Bson is pinned to 1.0.2; its real writer uses BinaryWriter for type markers, lengths, terminators and UTF-8 payloads.",
+  "compatibility": [
+    "Original/final owning NewtonsoftJson suites and each individual focused BsonTempDataSerializerTest outcome pass.",
+    "All 21 actual DI-resolved BSON serializer cases preserve exact serialized bytes, complete round-trip dictionaries and returned-array ownership.",
+    "String and Unicode BSON bytes are checked against independently encoded BSON document/string framing; every nonempty case records its payload SHA-256 and complete deserialized JSON.",
+    "An untimed real CookieTempDataProvider save/load consumes the DI-resolved serializer, produces real response cookies and restores the complete mixed dictionary.",
+    "Unsupported objects retain the exact existing InvalidOperationException before serialization; null/empty output remains Array.Empty<byte>().",
+    "No exported API, serializer configuration, dependency version or retained metadata cache is changed."
+  ],
+  "measurement": {
+    "expected_cases": 21,
+    "maximum_comparisons": 3,
+    "minimum_measurements_per_case": 8,
+    "outliers": "DontRemove",
+    "actual_target": "DI-resolved Microsoft.AspNetCore.Mvc.NewtonsoftJson.BsonTempDataSerializer.Serialize",
+    "scope": "Warmed real serializer and ArrayPool behavior. Cookie protection/chunking and round-trip deserialization are preflight contracts, not timed operations.",
+    "policy": "Retain every timing/allocation trade-off and both empty/null controls. Large payloads are stress cases, not claims about typical cookie sizes."
+  },
+  "hot_reload": "The proposal changes per-call stream storage only; it does not add or alter retained type/member metadata.",
+  "excluded": ["HTTP throughput", "Cold pool rents", "Pool pressure/concurrency", "Typical cookie payload distribution", "Native IIS/ANCM", "Other runtimes", "Composition with other proposals"],
+  "new_exported_api": false,
+  "tuning_after_round_1": "Keep the complete first pair. The initial pool-only prototype improves large text cases but increases all six array allocations and many array/small-input times. BSON 1.0.2 writes type markers and terminators through BinaryWriter; the existing pooled helper inherits Stream.WriteByte. Add a minimal WriteByte override delegating to the existing span Write path. The existing 25 shared-stream tests already cover WriteByte growth, sparse gaps, maximum capacity, position overflow and disposal. Validate them original/final. This shared-source tune changes both the NewtonsoftJson and WebUtilities DLLs; disclose and hash both, rather than claiming a target-only binary difference. Two measured comparisons remain.",
+  "existing_validation_exclusions": [
+    "The owning suite skips NewtonsoftJsonInputFormatterTest.JsonFormatter_EscapedKeys_SingleQuote under its existing Fact(Skip) for dotnet/aspnetcore#39069. All 50 BSON cases run and pass; this unrelated formatter assertion is not reached.",
+    "The original BsonTempDataSerializerTest.cs contains a UTF-8 BOM. Original/current formatter checks both report only CHARSET; preserve it under the minimal-diff policy. Both changed shipping C# files pass whitespace checks; no new whitespace diagnostic."
+  ],
+  "final_measurement_adjudication": "All19nonempty allocation pairs improve10.71-59.99percent;9lower time medians and12higher. Eight cases improve time in both final pairs. Publish only a workload-specific text/allocation proposal, explicitly retaining array/small-input costs and the unresolved Array_1_256 -51.24/+406.00percent timing pair.",
+  "final_dependency_control": "after-3 is a fresh immutable capture of the unchanged after-2 source. It freezes eight source-unchanged dependent DLL/PDBs to baseline public identities. Only NewtonsoftJson and WebUtilities differ; all21 payload/consumer preflights and Dry cases pass this controlled closure. Full source-built owning tests pass separately.",
+  "comparisons_consumed": 3
+}

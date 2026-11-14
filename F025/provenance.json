@@ -1,0 +1,64 @@
+{
+  "candidate": "F025",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "bb78b3d6b097895c85dcd006bc2fad50908ac43d",
+  "source_branch": "autoperf/F025-bson-tempdata-stream",
+  "source_hashes": [
+    {
+      "path": "src\\Mvc\\Mvc.NewtonsoftJson\\src\\BsonTempDataSerializer.cs",
+      "sha256": "380189855A0722CD139B243B80646579ECB1B560FA4030C82E5880D93F6E1695"
+    },
+    {
+      "path": "src\\Mvc\\Mvc.NewtonsoftJson\\src\\Microsoft.AspNetCore.Mvc.NewtonsoftJson.csproj",
+      "sha256": "B928AEC0406447D896FCFF911A9EC5F11CFD981B0A99D0A7FBDFA2FBE4B584D4"
+    },
+    {
+      "path": "src\\Mvc\\Mvc.NewtonsoftJson\\test\\BsonTempDataSerializerTest.cs",
+      "sha256": "2F9FB984CBD6AB0BB47DEDD732598DA08540629FECEEA0DDC47493B8129A8EF2"
+    },
+    {
+      "path": "src\\Shared\\PooledMemoryStream.cs",
+      "sha256": "96BB75A1016C0ADA004AAD8644EDFB456857850C61041A1B4383919026EB02C6"
+    }
+  ],
+  "final_snapshot": "after-3",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": false,
+  "additional_changed_assemblies": [
+    "Microsoft.AspNetCore.WebUtilities.dll"
+  ],
+  "unrelated_dependencies_unchanged": true,
+  "final_comparison_rounds": [
+    2,
+    3
+  ],
+  "prototype_comparison_rounds": [
+    1
+  ],
+  "cases_per_launch": 21,
+  "performance_assessment": "Workload-specific text/allocation proposal, not an all-path win. All19nonempty allocation pairs improve10.71-59.99percent. Nine cases have lower time medians,12higher;eight improve inboth final pairs,six regress inboth.",
+  "repeatable_text_gains": "Seven larger text/Unicode cases improve time in both final pairs,with median improvements18.43-39.76percent. Text_64_1024 median improves5.04percent but one pair regresses5.03percent.",
+  "repeatable_regressions": "Array_1_8 +15.31/+16.28percent;Array_1_4096 +6.65/+11.07percent;Text_8_16 +8.51/+6.26percent;Mixed +4.39/+2.52percent. Both empty/null controls also regress inboth final pairs,while remaining0B/op.",
+  "unexplained_instability": "Array_1_256 paired time changes -51.24/+406.00percent,median+177.38percent. Original means70.637/20.483us;changed34.443/103.645us. Original round2 andchangedround3 have standarddeviations75.433/105.814us. All8samples retained;no harmless-noise,GC,JIT orhost diagnosis claimed.",
+  "source_tuning": "One tune afterpair1:addPooledMemoryStream.WriteByte override delegatingtospanWrite. It removes the inherited byte-array bridge used by BSON's BinaryWriter. The installed runtime method IL containsnewarrSystem.Byte;actualIL/MVID recordedafterpublic source lookup returned404.",
+  "source_scope": "Four files29additions2deletions:BSONusing/stream/result changes,one shared-source Compile item,5-line sharedWriteByte override,19linesfor3permanentownershipcases. Existing validation,serializer settings,branches,nested writer lifetime andfinal independentlyowned byte-array copy remain.",
+  "dependency_control": "Finalafter3snapshot reuses the exact beforeharness/configuration andeight source-unchanged dependentDLL/PDBs withmatchingpublicidentities. OnlyNewtonsoftJson andWebUtilities differ. after2 wasnotmeasured;no source change betweenafter2/after3. Full source-built tests pass separately.",
+  "producer_reachability": "DI AddMvcCore().AddNewtonsoftJson resolvesactualBsonTempDataSerializer. ActualCookieTempDataProvider.SaveTempData emitsresponsecookies andLoadTempData consumes them usingthe samecodec;countingwrapperonlyuntimed. Timedmethodcallsordinaryactualcodec.",
+  "correctness": "All21setup payloadhashes/fullroundtrip/ownership/cookieproducer receiptsmatchoriginal/final. String/Unicode bytes checkedagainstindependentBSON framing. Bothowningsuites253passed1existingSkipped;all50BSONoutcomes andnew3rows individuallypass. Original/finalsharedstream25/25includingWriteBytegrowth,gaps,bounds,overflow,disposal.",
+  "existing_skipped_test": "NewtonsoftJsonInputFormatterTest.JsonFormatter_EscapedKeys_SingleQuote remainsunderexistingFact(Skip)fordotnet/aspnetcore#39069;notreached. FaithfulchangedboundaryisactualBSONserializer/cookieTempData,notthisunrelatedformatter.",
+  "formatting": "BothchangedshippingCSharpfilespasswhitespace. Original/currenttestfilechecksreportonlyCHARSETduetountouchedUTF8BOM. Preservebaselineencodingundertheminimaldiffpolicy;no newdiagnostic. Gitdiffcheckpasses.",
+  "hot_reload": "Per-callstreamstorageonly;nonew oraltered retained type/membermetadata.",
+  "preflight_history": "Initialprivatefixturecompilemissinglogging/options imports,unnecessaryAddViews dependencyclosure,andlocal-versus-UTCdateoracle failureswerecorrectedbeforeanybeforeSnapshot orsteadymeasurement. Sourcebehaviorwasnotchangedtosatisfythoseoracles.",
+  "unverified": [
+    "Cold pool rents",
+    "Pool pressure/concurrency",
+    "Typical cookie payload distribution",
+    "HTTP throughput",
+    "Other shared-helper consumer performance",
+    "Native IIS/ANCM",
+    "Other runtimes",
+    "Composition with other independent proposals"
+  ]
+}
