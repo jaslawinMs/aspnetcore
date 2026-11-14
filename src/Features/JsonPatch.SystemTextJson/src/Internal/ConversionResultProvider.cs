@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Buffers;
 using System.Text.Json;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
 
@@ -79,7 +81,8 @@ internal static class ConversionResultProvider
             return JsonSerializer.Deserialize(jsonElement, targetType, serializerOptions);
         }
 
-        using JsonDocument doc = JsonSerializer.SerializeToDocument(value, serializerOptions);
-        return JsonSerializer.Deserialize(doc.RootElement, targetType, serializerOptions);
+        using var stream = new PooledMemoryStream(ArrayPool<byte>.Shared, maxCapacity: int.MaxValue);
+        JsonSerializer.Serialize(stream, value, serializerOptions);
+        return JsonSerializer.Deserialize(stream.WrittenMemory.Span, targetType, serializerOptions);
     }
 }
