@@ -791,7 +791,7 @@ public class DefaultHtmlGenerator : IHtmlGenerator
 
             var replaceValidationMessageContents = string.IsNullOrEmpty(message);
             tagBuilder.MergeAttribute("data-valmsg-replace",
-                replaceValidationMessageContents.ToString().ToLowerInvariant());
+                replaceValidationMessageContents ? "true" : "false");
         }
 
         return tagBuilder;
