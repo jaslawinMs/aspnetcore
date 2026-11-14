@@ -1,0 +1,58 @@
+{
+  "candidate": "F027",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "26967f4651973322869fe8c6c202c31c8ab21e15",
+  "source_branch": "autoperf/F027-jsonpatch-direct-buffer",
+  "source_hashes": [
+    {
+      "sha256": "3F0F33E7C52E583A904A5D1DAD37EDB8AAAA66AE49DCB700EAD21A5E49083EB3",
+      "path": "src\\Features\\JsonPatch.SystemTextJson\\src\\Internal\\ConversionResultProvider.cs"
+    },
+    {
+      "sha256": "EB7CC0CE93ACEAA8A6B71D3AAE388275959B148D02757D7E5D37977629D11EBE",
+      "path": "src\\Features\\JsonPatch.SystemTextJson\\src\\Microsoft.AspNetCore.JsonPatch.SystemTextJson.csproj"
+    },
+    {
+      "sha256": "5B8D3D16700056E2340F21D3E1B2DAF9D25D20E1674E884A648A13CCCF493578",
+      "path": "src\\Features\\JsonPatch.SystemTextJson\\test\\IntegrationTests\\NestedObjectIntegrationTest.cs"
+    },
+    {
+      "sha256": "E0A4B4F494E8468C475A598DCDEA9027182504404F6C0205CE72D91601CE2639",
+      "path": "src\\Shared\\PooledMemoryStream.cs"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "final_comparison_rounds": [
+    2,
+    3
+  ],
+  "rejected_prototype_rounds": [
+    1
+  ],
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "cases_per_launch": 18,
+  "minimum_measured_iterations": 8,
+  "final_launch_order": [
+    "changed/original",
+    "original/changed"
+  ],
+  "timing_scope": "Actual public JsonPatchDocument.ApplyTo; complete typed conversion,deep-copy identities and actual deserialized JsonElement control checked in setup.",
+  "correctness": "19 original focused tests,253 final owning tests,25 existing shared stream tests,all6 new public-patch rows individually pass original/final,0 skipped",
+  "no_performance_aggregation_across_source_versions": true,
+  "harness_dependencies_unchanged": true,
+  "affected_cases": "All13 affected cases improved in both final pairs;median paired changes15.80-36.46 percent lower time,about72B/op lower warmed heap.",
+  "unresolved_control": "Assignable_1: original303/107ns,final203/412ns;median paired+127.01 percent,opposite per-round signs,per-launch medians also vary. Not discarded,not diagnosed,not dismissed as one outlier;no allocation gain claimed for its varying baseline.",
+  "allocation_scope": "Warmed managed heap only;retained pool storage,cold rents and concurrent pool pressure unmeasured;minor largest-case byte variation is not additional claimed savings.",
+  "unverified": [
+    "Assignable-value control performance explanation",
+    "HTTP parsing/throughput",
+    "Browser/native IIS workflows",
+    "Other runtimes",
+    "Trimmed/NativeAOT execution",
+    "Concurrent pool pressure",
+    "Retained pool memory",
+    "Composition with other independent branches"
+  ],
+  "reproduction": "See README.md exact commands and complete standalone project;AspNetCoreRoot selects the source checkout."
+}

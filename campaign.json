@@ -960,11 +960,16 @@
         "snippet": "using JsonDocument doc = JsonSerializer.SerializeToDocument(value, serializerOptions);\nreturn JsonSerializer.Deserialize(doc.RootElement, targetType, serializerOptions);",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "validated",
+      "notes": [
+        "Examining current main temporary JsonDocument conversion and actual public patch producers before implementation. Candidate is a UTF8 serialization/deserialization buffer,not a metadata cache; preserve existing JsonElement fast path and conversion/copy/error semantics.",
+        "Original19 focused public-patch tests and candidate full owning suite pass; all6 numeric/options/failure and copy/reference rows individually pass both. All18 actual ApplyTo benchmark setups pass both frozen variants. Earlier missing test assets restored after NETSDK1004; initial custom-options fixture lacked a type resolver and was corrected before conversion assertions/timing. External harness uses explicit source assemblies without transitive shared-framework mismatch. Beginning UTF8 byte-array prototype measurements with allocations retained.",
+        "Comparison1 UTF8 byte-array prototype rejected for about40 percent large-case heap growth despite lower CPU. Tuning reuses shared PooledMemoryStream, BCL stream serializer and span deserializer; no copied writer options, new package, exported API or cross-assembly private access. Shared helper made explicitly imported/nullable for legacy consumer without algorithm changes. Final owning+shared stream tests and18 setups pass; reserving comparisons2/3 solely for pooled variant.",
+        "All3 comparisons consumed: allocating UTF8 prototype kept separately; final pooled variant only rounds2/3 (changed/original then original/changed). All13 affected cases improve15.80-36.46 percent median paired time with about72B/op less heap; no source-variant averaging. Four JsonElement controls within-2.24 to+0.08 percent median. Assignable_1 control is unexplained/unstable:303/107ns original,203/412ns final,+127.01 percent paired median; retained,not dismissed or attributed,no fourth run. Original19 focused tests,final253 owning+25 shared stream tests,all6 rows individually pass both;18 setups each pass. Pool-retention/concurrency/HTTP/other-runtime scope unverified."
+      ],
+      "branch": "autoperf/F027-jsonpatch-direct-buffer",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T18:12:57.7197907-08:00"
     },
     {
       "id": "F028",

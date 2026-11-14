@@ -1,0 +1,22 @@
+{
+  "id": "F027",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "target": "ConversionResultProvider.ConvertToTargetType temporary JsonDocument for non-JsonElement values",
+  "planned_change": "Serialize directly to UTF8 bytes and deserialize those bytes, preserving the existing JsonElement fast path. Do not copy serializer internals or add a cache.",
+  "tuning_after_comparison_1": "The byte-array prototype reduced CPU but increased large-payload allocations about40 percent. Reuse the existing shared PooledMemoryStream with BCL stream serialization and span deserialization; preserve all original compatibility/measurement criteria and retain the rejected prototype separately.",
+  "producer": "Actual public JsonPatchDocument.Replace and Copy operations, including a real serialized/deserialized patch as the JsonElement control.",
+  "compatibility": [
+    "Every new numeric/options/failure and deep-copy/reference-handling row passes individually on original and changed source.",
+    "Preserve actual public patch outcomes, failed-conversion non-mutation, custom serializer options and deep-copy reference independence.",
+    "Existing custom-converter and full owning tests pass.",
+    "No exported API change, persistent cache, package or configuration changes."
+  ],
+  "measurement": {
+    "owner": "Actual public JsonPatchDocument.ApplyTo, not a copied serializer/helper.",
+    "cases": "Scalar conversion and assignable control; object projection, object copy, array copy and actual deserialized JsonElement control at sizes1,16,256,4096.",
+    "expected_cases": 18,
+    "maximum_paired_comparisons": 3,
+    "early_stop": "A clear large win can stop early; reject or tune material allocation regressions rather than publish only a CPU headline.",
+    "scope": "Public patch CPU and managed allocations, not HTTP throughput. Programmatic typed values and copies reach the changed path; deserialized JsonElement values retain their original path."
+  }
+}
