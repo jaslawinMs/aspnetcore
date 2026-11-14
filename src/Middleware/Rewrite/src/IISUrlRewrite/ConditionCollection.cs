@@ -58,7 +58,12 @@ internal sealed class ConditionCollection : IEnumerable<Condition>
         return _conditions.GetEnumerator();
     }
 
-    public IEnumerator<Condition> GetEnumerator()
+    public List<Condition>.Enumerator GetEnumerator()
+    {
+        return _conditions.GetEnumerator();
+    }
+
+    IEnumerator<Condition> IEnumerable<Condition>.GetEnumerator()
     {
         return _conditions.GetEnumerator();
     }
