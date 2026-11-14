@@ -1,5 +1,7 @@
 # F009: avoid growing-list scans in validation summaries
 
+[Draft proposal: jaslawinMs/aspnetcore#8](https://github.com/jaslawinMs/aspnetcore/pull/8).
+
 Source proposal: `741b8c19ac10117d253ce74c1e9d6c00fd463547`.
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
