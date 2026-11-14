@@ -8,13 +8,16 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.InternalTesting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Moq;
 
 namespace Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -953,6 +956,80 @@ public class DefaultHtmlGeneratorTest
     }
 
     [Theory]
+    [InlineData(nameof(Model.RegularEnum), new[] { "Two" }, false, true, new[] { "2", "Two" }, new[] { "2" })]
+    [InlineData(nameof(Model.RegularEnum), new[] { " Two " }, false, true, new[] { "2", "Two" }, new[] { "2" })]
+    [InlineData(nameof(Model.RegularEnum), new[] { "two" }, false, true, new[] { "two" }, new string[0])]
+    [InlineData(nameof(Model.RegularEnum), new[] { "43" }, false, false, new[] { "43" }, new[] { "43" })]
+    [InlineData(nameof(Model.RegularEnum), new[] { "One, Two" }, false, true, new[] { "One, Two", "3", "Three" }, new[] { "3" })]
+    [InlineData(nameof(Model.FlagsEnum), new[] { "Two, Four" }, false, false, new[] { "Two, Four", "6" }, new[] { "6" })]
+    [InlineData(nameof(Model.RegularEnum), new[] { "garbage" }, false, false, new[] { "garbage" }, new[] { "garbage" })]
+    [InlineData(nameof(Model.NullableEnum), new[] { "" }, false, true, new[] { "" }, new[] { "" })]
+    [InlineData(nameof(Model.RegularEnums), new[] { "One", "Two" }, true, true, new[] { "1", "One", "2", "Two" }, new[] { "1", "2" })]
+    public async Task GenerateSelect_PreservesBoundEnumCurrentValuesAndSelection(
+        string propertyName,
+        string[] submittedValues,
+        bool allowMultiple,
+        bool expectedModelSet,
+        string[] expectedCurrentValues,
+        string[] expectedSelectedValues)
+    {
+        var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+        var generator = GetGenerator(metadataProvider);
+        var viewContext = GetViewContext<Model>(model: null, metadataProvider: metadataProvider);
+        var metadata = metadataProvider.GetMetadataForProperty(typeof(Model), propertyName);
+        var elementMetadata = allowMultiple ? metadata.ElementMetadata : metadata;
+        Assert.True(elementMetadata.IsEnum);
+        var values = new Dictionary<string, StringValues> { [propertyName] = submittedValues };
+        var valueProvider = new FormValueProvider(
+            BindingSource.Form,
+            new FormCollection(values),
+            CultureInfo.InvariantCulture);
+        var bindingContext = DefaultModelBindingContext.CreateBindingContext(
+            viewContext,
+            valueProvider,
+            metadata,
+            bindingInfo: null,
+            modelName: propertyName);
+        var enumBinder = new EnumTypeModelBinder(
+            suppressBindingUndefinedValueToEnumType: true,
+            modelType: elementMetadata.UnderlyingOrModelType,
+            loggerFactory: NullLoggerFactory.Instance);
+        IModelBinder binder = allowMultiple
+            ? new CollectionModelBinder<RegularEnum>(enumBinder, NullLoggerFactory.Instance)
+            : enumBinder;
+        await binder.BindModelAsync(bindingContext);
+
+        Assert.Equal(expectedModelSet, bindingContext.Result.IsModelSet);
+        var entry = Assert.Single(viewContext.ModelState).Value;
+        Assert.Equal(string.Join(",", submittedValues), entry.AttemptedValue);
+        Assert.Equal(expectedModelSet ? 0 : 1, entry.Errors.Count);
+
+        var currentValues = generator.GetCurrentValues(
+            viewContext,
+            modelExplorer: null,
+            expression: propertyName,
+            allowMultiple);
+        Assert.Equal(expectedCurrentValues, currentValues);
+
+        var optionValues = new[] { "", "0", "1", "2", "3", "6", "43", "garbage" };
+        var selectList = optionValues.Select(value => new SelectListItem { Text = value, Value = value });
+        var result = generator.GenerateSelect(
+            viewContext,
+            modelExplorer: null,
+            optionLabel: null,
+            expression: propertyName,
+            selectList,
+            allowMultiple,
+            htmlAttributes: null);
+        var expectedOptions = string.Concat(optionValues.Select(value =>
+            "<option" +
+            (expectedSelectedValues.Contains(value, StringComparer.Ordinal) ? " selected=\"selected\"" : string.Empty) +
+            " value=\"" + value + "\">" + value + "</option>" + Environment.NewLine));
+
+        Assert.Equal(expectedOptions, HtmlContentUtilities.HtmlContentToString(result.InnerHtml, HtmlEncoder.Default));
+    }
+
+    [Theory]
     [InlineData(true, "")]
     [InlineData(false, "<input name=\"formFieldName\" type=\"hidden\" value=\"requestToken\" />")]
     public void GenerateAntiforgery_GeneratesAntiforgeryFieldsOnlyIfRequired(
@@ -1092,6 +1169,8 @@ public class DefaultHtmlGeneratorTest
         public FlagsEnum FlagsEnum { get; set; }
 
         public RegularEnum? NullableEnum { get; set; }
+
+        public List<RegularEnum> RegularEnums { get; set; }
 
         public List<string> Collection { get; } = new List<string>();
     }

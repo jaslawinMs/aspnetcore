@@ -6,7 +6,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Html;
@@ -24,9 +23,6 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures;
 public class DefaultHtmlGenerator : IHtmlGenerator
 {
     private const string HiddenListItem = @"<li style=""display:none""></li>";
-    private static readonly MethodInfo ConvertEnumFromStringMethod =
-        typeof(DefaultHtmlGenerator).GetTypeInfo().GetDeclaredMethod(nameof(ConvertEnumFromString));
-
     // See: (http://www.w3.org/TR/html5/forms.html#the-input-element)
     private static readonly string[] _placeholderInputTypes =
         new[] { "text", "search", "url", "tel", "email", "password", "number" };
@@ -995,8 +991,7 @@ public class DefaultHtmlGenerator : IHtmlGenerator
                 else if (!string.IsNullOrEmpty(stringValue))
                 {
                     // E.g. got a string from ModelState.
-                    var methodInfo = ConvertEnumFromStringMethod.MakeGenericMethod(innerType);
-                    enumValue = (Enum)methodInfo.Invoke(obj: null, parameters: new[] { stringValue });
+                    enumValue = (Enum)ConvertEnumFromString(stringValue, innerType);
                 }
             }
 
@@ -1394,14 +1389,14 @@ public class DefaultHtmlGenerator : IHtmlGenerator
         }
     }
 
-    private static object ConvertEnumFromString<TEnum>(string value) where TEnum : struct
+    private static object ConvertEnumFromString(string value, Type targetType)
     {
-        if (Enum.TryParse(value, out TEnum enumValue))
+        if (Enum.TryParse(targetType, value, out var enumValue))
         {
             return enumValue;
         }
 
-        // Do not return default(TEnum) when parse was unsuccessful.
+        // Do not return an enum value when parse was unsuccessful.
         return null;
     }
 
