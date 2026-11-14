@@ -3,8 +3,13 @@
 
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -388,6 +393,112 @@ public class HtmlHelperValidationSummaryTest
 
         // Assert
         Assert.Equal(expected, HtmlContentUtilities.HtmlContentToString(result));
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    [InlineData(2, true)]
+    public async Task ValidationSummary_PreservesBoundErrorsWithDifferentViewMetadata(
+        int metadataEntryCount,
+        bool excludePropertyErrors)
+    {
+        var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+        IHtmlHelper html = metadataEntryCount switch
+        {
+            0 => DefaultTemplatesUtilities.GetHtmlHelper<object>(model: null, provider: metadataProvider),
+            1 => DefaultTemplatesUtilities.GetHtmlHelper(new ValidationProjection(), metadataProvider),
+            2 => DefaultTemplatesUtilities.GetHtmlHelper(new ValidationProjectionWithA(), metadataProvider),
+            _ => throw new ArgumentOutOfRangeException(nameof(metadataEntryCount)),
+        };
+        html.ViewContext.ClientValidationEnabled = true;
+        var actionContext = new ActionContext(
+            html.ViewContext.HttpContext,
+            html.ViewContext.RouteData,
+            html.ViewContext.ActionDescriptor,
+            html.ViewData.ModelState);
+        var values = new Dictionary<string, StringValues>
+        {
+            [nameof(ValidationProjectionWithA.A)] = "invalid-a",
+            [nameof(ValidationProjection.Z)] = "invalid-z",
+            ["Items.index"] = new[] { "0", "1", "2" },
+            ["Items[0]"] = "invalid-first",
+            ["Items[1]"] = "1",
+            ["Items[2]"] = "invalid-last",
+        };
+        var valueProvider = new FormValueProvider(
+            BindingSource.Form,
+            new FormCollection(values),
+            CultureInfo.InvariantCulture);
+        var elementBinder = new SimpleTypeModelBinder(typeof(int), NullLoggerFactory.Instance);
+        foreach (var name in new[] { nameof(ValidationProjectionWithA.A), nameof(ValidationProjection.Z) })
+        {
+            var bindingContext = DefaultModelBindingContext.CreateBindingContext(
+                actionContext,
+                valueProvider,
+                metadataProvider.GetMetadataForType(typeof(int)),
+                bindingInfo: null,
+                modelName: name);
+            await elementBinder.BindModelAsync(bindingContext);
+            Assert.False(bindingContext.Result.IsModelSet);
+        }
+
+        var collectionContext = DefaultModelBindingContext.CreateBindingContext(
+            actionContext,
+            valueProvider,
+            metadataProvider.GetMetadataForType(typeof(List<int>)),
+            bindingInfo: null,
+            modelName: "Items");
+        var collectionBinder = new CollectionModelBinder<int>(elementBinder, NullLoggerFactory.Instance);
+        await collectionBinder.BindModelAsync(collectionContext);
+
+        Assert.True(collectionContext.Result.IsModelSet);
+        Assert.Equal(new[] { 0, 1, 0 }, Assert.IsType<List<int>>(collectionContext.Result.Model));
+        Assert.Equal(5, html.ViewData.ModelState.Count);
+        Assert.Equal(4, html.ViewData.ModelState.ErrorCount);
+        if (excludePropertyErrors)
+        {
+            html.ViewData.TemplateInfo.HtmlFieldPrefix = nameof(ValidationProjection.Z);
+        }
+
+        var expectedKeys = excludePropertyErrors
+            ? new[] { nameof(ValidationProjection.Z) }
+            : metadataEntryCount > 0
+                ? new[] { nameof(ValidationProjection.Z), nameof(ValidationProjectionWithA.A), "Items[0]", "Items[2]" }
+                : new[] { nameof(ValidationProjectionWithA.A), nameof(ValidationProjection.Z), "Items[0]", "Items[2]" };
+        var expectedItems = string.Concat(expectedKeys.Select(key =>
+        {
+            var error = Assert.Single(html.ViewData.ModelState[key].Errors);
+            Assert.NotEmpty(error.ErrorMessage);
+
+            return "<li>HtmlEncode[[" + error.ErrorMessage + "]]</li>" + Environment.NewLine;
+        }));
+        var summaryAttribute = excludePropertyErrors ? string.Empty : " data-valmsg-summary=\"HtmlEncode[[true]]\"";
+        var expected = "<div class=\"HtmlEncode[[validation-summary-errors]]\"" + summaryAttribute + "><ul>" +
+            expectedItems + "</ul></div>";
+
+        var result = html.ValidationSummary(
+            excludePropertyErrors,
+            message: null,
+            htmlAttributes: null,
+            tag: null);
+
+        Assert.Equal(expected, HtmlContentUtilities.HtmlContentToString(result));
+    }
+
+    private sealed class ValidationProjection
+    {
+        public int Z { get; set; }
+    }
+
+    private sealed class ValidationProjectionWithA
+    {
+        public int Z { get; set; }
+
+        public int A { get; set; }
     }
 
     [Fact]
