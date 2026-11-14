@@ -13,6 +13,57 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Tests;
 public class HttpUtilitiesTest
 {
     [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    [InlineData(11)]
+    [InlineData(12)]
+    [InlineData(13)]
+    [InlineData(14)]
+    [InlineData(15)]
+    public void GetsCustomMethodForEveryHashBucket(int bucket)
+    {
+        var input = Encoding.ASCII.GetBytes("AZZAZZZZ");
+        input[0] = (byte)('A' | ((bucket & 3) << 2));
+        input[3] = (byte)('A' | ((bucket >> 2) << 1));
+
+        var result = ((ReadOnlySpan<byte>)input).GetKnownMethod(out var method, out var length);
+
+        Assert.False(result);
+        Assert.Equal(HttpMethod.Custom, method);
+        Assert.Equal(0, length);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    public void DoesNotReadIncompleteNonGetMethodPrefix(int length)
+    {
+        var input = Encoding.ASCII.GetBytes("CONNECT ");
+        var prefix = new ReadOnlySpan<byte>(input, 0, length);
+
+        var result = prefix.GetKnownMethod(out var method, out var methodLength);
+
+        Assert.False(result);
+        Assert.Equal(HttpMethod.Custom, method);
+        Assert.Equal(0, methodLength);
+    }
+
+    [Theory]
     [InlineData(0x0100, 3)]
     [InlineData(0x0100, 4)]
     [InlineData(0x0100, 5)]
