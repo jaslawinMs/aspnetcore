@@ -6,6 +6,11 @@ median paired change, allocating 224 rather than 952 B/op. All three allowed
 comparisons are consumed: one initial StringBuilder pair and two final bounded
 character-buffer pairs. The two implementations are never aggregated.
 
+[Draft jaslawinMs/aspnetcore#37](https://github.com/jaslawinMs/aspnetcore/pull/37),
+[origin jaslawinMs/aspnetcore#36](https://github.com/jaslawinMs/aspnetcore/issues/36).
+The new draft was immediately browser-open requested; this is not rendered-page
+verification. Fork-only, with no upstream submission or request for review.
+
 Independent baseline: dotnet/aspnetcore
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 [Final measured source and compatibility tests](https://github.com/jaslawinMs/aspnetcore/commit/d251897b3f9dffb2b614b98345a752b47dd5f3d7):
@@ -226,3 +231,6 @@ and exact threshold timing. **Large separator-only inputs allocate a heap array
 even though the old method allocates zero; correctness is covered, that heap/time
 regression is not timed.** The bounded stack allocation is additional stack cost.
 Other optimization branches are not combined into these measurements.
+
+[Persistent publication verification](publication.json) records exact source,
+public evidence and report Git blob, draft state and browser-open request.
