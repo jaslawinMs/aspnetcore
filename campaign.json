@@ -3201,15 +3201,16 @@
         "snippet": "var valueString = Convert.ToString(value, CultureInfo.InvariantCulture);\nreturn CheckConstraintCore(valueString);",
         "suppressed": false
       },
-      "status": "validated",
+      "status": "drafted",
       "notes": [
         "Fresh default baseline 37e809. Evaluating only boxed Int32/Int64 exact comparison against Max; retain text conversion/NumberStyles.Integer for other types. Long/IntRouteConstraint fast paths are same-area precedent. Source is compiled into Routing and Components via routing targets; verify both consumers and fallback/culture/literal behavior. No production incoming-string speedup claim.",
         "Original/final Routing 3559/3559, all 57 Max rows including 54 new pass individually; Components 1320 passed plus eight existing skipped each, all 16 new shared-copy rows pass. All 35 actual matching/literal/full named-link producer receipts exactly agree, input identity/type preserved. Ten shipping additions only; fallback/literal/guards unchanged. Only Routing DLL differs in immutable executable/config closure, exact harness reused. Ready for first measurement.",
-        "Source 573ad997602a5c1a0cbbaa01b6b92fc06f68c070, three comparisons/one string-first tune; final rounds 2-3 only. All 12 typed cases improve in both pairs, medians 70.53-93.74% faster; eight save 32-64 B/op, four small cached cases already zero. Six string cases improve in both pairs, medians 13.04-28.04%. Full accepted named links mixed/near-zero, rejected links ~6.7% faster; unchanged heap. All 13 fallback/literal/guard controls retained including enum/formattable regressions and unexplained Decimal_Integral baseline instability. Original/final Routing 3559/3559 and all 57 Max rows; Components 1320 plus eight existing skipped each and all 16 new copy rows pass; all 35 producer receipts match. No universal/hosted/browser claim; no fourth comparison."
+        "Source 573ad997602a5c1a0cbbaa01b6b92fc06f68c070, three comparisons/one string-first tune; final rounds 2-3 only. All 12 typed cases improve in both pairs, medians 70.53-93.74% faster; eight save 32-64 B/op, four small cached cases already zero. Six string cases improve in both pairs, medians 13.04-28.04%. Full accepted named links mixed/near-zero, rejected links ~6.7% faster; unchanged heap. All 13 fallback/literal/guard controls retained including enum/formattable regressions and unexplained Decimal_Integral baseline instability. Original/final Routing 3559/3559 and all 57 Max rows; Components 1320 plus eight existing skipped each and all 16 new copy rows pass; all 35 producer receipts match. No universal/hosted/browser claim; no fourth comparison.",
+        "Published/OPEN/draft/main verified jaslawinMs/aspnetcore#26, issue #25; source573ad997602a5c1a0cbbaa01b6b92fc06f68c070; pinned evidence611f9bd332d28156b7ed8709363bb9aaa333c2d1. Three files+215/-0; exact template/body/scope verified; browser-open requested immediately, rendering not verified. Three comparisons/one tune, final2-3 only:12typed70.53-93.74%,6strings13.04-28.04% faster in both pairs; eight typed save32-64B/op, four cached already zero. Full accepted links mixed/near-zero; rejected~6.7%, unchanged heap. All controls/prototype/decimal instability retained. Routing3559 and57Max rows, Components1320 plus8existing skips/16new rows,35full producer receipts pass; no hosted/browser/universal claim or fourth measurement."
       ],
       "branch": "autoperf/F117-max-route-numeric-values",
-      "pr_url": null,
-      "updated_at": "2026-11-14T01:18:48.0436166-08:00"
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/26",
+      "updated_at": "2026-11-14T01:25:55.0977615-08:00"
     },
     {
       "id": "F118",

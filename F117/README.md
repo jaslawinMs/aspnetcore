@@ -1,11 +1,16 @@
 # F117: maximum route constraint string/integer fast paths
 
 **Compatible, workload-specific measured proposal.**
+Draft: [jaslawinMs/aspnetcore#26](https://github.com/jaslawinMs/aspnetcore/pull/26).
+Issue: [jaslawinMs/aspnetcore#25](https://github.com/jaslawinMs/aspnetcore/issues/25).
 Source: `573ad997602a5c1a0cbbaa01b6b92fc06f68c070`.
 Branch: `autoperf/F117-max-route-numeric-values`.
 Independent upstream baseline:
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 No other AutoPerf change is carried on this branch.
+Exact draft source/body/three-file scope and pinned evidence were remotely
+verified. Browser opening was requested immediately after creation; rendering
+was not verified. See [publication receipt](publication.json).
 
 ## Final results and retained non-wins
 
