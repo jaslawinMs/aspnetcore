@@ -29,6 +29,7 @@ well as the largest speedup.
 | F034 (also F119) | No-gain; duplicate consolidated | [Concrete Rewrite condition enumeration](F034/README.md) |
 | F045 | Draft proposal; unstable control disclosed | [Single validation-message ModelState lookup](F045/README.md) |
 | F048 | [Draft jaslawinMs/aspnetcore#47](https://github.com/jaslawinMs/aspnetcore/pull/47); common non-file gains, empty-filename allocation/time regressions and file/control non-wins retained | [Multipart file-section conversion](F048/README.md) |
+| F049 | [Draft jaslawinMs/aspnetcore#49](https://github.com/jaslawinMs/aspnetcore/pull/49); ordinary-file gains, star-only fallback allocation/time regressions and valid-form/control non-wins retained | [Multipart form-section conversion](F049/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |

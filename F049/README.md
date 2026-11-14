@@ -1,5 +1,10 @@
 # F049: avoid exceptions for ordinary-file multipart form conversion
 
+**Draft [jaslawinMs/aspnetcore#49](https://github.com/jaslawinMs/aspnetcore/pull/49)**;
+originating issue [jaslawinMs/aspnetcore#48](https://github.com/jaslawinMs/aspnetcore/issues/48).
+Immutable complete raw evidence:
+[4e112ddabeca1f0e440fd2c135877d6ca76e62af](https://github.com/jaslawinMs/aspnetcore/tree/4e112ddabeca1f0e440fd2c135877d6ca76e62af/F049).
+
 **Measured fork-only draft proposal, not a universal net-performance win.**
 Actual fresh-reader form conversion and complete body/reader consumption is
 **58.91% faster for eight ordinary-file sections**, **60.31% faster for32**
