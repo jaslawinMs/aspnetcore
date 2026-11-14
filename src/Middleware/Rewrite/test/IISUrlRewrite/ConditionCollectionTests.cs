@@ -28,7 +28,14 @@ public class ConditionCollectionTests
 
         Assert.Equal(expected, actual);
         Assert.Equal(expected, ((IEnumerable<Condition>)collection).ToArray());
-        Assert.Equal(expected, ((IEnumerable)collection).Cast<Condition>().ToArray());
+        actual.Clear();
+
+        foreach (Condition condition in (IEnumerable)collection)
+        {
+            actual.Add(condition);
+        }
+
+        Assert.Equal(expected, actual);
     }
 
     [Fact]
