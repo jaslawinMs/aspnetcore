@@ -372,8 +372,9 @@ internal sealed class DfaMatcherBuilder : MatcherBuilder
         private void AddParentsMatchingComplexSegment(RouteEndpoint endpoint, List<DfaNode> nextParents, RoutePatternPathSegment segment, DfaNode parent, RoutePatternParameterPart parameterPart)
         {
             var routeValues = new RouteValueDictionary();
-            foreach (var literal in parent.Literals.Keys)
+            foreach (var kvp in parent.Literals)
             {
+                var literal = kvp.Key;
                 if (RoutePatternMatcher.MatchComplexSegment(segment, literal, routeValues))
                 {
                     // If we got here (rare) it means that the literal matches the complex segment (for example the literal is something A-B)
@@ -414,7 +415,7 @@ internal sealed class DfaMatcherBuilder : MatcherBuilder
 
                     if (passedAllPolicies)
                     {
-                        nextParents.Add(parent.Literals[literal]);
+                        nextParents.Add(kvp.Value);
                     }
                 }
 

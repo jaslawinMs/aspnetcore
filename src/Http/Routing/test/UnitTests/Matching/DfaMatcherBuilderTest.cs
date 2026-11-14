@@ -992,6 +992,115 @@ public class DfaMatcherBuilderTest
         Assert.Null(paramCNode.Parameters);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BuildDfaTree_ComplexLiteralSiblings_PreservePolicyOrderAndOptionalValues(bool includeOptionalValue)
+    {
+        var calls = new List<(string Parameter, string Value)>();
+        var constraint = new Mock<IRouteConstraint>(MockBehavior.Strict);
+        constraint.As<IParameterLiteralNodeMatchingPolicy>()
+            .Setup(policy => policy.MatchesLiteral(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((parameter, value) => calls.Add((parameter, value)))
+            .Returns((string parameter, string value) => parameter is not "number" || value.All(char.IsAsciiDigit));
+        var builder = CreateDfaMatcherBuilder();
+        var secondLiteral = includeOptionalValue ? "BB-22.txt" : "BB-22";
+        var first = CreateEndpoint("AA-11.txt/first");
+        var alias = CreateEndpoint("aa-11.txt/alias");
+        var second = CreateEndpoint($"{secondLiteral}/second");
+        var rejected = CreateEndpoint("CC-invalid.txt/rejected");
+        var unmatched = CreateEndpoint("plain/unmatched");
+        var complex = CreateEndpoint("{prefix}-{number}.{extension?}/next",
+            constraints: new { prefix = constraint.Object, number = constraint.Object, extension = constraint.Object });
+        foreach (var endpoint in new[] { first, alias, second, rejected, unmatched, complex })
+        {
+            builder.AddEndpoint(endpoint);
+        }
+
+        var root = builder.BuildDfaTree();
+
+        Assert.Equal(new[] { "AA-11.txt", secondLiteral, "CC-invalid.txt", "plain" }, root.Literals.Keys);
+        Assert.Same(first, Assert.Single(root.Literals["AA-11.txt"].Literals["first"].Matches));
+        Assert.Same(alias, Assert.Single(root.Literals["AA-11.txt"].Literals["alias"].Matches));
+        Assert.Same(second, Assert.Single(root.Literals[secondLiteral].Literals["second"].Matches));
+        Assert.Same(rejected, Assert.Single(root.Literals["CC-invalid.txt"].Literals["rejected"].Matches));
+        Assert.Same(unmatched, Assert.Single(root.Literals["plain"].Literals["unmatched"].Matches));
+        Assert.Same(complex, Assert.Single(root.Literals["AA-11.txt"].Literals["next"].Matches));
+        Assert.Same(complex, Assert.Single(root.Literals[secondLiteral].Literals["next"].Matches));
+        Assert.False(root.Literals["CC-invalid.txt"].Literals.ContainsKey("next"));
+        Assert.False(root.Literals["plain"].Literals.ContainsKey("next"));
+        Assert.Same(complex, Assert.Single(root.Parameters.Literals["next"].Matches));
+        var expectedCalls = new List<(string Parameter, string Value)>
+        {
+            ("prefix", "AA"), ("number", "11"), ("extension", "txt"),
+            ("prefix", "BB"), ("number", "22")
+        };
+        if (includeOptionalValue)
+        {
+            expectedCalls.Add(("extension", "txt"));
+        }
+        expectedCalls.AddRange(new[] { ("prefix", "CC"), ("number", "invalid"), ("extension", "txt") });
+        Assert.Equal(expectedCalls, calls);
+    }
+
+    [Theory]
+    [InlineData("/AA-11.txt/next", 3, "AA", "11", "txt")]
+    [InlineData("/BB-22/next", 3, "BB", "22", null)]
+    [InlineData("/CC-invalid.txt/next", -1, null, null, null)]
+    [InlineData("/aa-11.txt/first", 0, null, null, null)]
+    public async Task Build_ComplexLiteralSiblings_PreserveEndpointSelection(
+        string path, int expectedEndpoint, string prefix, string number, string extension)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddRouting();
+        using var provider = services.BuildServiceProvider();
+        var builder = provider.GetRequiredService<DfaMatcherBuilder>();
+        var endpoints = new[]
+        {
+            CreateEndpoint("AA-11.txt/first"),
+            CreateEndpoint("BB-22/second"),
+            CreateEndpoint("CC-invalid.txt/rejected"),
+            CreateEndpoint("{prefix}-{number:int}.{extension?}/next")
+        };
+        foreach (var endpoint in endpoints)
+        {
+            builder.AddEndpoint(endpoint);
+        }
+        var matcher = builder.Build();
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+
+        await matcher.MatchAsync(context);
+
+        if (expectedEndpoint < 0)
+        {
+            Assert.Null(context.GetEndpoint());
+        }
+        else
+        {
+            Assert.Same(endpoints[expectedEndpoint], context.GetEndpoint());
+        }
+        if (expectedEndpoint is not 3)
+        {
+            Assert.Empty(context.Request.RouteValues);
+        }
+        else
+        {
+            Assert.Equal(prefix, context.Request.RouteValues["prefix"]);
+            Assert.Equal(number, context.Request.RouteValues["number"]);
+            if (extension is null)
+            {
+                Assert.False(context.Request.RouteValues.ContainsKey("extension"));
+            }
+            else
+            {
+                Assert.Equal(extension, context.Request.RouteValues["extension"]);
+            }
+            Assert.Equal(extension is null ? 2 : 3, context.Request.RouteValues.Count);
+        }
+    }
+
     [Fact]
     public void BuildDfaTree_MultipleEndpoint_ComplexParameter_BothCandidates_WhenLitteralPatternMatchesComplexParameterAndRoutePattern()
     {
