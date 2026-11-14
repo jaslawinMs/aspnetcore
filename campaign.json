@@ -1138,11 +1138,13 @@
         "compatibility_notes": "Pattern-based foreach and List<T>.Enumerator are supported across relevant runtimes. Preserve iteration order, mutation/version checks, Current and Dispose semantics. The owning collection is internal, so the proposed concrete path does not alter the exported framework API. Interface consumers still box; the benefit applies to the inspected concrete evaluator loop. No runtime benchmark was run.",
         "evidence_boundary": "source-only"
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "investigating",
+      "notes": [
+        "Default branch37e809... retains interface-returning GetEnumerator on internal ConditionCollection. F119 is an additional exact semantic duplicate of this same method and card. Acceptance: preserve concrete and both interface enumeration contracts, order, version/mutation checks and Dispose, no exported API changes; benchmark the actual ConditionEvaluator using real producer-created conditions, plus interface controls, at most3 measured comparisons."
+      ],
+      "branch": "autoperf/F034-rewrite-condition-enumeration",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T15:55:12.5709392-08:00"
     },
     {
       "id": "F035",
@@ -3187,11 +3189,13 @@
         "snippet": "public IEnumerator<Condition> GetEnumerator()\n{\n    return _conditions.GetEnumerator();\n}",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
+      "status": "duplicate",
+      "notes": [
+        "Exact semantic duplicate of F034: same custom-collection-interface-foreach-enumerator card, ConditionCollection.GetEnumerator implementation and concrete ConditionEvaluator consumer; only recorded end line differs63 versus64. Consolidate evaluation and any proposal under F034 rather than duplicate branches, benchmark budgets or PRs."
+      ],
       "branch": null,
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T16:02:42.9489682-08:00"
     },
     {
       "id": "F120",
@@ -3363,15 +3367,16 @@
         "compatibility_notes": "Both comparison modes selected by this class have matching equality overloads on supported targets. Preserve success/failure objects and null behavior, and leave all ordering branches unchanged. No public API change is required.",
         "evidence_boundary": "source-only"
       },
-      "status": "validated",
+      "status": "drafted",
       "notes": [
         "Proceeding after F068 publication; current origin/main remains37e809ead5824bc753a1c3d56f11615bdb1296c5. Acceptance: change only equality ordering to matching ordinal Equals, preserve null/case/Unicode and all genuine ordering branches, run before/after owning tests, benchmark actual StringMatch with matching and nonmatching controls and at most3 measured comparisons.",
         "Only equality branch changed from Compare==0 to matching ordinal Equals. Original compatibility16/16 and changed full owning tests486/486 pass; smoke24 cases each variant passes. Product formatting passes; the sole test-file CHARSET warning reproduces identically on baseline and is left unchanged. Existing dotnet/aspnetcore#70556 changes negation and still uses Compare for equality, so not an exact duplicate.",
-        "Stopped after1 of at most3 measured comparisons:24 cases, all0B/op. At256 chars ignoring case, equality267.74->20.97ns(-92.17%), length mismatch266.55->5.36ns(-97.99%). Eight control cases regress, including ordinal first mismatch+50-59% (about2-3ns); report every case. Original16/16 and changed owning486/486 tests pass, unchanged baseline CHARSET diagnostic retained. Real production matcher, byte-identical harness."
+        "Stopped after1 of at most3 measured comparisons:24 cases, all0B/op. At256 chars ignoring case, equality267.74->20.97ns(-92.17%), length mismatch266.55->5.36ns(-97.99%). Eight control cases regress, including ordinal first mismatch+50-59% (about2-3ns); report every case. Original16/16 and changed owning486/486 tests pass, unchanged baseline CHARSET diagnostic retained. Real production matcher, byte-identical harness.",
+        "Fork-only draft created and opened immediately in browser. Source585f715c0b954f47262b31f29f8c49511dbb24ab; raw results ddc848a71be06845711462c8bde66ce76a0f9505; fork issue3. Remote confirms draft, fork/main base, exactly2 changed files."
       ],
       "branch": "autoperf/F127-rewrite-string-equality",
-      "pr_url": null,
-      "updated_at": "2026-11-13T15:46:24.1219352-08:00"
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/4",
+      "updated_at": "2026-11-13T15:50:05.9122473-08:00"
     },
     {
       "id": "F128",

@@ -1,5 +1,7 @@
 # F127: equality-only Rewrite string comparisons
 
+[Draft proposal: jaslawinMs/aspnetcore#4](https://github.com/jaslawinMs/aspnetcore/pull/4).
+
 Replace `string.Compare(input, _value, _stringComparison) == 0` with the matching
 `string.Equals` overload **only in the Equal branch** of the real internal
 `StringMatch` evaluator. The four genuine ordering branches are untouched.
