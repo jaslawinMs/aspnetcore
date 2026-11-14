@@ -9,6 +9,25 @@ public class BsonTempDataSerializerTest : TempDataSerializerTestBase
 {
     protected override TempDataSerializer GetTempDataSerializer() => new BsonTempDataSerializer();
 
+    [Theory]
+    [InlineData(128)]
+    [InlineData(4096)]
+    [InlineData(131072)]
+    public void Serialize_ReturnsIndependentBsonPayloads(int length)
+    {
+        var serializer = GetTempDataSerializer();
+        var firstValue = new string('a', length);
+        var secondValue = new string('b', length);
+        var first = serializer.Serialize(new Dictionary<string, object> { ["value"] = firstValue });
+        var expected = first.ToArray();
+        var second = serializer.Serialize(new Dictionary<string, object> { ["value"] = secondValue });
+
+        Assert.NotSame(first, second);
+        Assert.Equal(expected, first);
+        Assert.Equal(firstValue, serializer.Deserialize(first)["value"]);
+        Assert.Equal(secondValue, serializer.Deserialize(second)["value"]);
+    }
+
     public static TheoryData<object, Type> InvalidTypes
     {
         get

@@ -110,6 +110,11 @@ internal sealed class PooledMemoryStream : Stream
         Write(buffer.AsSpan(offset, count));
     }
 
+    public override void WriteByte(byte value)
+    {
+        Write([value]);
+    }
+
     public override void Write(ReadOnlySpan<byte> buffer)
     {
         ThrowIfDisposed();

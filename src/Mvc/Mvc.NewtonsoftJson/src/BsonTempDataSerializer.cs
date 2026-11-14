@@ -1,11 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ViewFeatures.Infrastructure;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
@@ -134,12 +136,12 @@ internal sealed class BsonTempDataSerializer : TempDataSerializer
                 }
             }
 
-            using (var memoryStream = new MemoryStream())
+            using (var memoryStream = new PooledMemoryStream(ArrayPool<byte>.Shared, int.MaxValue))
             {
                 using (var writer = new BsonDataWriter(memoryStream))
                 {
                     _jsonSerializer.Serialize(writer, values);
-                    return memoryStream.ToArray();
+                    return memoryStream.WrittenMemory.ToArray();
                 }
             }
         }
