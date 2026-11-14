@@ -1,6 +1,7 @@
 # F301: concatenate complete Kestrel code-generation fragments
 
-Originating issue [jaslawinMs/aspnetcore#44](https://github.com/jaslawinMs/aspnetcore/issues/44).
+**Draft [jaslawinMs/aspnetcore#45](https://github.com/jaslawinMs/aspnetcore/pull/45)**;
+originating issue [jaslawinMs/aspnetcore#44](https://github.com/jaslawinMs/aspnetcore/issues/44).
 
 **Measured fork-only proposal.** Complete header generation is **51.40% faster**
 by median paired mean ratio and reports approximately **72.18% less heap
@@ -8,6 +9,9 @@ allocation**. Actual warm five-file `CodeGenerator.Program.Run` is **19.48%
 faster** with approximately **63.00% less reported heap**. These are
 informational code-generation measurements, not request throughput or an
 end-to-end clean-build speedup.
+
+Immutable complete raw evidence:
+[0c8157faee1178f72a0380ff25554e98fdaeba96](https://github.com/jaslawinMs/aspnetcore/tree/0c8157faee1178f72a0380ff25554e98fdaeba96/F301).
 
 Source: [fdf31c416447d377c63217b441d3eb0534dd5cac](https://github.com/jaslawinMs/aspnetcore/commit/fdf31c416447d377c63217b441d3eb0534dd5cac),
 independent branch `autoperf/F301-kestrel-codegen-concat`, based on fresh upstream
