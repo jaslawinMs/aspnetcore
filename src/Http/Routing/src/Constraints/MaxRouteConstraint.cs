@@ -54,6 +54,21 @@ internal class MaxRouteConstraint : IRouteConstraint
 
         if (values.TryGetValue(routeKey, out var value) && value != null)
         {
+            if (value is string stringValue)
+            {
+                return CheckConstraintCore(stringValue);
+            }
+
+            if (value is long longValue)
+            {
+                return longValue <= Max;
+            }
+
+            if (value is int intValue)
+            {
+                return intValue <= Max;
+            }
+
             var valueString = Convert.ToString(value, CultureInfo.InvariantCulture);
             return CheckConstraintCore(valueString);
         }
