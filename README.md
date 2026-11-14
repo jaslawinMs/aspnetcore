@@ -37,6 +37,7 @@ well as the largest speedup.
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
+| F128 | No supported material win; small gains and control regressions retained | [OWIN alternate accept delegate capture](F128/README.md) |
 | F130 | No supported net win; experiment retained | [Fixed input-type membership trade-offs](F130/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are

@@ -1,0 +1,36 @@
+{
+  "candidate": "F128",
+  "defined_before_implementation": true,
+  "prior_criteria_artifact": "F128-acceptance.md",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F128-owin-accept-pattern",
+  "production_change": "Capture WebSocketAcceptAlt in the existing declaration pattern and pass that captured value instead of casting. Preserve the explanatory object accept local, aliases, branches, async flow and every other production statement.",
+  "compatibility": [
+    "All original and changed Owin tests and every new individual row pass without skips.",
+    "Actual OwinEnvironment feature-map producer supplies the alternate delegate; actual UseOwin default registration is exercised.",
+    "Missing/null/wrong/standard delegate guards, environment identity, next await and exception identity are preserved.",
+    "Actual accept/callback execution, status guards, options/native-context identity, cancellation token and subprotocol are preserved.",
+    "Real ManagedWebSocket binary frames are decoded by a real peer and normal cleanup aborts the owned server socket.",
+    "No public signature, default, convention, cache, dependency or unrelated production change."
+  ],
+  "measurement": {
+    "expected_cases": 11,
+    "maximum_comparisons": 3,
+    "minimum_measurements_per_case": 8,
+    "outliers": "DontRemove",
+    "target_assembly": "Microsoft.AspNetCore.Owin.dll",
+    "actual_target": "WebSocketAcceptAdapter.AdaptWebSockets",
+    "policy": "Identical harness/PDB/runtime/configuration and immutable A/B outputs; only the owning Owin DLL may differ. Measure complete adapted requests, actual feature-map producers, default UseOwin and real frames/lifetime, not an extracted cast.",
+    "disposition_policy": "Publish no-gain instead of a style-only PR when no material compatible optimization is supported. Preserve every small gain, non-win and allocation result."
+  },
+  "excluded": [
+    "Hosted HTTP upgrade or network negotiation",
+    "Production throughput",
+    "Native/JIT-equivalence proof from managed IL",
+    "Other runtimes and architectures",
+    "Concurrent request pressure",
+    "Composition with independent branches"
+  ],
+  "new_exported_api": false,
+  "functional_bug_fix_red_green_claimed": false
+}

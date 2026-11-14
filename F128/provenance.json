@@ -1,0 +1,59 @@
+{
+  "candidate": "F128",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "87064c0d5d4600fcc6d60c1aaff5e7b926e52500",
+  "source_branch": "autoperf/F128-owin-accept-pattern",
+  "source_hashes": [
+    {
+      "path": "src\\Http\\Owin\\src\\WebSockets\\WebSocketAcceptAdapter.cs",
+      "sha256": "AA9ABE9376401FE8E76E29A91BB3AE347530FB3301C613B2DC7C33115BD156D7"
+    },
+    {
+      "path": "src\\Http\\Owin\\test\\OwinExtensionTests.cs",
+      "sha256": "6A99433AC4BD4B7833F028F53ED37B4FEB8D82929EBE3126FFD5A3675C694261"
+    },
+    {
+      "path": "src\\Http\\Owin\\test\\WebSocketAcceptAdapterTests.cs",
+      "sha256": "DCFEC8AD0FB15DACD0C548777CF900CF209FB19B35BA15983D5D96B4001E8358"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "disposition": "no-gain",
+  "disposition_meaning": "No supported material optimization to publish, not zero benefit in every case. One typed status/no-callback case improves modestly in all three pairs; other targeted paths are mixed and all allocations are unchanged.",
+  "final_comparison_rounds": [
+    1,
+    2,
+    3
+  ],
+  "cases_per_launch": 11,
+  "launch_order": [
+    "original/changed",
+    "changed/original",
+    "original/changed"
+  ],
+  "source_tuning": false,
+  "timing_scope": "Complete warmed AdaptWebSockets calls and actual default UseOwin pipelines; actual OwinEnvironment feature-map alternate-delegate producer. Full-upgrade cases create real ManagedWebSockets, send a binary frame and perform adapter cleanup plus owned resource disposal.",
+  "correctness": "Original/changed34 Owin tests pass without skips; all15 new rows individually pass; all11 actual producer/complete request/status/context/frame/cleanup setup receipts match.",
+  "change_scope": "Two existing production lines change in WebSocketAcceptAdapter only. Add type-focused compatibility tests and one actual default UseOwin pipeline/frame test; retain all original source and aliases otherwise.",
+  "targeted_results": "Seven affected cases: median paired changes -3.64 to +3.04 percent. Only Typed_Status101_NoCallback improves all pairs (-4.11/-3.64/-2.59 percent). Typed_Dictionary -4.66/-1.80/+1.84; Typed_Dynamic +3.04/+6.47/-4.60; Pipeline_Upgrade +2.00/+1.99/-0.52.",
+  "control_results": "Four no-alternate-path controls retained. Missing is +5.89/+5.47/+5.38 percent; StandardAccept and WrongObject have negative medians but reverse sign in round3. No causal or harmless-noise explanation is claimed.",
+  "allocation_results": "All11 cases have exactly unchanged B/op in every paired comparison; no allocation benefit.",
+  "managed_lowering": "Actual adapter async MoveNext raw IL and correctly decoded instruction stream retained. Original881bytes/290instructions/one castclass versus changed890bytes/291instructions/no castclass, both two isinst. This establishes only managed lowering, not native/JIT equivalence or a timing explanation.",
+  "setup_instrumentation": "Counters and output assertions run only in setup/preflight. Timed feature implementation is not Moq and stores only the current socket/context/transport; no growing mock invocation history.",
+  "unverified": [
+    "Hosted HTTP upgrade or network negotiation",
+    "Production throughput",
+    "Native/JIT-equivalence or explanation of timing variation",
+    "Other runtimes and architectures",
+    "Concurrent request pressure",
+    "Composition with other branches"
+  ],
+  "publication": "Retain separate experimental source branch and complete reproducible evidence; no speculative issue or optimization PR.",
+  "reproduction": "README contains exact successful commands and standalone source-project benchmark harness."
+}
