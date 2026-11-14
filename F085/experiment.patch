@@ -1,0 +1,64 @@
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.Generated.cs b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.Generated.cs
+index 1927277577..7679606d89 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.Generated.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.Generated.cs
+@@ -32,8 +32,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
+ 
+         private static readonly ulong _mask4Chars = GetMaskAsLong([0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00]);
+ 
+-        private static readonly Tuple<ulong, ulong, HttpMethod, int>[] _knownMethods =
+-            new Tuple<ulong, ulong, HttpMethod, int>[17];
++        private static readonly (ulong, ulong, HttpMethod, int)[] _knownMethods =
++            new (ulong, ulong, HttpMethod, int)[17];
+ 
+         private static readonly string[] _methodNames = new string[9];
+ 
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs
+index a7b346dbcd..12d9d9e79d 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs
+@@ -32,17 +32,17 @@ internal static partial class HttpUtilities
+     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+     private static void SetKnownMethod(ulong mask, ulong knownMethodUlong, HttpMethod knownMethod, int length)
+     {
+-        _knownMethods[GetKnownMethodIndex(knownMethodUlong)] = new Tuple<ulong, ulong, HttpMethod, int>(mask, knownMethodUlong, knownMethod, length);
++        _knownMethods[GetKnownMethodIndex(knownMethodUlong)] = (mask, knownMethodUlong, knownMethod, length);
+     }
+ 
+     private static void FillKnownMethodsGaps()
+     {
+         var knownMethods = _knownMethods;
+         var length = knownMethods.Length;
+-        var invalidHttpMethod = new Tuple<ulong, ulong, HttpMethod, int>(_mask8Chars, 0ul, HttpMethod.Custom, 0);
++        var invalidHttpMethod = (_mask8Chars, 0ul, HttpMethod.Custom, 0);
+         for (int i = 0; i < length; i++)
+         {
+-            if (knownMethods[i] == null)
++            if (knownMethods[i].Item1 == 0)
+             {
+                 knownMethods[i] = invalidHttpMethod;
+             }
+@@ -230,7 +230,7 @@ internal static partial class HttpUtilities
+                 {
+                     var knownMethod = _knownMethods[index];
+ 
+-                    if (knownMethod != null && (value & knownMethod.Item1) == knownMethod.Item2)
++                    if ((value & knownMethod.Item1) == knownMethod.Item2)
+                     {
+                         methodLength = knownMethod.Item4;
+                         return knownMethod.Item3;
+diff --git a/src/Servers/Kestrel/tools/CodeGenerator/HttpUtilities/HttpUtilities.cs b/src/Servers/Kestrel/tools/CodeGenerator/HttpUtilities/HttpUtilities.cs
+index da53501d24..140dc78c4e 100644
+--- a/src/Servers/Kestrel/tools/CodeGenerator/HttpUtilities/HttpUtilities.cs
++++ b/src/Servers/Kestrel/tools/CodeGenerator/HttpUtilities/HttpUtilities.cs
+@@ -76,8 +76,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
+ {0}
+ 
+ {1}
+-        private static readonly Tuple<ulong, ulong, HttpMethod, int>[] _knownMethods =
+-            new Tuple<ulong, ulong, HttpMethod, int>[{2}];
++        private static readonly (ulong, ulong, HttpMethod, int)[] _knownMethods =
++            new (ulong, ulong, HttpMethod, int)[{2}];
+ 
+         private static readonly string[] _methodNames = new string[{3}];
+ 

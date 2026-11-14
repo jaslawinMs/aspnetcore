@@ -1,0 +1,44 @@
+{
+  "candidate": "F085",
+  "disposition": "no-gain",
+  "comparisons_consumed": 3,
+  "benchmark_outcomes": 222,
+  "actual_producer_receipts": 222,
+  "original_table_slots_preserved": 17,
+  "actual_producer_cases": 37,
+  "test_outcomes": 11829,
+  "requirement_evidence": [
+    {
+      "requirement": "Custom method classification across sixteen hash buckets",
+      "evidence": "HttpUtilitiesTest.GetsCustomMethodForEveryHashBucket; all16 rows passed in all3 variants"
+    },
+    {
+      "requirement": "Incomplete non-GET prefix boundaries0 through7",
+      "evidence": "HttpUtilitiesTest.DoesNotReadIncompleteNonGetMethodPrefix; all8 rows passed in all3 variants"
+    },
+    {
+      "requirement": "Known method and interning/independent string behavior",
+      "evidence": "HttpUtilitiesTest.GetsKnownMethod, KnownMethodsAreInterned, GetKnownMethod_NonAsciiStart_ReturnsCustom; all configured rows passed"
+    },
+    {
+      "requirement": "Actual parser production and material start-line effects",
+      "evidence": "HttpParserTests.ParsesRequestLine plus remaining complete parser suite; harness37 setups including parser consumed/method/version/target and12 mixed members"
+    },
+    {
+      "requirement": "Generator template and runtime source agreement",
+      "evidence": "Actual fresh-process CodeGenerator five output files, generator-byte-parity.json and generator-restoration.json"
+    },
+    {
+      "requirement": "Exact original initialized table data",
+      "evidence": "All17 reflected ITuple records compared against original contract-oracles.json outside every measured setup"
+    },
+    {
+      "requirement": "Owner-only immutable executable/configuration experiment",
+      "evidence": "recursive-closure.json; all70 DLL/JSON files differ only in actual Kestrel owner"
+    },
+    {
+      "requirement": "Restore unsupported experiment",
+      "evidence": "restoration.json; three source files and original owner byte-equal, all3943 restored tests/all24 rows and37 setups passed"
+    }
+  ]
+}
