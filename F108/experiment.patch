@@ -1,0 +1,12 @@
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs b/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
+--- a/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
+@@ -52,7 +52,7 @@
+     {
+         if (HasCookie && _headers._Cookie.Count > 1)
+         {
+-            _headers._Cookie = string.Join("; ", _headers._Cookie.ToArray());
++            _headers._Cookie = string.Join("; ", (IEnumerable<string?>)_headers._Cookie);
+         }
+     }
+ 

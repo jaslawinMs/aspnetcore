@@ -1,0 +1,26 @@
+commit afa486058c00630609d48358cc8c6debac2796a6
+Author: Daniel-Genkin-MS-2 <104801075+Daniel-Genkin-MS-2@users.noreply.github.com>
+Date:   Fri May 13 18:08:25 2022 -0700
+
+    Merge HTTP/2 and HTTP/3 request cookies on Kestrel (#41591)
+
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs b/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
+index 635a0b3276..472f1c4771 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs
+@@ -48,6 +48,15 @@ internal sealed partial class HttpRequestHeaders : HttpHeaders
+         Clear(headersToClear);
+     }
+ 
++    [MethodImpl(MethodImplOptions.AggressiveInlining)]
++    public void MergeCookies()
++    {
++        if (HasCookie && _headers._Cookie.Count > 1)
++        {
++            _headers._Cookie = string.Join("; ", _headers._Cookie.ToArray());
++        }
++    }
++
+     protected override void ClearFast()
+     {
+         if (!ReuseHeaderValues)

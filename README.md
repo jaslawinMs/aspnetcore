@@ -34,6 +34,7 @@ well as the largest speedup.
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
+| F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
