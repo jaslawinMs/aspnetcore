@@ -1,0 +1,108 @@
+diff --git a/src/Http/WebUtilities/src/MultipartSectionConverterExtensions.cs b/src/Http/WebUtilities/src/MultipartSectionConverterExtensions.cs
+index 28ad9c6692..bbaa794c38 100644
+--- a/src/Http/WebUtilities/src/MultipartSectionConverterExtensions.cs
++++ b/src/Http/WebUtilities/src/MultipartSectionConverterExtensions.cs
+@@ -40,7 +40,14 @@ public static class MultipartSectionConverterExtensions
+ 
+         try
+         {
+-            return new FormMultipartSection(section);
++            var header = section.GetContentDispositionHeader();
++            // Leave filename-star decoding and final validation to the constructor.
++            if (header is null || !header.DispositionType.Equals("form-data") || header.FileName.Length > 0)
++            {
++                return null;
++            }
++
++            return new FormMultipartSection(section, header);
+         }
+         catch
+         {
+diff --git a/src/Http/WebUtilities/test/FormMultipartSectionConversionTests.cs b/src/Http/WebUtilities/test/FormMultipartSectionConversionTests.cs
+new file mode 100644
+index 0000000000..b1ab8de107
+--- /dev/null
++++ b/src/Http/WebUtilities/test/FormMultipartSectionConversionTests.cs
+@@ -0,0 +1,82 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Text;
++
++namespace Microsoft.AspNetCore.WebUtilities;
++
++public class FormMultipartSectionConversionTests
++{
++    private const string Boundary = "F049Boundary";
++
++    [Theory]
++    [InlineData(null)]
++    [InlineData("@")]
++    [InlineData("FORM-DATA; name=note")]
++    [InlineData("attachment; filename=file.txt")]
++    [InlineData("inline; filename=file.txt")]
++    [InlineData("form-data; name=upload; filename=plain.txt")]
++    [InlineData("form-data; name=\"up load\"; filename=\"file name.txt\"")]
++    [InlineData("form-data; filename=plain.txt")]
++    [InlineData("form-data; name=upload; filename*=UTF-8''%E2%82%AC.txt")]
++    [InlineData("form-data; filename*=UTF-8''; name=upload; filename=plain.txt")]
++    [InlineData("form-data; filename*=UTF-8''preferred.txt; name=upload; filename=plain.txt")]
++    public async Task AsFormDataSection_NonFormReaderSection_ReturnsNullWithoutConsumingBody(string? disposition)
++    {
++        using var input = CreateStream(disposition);
++        var reader = new MultipartReader(Boundary, input);
++        var section = Assert.IsType<MultipartSection>(await reader.ReadNextSectionAsync());
++        var body = section.Body;
++
++        var result = section.AsFormDataSection();
++
++        Assert.Null(result);
++        Assert.Same(body, section.Body);
++        using var output = new MemoryStream();
++        await section.Body.CopyToAsync(output);
++        Assert.Equal("payload", Encoding.UTF8.GetString(output.ToArray()));
++        Assert.Null(await reader.ReadNextSectionAsync());
++    }
++
++    [Theory]
++    [InlineData("form-data; name=note", "note")]
++    [InlineData("form-data; name=\"two words\"", "two words")]
++    [InlineData("form-data", "")]
++    [InlineData("form-data; name=\"\"", "")]
++    [InlineData("form-data; name=note; other=filename", "note")]
++    [InlineData("form-data; name=upload; filename=\"\"", "upload")]
++    [InlineData("form-data; name=upload; filename*=UTF-8''", "upload")]
++    [InlineData("form-data; name=upload; filename*=invalid", "upload")]
++    [InlineData("form-data; name=upload; filename=\"\"; filename*=UTF-8''", "upload")]
++    public async Task AsFormDataSection_FormReaderSection_PreservesNameIdentityAndValue(string disposition, string name)
++    {
++        using var input = CreateStream(disposition);
++        var reader = new MultipartReader(Boundary, input);
++        var section = Assert.IsType<MultipartSection>(await reader.ReadNextSectionAsync());
++        var body = section.Body;
++
++        var result = Assert.IsType<FormMultipartSection>(section.AsFormDataSection());
++
++        Assert.Same(section, result.Section);
++        Assert.Same(body, result.Section.Body);
++        Assert.Equal(name, result.Name);
++        Assert.Equal("payload", await result.GetValueAsync());
++        Assert.Null(await reader.ReadNextSectionAsync());
++    }
++
++    [Fact]
++    public void AsFormDataSection_NullSection_ThrowsArgumentNullException()
++    {
++        var exception = Assert.Throws<ArgumentNullException>(() => MultipartSectionConverterExtensions.AsFormDataSection(null!));
++
++        Assert.Equal("section", exception.ParamName);
++    }
++
++    private static MemoryStream CreateStream(string? disposition)
++    {
++        var header = disposition is null ? "Content-Type: text/plain\r\n" : $"Content-Disposition: {disposition}\r\n";
++        var body = $"--{Boundary}\r\n{header}\r\npayload\r\n--{Boundary}--\r\n";
++
++        return new MemoryStream(Encoding.UTF8.GetBytes(body));
++    }
++}

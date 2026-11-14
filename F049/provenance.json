@@ -1,0 +1,58 @@
+{
+  "candidate": "F049",
+  "disposition": "measured-common-ordinary-file-draft",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "1a1d5ef6064236e36b80beb9cfec6da9b183a7b3",
+  "source_branch": "autoperf/F049-form-section-without-exception",
+  "source_hashes": [
+    {
+      "path": "src/Http/WebUtilities/src/MultipartSectionConverterExtensions.cs",
+      "sha256": "874BB4AA6B51766E7123BC76B916B35ECF9A645375A134A33AF3F11C80D9EA5F"
+    },
+    {
+      "path": "src/Http/WebUtilities/test/FormMultipartSectionConversionTests.cs",
+      "sha256": "9E87F8F334F41981C799739C542969B0109AB25C06A1FDF09CAF1B20033A0982"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "final_report_rounds": [
+    2,
+    3
+  ],
+  "rejected_prototype_rounds": [
+    1
+  ],
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "measured_observations_each": 8,
+  "benchmark_classes": 2,
+  "fixed_cases": 31,
+  "raw_benchmark_outcomes": 186,
+  "matching_actual_producer_receipts": 186,
+  "recursive_closure_files_per_prototype": 61,
+  "only_changed_assembly": "Microsoft.AspNetCore.WebUtilities.dll",
+  "harness_runtime_dependencies_unchanged": true,
+  "final_original_proposed_passed_each": 562,
+  "final_preservation_rows_each": 21,
+  "successful_test_outcomes": 2810,
+  "existing_platform_skips_total": 10,
+  "report_safe_revalidation": "Two long rejection headers reordered without changing values; all21 distinct reported rows pass on byte-restored original/final shipping source. Initial tests/reports retained.",
+  "actual_boundary": "Actual MultipartReader wire production, real AsFormDataSection conversion, exact file/form metadata/body identity and complete body/reader consumption; unit tests exercise real GetValueAsync.",
+  "new_public_api_or_convention": false,
+  "F048_included": false,
+  "shared_host": true,
+  "serialized_builds_tests_and_measurements": true,
+  "build_maximum_nodes": 2,
+  "retained_regressions": [
+    "Star-only file exception fallback: +104 B/op; +25.75% helper / +6.65% full-reader medians.",
+    "Final valid-form heap unchanged; six of eight helper time medians higher, quoted form mixed and bare form faster.",
+    "Read_Form_1 / Read_Forms_8 / Read_EmptyStar_1 final medians +1.98 / +2.28 / +2.70%.",
+    "Untouched file-converter / header-parser controls have higher final time medians; no attribution.",
+    "Round1 rejected full predicate adds312 B/op to empty-star forms and144 B/op to invalid-star forms; untouched file-converter control+98.64% / CV42.70%."
+  ],
+  "unverified_boundaries": [
+    "Other malformed/custom/MIME-encoded empty ordinary filename allocation/timing partitions.",
+    "Cold first-process/JIT and exceptional memory-pressure catch behavior.",
+    "HTTP/application/network throughput, concurrency, other runtimes/platforms, native/JIT attribution."
+  ]
+}
