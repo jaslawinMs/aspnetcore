@@ -5,6 +5,10 @@ Independent baseline: dotnet/aspnetcore
 [Final source](https://github.com/jaslawinMs/aspnetcore/commit/fb2946a78adb33150ae345b5154d5557cb11275c):
 `fb2946a78adb33150ae345b5154d5557cb11275c`.
 
+[Draft jaslawinMs/aspnetcore#31](https://github.com/jaslawinMs/aspnetcore/pull/31)
+and [origin jaslawinMs/aspnetcore#30](https://github.com/jaslawinMs/aspnetcore/issues/30)
+are fork-only. The newly created draft was immediately browser-open requested.
+
 **Ordinary method reads/writes improve 5.38-5.61% in final paired medians;
 several other complete reads improve 7.10-18.87%.** Allocations are unchanged.
 Actual full-`UseOwin` pipeline observations are small/mixed, not a stable broad
