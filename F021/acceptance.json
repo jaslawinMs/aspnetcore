@@ -1,0 +1,21 @@
+{
+  "id": "F021",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "target": "DefaultHtmlGenerator.GetCurrentValues per-nonempty-string enum conversion",
+  "planned_change": "Use the existing BCL non-generic Enum.TryParse(Type,string,out object) instead of closing and reflectively invoking a generic helper. Do not introduce a metadata/delegate cache.",
+  "producer": "Actual EnumTypeModelBinder and CollectionModelBinder<RegularEnum> consume FormValueProvider values and produce real ModelState. Actual GenerateSelect renders selected options.",
+  "compatibility": [
+    "All nine new producer/current-values/rendered-options rows pass individually on original and changed source.",
+    "Preserve exact current-value sets and rendered option selection for names, whitespace, casing, numeric undefined values, comma combinations, invalid text, nullable empty and multiple selection.",
+    "Preserve actual successful and failed model-binding outcomes; do not assume the binder and rendering parser have identical casing/defined-value rules.",
+    "Existing enum-conversion cases and full owning ViewFeatures suite pass.",
+    "No exported API, default or persistent cache changes; trim/dynamic-code constraints are not expanded."
+  ],
+  "measurement": {
+    "owner": "Actual public DefaultHtmlGenerator.GetCurrentValues, using real MVC metadata and binder-produced ModelState. No copied enum parser and no timed reflection.",
+    "controls": "Non-enum strings, typed enum values, nullable/empty and one/multiple values as feasible.",
+    "maximum_paired_comparisons": 3,
+    "early_stop": "A clear large improvement around50 percent can stop after one comparison; retain every regression, heap cost and setup limitation.",
+    "scope": "Helper CPU and managed allocations, with actual selected-option rendering checked separately. No HTTP-throughput claim."
+  }
+}

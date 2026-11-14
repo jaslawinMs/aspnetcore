@@ -820,11 +820,15 @@
         "snippet": "var methodInfo = ConvertEnumFromStringMethod.MakeGenericMethod(innerType);\nenumValue = (Enum)methodInfo.Invoke(obj: null, parameters: new[] { stringValue });",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "validated",
+      "notes": [
+        "Investigating a non-reflective Enum.TryParse(Type,...) replacement for per-value MakeGenericMethod/Invoke. No new type cache planned. Establish actual binding/selection behavior for enum names, numeric values, aliases, flags, invalid values and nullable/multiple selection before implementation.",
+        "Original188 generator tests and candidate2602 owning tests pass. Each9 real enum/collection binding-to-current-values-and-selected-options row passes both versions; case-sensitive rendering remains distinct from case-insensitive binding. All23 actual MVC metadata/binding benchmarks pass both snapshots, byte-identical harness/config. No cache added. Changed-file whitespace clean. Earlier external setup missing hosting dependencies was rejected before measured comparisons.",
+        "One23-case actual-owner comparison completed with8 measurements each: successful enum names/numbers about56-67 percent lower time; unsuccessful lowercase/invalid parses about71-91 percent lower time. Affected heap232 bytes/value lower (large cases differ by about1-2 measurement bytes). All18 affected cases improved; five controls retained, including Typed_64+5.03 percent. Large-win early stop after1/3 comparisons; no tuning. Source/tests committed independently after2602 owning tests and original188 focused tests passed."
+      ],
+      "branch": "autoperf/F021-enum-selection-conversion",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T17:50:05.7663527-08:00"
     },
     {
       "id": "F022",
