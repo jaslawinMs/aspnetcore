@@ -64,9 +64,14 @@ internal static class ValidationHelpers
             if (entries.Count < modelStateDictionary.Count)
             {
                 // Account for entries in the ModelStateDictionary that do not have corresponding ModelMetadata values.
+                var metadataEntryCount = entries.Count;
+                var visitedEntries = metadataEntryCount > 1 ? new HashSet<ModelStateEntry>(entries) : null;
+                // Dictionary entries are unique, so only check the entries already added by Visit.
                 foreach (var entry in modelStateDictionary)
                 {
-                    if (!entries.Contains(entry.Value))
+                    if (visitedEntries is null
+                        ? entries.IndexOf(entry.Value, 0, metadataEntryCount) < 0
+                        : !visitedEntries.Contains(entry.Value))
                     {
                         entries.Add(entry.Value);
                     }
