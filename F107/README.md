@@ -1,9 +1,17 @@
 # F107: empty form-file query results
 
 **Measured, workload-specific proposal with an explicit empty-result convention change.**
+Draft: [jaslawinMs/aspnetcore#29](https://github.com/jaslawinMs/aspnetcore/pull/29).
+Originating issue: [jaslawinMs/aspnetcore#27](https://github.com/jaslawinMs/aspnetcore/issues/27).
+Separate convention proposal: [jaslawinMs/aspnetcore#28](https://github.com/jaslawinMs/aspnetcore/issues/28), Feature/api-suggestion/api-proposal, not approved.
 Source: `1dad2006f241e932236425bd869293a2156e348a`.
 Baseline: `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 Branch: `autoperf/F107-form-file-empty-results`.
+
+Exact draft body/source/three-file scope and the pinned evidence were remotely
+verified. Browser opening was requested immediately after creation; rendering
+was not verified. See [publication receipt](publication.json) and
+[convention proposal receipt](api-proposal-publication.json).
 
 GetFiles retains the original enumeration and ordinal-ignore-case comparison,
 but creates its existing List only at the first match. No matches return the
@@ -19,7 +27,7 @@ matching files, not a mutable List. Empty snapshot contents remain correct.
 However, the actual no-match result changes **List -> array**, **fresh ->
 shared object identities**, and **ICollection.IsReadOnly false -> true**.
 Code depending on the former concrete type/mutable downcast is not covered by
-the read-only equivalence claim. A separate convention proposal will make this
+the read-only equivalence claim. A separate convention proposal makes this
 review question explicit; this is not an RTM-approved API/convention change.
 See the [actual original/final convention probe](empty-result-convention.json).
 
@@ -149,6 +157,6 @@ SDK 12.0.100-alpha.1.26557.102, runtime 12.0.0-alpha.1.26562.105,
 BenchmarkDotNet 0.13.0, in-process server GC. Failed CA2208 test compile preflight
 was corrected before any snapshot/measurement; it is preserved, not counted as
 a measured comparison or successful test. [Validation logs/receipts](validation).
-Source history showed no behavior change since the earlier public/nonnullable
+Source history showed no behavior change since the earlier public/nullability
 annotations/migration; bounded related searches did not prove lack of other
 prior art or default consumer usage.
