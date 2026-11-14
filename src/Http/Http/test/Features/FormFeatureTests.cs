@@ -197,6 +197,55 @@ InvalidContentDispositionValue +
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    public async Task ReadFormAsync_MultipartFileQueries_PreserveResultsAndSnapshots(bool bufferRequest)
+    {
+        var multipart = MultipartFormField +
+            MultipartFormFile.Replace("temp.html", "first.html") +
+            MultipartFormFile.Replace("myfile1", "other").Replace("temp.html", "other.html") +
+            MultipartFormFile.Replace("myfile1", "MYFILE1").Replace("temp.html", "second.html") +
+            MultipartFormEnd;
+        var context = new DefaultHttpContext();
+        var responseFeature = new FakeResponseFeature();
+        context.Features.Set<IHttpResponseFeature>(responseFeature);
+        context.Request.ContentType = MultipartContentType;
+        context.Request.Body = new NonSeekableReadStream(Encoding.UTF8.GetBytes(multipart));
+        context.Features.Set<IFormFeature>(new FormFeature(context.Request, new FormOptions { BufferBody = bufferRequest }));
+
+        var form = await context.Request.ReadFormAsync();
+        var missing = form.Files.GetFiles("absent");
+        var matching = form.Files.GetFiles("myfile1");
+
+        Assert.Equal("Foo", form["description"]);
+        Assert.Equal(3, form.Files.Count);
+        Assert.Empty(missing);
+        Assert.Collection(matching,
+            file => Assert.Same(form.Files[0], file),
+            file => Assert.Same(form.Files[2], file));
+        Assert.Equal(new[] { "first.html", "second.html" }, matching.Select(file => file.FileName));
+        Assert.Equal(new[] { "myfile1", "MYFILE1" }, matching.Select(file => file.Name));
+        foreach (var file in matching)
+        {
+            Assert.Equal("text/html", file.ContentType);
+            Assert.Equal(Encoding.UTF8.GetByteCount("<html><body>Hello World</body></html>"), file.Length);
+            using var body = file.OpenReadStream();
+            using var reader = new StreamReader(body);
+            Assert.Equal("<html><body>Hello World</body></html>", await reader.ReadToEndAsync());
+        }
+
+        var added = new FormFile(Stream.Null, 0, 0, "absent", "added.txt");
+        var collection = Assert.IsType<FormFileCollection>(form.Files);
+        collection.Add(added);
+        Assert.Empty(missing);
+        Assert.Same(added, Assert.Single(form.Files.GetFiles("absent")));
+        collection.Clear();
+        Assert.Equal(2, matching.Count);
+        Assert.Equal(new[] { "first.html", "second.html" }, matching.Select(file => file.FileName));
+        await responseFeature.CompleteAsync();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     public async Task ReadFormAsync_MultipartRepeatedHeadersCountExceeded_Throws(bool bufferRequest)
     {
         var body = MultipartFormField.Replace("\r\n\r\n",
