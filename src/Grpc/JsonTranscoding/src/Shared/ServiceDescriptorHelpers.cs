@@ -405,7 +405,7 @@ internal static class ServiceDescriptorHelpers
         return routeParameterDescriptors;
     }
 
-    public static BodyDescriptorInfo? ResolveBodyDescriptor(string body, Type serviceType, MethodDescriptor methodDescriptor)
+    public static BodyDescriptorInfo? ResolveBodyDescriptor(string body, MethodDescriptor methodDescriptor)
     {
         if (!string.IsNullOrEmpty(body))
         {
@@ -437,14 +437,7 @@ internal static class ServiceDescriptorHelpers
             }
             else
             {
-                ParameterInfo? requestParameter = null;
-                var methodInfo = serviceType.GetMethod(methodDescriptor.Name);
-                if (methodInfo != null)
-                {
-                    requestParameter = methodInfo.GetParameters().SingleOrDefault(p => p.Name == "request");
-                }
-
-                return new BodyDescriptorInfo(methodDescriptor.InputType, fieldDescriptor: null, isDescriptorRepeated: false, parameterInfo: requestParameter);
+                return new BodyDescriptorInfo(methodDescriptor.InputType, fieldDescriptor: null, isDescriptorRepeated: false);
             }
         }
 
