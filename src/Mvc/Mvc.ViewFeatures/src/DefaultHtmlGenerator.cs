@@ -27,14 +27,6 @@ public class DefaultHtmlGenerator : IHtmlGenerator
     private static readonly MethodInfo ConvertEnumFromStringMethod =
         typeof(DefaultHtmlGenerator).GetTypeInfo().GetDeclaredMethod(nameof(ConvertEnumFromString));
 
-    // See: (http://www.w3.org/TR/html5/forms.html#the-input-element)
-    private static readonly string[] _placeholderInputTypes =
-        new[] { "text", "search", "url", "tel", "email", "password", "number" };
-
-    // See: (http://www.w3.org/TR/html5/sec-forms.html#apply)
-    private static readonly string[] _maxLengthInputTypes =
-        new[] { "text", "search", "url", "tel", "email", "password" };
-
     private readonly IAntiforgery _antiforgery;
     private readonly IModelMetadataProvider _metadataProvider;
     private readonly IUrlHelperFactory _urlHelperFactory;
@@ -1171,12 +1163,14 @@ public class DefaultHtmlGenerator : IHtmlGenerator
         }
 
         var suppliedTypeString = tagBuilder.Attributes["type"];
-        if (_placeholderInputTypes.Contains(suppliedTypeString))
+        // See: (http://www.w3.org/TR/html5/forms.html#the-input-element)
+        if (suppliedTypeString is "text" or "search" or "url" or "tel" or "email" or "password" or "number")
         {
             AddPlaceholderAttribute(viewContext.ViewData, tagBuilder, modelExplorer, expression);
         }
 
-        if (_maxLengthInputTypes.Contains(suppliedTypeString))
+        // See: (http://www.w3.org/TR/html5/sec-forms.html#apply)
+        if (suppliedTypeString is "text" or "search" or "url" or "tel" or "email" or "password")
         {
             AddMaxLengthAttribute(viewContext.ViewData, tagBuilder, modelExplorer, expression);
         }
