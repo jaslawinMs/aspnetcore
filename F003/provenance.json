@@ -1,0 +1,78 @@
+{
+  "candidate": "F003",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "531c65215740418197fa535fb852bf456a4ce8e3",
+  "source_branch": "autoperf/F003-grpc-list-activation",
+  "source_hashes": [
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\src\\Microsoft.AspNetCore.Grpc.JsonTranscoding\\Internal\\Json\\ListValueConverter.cs",
+      "sha256": "C8B560A4DD64B9D8D35058967BE708E15F4AF7F8D22221C8E1504475F00E52CF"
+    },
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\test\\Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests\\ConverterTests\\JsonConverterReadTests.cs",
+      "sha256": "97DBEC37A5B200BB783D0453FA26886138C8A08B4F719B1C46DC2C0CE8DDBCA3"
+    },
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\test\\Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests\\Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests.csproj",
+      "sha256": "1205FA4C645F6B5FFC23E5836A7645465220CA4455FD5103832D05FB6C46B17B"
+    },
+    {
+      "path": "src\\Grpc\\JsonTranscoding\\test\\Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests\\Proto\\CustomWellKnown\\struct.proto",
+      "sha256": "55E3A5C3C43EF2D78C419D7BF824CD8DAA0EDAF0E07F42E081F7BE9D28D3338B"
+    }
+  ],
+  "final_snapshot": "after",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "additional_changed_assemblies": [],
+  "unrelated_dependencies_unchanged": true,
+  "final_measurement_rounds": [
+    1,
+    2,
+    3
+  ],
+  "tuning_iterations": 0,
+  "original_guarded_final_tests_passed": [
+    313,
+    313,
+    313
+  ],
+  "original_guarded_final_ListValue_rows": [
+    10,
+    10,
+    10
+  ],
+  "original_guarded_final_new_rows": [
+    8,
+    8,
+    8
+  ],
+  "guard_mutation": {
+    "measured": false,
+    "total": 10,
+    "passed": 8,
+    "failed": 2,
+    "failure": "Both real custom CLR empty/mixed rows throw InvalidCastException without the exact-type guard."
+  },
+  "actual_component_boundary": "Complete System.Text.Json string/UTF8 serialization/deserialization using the compiled owner JsonContext, DescriptorRegistry, JsonConverterHelper options producer and real converter factory. Standard and custom-generated protobuf messages; independent Google JsonParser and custom protobuf wire oracle.",
+  "complete_setup_receipts_per_variant_and_launch": 21,
+  "recursive_DLL_JSON_members_per_snapshot": 63,
+  "closure_preparation": "Original harness DLL/PDB/deps/runtime configuration reused unchanged. Recursive closure differs only in Microsoft.AspNetCore.Grpc.JsonTranscoding.dll. Final source and rebuilt owner reproduce the measured guarded source/owner hashes exactly before source commit.",
+  "benchmark_configuration": "BenchmarkDotNet0.13.0; pinned .NET12 alpha; Release; in-process; server GC;3warmups;8retained measured iterations;100ms iterationTime;DontRemove. Serialized A/B,B/A,A/B;3pairs total;no timed launch discarded or fourth pair.",
+  "source_capture_note": "Manifests record independent baseline37e809 and dirty candidate/test source at capture; final committed source hashes verified separately. Source build removed only UTF8 BOM from App.Ref suppression XML; exact owned BOM restored and excluded from commit.",
+  "compatibility_boundary": "Original, guarded and final313-test suites/all8new rows pass through actual serialization. Not a reproduced functional bug. Negative unguarded-constructor mutation demonstrates both custom-type guards fail for the expected reason and pass with the measured guard.",
+  "custom_fixture_boundary": "Generated canonical google.protobuf full names and field schema, different CLR namespace and noncanonical source-file name. Google's own JSON parser expects an object for that file; standard Google JSON parser output is transferred through custom protobuf wire parsing as the independent oracle. Actual ASP.NET converter factory supports/deserializes that custom CLR type. No claim that Google JsonParser directly accepts this fixture's JSON.",
+  "observed_effect": "9of14standard-read cases improve in every pair;13lower/1higher medians. Root_Empty_String median4.80% lower; Root_NestedEmpty_64/2562.29/2.48% lower. No structural allocation saving. Mixed custom fallback times,all4unchanged control medians higher and large Custom_Empty variance retained.",
+  "IL_boundary": "Closed ListValue Read managed IL grows45to84bytes and contains direct ListValue construction plus generic activation fallback. Not native/JIT dispatch, code-size, inlining or causal timing proof.",
+  "managed_framework_prerequisites": "Existing pinned source-built Microsoft.AspNetCore.App12.0.0-dev installed only into repository-local .dotnet during F295 setup; same framework used for all tests. Standalone benchmark pins Core12 and disables transitive shared-framework fallback. No global SDK/package/feed changes.",
+  "excluded_or_unverified": [
+    "Cold converter/options construction and first-use latency",
+    "Hosted gRPC/HTTP or production throughput/workload distribution",
+    "Concurrency, GC pressure, other runtimes/platforms and architectures",
+    "Native code/JIT inlining or causal explanation of control/measurement variance",
+    "Trimming/Native AOT and composition with other proposals",
+    "Native IIS, ReadyToRun and installer packaging"
+  ]
+}

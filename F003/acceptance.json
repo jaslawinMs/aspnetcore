@@ -1,0 +1,35 @@
+{
+  "candidate": "F003",
+  "shipping_scope": "Only ListValueConverter.Read initializer: exact standard CLR type uses direct constructor; original generic-new fallback retained. No public API, cache, other converter or assembly-boundary change.",
+  "requirement_coverage": [
+    {
+      "requirement": "Preserve complete empty/single/mixed values, order, fresh messages and root collection isolation",
+      "test": "JsonConverterReadTests.ListValue_Read_PreservesValuesAndFreshCollections",
+      "rows": 3,
+      "original_guarded_final": "All rows passed"
+    },
+    {
+      "requirement": "Preserve real generated custom CLR type and full field schema through owning factory",
+      "test": "JsonConverterReadTests.ListValue_CustomClrType_PreservesGeneratedContract",
+      "rows": 2,
+      "original_guarded_final": "Both rows passed",
+      "unguarded_mutation": "Both rows fail for InvalidCastException"
+    },
+    {
+      "requirement": "Preserve root-null serializer preemption",
+      "test": "JsonConverterReadTests.ListValue_NullRoot_PreservesNullResult",
+      "rows": 1,
+      "original_guarded_final": "Passed"
+    },
+    {
+      "requirement": "Preserve invalid object/scalar JSON exception type",
+      "test": "JsonConverterReadTests.ListValue_InvalidRoot_PreservesJsonException",
+      "rows": 2,
+      "original_guarded_final": "Both rows passed"
+    }
+  ],
+  "correctness": "313passed/0failed/0skipped on original, guarded and final;10ListValue rows including8new; each actual TRX parsed individually",
+  "benchmark": "21fixed actual serializer cases,126outcomes and126producer receipts;all eight measured iterations retained per outcome;3complete pairs",
+  "reproducibility": "Exact source/owner hashes;63recursive DLL/JSON members with owner-only difference;unchanged harness/PDB/deps/runtime;actual owner paths/MVIDs",
+  "disposition": "Modest measured fork-only draft, no allocation saving or broad throughput/native-code claim"
+}

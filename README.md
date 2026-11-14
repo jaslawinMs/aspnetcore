@@ -21,6 +21,7 @@ well as the largest speedup.
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F003 | Modest measured draft proposal; no structural heap saving, custom variance and control/non-win outcomes retained | [Guarded protobuf ListValue construction](F003/README.md) |
 | F009 | Draft proposal | [Validation-summary metadata membership](F009/README.md) |
 | F021 | Draft proposal | [Enum conversion during select rendering](F021/README.md) |
 | F025 | Draft proposal; workload trade-offs and unstable case retained | [Pooled BSON TempData buffers](F025/README.md) |
