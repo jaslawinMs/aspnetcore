@@ -1,0 +1,96 @@
+{
+  "candidate": "F295",
+  "disposition": "validated-with-disclosed-tradeoffs",
+  "scope": "Actual formatter and complete body-field descriptor resolution; not hosted gRPC/HTTP throughput or full startup.",
+  "baseline_default_verified": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "acceptance_defined_before_implementation": "F295-acceptance.md",
+  "comparisons": 3,
+  "all_measured_launches": 6,
+  "cases_per_launch": 22,
+  "minimum_iterations_per_case": 8,
+  "prototype_summary_rounds": [1],
+  "final_summary_rounds": [2, 3],
+  "prototype": "StringBuilder sized to input.Length",
+  "final": "Per-call char span: stack for input.Length <= 128, heap array otherwise, one final string",
+  "maximum_stack_bytes": 256,
+  "only_owning_dll_differs_in_all_snapshots": true,
+  "recursive_dll_json_files_checked_each": 63,
+  "exact_original_harness_pdb_runtime_and_dependency_configuration_reused": true,
+  "all_raw_results_and_preparation_failures_retained": true,
+  "original_final_suites": {
+    "before_passed": 334,
+    "after_passed": 334,
+    "failed": 0,
+    "skipped": 0,
+    "focused_class_rows_each": 30,
+    "new_rows_each": 29
+  },
+  "initial_suites": {
+    "before_passed": 328,
+    "after_passed": 328,
+    "new_rows_each": 23,
+    "archived_before_tuning": true
+  },
+  "requirement_coverage": [
+    {
+      "requirement": "Exact empty, separator, acronym, case-transition, digits, period flags, trailing marker and Unicode/surrogate behavior; every row exercises all four flag combinations",
+      "test": "FormatUnderscoreName_PreservesCharacterTransitions",
+      "rows": 18
+    },
+    {
+      "requirement": "Letter output, zero-output separators and trailing marker replacement immediately before/at/after bounded buffer threshold, including empty, single and large fallback",
+      "test": "FormatUnderscoreName_PreservesOutputAtBufferBoundaries",
+      "rows": [0, 1, 127, 128, 129, 1024]
+    },
+    {
+      "requirement": "Real generated protobuf field/repetition/CLR property selection and actual distinct value identity for sub, sub_data, repeated_strings, repeated_messages and map_strings",
+      "test": "ResolveBodyDescriptor_PreservesGeneratedPropertySelection",
+      "rows": 5
+    },
+    {
+      "requirement": "Real compiled formatter and complete actual descriptor producer, property/value identity, star/missing/echo controls",
+      "test": "NameFormattingBenchmark.Setup",
+      "matching_receipts_each_variant_and_launch": 22
+    }
+  ],
+  "measurement_verdict": {
+    "affected_cases_improving_both_final_pairs": 15,
+    "affected_small_or_no_output_cases_slower_both_final_pairs": 4,
+    "final_medians_lower": 16,
+    "final_medians_higher": 6,
+    "affected_allocations_lower_each_final_pair": 15,
+    "other_cases_allocations_unchanged": 7,
+    "complete_additional_bindings_paired_median_time_change_percent": -57.63,
+    "complete_additional_bindings_bytes_before_after": [952, 224],
+    "complete_custom_paired_median_time_change_percent": -26.85,
+    "complete_custom_bytes_before_after": [328, 176],
+    "ordinary_repeated_strings_paired_median_time_change_percent": -77.21,
+    "ordinary_repeated_strings_bytes_before_after": [616, 56],
+    "small_input_time_regressions_percent": {
+      "Empty": 112.52,
+      "SingleLower": 34.02,
+      "SingleUpper": 29.41,
+      "Separators_32": 84.30
+    },
+    "unchanged_control_median_time_changes_percent": {
+      "BodyMissing_Control": 0.72,
+      "BodyStar_Control": 0.94,
+      "Echo_Control": -3.06
+    },
+    "variance_cause": "Unverified; complete raw statistics retained, no harmless-noise/JIT explanation."
+  },
+  "source_and_harness_formatting_passed": true,
+  "functional_bug_fix_red_green_claim": false,
+  "public_signature_default_or_convention_change_intended": false,
+  "new_process_wide_metadata_cache": false,
+  "repository_dependency_manifests_changed": false,
+  "machine_settings_changed": false,
+  "excluded_or_unverified": [
+    "Full application startup, hosted gRPC/HTTP and production throughput",
+    "Cold runtime, concurrency, stack/heap pressure and other architectures/runtimes",
+    "Timing of exact 127/128/129 threshold boundaries",
+    "Heap regression for large separator-only inputs: heap array is allocated despite empty output",
+    "Production input distribution and cause of measurement/control variance",
+    "Native IIS, ReadyToRun and installer packaging; disabled for source-built managed test prerequisites"
+  ]
+}

@@ -1,0 +1,77 @@
+diff --git a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+index 6010fd7500..86782d3bce 100644
+--- a/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
++++ b/src/Grpc/JsonTranscoding/src/Shared/ServiceDescriptorHelpers.cs
+@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
+ using System.Globalization;
+ using System.Linq;
+ using System.Reflection;
++using System.Text;
+ using Google.Api;
+ using Google.Protobuf;
+ using Google.Protobuf.Reflection;
+@@ -612,7 +613,7 @@ internal static class ServiceDescriptorHelpers
+     public static string FormatUnderscoreName(string input, bool pascalCase, bool preservePeriod)
+     {
+         var capitalizeNext = pascalCase;
+-        var result = string.Empty;
++        var result = new StringBuilder(input.Length);
+ 
+         for (var i = 0; i < input.Length; i++)
+         {
+@@ -620,11 +621,11 @@ internal static class ServiceDescriptorHelpers
+             {
+                 if (capitalizeNext)
+                 {
+-                    result += char.ToUpper(input[i], CultureInfo.InvariantCulture);
++                    result.Append(char.ToUpper(input[i], CultureInfo.InvariantCulture));
+                 }
+                 else
+                 {
+-                    result += input[i];
++                    result.Append(input[i]);
+                 }
+                 capitalizeNext = false;
+             }
+@@ -634,18 +635,18 @@ internal static class ServiceDescriptorHelpers
+                 {
+                     // Force first letter to lower-case unless explicitly told to
+                     // capitalize it.
+-                    result += char.ToLower(input[i], CultureInfo.InvariantCulture);
++                    result.Append(char.ToLower(input[i], CultureInfo.InvariantCulture));
+                 }
+                 else
+                 {
+                     // Capital letters after the first are left as-is.
+-                    result += input[i];
++                    result.Append(input[i]);
+                 }
+                 capitalizeNext = false;
+             }
+             else if (char.IsDigit(input[i]))
+             {
+-                result += input[i];
++                result.Append(input[i]);
+                 capitalizeNext = true;
+             }
+             else
+@@ -653,16 +654,16 @@ internal static class ServiceDescriptorHelpers
+                 capitalizeNext = true;
+                 if (input[i] == '.' && preservePeriod)
+                 {
+-                    result += '.';
++                    result.Append('.');
+                 }
+             }
+         }
+         // Add a trailing "_" if the name should be altered.
+         if (input.Length > 0 && input[input.Length - 1] == '#')
+         {
+-            result += '_';
++            result.Append('_');
+         }
+-        return result;
++        return result.ToString();
+     }
+ }
+ 
