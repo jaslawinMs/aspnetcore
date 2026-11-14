@@ -2193,15 +2193,16 @@
         "snippet": "var header = new StringBuilder();\n\nheader.Append(_name.AsSpan());\nheader.Append('=');\nheader.Append(_value.AsSpan());\n\nreturn header.ToString();",
         "suppressed": false
       },
-      "status": "validated",
+      "status": "drafted",
       "notes": [
         "Fresh upstream default 37e809. Evaluate actual CookieHeaderValue.ToString span formatting; preserve validated names/values, quoted output, sliced StringSegment offsets and parser-produced values. Original method allocates a StringBuilder for three fixed span pieces; proposed three-span string.Concat avoids substring intermediates. No public API or retained metadata cache change. Define compatibility/performance acceptance before shipping edits.",
         "Baseline/final 1856/1856 Headers outcomes and all eight new slice/parser rows pass individually. All 24 complete header/source-producer receipts match, including canonical empty parser values. Span Concat mirrors existing assembly precedent; validation/API/cache unchanged. Identical harness/configs/unrelated closure, only Headers DLL differs; first measured comparison starting.",
-        "Source 7998aa5d782616f3f8f1dbebbff7722c6a960bd3; one comparison, no tuning, clear-large-win early stop. All 21 affected cases improve 47.19-75.15% time and 50.36-74.29% heap, saving 104-8352 B/op. All three unchanged SetCookie controls regress 2.44-7.59% time with unchanged allocation; retain without explanation. Original/final 1856/1856 owning tests, every new row and all 24 full-output/real-producer receipts pass. Corrected canonical-empty parser precondition before any snapshots/timing. No Request.Cookies/production or functional-red-green claim."
+        "Source 7998aa5d782616f3f8f1dbebbff7722c6a960bd3; one comparison, no tuning, clear-large-win early stop. All 21 affected cases improve 47.19-75.15% time and 50.36-74.29% heap, saving 104-8352 B/op. All three unchanged SetCookie controls regress 2.44-7.59% time with unchanged allocation; retain without explanation. Original/final 1856/1856 owning tests, every new row and all 24 full-output/real-producer receipts pass. Corrected canonical-empty parser precondition before any snapshots/timing. No Request.Cookies/production or functional-red-green claim.",
+        "Published/OPEN/draft/base main verified jaslawinMs/aspnetcore#24, issue #23; exact source 7998aa5d782616f3f8f1dbebbff7722c6a960bd3, pinned full evidence 3463bfd3782a94842c224ce89054556687833065. Two files +50/-8; template/body verified. Browser-open requested immediately after creation, rendering not verified. One comparison, no tune; all 21 affected improve time 47.19-75.15% and heap 50.36-74.29%; all three unchanged control regressions retained with unchanged allocation. Both 1856 owning outcomes/all eight new plus four existing direct ToString rows and all 24 real-producer/full-output receipts pass. No Request.Cookies/production or functional-red-green claim."
       ],
       "branch": "autoperf/F079-cookie-header-concat",
-      "pr_url": null,
-      "updated_at": "2026-11-14T00:35:54.4513417-08:00"
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/24",
+      "updated_at": "2026-11-14T00:42:06.1199366-08:00"
     },
     {
       "id": "F080",

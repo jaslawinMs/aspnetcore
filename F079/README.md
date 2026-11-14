@@ -1,11 +1,16 @@
 # F079: CookieHeaderValue span concatenation
 
 **Measured compatible formatting proposal.**
+Draft: [jaslawinMs/aspnetcore#24](https://github.com/jaslawinMs/aspnetcore/pull/24).
+Issue: [jaslawinMs/aspnetcore#23](https://github.com/jaslawinMs/aspnetcore/issues/23).
 Source: `7998aa5d782616f3f8f1dbebbff7722c6a960bd3`.
 Branch: `autoperf/F079-cookie-header-concat`.
 Independent upstream baseline:
 `37e809ead5824bc753a1c3d56f11615bdb1296c5`.
 No other AutoPerf proposal is carried on this branch.
+The draft's source/body/two-file scope and pinned evidence were remotely
+verified. Browser opening was requested immediately after creation; rendering
+was not verified. See [publication receipt](publication.json).
 
 ## Measurements and retained controls
 
