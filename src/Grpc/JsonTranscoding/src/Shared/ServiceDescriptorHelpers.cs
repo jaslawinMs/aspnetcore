@@ -612,7 +612,9 @@ internal static class ServiceDescriptorHelpers
     public static string FormatUnderscoreName(string input, bool pascalCase, bool preservePeriod)
     {
         var capitalizeNext = pascalCase;
-        var result = string.Empty;
+        // Each input character, including a replaced trailing '#', emits at most one character.
+        Span<char> result = input.Length <= 128 ? stackalloc char[input.Length] : new char[input.Length];
+        var resultLength = 0;
 
         for (var i = 0; i < input.Length; i++)
         {
@@ -620,11 +622,11 @@ internal static class ServiceDescriptorHelpers
             {
                 if (capitalizeNext)
                 {
-                    result += char.ToUpper(input[i], CultureInfo.InvariantCulture);
+                    result[resultLength++] = char.ToUpper(input[i], CultureInfo.InvariantCulture);
                 }
                 else
                 {
-                    result += input[i];
+                    result[resultLength++] = input[i];
                 }
                 capitalizeNext = false;
             }
@@ -634,18 +636,18 @@ internal static class ServiceDescriptorHelpers
                 {
                     // Force first letter to lower-case unless explicitly told to
                     // capitalize it.
-                    result += char.ToLower(input[i], CultureInfo.InvariantCulture);
+                    result[resultLength++] = char.ToLower(input[i], CultureInfo.InvariantCulture);
                 }
                 else
                 {
                     // Capital letters after the first are left as-is.
-                    result += input[i];
+                    result[resultLength++] = input[i];
                 }
                 capitalizeNext = false;
             }
             else if (char.IsDigit(input[i]))
             {
-                result += input[i];
+                result[resultLength++] = input[i];
                 capitalizeNext = true;
             }
             else
@@ -653,16 +655,16 @@ internal static class ServiceDescriptorHelpers
                 capitalizeNext = true;
                 if (input[i] == '.' && preservePeriod)
                 {
-                    result += '.';
+                    result[resultLength++] = '.';
                 }
             }
         }
         // Add a trailing "_" if the name should be altered.
         if (input.Length > 0 && input[input.Length - 1] == '#')
         {
-            result += '_';
+            result[resultLength++] = '_';
         }
-        return result;
+        return new string(result[..resultLength]);
     }
 }
 
