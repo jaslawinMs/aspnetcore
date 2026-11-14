@@ -1,0 +1,57 @@
+{
+  "candidate": "F106",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "aed53fce5281e7f3d9a54c2e0ba6a45a42c234f5",
+  "source_branch": "autoperf/F106-enum-name-reverse-lookup",
+  "source_hashes": [
+    {
+      "sha256": "C667ADB17224ADF79DF6A7F4C3CADF1D8E47BE36C3B908666714C54247E786F1",
+      "path": "src\\Mvc\\Mvc.ViewFeatures\\src\\DefaultHtmlGenerator.cs"
+    },
+    {
+      "sha256": "A4955B296BE506ED1D9F222651C787F3EF06A573536063370043A42A426B14E0",
+      "path": "src\\Mvc\\Mvc.ViewFeatures\\test\\DefaultHtmlGeneratorTest.cs"
+    }
+  ],
+  "final_snapshot": "after-2",
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "minimum_measured_iterations": 8,
+  "harness_dependencies_unchanged": true,
+  "final_comparison_rounds": [
+    2,
+    3
+  ],
+  "prototype_comparison_rounds": [
+    1
+  ],
+  "source_tuning": "One change after round 1: lazy eligibility and original-scan fallback for known-invalid ModelState.",
+  "cases_per_launch": 41,
+  "eligible_workloads": 13,
+  "control_workloads": 28,
+  "performance_assessment": "All 13 indexed cases improve time and allocation in both final pairs: median paired time 10.91-83.65 percent lower,608-12257 fewer B/op. This is a workload-specific fork proposal, not an all-path win.",
+  "control_costs": "27 of28 controls have positive median time changes,21 regress inboth pairs. Range -2.58 to+10.36 percent;Small_Typed_1 +15.87/+4.84,Large_TwoValid_64 +9.56/+8.66. No measurement discarded or explained as harmless noise.",
+  "allocation_variations": "Five controls retain1-10B increases or0-2B decreases bylaunch;no uniform unchanged-allocation claim. Sparseinvalid ModelState prototype heap increases are removed inmeasuredfinal cases, but CPU costs remain.",
+  "prototype_source_verification": "The normalized unified patch applies tobaseline37e809. ReconstructedCRLF source hashes exactly tooriginalaftermanifest CD4CE21B546396A3D2C65F9F901B65F472A3718A7D9D2418B8A17573BAAD7A0D,withoutmodifyingtheworkingtree.",
+  "timing_scope": "Warmed actual public DefaultHtmlGenerator.GetCurrentValues, not a proxy; real metadata, bound ModelState or typed model/iterator values.",
+  "correctness": "Original/final 2596-case owning suites and all 182 focused outcomes passed, including three new permanent cases. All 41 real producer/current-value/select-HTML setups and Dry cases pass both variants; exact current-value insertion order and full encoded HTML receipts match.",
+  "source_scope": "Two files: 15 source additions/3 deletions plus 42 new test lines. Original string/enum/numeric conversion, all alias names, ordinal reverse matching and consumer loop are preserved. No new exported API, dependency or retained metadata cache.",
+  "hot_reload": "The nullable eligibility flag and reverse lookup are local to one call. No static/singleton metadata state is added, so no new MetadataUpdateHandler or live-edit cache test is needed.",
+  "producer_reachability": "FormValueProvider, CollectionModelBinder and EnumTypeModelBinder produce all submitted rows and errors. Actual typed lists and iterator methods produce model-fallback inputs. The benchmark does not directly inject ModelState values/errors.",
+  "invalid_state_producer": "Actual ModelStateDictionary AddModelError/TryAddModelError marks entry.ValidationState Invalid; the candidate inspects this state without reading its lazy error collection.",
+  "extra_lookup": "Only eligible counted enum workloads inspect ModelState again, to avoid indexing sparse known-invalid input. Large/nested ModelState performance is not measured.",
+  "prototype_rejection": "Round 1 gains were real, including 56-84 percent in large valid/typed cases. Sparse invalid ModelState heap increased 42-45 percent and empty time 26.8 percent. The complete prototype pair is retained separately, not mixed with final statistics.",
+  "test_boundary": "New unit cases directly set up ModelState to verify downstream alias/undefined/invalid semantics; real producer reachability is established separately by benchmark preflight.",
+  "preflight_history": "The initial HTML oracle used LF instead of Windows line endings and was fixed before any snapshot/measurement. Initial test tuple typing/ArgumentException diagnostics were fixed before the 2596-case original run; the before capture's dirty-test receipt remains unchanged. Shipping target source and the frozen harness were unaffected.",
+  "unverified": [
+    "Cold metadata/static delegate initialization",
+    "Large or nested ModelState",
+    "Sparse invalid model/ViewData fallback without an Invalid ModelState entry",
+    "HTTP throughput",
+    "Browser workflows",
+    "Native IIS/ANCM",
+    "Other runtimes",
+    "Composition with F021 or other independent branches"
+  ],
+  "reproduction": "Complete standalone project and exact commands/outcomes are in README; immutable target-only DLL differences and load receipts are retained."
+}

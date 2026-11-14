@@ -1,0 +1,33 @@
+diff --git a/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs b/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
+--- a/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
++++ b/src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs
+@@ -966,6 +966,10 @@ public class DefaultHtmlGenerator : IHtmlGenerator
+         Debug.Assert(isTargetEnum ^ enumNames == null);
+ 
+         var innerType = metadata.UnderlyingOrModelType;
++        var useEnumNamesLookup = isTargetEnum &&
++            rawValues is ICollection { Count: var rawValueCount } &&
++            rawValueCount > 1 && rawValueCount >= enumNames.Count;
++        ILookup<string, string> enumNamesLookup = null;
+ 
+         // Convert raw value collection to strings.
+         var currentValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+@@ -1010,10 +1014,15 @@ public class DefaultHtmlGenerator : IHtmlGenerator
+                 // contains enum values and property has type int or string.
+                 if (isTargetEnum)
+                 {
+                     // Add all simple names for this value.
+-                    var matchingNames = enumNames
+-                        .Where(kvp => string.Equals(integerString, kvp.Value, StringComparison.Ordinal))
+-                        .Select(kvp => kvp.Key);
++                    var matchingNames = useEnumNamesLookup
++                        ? (enumNamesLookup ??= enumNames.ToLookup(
++                            static kvp => kvp.Value,
++                            static kvp => kvp.Key,
++                            StringComparer.Ordinal))[integerString]
++                        : enumNames
++                            .Where(kvp => string.Equals(integerString, kvp.Value, StringComparison.Ordinal))
++                            .Select(kvp => kvp.Key);
+                     foreach (var name in matchingNames)
+                     {
+                         currentValues.Add(name);

@@ -1,0 +1,28 @@
+{
+  "candidate": "F106",
+  "defined_before_implementation": true,
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F106-enum-name-reverse-lookup",
+  "production_change": "Evaluate a lazy per-call reverse index only for known multi-value collections with at least as many raw values as enum names. Preserve the existing scan for small inputs and unknown-count enumerables; preserve every alias, ordinal integer matching, parse semantics and insertion order.",
+  "compatibility": [
+    "Original/final owning ViewFeatures suites and every individual focused generator case pass.",
+    "Actual MVC DataAnnotations metadata contains the complete eight/64-member enums and aliases.",
+    "Real FormValueProvider, CollectionModelBinder and EnumTypeModelBinder produce names, numbers, lowercase, invalid, mixed and undefined numeric ModelState.",
+    "Typed model lists and actual iterator producers exercise model fallback.",
+    "All 41 setups assert complete current-value sets and encoded select HTML, including aliases, flags, invalid CSS and selected/unselected options.",
+    "No process-wide metadata cache, exported API, dependency change or cross-assembly private access."
+  ],
+  "measurement": {
+    "expected_cases": 41,
+    "maximum_comparisons": 3,
+    "minimum_measurements_per_case": 8,
+    "outliers": "DontRemove",
+    "actual_target": "Microsoft.AspNetCore.Mvc.ViewFeatures.DefaultHtmlGenerator.GetCurrentValues",
+    "policy": "Measure actual target; retain every timing/allocation trade-off and all controls; publish no optimization PR without a supported gain."
+  },
+  "hot_reload": "Index lifetime is one call, not static/singleton or retained across renders. No new metadata-update handler or live-edit validation is required.",
+  "excluded": ["HTTP throughput", "Browser workflows", "Cold metadata initialization", "Native IIS/ANCM", "Other runtimes", "Composition with F021 or other proposals"],
+  "new_exported_api": false,
+  "tuning_after_round_1": "Large valid/typed cases improved 56-84 percent, but sparse invalid submissions increased heap 42-45 percent and empty/small controls regressed. Keep round 1 intact. Evaluate collection eligibility lazily only after a parsed enum value, and leave known-invalid ModelState on the original scan without allocating an index or reading its error collection. All original compatibility and measurement criteria remain unchanged; two comparisons remain.",
+  "new_unverified_boundary": "Sparse invalid model/ViewData fallback without an invalid ModelState entry can still pay reverse-index setup costs; no all-input performance or cold-error-collection claim."
+}
