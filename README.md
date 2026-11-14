@@ -20,6 +20,7 @@ well as the largest speedup.
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F009 | Measured proposal | [Validation-summary metadata membership](F009/README.md) |
 | F034 (also F119) | No-gain; duplicate consolidated | [Concrete Rewrite condition enumeration](F034/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |

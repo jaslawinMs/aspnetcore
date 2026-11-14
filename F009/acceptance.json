@@ -1,0 +1,26 @@
+{
+  "id": "F009",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "producer": "Actual SimpleTypeModelBinder and CollectionModelBinder<int> bind FormValueProvider input, including conversion failures, into the shared ActionContext.ModelState. No direct error injection or copied membership loop.",
+  "disputed_precondition": "A view with object or projected metadata shares the actual bound ModelState; some or all entries lack matching view metadata.",
+  "compatibility": [
+    "All six new producer-to-rendering theory rows pass individually on original and candidate, covering zero, one and two metadata-matched entries.",
+    "Exact rendered error order and uniqueness are preserved with empty and mixed matching metadata.",
+    "excludePropertyErrors uses the actual prefix-bound error and excludes every other error.",
+    "Existing validation-summary cases and the full owning ViewFeatures suite pass.",
+    "No public API, defaults, new package configuration or cross-assembly private access changes."
+  ],
+  "measurement": {
+    "owner": "Actual ValidationHelpers.GetModelStateList through a setup-bound typed delegate, using actual binder-produced ModelState and actual ViewDataDictionary metadata.",
+    "controls": "Aligned metadata avoiding fallback; model-error-only path; small bound collections.",
+    "maximum_paired_comparisons": 3,
+    "early_stop": "One comparison is sufficient for a clear large improvement around 50 percent or more, retaining every regression and allocation cost.",
+    "scope": "Helper CPU and managed allocations, not HTTP throughput. Actual rendering compatibility is separately exercised.",
+    "exclusions": "Native IIS, hosted HTTP parsing, browser workflows, and composition with other independent optimization branches."
+  },
+  "history": {
+    "related_issue": "https://github.com/dotnet/aspnetcore/issues/4831",
+    "related_closed_pr": "https://github.com/dotnet/aspnetcore/pull/7221",
+    "note": "The original contract explicitly includes errors outside model metadata; the optimization must not discard them."
+  }
+}

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Routing.Abstractions\src\Microsoft.AspNetCore.Routing.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Abstractions\src\Microsoft.AspNetCore.Mvc.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.ViewFeatures\src\Microsoft.AspNetCore.Mvc.ViewFeatures.csproj" />
+  </ItemGroup>
+  <Target Name="ValidateSourceRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(AspNetCoreRoot)' == ''" Text="Set AspNetCoreRoot to the ASP.NET Core checkout being measured." />
+  </Target>
+</Project>
