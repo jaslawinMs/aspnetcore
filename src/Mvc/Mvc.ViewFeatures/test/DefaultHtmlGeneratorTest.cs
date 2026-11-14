@@ -998,6 +998,172 @@ public class DefaultHtmlGeneratorTest
         Assert.Equal(expected, antiforgeryField);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GenerateSelect_CurrentValuesList_PreservesOrdinalMatchingAndGrouping(bool grouped)
+    {
+        var values = Enumerable.Range(0, 32).Select(index => $"other{index}").ToList();
+        values[0] = "choice3";
+        values[1] = "CHOICE9";
+        var items = CreateSelectionItems(grouped);
+        items[5].Selected = true;
+
+        var result = RenderSelection(items, values);
+
+        Assert.Equal(ExpectedSelection(grouped, 3), result);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GenerateSelect_CurrentValuesHashSet_PreservesComparer(bool ignoreCase)
+    {
+        var values = new HashSet<string>(
+            Enumerable.Range(0, 32).Select(index => $"OTHER{index}"),
+            ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal)
+        {
+            "CHOICE3",
+        };
+
+        var result = RenderSelection(CreateSelectionItems(grouped: false), values);
+
+        Assert.Equal(ignoreCase ? ExpectedSelection(grouped: false, 3) : ExpectedSelection(grouped: false), result);
+    }
+
+    [Fact]
+    public void GenerateSelect_CurrentValuesListSubclass_PreservesContainsImplementation()
+    {
+        var values = new CaseInsensitiveSelectionList();
+        values.AddRange(Enumerable.Range(0, 32).Select(index => $"OTHER{index}"));
+        values.Add("CHOICE3");
+
+        var result = RenderSelection(CreateSelectionItems(grouped: false), values);
+
+        Assert.Equal(ExpectedSelection(grouped: false, 3), result);
+        Assert.Equal(32, values.ContainsCalls);
+    }
+
+    [Fact]
+    public void GenerateSelect_CurrentValuesCollection_PreservesContainsWithoutEnumeration()
+    {
+        var values = new Mock<ICollection<string>>(MockBehavior.Strict);
+        values.Setup(collection => collection.Contains(It.IsAny<string>()))
+            .Returns<string>(value => string.Equals(value, "CHOICE3", StringComparison.OrdinalIgnoreCase));
+
+        var result = RenderSelection(CreateSelectionItems(grouped: false), values.Object);
+
+        Assert.Equal(ExpectedSelection(grouped: false, 3), result);
+        values.Verify(collection => collection.Contains(It.IsAny<string>()), Times.Exactly(32));
+    }
+
+    [Fact]
+    public void GenerateSelect_CurrentValuesList_ObservesOptionEnumerationUpdates()
+    {
+        var values = Enumerable.Range(0, 32).Select(index => $"other{index}").ToList();
+        var items = CreateSelectionItems(grouped: false);
+        IEnumerable<SelectListItem> Enumerate()
+        {
+            foreach (var item in items)
+            {
+                yield return item;
+            }
+
+            values.Add("choice3");
+        }
+
+        var result = RenderSelection(Enumerate(), values);
+
+        Assert.Equal(ExpectedSelection(grouped: false, 3), result);
+    }
+
+    [Fact]
+    public void GenerateSelect_CurrentValuesList_ObservesCustomOptionIndexerUpdates()
+    {
+        var values = Enumerable.Range(0, 32).Select(index => $"other{index}").ToList();
+        var items = CreateSelectionItems(grouped: false);
+        var options = new Mock<IList<SelectListItem>>(MockBehavior.Strict);
+        options.SetupGet(collection => collection.Count).Returns(items.Count);
+        options.Setup(collection => collection[It.IsAny<int>()])
+            .Returns<int>(index =>
+            {
+                if (index == 0 && !values.Contains("choice3"))
+                {
+                    values.Add("choice3");
+                }
+
+                return items[index];
+            });
+
+        var result = RenderSelection(options.Object, values);
+
+        Assert.Equal(ExpectedSelection(grouped: false, 3), result);
+    }
+
+    private static List<SelectListItem> CreateSelectionItems(bool grouped)
+    {
+        var group = grouped ? new SelectListGroup { Name = "group" } : null;
+
+        return Enumerable.Range(0, 32).Select(index => new SelectListItem
+        {
+            Text = $"text{index}",
+            Value = $"choice{index}",
+            Group = group,
+        }).ToList();
+    }
+
+    private static string RenderSelection(IEnumerable<SelectListItem> items, ICollection<string> values)
+    {
+        var metadataProvider = new TestModelMetadataProvider();
+        var viewContext = GetViewContext(new Model(), metadataProvider);
+        viewContext.ClientValidationEnabled = false;
+        var result = GetGenerator(metadataProvider).GenerateSelect(
+            viewContext,
+            viewContext.ViewData.ModelExplorer.GetExplorerForProperty(nameof(Model.Collection)),
+            optionLabel: null,
+            expression: nameof(Model.Collection),
+            selectList: items,
+            currentValues: values,
+            allowMultiple: true,
+            htmlAttributes: null);
+
+        return HtmlContentUtilities.HtmlContentToString(result, HtmlEncoder.Default);
+    }
+
+    private static string ExpectedSelection(bool grouped, params int[] selected)
+    {
+        var result = "<select id=\"Collection\" multiple=\"multiple\" name=\"Collection\">";
+        if (grouped)
+        {
+            result += "<optgroup label=\"group\">" + Environment.NewLine;
+        }
+
+        for (var index = 0; index < 32; index++)
+        {
+            var selectedAttribute = selected.Contains(index) ? " selected=\"selected\"" : string.Empty;
+            result += $"<option{selectedAttribute} value=\"choice{index}\">text{index}</option>" + Environment.NewLine;
+        }
+
+        if (grouped)
+        {
+            result += "</optgroup>" + Environment.NewLine;
+        }
+
+        return result + "</select>";
+    }
+
+    private class CaseInsensitiveSelectionList : List<string>, ICollection<string>
+    {
+        public int ContainsCalls { get; private set; }
+
+        bool ICollection<string>.Contains(string item)
+        {
+            ContainsCalls++;
+
+            return this.Any(value => string.Equals(value, item, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     // GetCurrentValues uses only the IModelMetadataProvider passed to the DefaultHtmlGenerator constructor.
     private static IHtmlGenerator GetGenerator(IModelMetadataProvider metadataProvider, MvcViewOptions options = default)
     {
