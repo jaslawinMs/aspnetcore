@@ -307,12 +307,12 @@ public class KnownHeaders
 
     static string Each<T>(IEnumerable<T> values, Func<T, string> formatter)
     {
-        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
+        return values.Any() ? string.Concat(values.Select(formatter)) : "";
     }
 
     static string Each<T>(IEnumerable<T> values, Func<T, int, string> formatter)
     {
-        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
+        return values.Any() ? string.Concat(values.Select(formatter)) : "";
     }
 
     static string AppendSwitch(IEnumerable<IGrouping<int, KnownHeader>> values) =>
