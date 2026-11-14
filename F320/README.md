@@ -1,5 +1,8 @@
 # F320: stop constructing unused gRPC body-property metadata
 
+**Draft [jaslawinMs/aspnetcore#41](https://github.com/jaslawinMs/aspnetcore/pull/41)**;
+originating issue [jaslawinMs/aspnetcore#40](https://github.com/jaslawinMs/aspnetcore/issues/40).
+
 **Measured proposal, not a request-throughput improvement.** The complete body
 descriptor helper is consistently faster and allocates less after removing its
 unused CLR property lookup. All six full binder `ParseRoute` named-body cases
