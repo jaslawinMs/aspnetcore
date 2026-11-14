@@ -2162,11 +2162,15 @@
         "compatibility_notes": "Json.NET token readers/writers are package APIs available across this project's net462, netstandard2.0 and net12.0 targets; no modern-only BCL API or public API redesign is required. Preserve JsonConvert.DefaultSettings participation, converters, resolver asymmetry (currently only the deserialization settings receive the supplied resolver), date/float/numeric/string conversion, independent-copy semantics, and caught failures returning CanBeConverted=false. The direct path must be validated for these contracts before adoption; source inspection proves the throwaway text shape, not equivalence or performance of a replacement.",
         "evidence_boundary": "source-only"
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "rejected",
+      "notes": [
+        "Independentfreshmain37e809;differentlegacyNewtonsoftJsonPatchbackendfromF027STJ,notduplicate. InspectactualConvertTo/CopyTo/configuration/convertersemantics and alltargetframeworks. Prove actualpublicpatchproducer and completecompatibilitybeforeproposingtokenbridge;no newmetadata cache.",
+        "Acceptance recorded before shipping edits. Baseline 290/290 tests, all three new public ApplyTo contract tests individually pass; 28 actual public patch timing setups and four compatibility probes pass. Evaluate token bridge independently; reject any observable date/numeric/converter incompatibility.",
+        "Published compatibility-test source 8ea2e0d63e6d90ebc56591666d7f727f849e7db6, shipping source restored byte-for-byte. One immutable 28-case A/B pair: four large-object cases 92.99-93.93 percent faster and all 22 affected allocations lower, but four small-object time regressions and three verified public-patch semantic failures (DateTime to String, Double to Decimal, String converter token to Bytes/error). Baseline/restored 290/290, prototype 287/290 exactly the three new tests. Both source states build all three TFMs. Reject this bridge, not every possible future alternative; no optimization PR. 1/3 comparisons consumed."
+      ],
+      "branch": "autoperf/F077-jsonpatch-token-bridge",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T23:28:08.9172785-08:00"
     },
     {
       "id": "F079",

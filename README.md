@@ -12,7 +12,8 @@ or measured regressions.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
-as speculative optimization PRs. Correctness, actual owning-component behavior,
+as speculative optimization PRs. Incompatible replacements are marked
+`rejected` even when individual benchmarks improve. Correctness, actual owning-component behavior,
 small-workload controls, allocations, and measurement limitations matter as
 well as the largest speedup.
 
@@ -27,6 +28,7 @@ well as the largest speedup.
 | F034 (also F119) | No-gain; duplicate consolidated | [Concrete Rewrite condition enumeration](F034/README.md) |
 | F045 | Draft proposal; unstable control disclosed | [Single validation-message ModelState lookup](F045/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
+| F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |

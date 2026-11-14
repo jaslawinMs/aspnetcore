@@ -1,0 +1,30 @@
+diff --git a/src/Features/JsonPatch/src/Internal/ConversionResultProvider.cs b/src/Features/JsonPatch/src/Internal/ConversionResultProvider.cs
+index 7fb84e3453..376f70bca9 100644
+--- a/src/Features/JsonPatch/src/Internal/ConversionResultProvider.cs
++++ b/src/Features/JsonPatch/src/Internal/ConversionResultProvider.cs
+@@ -3,6 +3,7 @@
+ 
+ using System;
+ using Newtonsoft.Json;
++using Newtonsoft.Json.Linq;
+ using Newtonsoft.Json.Serialization;
+ 
+ namespace Microsoft.AspNetCore.JsonPatch.Internal;
+@@ -35,7 +36,7 @@ public static class ConversionResultProvider
+             {
+                 if (contractResolver == null)
+                 {
+-                    var deserialized = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(value), typeToConvertTo);
++                    var deserialized = JToken.FromObject(value).ToObject(typeToConvertTo, JsonSerializer.CreateDefault());
+                     return new ConversionResult(true, deserialized);
+                 }
+                 else
+@@ -44,7 +45,7 @@ public static class ConversionResultProvider
+                     {
+                         ContractResolver = contractResolver
+                     };
+-                    var deserialized = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(value), typeToConvertTo, serializerSettings);
++                    var deserialized = JToken.FromObject(value).ToObject(typeToConvertTo, JsonSerializer.CreateDefault(serializerSettings));
+                     return new ConversionResult(true, deserialized);
+                 }
+             }

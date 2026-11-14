@@ -1,0 +1,41 @@
+{
+  "candidate": "F077",
+  "disposition": "rejected",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "8ea2e0d63e6d90ebc56591666d7f727f849e7db6",
+  "source_branch": "autoperf/F077-jsonpatch-token-bridge",
+  "committed_source_scope": "One new compatibility-test file, 100 additions; no shipping code change.",
+  "measured_experimental_snapshot": "after",
+  "source_before_sha256": "33755B0765AECC13099B85B8D89D88BC98231C60BD0A2D7EE75DEC0D9FA68CC1",
+  "source_prototype_sha256": "0D40E2C9D791516A6DBF14ACDADC92BE1A321F09A4D2E2321FC8EF4CABDECC7C",
+  "shipping_source_restored_byte_for_byte": true,
+  "harness_and_configs_identical": true,
+  "unrelated_dependencies_identical": true,
+  "changed_assembly": "Microsoft.AspNetCore.JsonPatch.dll",
+  "comparisons_consumed": 1,
+  "maximum_comparisons": 3,
+  "cases_per_launch": 28,
+  "minimum_samples": 8,
+  "affected_cases": 22,
+  "lower_time_cases": 20,
+  "higher_time_cases": 8,
+  "stop_reason": "Four 16,384-character cases improve more than 50 percent; all three independent semantic contracts fail. More speed tuning cannot make this bridge an acceptable replacement.",
+  "semantic_rejection": [
+    "Nested object-valued ISO date becomes String instead of DateTime.",
+    "Nested object-valued Decimal remains Decimal instead of the original Double.",
+    "Byte-array patch input exposes Bytes rather than String to a destination converter, failing public ApplyTo."
+  ],
+  "default_settings_factory_calls": "Exactly two independently created default configurations in both variants.",
+  "correctness": "Before 290/290; prototype 287/290 with exactly the three new contract failures; restored 290/290.",
+  "framework_builds": "Prototype and restored shipping project both build net12.0, net462 and netstandard2.0 without warnings/errors.",
+  "formatting": "The new test file passes the repository whitespace check.",
+  "api_shape": "Unchanged; no optimization/API proposal or draft PR.",
+  "unverified": [
+    "Every possible compatible alternative",
+    "Other serializer configurations/converters",
+    "HTTP throughput",
+    "Cold cache/first-use costs",
+    "Other runtimes",
+    "Composition with other proposals"
+  ]
+}

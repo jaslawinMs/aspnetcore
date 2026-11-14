@@ -1,0 +1,78 @@
+[
+  {
+    "variant": "before",
+    "receipts": [
+      {
+        "name": "NestedDate",
+        "compatible": true,
+        "expected": "System.DateTime",
+        "actual": "System.DateTime",
+        "result": "\"2024-01-02T03:04:05Z\"",
+        "patch_errors": []
+      },
+      {
+        "name": "NestedFloatingPoint",
+        "compatible": true,
+        "expected": "System.Double",
+        "actual": "System.Double",
+        "result": "1.25",
+        "patch_errors": []
+      },
+      {
+        "name": "ByteArrayDestinationConverter",
+        "compatible": true,
+        "expected": "String",
+        "actual": "String",
+        "result": "AAH/",
+        "patch_errors": []
+      },
+      {
+        "name": "IndependentDefaultSettingsStages",
+        "compatible": true,
+        "expected": "2 factory invocations; integer 42",
+        "actual": "2 factory invocations; integer 42",
+        "result": "42",
+        "patch_errors": []
+      }
+    ]
+  },
+  {
+    "variant": "after",
+    "receipts": [
+      {
+        "name": "NestedDate",
+        "compatible": false,
+        "expected": "System.DateTime",
+        "actual": "System.String",
+        "result": "\"2024-01-02T03:04:05Z\"",
+        "patch_errors": []
+      },
+      {
+        "name": "NestedFloatingPoint",
+        "compatible": false,
+        "expected": "System.Double",
+        "actual": "System.Decimal",
+        "result": "1.25",
+        "patch_errors": []
+      },
+      {
+        "name": "ByteArrayDestinationConverter",
+        "compatible": false,
+        "expected": "String",
+        "actual": "Bytes",
+        "result": "null",
+        "patch_errors": [
+          "The value 'System.Byte[]' is invalid for target location."
+        ]
+      },
+      {
+        "name": "IndependentDefaultSettingsStages",
+        "compatible": true,
+        "expected": "2 factory invocations; integer 42",
+        "actual": "2 factory invocations; integer 42",
+        "result": "42",
+        "patch_errors": []
+      }
+    ]
+  }
+]
