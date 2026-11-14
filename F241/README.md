@@ -5,6 +5,10 @@ Independent baseline: dotnet/aspnetcore
 [Final source](https://github.com/jaslawinMs/aspnetcore/commit/de11a4d95cf493f907520ca7a29865456ff93305):
 `de11a4d95cf493f907520ca7a29865456ff93305`.
 
+[Draft jaslawinMs/aspnetcore#33](https://github.com/jaslawinMs/aspnetcore/pull/33)
+and [origin jaslawinMs/aspnetcore#32](https://github.com/jaslawinMs/aspnetcore/issues/32)
+are fork-only. The newly created draft was immediately browser-open requested.
+
 **Three 1,024-component complete-discovery cases improve 30.03-33.71% in
 final paired medians, with more heap allocation.** Two indexed 256-component
 cases improve 5.53-7.97%. Eighteen of twenty non-index cases have higher medians.
