@@ -1,0 +1,64 @@
+{
+  "candidate": "F319",
+  "disposition": "no-gain",
+  "reason": "Diagnostic helper gains do not establish a supported net actual-startup gain or justify cache lifetime/invalidation.",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "tests_only_source_revision": "eb1fb6318cd36937b5fe12ffb03f6e84650a45ab",
+  "tests_only_branch": "autoperf/F319-grpc-service-descriptor",
+  "changed_commit_paths": [
+    "src/Grpc/JsonTranscoding/test/Microsoft.AspNetCore.Grpc.JsonTranscoding.Tests/ServiceDescriptorHelpersTests.cs"
+  ],
+  "original_and_restored_source_sha256": "339DA38AF9C6E21A332324ADF603ECD976161769BC922C057DD6755F0F25A935",
+  "discarded_experiment_source_sha256": "1BFCD27E0D35E664E92E2ADA6087A52596721775543FCF5A200F46573E8E262C",
+  "source_baseline_git_blob": "6010fd7500b44a6d62139448e142af488cd5f6d0",
+  "measured_experiment_not_in_source_commit": true,
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "comparison_budget_closed": true,
+  "benchmark_outcomes": 78,
+  "test_outcomes": 946,
+  "cases_per_launch": 13,
+  "measured_iterations_per_case": 8,
+  "actual_producer_receipts": 78,
+  "recursive_dll_json_closure_files": 84,
+  "only_owner_differs": true,
+  "original_harness_runtime_deps_reused": true,
+  "actual_owner_load_and_mvid_match_snapshots": true,
+  "actual_startup_boundary": "Fresh AddGrpc/AddJsonTranscoding DI construction, actual generated BindService/Descriptor/HTTP annotations, MapGrpcService and materialized endpoints.",
+  "diagnostic_only_cases": [
+    "Helper_Greeter",
+    "Helper_Colon",
+    "Helper_Null",
+    "Helper_Throw",
+    "Helper_Missing",
+    "Helper_Wrong"
+  ],
+  "untouched_controls": [
+    "Direct_Descriptor_Control",
+    "Map_NoBind_Control"
+  ],
+  "repeatable_startup_time_gain": [
+    "Map_Greeter_4: median paired mean -3.13%; other four actual startup cases mixed"
+  ],
+  "isolated_helper_time_gains": [
+    "Helper_Greeter -10.37%",
+    "Helper_Colon -12.48%",
+    "Helper_Null -15.15%"
+  ],
+  "no_isolated_helper_structural_allocation_saving": true,
+  "throwing_getter_reported_extra_bytes_per_op": [
+    21,
+    20,
+    20
+  ],
+  "all_startup_and_no_bind_control_allocation_directions": "Lower in pairs1-2, higher in pair3; no attributable structural saving established.",
+  "unstable_case": "Map_Colon_4: -25.92%, +68.11%, +17.37%; max within-run CV36.90%.",
+  "untimed_provider_lifecycle_captures": 4,
+  "prior_assumed_background_compilation_audit_timed_out": true,
+  "actual_off_thread_di_compilation_observed": false,
+  "conditional_di_compilation_source_is_not_actual_producer_reachability_proof": true,
+  "bdn_allocation_attribution_unestablished": true,
+  "public_optimization_issue_or_pr_created": false,
+  "cache_lifetime_hot_reload_cold_first_process_requests_concurrency_other_platforms_unverified": true,
+  "shipping_source_restored_byte_for_byte": true
+}

@@ -1,0 +1,36 @@
+diff --git "a/<SESSION_FILES>\\autoperf-runs\\F319\\source-before.cs" "b/<SESSION_FILES>\\autoperf-runs\\F319\\source-experiment.cs"
+index 6010fd7500..910a69203d 100644
+--- "a/<SESSION_FILES>\\autoperf-runs\\F319\\source-before.cs"
++++ "b/<SESSION_FILES>\\autoperf-runs\\F319\\source-experiment.cs"
+@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
+ using System.Globalization;
+ using System.Linq;
+ using System.Reflection;
++using System.Runtime.CompilerServices;
+ using Google.Api;
+ using Google.Protobuf;
+ using Google.Protobuf.Reflection;
+@@ -32,6 +33,13 @@ namespace Grpc.Shared;
+ 
+ internal static class ServiceDescriptorHelpers
+ {
++    private static readonly ConditionalWeakTable<Type, DescriptorProperty> ServiceDescriptorProperties = new();
++
++    private sealed class DescriptorProperty(PropertyInfo? property)
++    {
++        public PropertyInfo? Property { get; } = property;
++    }
++
+     private static readonly HashSet<string> WellKnownTypeNames = new HashSet<string>
+     {
+         "google/protobuf/any.proto",
+@@ -54,7 +62,8 @@ internal static class ServiceDescriptorHelpers
+ 
+     public static ServiceDescriptor? GetServiceDescriptor(Type serviceReflectionType)
+     {
+-        var property = serviceReflectionType.GetProperty("Descriptor", BindingFlags.Public | BindingFlags.Static);
++        var property = ServiceDescriptorProperties.GetValue(serviceReflectionType,
++            static type => new DescriptorProperty(type.GetProperty("Descriptor", BindingFlags.Public | BindingFlags.Static))).Property;
+         if (property != null)
+         {
+             return (ServiceDescriptor?)property.GetValue(null);

@@ -48,6 +48,7 @@ well as the largest speedup.
 | F241 | [Draft jaslawinMs/aspnetcore#33](https://github.com/jaslawinMs/aspnetcore/pull/33); larger discovery gains, extra heap and small/fallback regressions retained | [Bounded view-component discovery membership](F241/README.md) |
 | F272 | No supported net win; complete descriptor/word-start results mixed, direct lower-branch gain and control/heap variance retained | [Invariant gRPC character casing](F272/README.md) |
 | F295 | [Draft jaslawinMs/aspnetcore#37](https://github.com/jaslawinMs/aspnetcore/pull/37); complete body-descriptor gains, tiny/no-output time regressions and large no-output heap boundary retained | [Bounded gRPC name formatting](F295/README.md) |
+| F319 | No supported net startup win; helper gains, mixed real startup/control outcomes, heap direction reversal and failed attribution hypothesis retained | [gRPC service-descriptor PropertyInfo cache](F319/README.md) |
 
 Measurements were collected serially on a shared Windows machine. They are
 microbenchmark observations, not production throughput or universal performance

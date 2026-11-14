@@ -8558,11 +8558,14 @@
         "snippet": "var property = serviceReflectionType.GetProperty(\"Descriptor\", BindingFlags.Public | BindingFlags.Static);\nreturn (ServiceDescriptor?)property.GetValue(null);",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "no-gain",
+      "notes": [
+        "Fresh upstream default37e809; independently evaluate GetServiceDescriptor reflection frequency/actual binder consumer and metadata lifetime before choosing any cache. No shipping edits. F003 published and budget closed.",
+        "Three fixed13-case pairs,78outcomes/78actual receipts. OnlyMap_Greeter_4 improves every startup pair(median-3.13%); other4mixed, Colon4median+17.37%/CV36.9%. Diagnostic helper10.37-15.15% gains do not justify startup cache state; throwing getter+20-21B/op. Allstartup/no-bind allocation directions reverse in pair3, unattributed. Original/prototype/restored311/311, all6new getter rows;13existing rows/946total outcomes. Original shipping source/owner/BOM restored exactly. Tests-only eb1fb6318cd36937b5fe12ffb03f6e84650a45ab published. Conditional off-thread DI compilation source was not observed by actual bounded lifecycle captures; failed assertion retained. No optimization PR; cache lifetime/Hot Reload/cold/request-throughput unverified."
+      ],
+      "branch": "autoperf/F319-grpc-service-descriptor",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-14T09:33:10.7545832-08:00"
     },
     {
       "id": "F320",
