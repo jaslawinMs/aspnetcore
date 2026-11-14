@@ -1,5 +1,10 @@
 # F048: avoid exceptions for common non-file multipart sections
 
+**Draft [jaslawinMs/aspnetcore#47](https://github.com/jaslawinMs/aspnetcore/pull/47)**;
+originating issue [jaslawinMs/aspnetcore#46](https://github.com/jaslawinMs/aspnetcore/issues/46).
+Immutable complete raw evidence:
+[1dace1c94eb462830d23d1b9b7b3890043f98c92](https://github.com/jaslawinMs/aspnetcore/tree/1dace1c94eb462830d23d1b9b7b3890043f98c92/F048).
+
 **Measured, fork-only draft proposal; not a universal net-performance claim.**
 The final raw-parameter guard reports **57.88% faster eight-form-section work**,
 **60.23% faster 32-form-section work**, and **38.57% faster mixed-eight-section
