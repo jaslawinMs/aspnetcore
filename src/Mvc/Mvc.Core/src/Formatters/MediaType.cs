@@ -259,6 +259,19 @@ public readonly struct MediaType
     /// <returns>The parsed media type with its associated quality.</returns>
     public static MediaTypeSegmentWithQuality CreateMediaTypeSegmentWithQuality(string mediaType, int start)
     {
+        var result = CreateMediaTypeSegmentWithQuality(mediaType, start, out var invalidQuality);
+        if (invalidQuality is { } value)
+        {
+            // Preserve the public exception details for invalid quality values.
+            double.Parse(value.AsSpan(), NumberStyles.AllowDecimalPoint, NumberFormatInfo.InvariantInfo);
+        }
+
+        return result;
+    }
+
+    internal static MediaTypeSegmentWithQuality CreateMediaTypeSegmentWithQuality(string mediaType, int start, out StringSegment? invalidQuality)
+    {
+        invalidQuality = null;
         var parsedMediaType = new ReadOnlyMediaTypeHeaderValue(mediaType, start, length: null);
 
         // Short-circuit use of the MediaTypeParameterParser if constructor detected an invalid type or subtype.
@@ -277,9 +290,13 @@ public readonly struct MediaType
             if (parameter.HasName(QualityParameter))
             {
                 // If media type contains two `q` values i.e. it's invalid in an uncommon way, pick last value.
-                quality = double.Parse(
+                if (!double.TryParse(
                     parameter.Value.AsSpan(), NumberStyles.AllowDecimalPoint,
-                    NumberFormatInfo.InvariantInfo);
+                    NumberFormatInfo.InvariantInfo, out quality))
+                {
+                    invalidQuality = parameter.Value;
+                    return default(MediaTypeSegmentWithQuality);
+                }
             }
         }
 

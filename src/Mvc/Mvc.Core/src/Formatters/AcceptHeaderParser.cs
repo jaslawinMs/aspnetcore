@@ -152,7 +152,7 @@ internal static class AcceptHeaderParser
         int start,
         out MediaTypeSegmentWithQuality result)
     {
-        result = MediaType.CreateMediaTypeSegmentWithQuality(input, start);
+        result = MediaType.CreateMediaTypeSegmentWithQuality(input, start, out _);
         if (result.MediaType.HasValue)
         {
             return result.MediaType.Length;

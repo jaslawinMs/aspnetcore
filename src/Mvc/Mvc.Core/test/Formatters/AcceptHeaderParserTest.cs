@@ -1,12 +1,82 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.Mvc.Formatters;
 
 public class AcceptHeaderParserTest
 {
+    [Theory]
+    [InlineData("bad")]
+    [InlineData("1e3")]
+    [InlineData("-0.2")]
+    [InlineData("+0.2")]
+    [InlineData("")]
+    [InlineData("\"bad\"")]
+    public void ParseAcceptHeader_InvalidQuality_RecoversWithoutThrowing(string quality)
+    {
+        var header = $"application/json;q={quality},text/plain";
+        var thread = Environment.CurrentManagedThreadId;
+        var exceptions = 0;
+        IList<MediaTypeSegmentWithQuality> parsed;
+        void Observe(object sender, FirstChanceExceptionEventArgs args)
+        {
+            if (Environment.CurrentManagedThreadId == thread && args.Exception is FormatException)
+            {
+                exceptions++;
+            }
+        }
+        AppDomain.CurrentDomain.FirstChanceException += Observe;
+        try
+        {
+            parsed = AcceptHeaderParser.ParseAcceptHeader(new[] { header });
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.FirstChanceException -= Observe;
+        }
+
+        var result = Assert.Single(parsed);
+        Assert.Equal("text/plain", result.MediaType.Value);
+        Assert.Same(header, result.MediaType.Buffer);
+        Assert.Equal(header.IndexOf("text/plain", StringComparison.Ordinal), result.MediaType.Offset);
+        Assert.Equal(1.0, result.Quality);
+        Assert.Equal(0, exceptions);
+    }
+
+    [Theory]
+    [InlineData("bad")]
+    [InlineData("1e3")]
+    [InlineData("-0.2")]
+    [InlineData("+0.2")]
+    [InlineData("\"bad\"")]
+    public void CreateMediaTypeSegmentWithQuality_InvalidQuality_PreservesPublicException(string quality)
+    {
+        var header = $"application/json;q={quality}";
+
+        Assert.Throws<FormatException>(() => MediaType.CreateMediaTypeSegmentWithQuality(header, start: 0));
+    }
+
+    [Fact]
+    public void CreateMediaTypeSegmentWithQuality_EmptyQualityAtEnd_PreservesPublicException()
+    {
+        var header = "application/json;q=";
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            () => MediaType.CreateMediaTypeSegmentWithQuality(header, start: 0));
+        Assert.Equal("index", exception.ParamName);
+    }
+
+    [Fact]
+    public void CreateMediaTypeSegmentWithQuality_EmptyQualityBeforeComma_PreservesPublicException()
+    {
+        var header = "application/json;q=,text/plain";
+
+        Assert.Throws<FormatException>(() => MediaType.CreateMediaTypeSegmentWithQuality(header, start: 0));
+    }
+
     [Fact]
     public void ParseAcceptHeader_ParsesSimpleHeader()
     {
