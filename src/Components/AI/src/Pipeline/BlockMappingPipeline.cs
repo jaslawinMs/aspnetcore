@@ -122,7 +122,10 @@ internal class BlockMappingPipeline
                     {
                         var catchUpResult = activeEntry.Invoke(context);
 
-                        BlockMappingPipelineLog.ActiveHandlerResult(_logger, emitBlock.GetType().Name, catchUpResult.Kind.ToString(), emitBlock.Id);
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                        {
+                            BlockMappingPipelineLog.ActiveHandlerResult(_logger, emitBlock.GetType().Name, catchUpResult.Kind.ToString(), emitBlock.Id);
+                        }
 
                         if (catchUpResult.Kind == HandleResult.ResultKind.Complete)
                         {
