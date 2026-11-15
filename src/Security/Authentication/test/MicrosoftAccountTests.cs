@@ -3,9 +3,11 @@
 
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
@@ -357,6 +359,115 @@ public class MicrosoftAccountTests : RemoteAuthenticationTests<MicrosoftAccountO
         Assert.Equal(2, transaction.SetCookie.Count);
         Assert.StartsWith(".AspNetCore.Correlation.", transaction.SetCookie[0]);
         Assert.StartsWith(".AspNetCore." + TestExtensions.CookieAuthenticationScheme, transaction.SetCookie[1]);
+    }
+
+    [Theory]
+    [InlineData("Utf8")]
+    [InlineData("Utf8Uppercase")]
+    [InlineData("Utf8Large")]
+    [InlineData("Utf8Bom")]
+    [InlineData("Utf8BomLarge")]
+    [InlineData("Utf8Quoted")]
+    [InlineData("Utf8NoCharset")]
+    [InlineData("Utf8BomNoCharset")]
+    [InlineData("Utf16")]
+    [InlineData("Utf16Quoted")]
+    [InlineData("Utf16BomNoCharset")]
+    [InlineData("BigEndianUtf16")]
+    [InlineData("BigEndianUtf16BomNoCharset")]
+    [InlineData("Utf32")]
+    [InlineData("Utf32BomNoCharset")]
+    [InlineData("Latin1")]
+    [InlineData("InvalidUtf8")]
+    [InlineData("InvalidUtf8Large")]
+    public async Task UserInfoResponseEncodingPreservesClaims(string scenario)
+    {
+        var encoding = scenario switch
+        {
+            "Utf16" or "Utf16Quoted" or "Utf16BomNoCharset" => Encoding.Unicode,
+            "BigEndianUtf16" or "BigEndianUtf16BomNoCharset" => Encoding.BigEndianUnicode,
+            "Utf32" or "Utf32BomNoCharset" => Encoding.UTF32,
+            "Latin1" or "InvalidUtf8" or "InvalidUtf8Large" => Encoding.Latin1,
+            _ => Encoding.UTF8,
+        };
+        var charset = scenario switch
+        {
+            "Utf8Uppercase" => "UTF-8",
+            "Utf16" => "utf-16",
+            "Utf16Quoted" => "\"utf-16\"",
+            "BigEndianUtf16" => "utf-16BE",
+            "Utf32" => "utf-32",
+            "Latin1" => "iso-8859-1",
+            "Utf8Quoted" => "\"utf-8\"",
+            _ when scenario.EndsWith("NoCharset", StringComparison.Ordinal) => null,
+            _ => "utf-8",
+        };
+        var padding = scenario is "Utf8Large" or "Utf8BomLarge" or "InvalidUtf8Large" ? new string('x', 32768) : string.Empty;
+        var json = "{\"id\":\"TestProfileId\",\"displayName\":\"caf\u00E9 \\u03A9 \\ud83d\\ude00\\nname\",\"mail\":null,\"userPrincipalName\":\"user@example.com\",\"padding\":\"" + padding + "\"}";
+        var bytes = encoding.GetBytes(json);
+        if (scenario.Contains("Bom", StringComparison.Ordinal))
+        {
+            bytes = [.. encoding.GetPreamble(), .. bytes];
+        }
+        var expectedName = scenario is "InvalidUtf8" or "InvalidUtf8Large" ? "caf\uFFFD \u03A9 \U0001F600\nname" : "caf\u00E9 \u03A9 \U0001F600\nname";
+        var userInfoRequests = 0;
+        var creatingTicketCalls = 0;
+        var capturedPayload = default(JsonElement);
+        using var host = await CreateHost(o =>
+        {
+            o.ClientId = "Test Client Id";
+            o.ClientSecret = "Test Client Secret";
+            o.BackchannelHttpHandler = new TestHttpMessageHandler
+            {
+                Sender = request =>
+                {
+                    var endpoint = request.RequestUri.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
+                    if (endpoint == MicrosoftAccountDefaults.TokenEndpoint)
+                    {
+                        return ReturnJsonResponse(new { access_token = "Test Access Token", token_type = "Bearer" });
+                    }
+                    if (endpoint == MicrosoftAccountDefaults.UserInformationEndpoint)
+                    {
+                        userInfoRequests++;
+                        Assert.Equal("Bearer", request.Headers.Authorization.Scheme);
+                        Assert.Equal("Test Access Token", request.Headers.Authorization.Parameter);
+                        var content = new ByteArrayContent(bytes);
+                        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = charset };
+                        return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+                    }
+                    return null;
+                }
+            };
+            o.Events = new OAuthEvents
+            {
+                OnCreatingTicket = context =>
+                {
+                    creatingTicketCalls++;
+                    capturedPayload = context.User;
+                    Assert.Equal(expectedName, context.User.GetProperty("displayName").GetString());
+                    Assert.Equal(padding, context.User.GetProperty("padding").GetString());
+                    Assert.Equal(expectedName, context.Principal.FindFirst(ClaimTypes.Name).Value);
+                    Assert.Equal("TestProfileId", context.Principal.FindFirst(ClaimTypes.NameIdentifier).Value);
+                    Assert.Equal("user@example.com", context.Principal.FindFirst(ClaimTypes.Email).Value);
+                    return Task.CompletedTask;
+                }
+            };
+        });
+
+        using var server = host.GetTestServer();
+        var challenge = await server.SendAsync("https://example.com/challenge");
+        Assert.Equal(HttpStatusCode.Redirect, challenge.Response.StatusCode);
+        var query = QueryHelpers.ParseQuery(challenge.Response.Headers.Location.Query);
+        var correlationCookie = challenge.SetCookie.Single().Split(';')[0];
+        var callback = await server.SendAsync(
+            "https://example.com/signin-microsoft?code=TestCode&state=" + query["state"],
+            correlationCookie);
+
+        Assert.Equal(HttpStatusCode.Redirect, callback.Response.StatusCode);
+        Assert.Equal("/me", callback.Response.Headers.GetValues("Location").First());
+        Assert.Equal(1, userInfoRequests);
+        Assert.Equal(1, creatingTicketCalls);
+        Assert.Throws<ObjectDisposedException>(() => capturedPayload.GetProperty("id"));
     }
 
     private static async Task<IHost> CreateHost(Action<MicrosoftAccountOptions> configureOptions)

@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,27 @@ public class MicrosoftAccountHandler : OAuthHandler<MicrosoftAccountOptions>
             throw new HttpRequestException($"An error occurred when retrieving Microsoft user information ({response.StatusCode}). Please check if the authentication information is correct and the corresponding Microsoft Account API is enabled.");
         }
 
-        using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted)))
+        var charset = response.Content.Headers.ContentType?.CharSet;
+        ReadOnlyMemory<byte> utf8Content = default;
+        if (charset is not null && string.Equals(charset, "utf-8", StringComparison.OrdinalIgnoreCase))
+        {
+            utf8Content = await response.Content.ReadAsByteArrayAsync(Context.RequestAborted);
+        }
+
+        JsonDocument payload;
+        if (!utf8Content.IsEmpty && Utf8.IsValid(utf8Content.Span))
+        {
+            // Unlike the string decoder, the memory parser rejects a UTF-8 BOM.
+            var preambleLength = utf8Content.Span.StartsWith(Encoding.UTF8.Preamble) ? Encoding.UTF8.Preamble.Length : 0;
+            payload = JsonDocument.Parse(utf8Content[preambleLength..]);
+        }
+        else
+        {
+            // Preserve charset inference and replacement decoding for other data.
+            payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted));
+        }
+
+        using (payload)
         {
             var context = new OAuthCreatingTicketContext(new ClaimsPrincipal(identity), properties, Context, Scheme, Options, Backchannel, tokens, payload.RootElement);
             context.RunClaimActions();
