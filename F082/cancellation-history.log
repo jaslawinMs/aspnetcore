@@ -1,0 +1,69 @@
+commit a24aed7e5459acc1417a0e490a80e0472d498b2b
+Author: Martin Costello <martin@martincostello.com>
+Date:   Sun Mar 7 05:24:42 2021 +0000
+
+    Use newer method overloads in auth handlers (#30715)
+    
+    * Use new CancellationToken overloads
+    
+    Use new overloads of methods added in .NET 5.0 that accept a CancellationToken.
+    
+    * Use StringBuilder.Append(char)
+    
+    Use StringBuilder.Append(char) instead of StringBuilder.Append(string) when there is only a single character.
+    
+    * Use WriteAsync(Span<byte>, CancellationToken)
+    
+    Use WriteAsync() overload that accepts a span and a CancellationToken, instead of an array and indexes to write all bytes.
+    
+    * Make methods static
+    
+    Make methods that do not access instance data static.
+    
+    * Remove unused code
+    
+    Remove an unused method and an unused parameter.
+    
+    * Use compound assignment
+    
+    Use the compound assignment operator.
+    
+    * Fix test names
+    
+    Fix copy-paste from Facebook tests.
+    
+    * Remove CancellationToken
+    
+    Remove the CancellationToken from the WriteAsync() call to address review feedback.
+
+diff --git a/src/Security/Authentication/MicrosoftAccount/src/MicrosoftAccountHandler.cs b/src/Security/Authentication/MicrosoftAccount/src/MicrosoftAccountHandler.cs
+index bb57fd761c..d5e2e1af6e 100644
+--- a/src/Security/Authentication/MicrosoftAccount/src/MicrosoftAccountHandler.cs
++++ b/src/Security/Authentication/MicrosoftAccount/src/MicrosoftAccountHandler.cs
+@@ -43,7 +43,7 @@ namespace Microsoft.AspNetCore.Authentication.MicrosoftAccount
+                 throw new HttpRequestException($"An error occurred when retrieving Microsoft user information ({response.StatusCode}). Please check if the authentication information is correct and the corresponding Microsoft Account API is enabled.");
+             }
+ 
+-            using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()))
++            using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted)))
+             {
+                 var context = new OAuthCreatingTicketContext(new ClaimsPrincipal(identity), properties, Context, Scheme, Options, Backchannel, tokens, payload.RootElement);
+                 context.RunClaimActions();
+@@ -92,7 +92,7 @@ namespace Microsoft.AspNetCore.Authentication.MicrosoftAccount
+             return QueryHelpers.AddQueryString(Options.AuthorizationEndpoint, queryStrings!);
+         }
+ 
+-        private void AddQueryString<T>(
++        private static void AddQueryString<T>(
+            Dictionary<string, string> queryStrings,
+            AuthenticationProperties properties,
+            string name,
+@@ -119,7 +119,7 @@ namespace Microsoft.AspNetCore.Authentication.MicrosoftAccount
+             }
+         }
+ 
+-        private void AddQueryString(
++        private static void AddQueryString(
+             Dictionary<string, string> queryStrings,
+             AuthenticationProperties properties,
+             string name,

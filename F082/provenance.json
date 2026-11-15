@@ -1,0 +1,40 @@
+{
+  "candidate": "F082",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F082-microsoft-account-utf8-user-info-json",
+  "source_commit": "edc45e3ebc9ac3606cd4c774046faaa9170067ca",
+  "disposition": "Qualified UTF8 allocation/scaling draft;not merge-ready because malformed-UTF8 copy costs remain.",
+  "source_scope": {
+    "additions": 133,
+    "deletions": 1,
+    "files": 2
+  },
+  "public_api_or_default_change": false,
+  "measured_comparisons": 3,
+  "measured_source_strategies": 1,
+  "comparison_budget_closed": true,
+  "rejected_unmeasured_raw_memory_prototypes": 1,
+  "actual_producer": "Real HttpClient.SendAsync/HttpContent buffering -> initialized MicrosoftAccountHandler -> actual Bearer request,claim actions,async CreatingTicket,ticket/document lifetime",
+  "http_completion_mode_unchanged": true,
+  "shipping_request_response_disposal_unchanged": true,
+  "external_request_response_cleanup_uniform_in_both_timings": true,
+  "test_only_protected_method_exposure": true,
+  "shipping_visibility_changes": false,
+  "retained_costs": [
+    "MalformedUTF8large median+20.36%,16616B/op extra",
+    "MalformedUTF8small median+3.21%,232B/op extra",
+    "EmptyJSONmedian+6.03%,72-624B/op extra",
+    "UTF16large/small median+3.18/+3.47%;all other fallback/error movements retained"
+  ],
+  "limits": [
+    "No external-provider/browser,network-streaming,production-throughput or universal-benefit claim.",
+    "Owned UTF8 array is still materialized and retained through async event/document lifetime.",
+    "Unicode16KiB timing improves54.56%,but allocation savesonly129B/op;not ASCII-sized savings.",
+    "Custom encoding providers,other platforms/runtimes are unverified."
+  ],
+  "shared_windows_host": true,
+  "cpu_heavy_commands_serialized": true,
+  "power_or_affinity_changed": false,
+  "raw_binaries_published": false,
+  "raw_source_reports_logs_copied_without_transformation": true
+}

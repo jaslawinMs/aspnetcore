@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <TestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Authentication.Test\Release\net12.0</TestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Security\Authentication\MicrosoftAccount\src\Microsoft.AspNetCore.Authentication.MicrosoftAccount.csproj" />
+    <Reference Include="$(TestBin)\Microsoft.*.dll"
+      Exclude="$(TestBin)\*Test*.dll;$(TestBin)\*Generator*.dll;$(TestBin)\Microsoft.AspNetCore.Authentication.MicrosoftAccount.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(TestBin)\Microsoft.AspNetCore.Authentication.MicrosoftAccount.dll')"
+      Text="Run the actual MicrosoftAccountTests Release first;do not substitute installed ASP.NET assemblies." />
+  </Target>
+</Project>
