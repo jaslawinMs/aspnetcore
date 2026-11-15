@@ -1,0 +1,31 @@
+{
+  "candidate": "F059",
+  "mutation": "Remove the known side-effect-free dictionary guard;always lookup before duplicate state.",
+  "exit_code": 1,
+  "actual_test_outcomes": 371,
+  "passed": 367,
+  "failed": 4,
+  "new_comparisons_consumed": 0,
+  "expected_failures": [
+    {
+      "name": "Microsoft.AspNetCore.Mvc.Razor.RazorPageTest.RenderSectionAsync_DuplicatePrecedesThrowingDictionaryLookup(subclass: True)",
+      "outcome": "Failed",
+      "message": "Assert.Equal() Failure: Strings differ\r\n           ↓ (pos 0)\r\nExpected: \"RenderSectionAsync invocation in '/Views/\"···\r\nActual:   \"lookup-failure\"\r\n           ↑ (pos 0)"
+    },
+    {
+      "name": "Microsoft.AspNetCore.Mvc.Razor.RazorPageTest.RenderSectionAsync_PreservesReentrantDictionaryLookup",
+      "outcome": "Failed",
+      "message": "System.InvalidOperationException : RenderSectionAsync invocation in '' is invalid. The section 'header' has already been rendered."
+    },
+    {
+      "name": "Microsoft.AspNetCore.Mvc.Razor.RazorPageTest.RenderSectionAsync_DuplicatePrecedesThrowingDictionaryLookup(subclass: False)",
+      "outcome": "Failed",
+      "message": "Assert.Equal() Failure: Strings differ\r\n           ↓ (pos 0)\r\nExpected: \"RenderSectionAsync invocation in '/Views/\"···\r\nActual:   \"lookup-failure\"\r\n           ↑ (pos 0)"
+    },
+    {
+      "name": "Microsoft.AspNetCore.Mvc.Razor.RazorPageTest.RenderSectionAsync_DuplicatePrecedesThrowingComparer",
+      "outcome": "Failed",
+      "message": "Assert.Equal() Failure: Strings differ\r\n           ↓ (pos 0)\r\nExpected: \"RenderSectionAsync invocation in '/Views/\"···\r\nActual:   \"comparer-failure\"\r\n           ↑ (pos 0)"
+    }
+  ]
+}
