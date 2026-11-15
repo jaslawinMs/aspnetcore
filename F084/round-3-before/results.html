@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.DirectoryBenchmark-20261115-122451</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>          Case</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Exercise</td><td>Confi(...)ntrol [24]</td><td>136,641.21 ns</td><td>74,836.189 ns</td><td>39,140.774 ns</td><td>3.4722</td><td>-</td><td>-</td><td>154,104 B</td>
+</tr><tr><td>Exercise</td><td>ConfiguredTwoControl</td><td>5,201.57 ns</td><td>323.121 ns</td><td>168.999 ns</td><td>0.3089</td><td>-</td><td>-</td><td>13,416 B</td>
+</tr><tr><td>Exercise</td><td>Depth128</td><td>342,729.19 ns</td><td>61,734.751 ns</td><td>32,288.468 ns</td><td>19.7368</td><td>6.5789</td><td>6.5789</td><td>865,326 B</td>
+</tr><tr><td>Exercise</td><td>Depth32</td><td>18,269.93 ns</td><td>1,251.325 ns</td><td>654.467 ns</td><td>2.2255</td><td>-</td><td>-</td><td>82,529 B</td>
+</tr><tr><td>Exercise</td><td>Depth64</td><td>51,056.82 ns</td><td>9,047.092 ns</td><td>4,731.804 ns</td><td>6.6021</td><td>0.4401</td><td>-</td><td>243,153 B</td>
+</tr><tr><td>Exercise</td><td>Eight</td><td>6,550.07 ns</td><td>543.699 ns</td><td>284.365 ns</td><td>0.5659</td><td>-</td><td>-</td><td>23,184 B</td>
+</tr><tr><td>Exercise</td><td>EscapedDepth64</td><td>190,379.89 ns</td><td>17,191.983 ns</td><td>8,991.740 ns</td><td>8.2237</td><td>1.6447</td><td>1.6447</td><td>386,984 B</td>
+</tr><tr><td>Exercise</td><td>EscapedEight</td><td>9,085.29 ns</td><td>470.214 ns</td><td>245.931 ns</td><td>0.7143</td><td>-</td><td>-</td><td>26,768 B</td>
+</tr><tr><td>Exercise</td><td>HeadDepth64Control</td><td>35.37 ns</td><td>0.658 ns</td><td>0.344 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Exercise</td><td>HeadRootControl</td><td>36.70 ns</td><td>1.041 ns</td><td>0.545 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Exercise</td><td>LongEight1K</td><td>138,888.78 ns</td><td>16,940.618 ns</td><td>8,860.271 ns</td><td>8.5227</td><td>2.8409</td><td>2.8409</td><td>372,554 B</td>
+</tr><tr><td>Exercise</td><td>LongSingle1K</td><td>8,993.18 ns</td><td>491.327 ns</td><td>256.974 ns</td><td>0.9483</td><td>-</td><td>-</td><td>38,696 B</td>
+</tr><tr><td>Exercise</td><td>LongTwo1K</td><td>13,329.13 ns</td><td>635.083 ns</td><td>332.160 ns</td><td>1.8538</td><td>-</td><td>-</td><td>72,825 B</td>
+</tr><tr><td>Exercise</td><td>ManyFiles64Depth64</td><td>136,516.04 ns</td><td>12,145.521 ns</td><td>6,352.342 ns</td><td>8.5784</td><td>2.4510</td><td>2.4510</td><td>332,776 B</td>
+</tr><tr><td>Exercise</td><td>ManyFiles64Root</td><td>36,365.02 ns</td><td>2,260.018 ns</td><td>1,182.033 ns</td><td>2.5289</td><td>-</td><td>-</td><td>102,234 B</td>
+</tr><tr><td>Exercise</td><td>Overr(...)ntrol [22]</td><td>56,067.30 ns</td><td>5,926.002 ns</td><td>3,099.413 ns</td><td>8.1250</td><td>-</td><td>-</td><td>313,843 B</td>
+</tr><tr><td>Exercise</td><td>OverrideTwoControl</td><td>4,948.74 ns</td><td>150.101 ns</td><td>78.506 ns</td><td>0.4016</td><td>-</td><td>-</td><td>15,544 B</td>
+</tr><tr><td>Exercise</td><td>PathBaseEight</td><td>7,130.55 ns</td><td>429.643 ns</td><td>224.712 ns</td><td>0.6257</td><td>-</td><td>-</td><td>24,416 B</td>
+</tr><tr><td>Exercise</td><td>RepeatedEight</td><td>6,742.77 ns</td><td>469.014 ns</td><td>245.304 ns</td><td>0.6075</td><td>-</td><td>-</td><td>23,488 B</td>
+</tr><tr><td>Exercise</td><td>Root</td><td>4,234.43 ns</td><td>247.562 ns</td><td>129.480 ns</td><td>0.3021</td><td>-</td><td>-</td><td>12,904 B</td>
+</tr><tr><td>Exercise</td><td>Single</td><td>4,555.97 ns</td><td>282.688 ns</td><td>147.851 ns</td><td>0.3467</td><td>-</td><td>-</td><td>13,232 B</td>
+</tr><tr><td>Exercise</td><td>Two</td><td>4,285.77 ns</td><td>66.358 ns</td><td>34.706 ns</td><td>0.3369</td><td>-</td><td>-</td><td>13,624 B</td>
+</tr><tr><td>Exercise</td><td>UnicodeDepth64</td><td>187,041.73 ns</td><td>19,905.881 ns</td><td>10,411.161 ns</td><td>8.0128</td><td>1.6026</td><td>1.6026</td><td>358,962 B</td>
+</tr><tr><td>Exercise</td><td>UnicodeEight</td><td>9,258.33 ns</td><td>632.941 ns</td><td>331.040 ns</td><td>0.6406</td><td>-</td><td>-</td><td>26,056 B</td>
+</tr></tbody></table>
+</body>
+</html>

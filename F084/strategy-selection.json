@@ -1,0 +1,18 @@
+{
+  "candidate": "F084",
+  "original_measured_strategy": "Exact default HtmlEncoder singleton;encode and join all normalized segments once;append growing ranges.",
+  "original_comparison": 1,
+  "all_original_strategy_cases_retained": 24,
+  "reason_for_tuning": {
+    "Root": {"extra_bytes_per_operation": 32, "time_change_percent": 1.17},
+    "Two": {"extra_bytes_per_operation": 16, "time_change_percent": 1.26},
+    "LongTwo1K": {"extra_bytes_per_operation": 2048, "time_change_percent": 14.26}
+  },
+  "selected_gate": "Retain the existing loop for zero,one or two normalized segments and every non-default encoder;default-only range path for at least three.",
+  "gate_basis": "Eliminate observed ordinary/shallow joining allocation costs;not a globally optimal or measured two-versus-three timing crossover claim.",
+  "tested_gate_boundary": "DefaultEncoderPreservesBreadcrumbs Two has two segments;PathBase,Unicode andUnpairedSurrogates have three;exact href/text,title,body length andproducer checks remain required.",
+  "remaining_comparisons": [2, 3],
+  "timing_order": ["BA", "AB"],
+  "public_api_or_default_change": false,
+  "unmodified_code_control_movements": "All HEAD/configured/custom controls and timing/RSD costs retained;do not attribute their movements to an established causal mechanism."
+}
