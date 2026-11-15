@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Helpers;
 using Microsoft.Extensions.Internal;
@@ -11,6 +12,9 @@ namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
 
 internal class ListAdapter : IAdapter
 {
+    // List and element types can belong to collectible assemblies.
+    private static readonly ConditionalWeakTable<Type, Type> _listTypeArguments = new();
+
     public virtual bool TryAdd(object target, string segment, JsonSerializerOptions serializerOptions, object value, out string errorMessage)
     {
         if (!TryGetListTypeArgument(target, out var typeArgument, out errorMessage))
@@ -203,6 +207,12 @@ internal class ListAdapter : IAdapter
             return false;
         }
 
+        if (_listTypeArguments.TryGetValue(listType, out listTypeArgument))
+        {
+            errorMessage = null;
+            return true;
+        }
+
         var genericList = ClosedGenericMatcher.ExtractGenericInterface(listType, typeof(IList<>));
         if (genericList == null)
         {
@@ -212,6 +222,7 @@ internal class ListAdapter : IAdapter
         }
 
         listTypeArgument = genericList.GenericTypeArguments[0];
+        _listTypeArguments.AddOrUpdate(listType, listTypeArgument);
         errorMessage = null;
         return true;
     }

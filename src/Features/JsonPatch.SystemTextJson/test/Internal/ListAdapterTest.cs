@@ -1,11 +1,17 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Helpers;
 using Xunit;
 
 namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
@@ -607,5 +613,159 @@ public class ListAdapterTest
         Assert.False(success);
         Assert.Null(value);
         Assert.Equal($"The type '{targetObject.GetType().FullName}' which is an array is not supported for json patch operations as it has a fixed size.", message);
+    }
+
+    [Theory]
+    [InlineData("Int")]
+    [InlineData("String")]
+    [InlineData("Derived")]
+    [InlineData("Multiple")]
+    [InlineData("JsonArray")]
+    public void Patch_RepeatedAdaptersPreserveRuntimeListElementTypes(string scenario)
+    {
+        object target = scenario switch
+        {
+            "Int" => new List<int> { 20 },
+            "String" => new List<string> { "20" },
+            "Derived" => new DerivedIntList { 20 },
+            "Multiple" => new MultipleInterfaceList { 20 },
+            "JsonArray" => new JsonArray { 20 },
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario)),
+        };
+        var options = new JsonSerializerOptions
+        {
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        };
+        Assert.True(new ListAdapter().TryGet(target, "0", options, out var initial, out var getError));
+        Assert.Null(getError);
+        AssertListValue(initial, scenario, 20);
+
+        object added = scenario == "JsonArray" ? 40 : "40";
+        Assert.True(new ListAdapter().TryAdd(target, "-", options, added, out var addError));
+        Assert.Null(addError);
+        object replacement = scenario == "JsonArray" ? 50 : "50";
+        Assert.True(new ListAdapter().TryReplace(target, "1", options, replacement, out var replaceError));
+        Assert.Null(replaceError);
+        Assert.True(new ListAdapter().TryTraverse(target, "1", options, out var traversed, out var traverseError));
+        Assert.Null(traverseError);
+        AssertListValue(traversed, scenario, 50);
+        Assert.True(new ListAdapter().TryTest(target, "1", options, replacement, out var testError));
+        Assert.Null(testError);
+        Assert.True(new ListAdapter().TryRemove(target, "0", options, out var removeError));
+        Assert.Null(removeError);
+        Assert.True(new ListAdapter().TryGet(target, "0", options, out var remaining, out var remainingError));
+        Assert.Null(remainingError);
+        AssertListValue(remaining, scenario, 50);
+        Assert.Equal(1, GenericListOrJsonArrayUtilities.GetCount(target));
+    }
+
+    [Fact]
+    public void Patch_ConcurrentAdaptersPreserveRuntimeListElementTypes()
+    {
+        Parallel.For(0, 64, index =>
+        {
+            var text = index.ToString(CultureInfo.InvariantCulture);
+            object target = index % 2 == 0 ? new ConcurrentList<int>() : new ConcurrentList<string>();
+            object expected = index % 2 == 0 ? index : text;
+            Assert.True(new ListAdapter().TryAdd(target, "-", JsonSerializerOptions.Default, expected, out var addError));
+            Assert.Null(addError);
+            Assert.True(new ListAdapter().TryGet(target, "0", JsonSerializerOptions.Default, out var value, out var getError));
+            Assert.Null(getError);
+            Assert.Equal(expected, value);
+            Assert.True(new ListAdapter().TryRemove(target, "0", JsonSerializerOptions.Default, out var removeError));
+            Assert.Null(removeError);
+            Assert.Empty((IList)target);
+        });
+    }
+
+    [Fact]
+    public void Get_DoesNotRetainCollectibleListOrElementTypes()
+    {
+        var (list, element) = ExerciseCollectibleList();
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            if (!IsAlive(list) && !IsAlive(element))
+            {
+                break;
+            }
+        }
+
+        Assert.False(IsAlive(list));
+        Assert.False(IsAlive(element));
+    }
+
+    private static void AssertListValue(object value, string scenario, int expected)
+    {
+        if (scenario == "JsonArray")
+        {
+            Assert.Equal(expected, Assert.IsAssignableFrom<JsonValue>(value).GetValue<int>());
+        }
+        else if (scenario == "String")
+        {
+            Assert.Equal(expected.ToString(CultureInfo.InvariantCulture), Assert.IsType<string>(value));
+        }
+        else
+        {
+            Assert.Equal(expected, Assert.IsType<int>(value));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (WeakReference<Type> List, WeakReference<Type> Element) ExerciseCollectibleList()
+    {
+        var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("CollectibleList" + Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.RunAndCollect);
+        var module = assembly.DefineDynamicModule("Lists");
+        var elementBuilder = module.DefineType("Element", TypeAttributes.Public);
+        elementBuilder.DefineDefaultConstructor(MethodAttributes.Public);
+        var elementType = elementBuilder.CreateType()!;
+        var listBuilder = module.DefineType("ElementList", TypeAttributes.Public, typeof(List<>).MakeGenericType(elementType));
+        listBuilder.DefineDefaultConstructor(MethodAttributes.Public);
+        var listType = listBuilder.CreateType()!;
+        var value = Activator.CreateInstance(elementType)!;
+        var target = (IList)Activator.CreateInstance(listType)!;
+        target.Add(value);
+        Assert.True(new ListAdapter().TryGet(target, "0", JsonSerializerOptions.Default, out var actual, out var error));
+        Assert.Null(error);
+        Assert.Same(value, actual);
+
+        return (new WeakReference<Type>(listType), new WeakReference<Type>(elementType));
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool IsAlive(WeakReference<Type> reference)
+    {
+        return reference.TryGetTarget(out _);
+    }
+
+    private sealed class DerivedIntList : List<int>
+    {
+    }
+
+    private sealed class ConcurrentList<T> : List<T>
+    {
+    }
+
+    private sealed class MultipleInterfaceList : List<int>, IList<string>
+    {
+        private readonly List<string> _strings = [];
+        string IList<string>.this[int index]
+        {
+            get => _strings[index];
+            set => _strings[index] = value;
+        }
+        int ICollection<string>.Count => _strings.Count;
+        bool ICollection<string>.IsReadOnly => false;
+        void ICollection<string>.Add(string item) => _strings.Add(item);
+        void ICollection<string>.Clear() => _strings.Clear();
+        bool ICollection<string>.Contains(string item) => _strings.Contains(item);
+        void ICollection<string>.CopyTo(string[] array, int arrayIndex) => _strings.CopyTo(array, arrayIndex);
+        bool ICollection<string>.Remove(string item) => _strings.Remove(item);
+        int IList<string>.IndexOf(string item) => _strings.IndexOf(item);
+        void IList<string>.Insert(int index, string item) => _strings.Insert(index, item);
+        void IList<string>.RemoveAt(int index) => _strings.RemoveAt(index);
+        IEnumerator<string> IEnumerable<string>.GetEnumerator() => _strings.GetEnumerator();
     }
 }
