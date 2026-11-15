@@ -54,8 +54,11 @@ internal class BlockMappingPipeline
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
 #pragma warning restore IDE0060
     {
-        var contentTypes = string.Join(", ", update.Contents.Select(c => c.GetType().Name));
-        BlockMappingPipelineLog.ProcessingUpdate(_logger, update.Role?.Value, update.Contents.Count, contentTypes);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            var contentTypes = string.Join(", ", update.Contents.Select(c => c.GetType().Name));
+            BlockMappingPipelineLog.ProcessingUpdate(_logger, update.Role?.Value, update.Contents.Count, contentTypes);
+        }
 
         var context = new BlockMappingContext(update, _handlers);
 
