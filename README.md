@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 61/358 finalized**: 44 drafts, 8 no-gain, 5 rejected and 4 duplicates;
-297 findings remain unfinished.
+**Progress: 62/358 finalized**: 45 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+296 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -63,6 +63,7 @@ well as the largest speedup.
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F084 | [Draft jaslawinMs/aspnetcore#89](https://github.com/jaslawinMs/aspnetcore/pull/89); selected ASCII32/64 paths improve 22.66%/32.96%, escaped/Unicode64 improve 38.92%/41.26% with lower heap; HEAD64/root remain 52.86%/49.41% slower, ordinary Two 4.12% and custom64 8.59% slower; two strategies, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [Default-encoder directory breadcrumb prefixes](F084/README.md) |
 | F085 | No-gain; all heap unchanged, tiny lookup differences and actual parser/control non-wins retained | [Inline known HTTP method record experiment](F085/README.md) |
+| F086 | [Draft jaslawinMs/aspnetcore#91](https://github.com/jaslawinMs/aspnetcore/pull/91); 15 warm profiles improve 50.76-60.18%, int Replace1/8 save 120B/960B; non-generic/Poco/array controls remain 8.75%/6.70%/2.11% slower and both genuine first-use type profiles add 81B per patch; one strategy, 1/3 budget closed after large warm gains, qualified weak-key cache draft, **not merge-ready** | [System.Text.Json JSON Patch list element metadata](F086/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
