@@ -1,0 +1,38 @@
+{
+  "candidate": "F080",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F080-globbing-path-comparison-segments",
+  "source_commit": "c65b2ec087420e860e3fcfdd2457974363480ea7",
+  "source_change": "Retain extensionless StringSegment slices and clamp ordinal comparison spans at the original extensionless buffer ends.",
+  "files": 2,
+  "additions": 23,
+  "deletions": 9,
+  "added_preservation_test_lines": 16,
+  "public_api_or_default_change": false,
+  "measured_comparisons": 3,
+  "measured_source_strategies": 1,
+  "comparison_budget_closed": true,
+  "unmeasured_rejected_prototypes": 1,
+  "rejected_prototype_reason": "Full-buffer slices read removed extensions and reorder /A/a.css and /A/a-b.css;the real matcher ordering row fails.",
+  "actual_producer": "Matcher -> FileProviderGlobbingDirectory/File -> owner FindFiles -> BinarySearch with actual static comparer -> sorted unique URLs -> MemoryCache",
+  "timed_boundary": "Actual comparer via IComparer dispatch;or real cache token invalidation plus BuildUrlList.Cache-hit controls retain warmed cache.",
+  "reflection_is_setup_only": true,
+  "virtual_provider_is_explicit_input": true,
+  "fresh_directory_enumerators": true,
+  "actual_cancellation_change_token": true,
+  "unchanged_issues": [
+    "dotnet/aspnetcore#69975 cross-PathBase cache identity",
+    "dotnet/aspnetcore#62134 ordered include/exclude evaluation"
+  ],
+  "limits": [
+    "No physical I/O/full HTTP/startup/production-throughput claim.",
+    "Fill1/cache-hit/identity controls do not reach the changed comparison seam;their timing changes are not attributed.",
+    "Cache fills include actual cancellation and potentially asynchronous eviction;not whole-process allocation accounting or pure sorting latency.",
+    "Long virtual-provider strings are scaling inputs and may exceed physical filename limits."
+  ],
+  "shared_windows_host": true,
+  "cpu_heavy_commands_serialized": true,
+  "power_or_affinity_changed": false,
+  "raw_binaries_published": false,
+  "raw_reports_and_logs_copied_without_transformation": true
+}
