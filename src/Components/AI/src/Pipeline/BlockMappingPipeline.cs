@@ -70,7 +70,10 @@ internal class BlockMappingPipeline
             var active = _activeStack[i];
             var result = active.Invoke(context);
 
-            BlockMappingPipelineLog.ActiveHandlerResult(_logger, active.Block.GetType().Name, result.Kind.ToString(), active.Block.Id);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                BlockMappingPipelineLog.ActiveHandlerResult(_logger, active.Block.GetType().Name, result.Kind.ToString(), active.Block.Id);
+            }
 
             switch (result.Kind)
             {
