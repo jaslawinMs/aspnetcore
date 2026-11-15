@@ -1,0 +1,42 @@
+@page "/autoperf-navlink"
+@page "/autoperf-navlink/{*Path}"
+@inject NavigationManager Navigation
+
+<h1>F070 NavLink diagnostic</h1>
+<div id="f070-counter">@_count</div>
+<div id="f070-instance">@_instance</div>
+<button id="f070-increment" @onclick="Increment">Increment</button>
+<button id="f070-go-exact" @onclick='() => GoTo("alpha")'>Exact</button>
+<button id="f070-go-mixed" @onclick='() => GoTo("ALPHA")'>Mixed case</button>
+<button id="f070-go-neighbor" @onclick='() => GoTo("alphb")'>Neighbor</button>
+<button id="f070-go-separator" @onclick='() => GoTo("alphabet")'>Non-separator</button>
+<button id="f070-go-child" @onclick='() => GoTo("alpha/child")'>Child</button>
+<button id="f070-go-query" @onclick='() => GoTo("alpha?view=other#section")'>Query and fragment</button>
+<button id="f070-go-slash" @onclick='() => GoTo("alpha/")'>Trailing slash</button>
+<button id="f070-go-unicode" @onclick="GoToUnicode">Encoded Unicode</button>
+<nav id="f070-links">
+    <NavLink id="f070-exact" href="autoperf-navlink/alpha" Match="NavLinkMatch.All" class="f070-link">Exact</NavLink>
+    <NavLink id="f070-mixed" href="AUTOPERF-NAVLINK/ALPHA" Match="NavLinkMatch.All" class="f070-link">Mixed</NavLink>
+    <NavLink id="f070-slash" href="autoperf-navlink/alpha/" Match="NavLinkMatch.All" class="f070-link">Slash</NavLink>
+    <NavLink id="f070-query" href="autoperf-navlink/alpha?view=FULL#section" Match="NavLinkMatch.All" class="f070-link">Query</NavLink>
+    <NavLink id="f070-prefix" href="autoperf-navlink/alpha" Match="NavLinkMatch.Prefix" class="f070-link">Prefix</NavLink>
+    <NavLink id="f070-neighbor" href="autoperf-navlink/alphb" Match="NavLinkMatch.All" class="f070-link">Neighbor</NavLink>
+    <NavLink id="f070-unicode" href="@UnicodeHref" Match="NavLinkMatch.All" class="f070-link">Unicode</NavLink>
+    <NavLink id="f070-missing" class="f070-link">Missing href</NavLink>
+</nav>
+
+@code
+{
+    private const string UnicodeHref = "autoperf-navlink/caf\u00e9";
+    private readonly string _instance = Guid.NewGuid().ToString("N");
+    private int _count;
+
+    [Parameter]
+    public string? Path { get; set; }
+
+    private void Increment() => _count++;
+
+    private void GoTo(string path) => Navigation.NavigateTo($"autoperf-navlink/{path}");
+
+    private void GoToUnicode() => Navigation.NavigateTo(UnicodeHref);
+}
