@@ -73,7 +73,18 @@
     </TestContentPackage.RenderFragmentChild>
 }
 
+@if (Test == 8)
+{
+    <TestContentPackage.RenderFragmentChild @rendermode="renderMode" IdSuffix="test8">
+        <pre id="escaped-unicode-content" data-fragment="@EscapedAttribute">@UnicodeText</pre>
+    </TestContentPackage.RenderFragmentChild>
+}
+
 @code {
+    private const string EscapedAttribute = "\u00E9\u6F22 \"quote\" \\ path <tag> & value";
+    private static readonly string UnicodeText = string.Concat(Enumerable.Repeat(
+        "\u00E9\u6F22\U0001F642 \"quoted\" \\ path <tag> & line\n", 64));
+
     [Parameter, SupplyParameterFromQuery(Name = "test")]
     public int Test { get; set; }
 

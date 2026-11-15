@@ -57,7 +57,7 @@ internal sealed partial class ComponentParameterDeserializer
                 {
                     var value = (JsonElement)parameterValues[i];
                     var serialized = JsonSerializer.Deserialize<SerializedRenderFragment>(
-                        value.GetRawText(),
+                        value,
                         ServerComponentSerializationSettings.JsonSerializationOptions);
                     parametersDictionary.Add(definition.Name, RenderFragmentSerializer.Deserialize(serialized!.Nodes, ServerComponentSerializationSettings.JsonSerializationOptions, _parametersCache));
                 }

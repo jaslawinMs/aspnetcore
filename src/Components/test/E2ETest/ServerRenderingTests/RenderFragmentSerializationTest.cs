@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Globalization;
 using Components.TestServer.RazorComponents;
 using Microsoft.AspNetCore.Components.E2ETest.Infrastructure;
 using Microsoft.AspNetCore.Components.E2ETest.Infrastructure.ServerFixtures;
@@ -123,5 +124,33 @@ public class RenderFragmentSerializationTest : ServerTestBase<BasicTestAppServer
         Browser.Equal("Item 1", () => Browser.FindElement(By.Id("keyed-1")).Text);
         Browser.Equal("Item 2", () => Browser.FindElement(By.Id("keyed-2")).Text);
         Browser.Equal("Item 3", () => Browser.FindElement(By.Id("keyed-3")).Text);
+    }
+
+    [Fact]
+    public void RenderFragmentCrossesBoundary_EscapedUnicodeContent()
+    {
+        Navigate($"{ServerPathBase}/render-fragment-interactive?test=8&mode=server");
+        var expectedText = string.Concat(Enumerable.Repeat(
+            "\u00E9\u6F22\U0001F642 \"quoted\" \\ path <tag> & line\n", 64));
+        var expectedAttribute = "\u00E9\u6F22 \"quote\" \\ path <tag> & value";
+
+        Browser.Equal("True", () => Browser.FindElement(By.Id("is-interactive-test8")).Text);
+        Browser.Equal(expectedText, ReadFragmentText);
+        Browser.Equal(expectedAttribute, () => Browser.FindElement(By.Id("escaped-unicode-content")).GetDomAttribute("data-fragment"));
+
+        Browser.Click(By.Id("increment-test8"));
+        Browser.Equal("1", () => Browser.FindElement(By.Id("count-test8")).Text);
+        Browser.Equal(expectedText, ReadFragmentText);
+        Browser.Equal(expectedAttribute, () => Browser.FindElement(By.Id("escaped-unicode-content")).GetDomAttribute("data-fragment"));
+
+        string ReadFragmentText()
+        {
+            // Selenium's Windows string transport changes LF to CRLF; numeric UTF16 preserves the exact DOM text.
+            var units = (IEnumerable<object>)((IJavaScriptExecutor)Browser).ExecuteScript(
+                "return Array.from({length:arguments[0].textContent.length},(_,i)=>arguments[0].textContent.charCodeAt(i));",
+                Browser.FindElement(By.Id("escaped-unicode-content")));
+
+            return new string(units.Select(value => checked((char)Convert.ToInt32(value, CultureInfo.InvariantCulture))).ToArray());
+        }
     }
 }
