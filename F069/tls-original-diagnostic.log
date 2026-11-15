@@ -1,0 +1,54 @@
+AUTOPERF_OWNER {"assembly":"Microsoft.AspNetCore.Server.Kestrel.Core, Version=12.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60","sha256":"A9004151B59486AAF5AA9E37EDAE1D2138BDC7770D74ECF9CA8BE2AF3FDAB5B1","actual_shipping_owner_beside_harness":true,"actual_certificate_configuration_loader_no_recording_proxy":true,"reflection_only_prepares_constructor_and_typed_delegate_outside_timing":true,"installed_aspnet_framework_fallback":false}
+AUTOPERF_TLS_BEGIN Patterns1_First
+AUTOPERF_SERVER Microsoft.Extensions.Hosting.Internal.Host Starting: Hosting starting 
+AUTOPERF_SERVER Microsoft.Hosting.Lifetime ListeningOnAddress: Now listening on: https://127.0.0.1:60235 
+AUTOPERF_SERVER Microsoft.AspNetCore.Hosting.Diagnostics HostingStartupAssemblyLoaded: Loaded hosting startup assembly AutoPerf.Benchmarks 
+AUTOPERF_SERVER Microsoft.Hosting.Lifetime 0: Application started. Press Ctrl+C to shut down. 
+AUTOPERF_SERVER Microsoft.Hosting.Lifetime 0: Hosting environment: Production 
+AUTOPERF_SERVER Microsoft.Hosting.Lifetime 0: Content root path: <SESSION_FILES>\autoperf-runs\F069\harness\bin\Release\net12.0\ 
+AUTOPERF_SERVER Microsoft.Extensions.Hosting.Internal.Host Started: Hosting started 
+AUTOPERF_SERVER Microsoft.AspNetCore.Server.Kestrel.Connections ConnectionAccepted: Connection id "0HNQ3006KH0H8" accepted. 
+AUTOPERF_SERVER Microsoft.AspNetCore.Server.Kestrel.Connections ConnectionStart: Connection id "0HNQ3006KH0H8" started. 
+AUTOPERF_SERVER Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware AuthenticationFailed: Failed to authenticate HTTPS connection. System.Security.Authentication.AuthenticationException: Authentication failed because the platform does not support ephemeral keys.
+ ---> System.ComponentModel.Win32Exception (0x8009030E): No credentials are available in the security package
+   at System.Net.SSPIWrapper.AcquireCredentialsHandle(ISSPIInterface secModule, String package, CredentialUse intent, SCH_CREDENTIALS* scc)
+   at System.Net.Security.SslStreamPal.AcquireCredentialsHandle(CredentialUse credUsage, SCH_CREDENTIALS* secureCredential)
+   at System.Net.Security.SslStreamPal.AcquireCredentialsHandleSchCredentials(SslAuthenticationOptions authOptions, X509Certificate2 certificate)
+   at System.Net.Security.SslStreamPal.AcquireCredentialsHandle(SslAuthenticationOptions sslAuthenticationOptions, Boolean newCredentialsRequested)
+   --- End of inner exception stack trace ---
+   at System.Net.Security.SslStreamPal.AcquireCredentialsHandle(SslAuthenticationOptions sslAuthenticationOptions, Boolean newCredentialsRequested)
+   at System.Net.Security.SslStream.AcquireCredentialsHandle(SslAuthenticationOptions sslAuthenticationOptions, Boolean newCredentialsRequested)
+   at System.Net.Security.SslStream.AcquireServerCredentials(Byte[]& thumbPrint)
+   at System.Net.Security.SslStream.TryNextMessageViaTlsSession(ReadOnlySpan`1 incomingBuffer, ProtocolToken& token, Int32& consumed)
+   at System.Net.Security.SslStream.NextMessage(ReadOnlySpan`1 incomingBuffer, Int32& consumed)
+   at System.Net.Security.SslStream.ProcessTlsFrame(Int32 frameSize)
+   at System.Net.Security.SslStream.ForceAuthenticationAsync[TIOAdapter](Boolean receiveFirst, Byte[] reAuthenticationData, CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.ProcessAuthenticationAsync(Boolean isAsync, CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.AuthenticateAsServerAsync(ServerOptionsSelectionCallback optionsCallback, Object state, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware.OnConnectionAsync(ConnectionContext context) in C:\src\aspnetcore\src\Servers\Kestrel\Core\src\Middleware\HttpsConnectionMiddleware.cs:line 188
+AUTOPERF_SERVER Microsoft.AspNetCore.Server.Kestrel.Connections ConnectionStop: Connection id "0HNQ3006KH0H8" stopped. 
+AUTOPERF_SERVER Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets ConnectionWriteFin: Connection id "0HNQ3006KH0H8" sending FIN because: "The Socket transport's send loop completed gracefully." 
+AUTOPERF_SERVER Microsoft.Extensions.Hosting.Internal.Host Stopping: Hosting stopping 
+AUTOPERF_SERVER Microsoft.Hosting.Lifetime 0: Application is shutting down... 
+AUTOPERF_SERVER Microsoft.Extensions.Hosting.Internal.Host Stopped: Hosting stopped 
+Unhandled exception. System.Net.Http.HttpRequestException: The SSL connection could not be established, see inner exception.
+ ---> System.IO.IOException: Received an unexpected EOF or 0 bytes from the transport stream.
+   at System.Net.Security.SslStream.ReceiveHandshakeFrameAsync[TIOAdapter](CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.ForceAuthenticationAsync[TIOAdapter](Boolean receiveFirst, Byte[] reAuthenticationData, CancellationToken cancellationToken)
+   at System.Net.Http.ConnectHelper.EstablishSslConnectionAsync(SslClientAuthenticationOptions sslOptions, HttpRequestMessage request, Boolean async, Stream stream, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.ConnectHelper.EstablishSslConnectionAsync(SslClientAuthenticationOptions sslOptions, HttpRequestMessage request, Boolean async, Stream stream, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, Boolean isForHttp2, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp2ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.HttpMessageHandlerStage.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpMessageHandlerStage.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpMessageHandlerStage.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.SocketsHttpHandler.<SendAsync>g__CreateHandlerAndSendAsync|122_0(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at AutoPerf.TlsProbe.VerifyAsync() in <SESSION_FILES>\autoperf-runs\F069\harness\TlsProbe.cs:line 97
+   at AutoPerf.TlsProbe.VerifyAsync() in <SESSION_FILES>\autoperf-runs\F069\harness\TlsProbe.cs:line 131
+   at Program.<Main>$(String[] args) in <SESSION_FILES>\autoperf-runs\F069\harness\Program.cs:line 30
+   at Program.<Main>(String[] args)

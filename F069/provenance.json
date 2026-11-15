@@ -1,0 +1,93 @@
+{
+  "candidate": "F069",
+  "disposition": "qualified-large-configuration-lookup-proposal",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_commit": "f01ba1e0475dc1c8f13c18f95fe90377b800e961",
+  "branch": "autoperf/F069-sni-wildcard-selection",
+  "original_source_sha256": "FA460F21003F71D75CD8717B927B05C9AEDD5E26384001E3D4E890D14E6FF8BF",
+  "proposed_source_sha256": "EF16D671EE9C00E52B2D23A844F5A0C4AD6CE9F6DC9D55607F0B065A04E20B17",
+  "original_owner_sha256": "A9004151B59486AAF5AA9E37EDAE1D2138BDC7770D74ECF9CA8BE2AF3FDAB5B1",
+  "proposed_owner_sha256": "179B834630BEBF43BE6E1E29859813A89F489DA3CB59E769CBB2ABD22A51A131",
+  "committed_source_identity": [
+    {
+      "path": "src/Servers/Kestrel/Core/src/Internal/SniOptionsSelector.cs",
+      "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "commit": "f01ba1e0475dc1c8f13c18f95fe90377b800e961",
+      "measured_source_sha256": "ef16d671ee9c00e52b2d23a844f5a0c4ad6ce9f6dc9d55607f0b065a04e20b17",
+      "committed_source_sha256": "0b5e52ee464472cbbb73eb115ab8540e234dd99c31f1138e80a40e803d5bee0d",
+      "baseline_source_sha256": "a9cbeac47ffc0dc2d5f5cb855f6b950876431c8aca556269ca3f27b171a5d4de",
+      "measured_source_bytes_equal_committed": false,
+      "difference_is_only_git_crlf_lf_canonicalization": true,
+      "committed_source_text_matches_measured_source": true,
+      "original_text_matches_default_branch": true
+    },
+    {
+      "path": "src/Servers/Kestrel/Core/test/SniOptionsSelectorTests.cs",
+      "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "commit": "f01ba1e0475dc1c8f13c18f95fe90377b800e961",
+      "measured_source_sha256": "c5fc9c3dc18260ffe6257c3cebcc7e73c967e9966d4c2be8c3ea9039ddc829e0",
+      "committed_source_sha256": "ce8ef176f88340e00d7eab1641fc3e1fe2699234997bcff4d3aa2c2f6ba45b4b",
+      "baseline_source_sha256": "f36f79b8a13adb6887f2c054fb5c27a0593c7fc313da308226561ec89f2f302b",
+      "measured_source_bytes_equal_committed": false,
+      "difference_is_only_git_crlf_lf_canonicalization": true,
+      "committed_source_text_matches_measured_source": true,
+      "original_text_matches_default_branch": true
+    }
+  ],
+  "final_measured_owner_and_raw_source_verified": true,
+  "comparisons": 3,
+  "distinct_source_strategies": 3,
+  "shipping_source_tunes": 2,
+  "harness_changes_between_measurements": 0,
+  "comparison_budget_closed": true,
+  "final_strategy_comparisons": 1,
+  "no_aggregation_across_strategies": true,
+  "raw_outcomes": 198,
+  "all_paired_rows": 99,
+  "final_outcomes": 66,
+  "final_pairs": 33,
+  "all_actual_samples": 1584,
+  "actual_bdn_owner_markers": 204,
+  "measured_recursive_dll_json_files": 105,
+  "only_changed_measured_dependency": "Microsoft.AspNetCore.Server.Kestrel.Core.dll",
+  "frozen_unchanged_non_owner_after_second_build": "Microsoft.AspNetCore.Server.Kestrel.dll",
+  "preserved_unmeasured_second_build_snapshot": "after-2-build-manifest.json",
+  "final_identical_option_contracts": 29,
+  "final_identical_real_tls_http_receipts": 17,
+  "original_tests": 31,
+  "expanded_original_tests": 47,
+  "final_tests": 47,
+  "all_actual_passing_test_outcomes": 250,
+  "original_functional_red_claim": false,
+  "actual_pdb_source_identities": 9,
+  "ordinary_selection_allocation_bytes": 24,
+  "original_selection_allocation_bytes": 24,
+  "second_strategy_additional_small_selection_bytes": 56,
+  "final_additional_small_selection_bytes": 0,
+  "final_small_nonwins_percent": {
+    "Patterns1_Last": 9.58,
+    "Patterns8_Last": 7.4,
+    "Patterns8_Miss": 9.32
+  },
+  "final_scaled_constructor_time_increase_percent": {
+    "Patterns64": 24.39,
+    "Patterns512": 17.12
+  },
+  "final_scaled_constructor_extra_allocated_bytes": {
+    "Patterns64": 2184,
+    "Patterns512": 14785
+  },
+  "small_constructor_extra_allocated_bytes": 8,
+  "caveats": [
+    "Final source has only one33-case pair;earlier source definitions remain separate,not additional repetitions of final code.",
+    "All-size hashing caused large small/deep-name and first-match regressions;hybrid strategy retained a56B/op small enumeration regression;both full comparisons are preserved.",
+    "Final1-last and8-last/miss remain9.58%/7.40%/9.32% slower;exact/null/empty/trailing-dot controls improve5-9% without reaching wildcard lookup.These do not establish universal latency.",
+    "Large constructors are24.39%/17.12% slower and allocate2184/14785 extra bytes.Small constructors add8 bytes.Large sets retain both sorted and dictionary indexes;allocated bytes are not retained-byte measurements.",
+    "Original ordinary selection already allocated24B/op;final ordinary selection remains24B/op.No enumeration-allocation saving against baseline is claimed.",
+    "Second original CertificateSelector512 has151.73% CV and an outlier-distorted mean;it is retained but not used as a final gain claim.Final callback heap2-byte drift is not credited.",
+    "Warm actual GetOptions selection is not TLS handshake or HTTP throughput.Actual constructor profile avoids certificate-chain creation and IO using a real fallback certificate callback.",
+    "Actual runtime maps both Unicode and A-label URI targets to a Unicode ClientHello name;direct raw A-label diagnostics intentionally remain distinct,without configuration normalization changes.",
+    "Non-owner Kestrel DLL rebuild drift was archived before the second comparison;original public-identical non-owner DLL was frozen and the isolated real TLS producer revalidated.",
+    "Shared Windows box,no dedicated-machine or power/affinity assumption.Other runtimes,architectures,NativeAOT and full handshake/request throughput remain unverified."
+  ]
+}

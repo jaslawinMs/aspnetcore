@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <CoreTestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Server.Kestrel.Core.Tests\Release\net12.0</CoreTestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Microsoft.AspNetCore.Server.Kestrel.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Kestrel\src\Microsoft.AspNetCore.Server.Kestrel.csproj" />
+    <Reference Include="$(CoreTestBin)\Microsoft.*.dll" Exclude="$(CoreTestBin)\*Test*.dll;$(CoreTestBin)\*Generator*.dll;$(CoreTestBin)\Microsoft.AspNetCore.Server.Kestrel.Core.dll" />
+    <Reference Include="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Server.Kestrel.Transport.*\Release\net12.0\*.dll" Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(CoreTestBin)\Microsoft.AspNetCore.Server.Kestrel.Core.dll')" Text="Build SniOptionsSelectorTests Release first; use source owner/dependencies, not an installed ASP.NET framework." />
+  </Target>
+</Project>

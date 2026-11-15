@@ -1,0 +1,266 @@
+diff --git a/src/Servers/Kestrel/Core/src/Internal/SniOptionsSelector.cs b/src/Servers/Kestrel/Core/src/Internal/SniOptionsSelector.cs
+index 0e40d1233a..a8cf1e2117 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/SniOptionsSelector.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/SniOptionsSelector.cs
+@@ -18,6 +18,7 @@ internal sealed class SniOptionsSelector
+ {
+     private const string WildcardHost = "*";
+     private const string WildcardPrefix = "*.";
++    private const int WildcardPrefixLookupThreshold = 8;
+ 
+     private readonly string _endpointName;
+     private readonly ILogger<HttpsConnectionMiddleware> _logger;
+@@ -27,6 +28,7 @@ internal sealed class SniOptionsSelector
+ 
+     private readonly Dictionary<string, SniOptions> _exactNameOptions = new Dictionary<string, SniOptions>(StringComparer.OrdinalIgnoreCase);
+     private readonly SortedList<string, SniOptions> _wildcardPrefixOptions = new SortedList<string, SniOptions>(LongestStringFirstComparer.Instance);
++    private readonly Dictionary<string, SniOptions>? _wildcardPrefixOptionsLookup;
+     private readonly SniOptions? _wildcardOptions;
+ 
+     public SniOptionsSelector(
+@@ -111,6 +113,11 @@ internal sealed class SniOptionsSelector
+                 _exactNameOptions.Add(name, sniOptions);
+             }
+         }
++
++        if (_wildcardPrefixOptions.Count > WildcardPrefixLookupThreshold)
++        {
++            _wildcardPrefixOptionsLookup = new Dictionary<string, SniOptions>(_wildcardPrefixOptions, StringComparer.OrdinalIgnoreCase);
++        }
+     }
+ 
+     public (SslServerAuthenticationOptions, ClientCertificateMode) GetOptions(ConnectionContext connection, string serverName)
+@@ -119,12 +126,20 @@ internal sealed class SniOptionsSelector
+ 
+         if (!string.IsNullOrEmpty(serverName) && !_exactNameOptions.TryGetValue(serverName, out sniOptions) && IsValidSniServerName(serverName))
+         {
+-            foreach (var (suffix, options) in _wildcardPrefixOptions)
++            if (_wildcardPrefixOptionsLookup is { } wildcardLookup)
+             {
+-                if (serverName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
++                sniOptions = GetIndexedWildcardOptions(serverName, wildcardLookup);
++            }
++            else
++            {
++                for (var i = 0; i < _wildcardPrefixOptions.Count; i++)
+                 {
+-                    sniOptions = options;
+-                    break;
++                    var suffix = _wildcardPrefixOptions.GetKeyAtIndex(i);
++                    if (serverName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
++                    {
++                        sniOptions = _wildcardPrefixOptions.GetValueAtIndex(i);
++                        break;
++                    }
+                 }
+             }
+         }
+@@ -176,6 +191,33 @@ internal sealed class SniOptionsSelector
+         return (sslOptions, sniOptions.ClientCertificateMode);
+     }
+ 
++    private SniOptions? GetIndexedWildcardOptions(string serverName, Dictionary<string, SniOptions> wildcardOptions)
++    {
++        // Preserve the best-case scan without hashing when the longest suffix matches.
++        var longestSuffix = _wildcardPrefixOptions.GetKeyAtIndex(0);
++        if (serverName.EndsWith(longestSuffix, StringComparison.OrdinalIgnoreCase))
++        {
++            return _wildcardPrefixOptions.GetValueAtIndex(0);
++        }
++
++        var wildcardLookup = wildcardOptions.GetAlternateLookup<ReadOnlySpan<char>>();
++        var serverNameSpan = serverName.AsSpan();
++        var dotIndex = serverNameSpan.IndexOf('.');
++        while (dotIndex >= 0)
++        {
++            serverNameSpan = serverNameSpan[dotIndex..];
++            if (wildcardLookup.TryGetValue(serverNameSpan, out var options))
++            {
++                return options;
++            }
++
++            serverNameSpan = serverNameSpan[1..];
++            dotIndex = serverNameSpan.IndexOf('.');
++        }
++
++        return null;
++    }
++
+     // RFC 6066 §3 requires the SNI server_name to be a syntactically valid DNS hostname and
+     // forbids a trailing dot. Uri.CheckHostName already rejects empty labels, leading dots,
+     // non-LDH characters, embedded nulls, and IP literals, but it accepts a trailing dot as
+diff --git a/src/Servers/Kestrel/Core/test/SniOptionsSelectorTests.cs b/src/Servers/Kestrel/Core/test/SniOptionsSelectorTests.cs
+index de7f350af8..a4a2db1872 100644
+--- a/src/Servers/Kestrel/Core/test/SniOptionsSelectorTests.cs
++++ b/src/Servers/Kestrel/Core/test/SniOptionsSelectorTests.cs
+@@ -134,6 +134,152 @@ public class SniOptionsSelectorTests
+         Assert.Equal("Short", pathDictionary[aSubdomainOptions.ServerCertificate]);
+     }
+ 
++    [Theory]
++    [InlineData("a.b.c.EXAMPLE.org", "Long", 0)]
++    [InlineData("b.c.example.org", "Short", 0)]
++    [InlineData("a.b.d.c.example.org", "Short", 0)]
++    [InlineData("xexample.org", "WildcardOnly", 0)]
++    [InlineData("a.b.c.EXAMPLE.org", "Long", 64)]
++    [InlineData("b.c.example.org", "Short", 64)]
++    [InlineData("a.b.d.c.example.org", "Short", 64)]
++    [InlineData("xexample.org", "WildcardOnly", 64)]
++    public void MatchesWildcardSuffixesAtSuccessiveLabelBoundaries(string serverName, string expectedCertificatePath, int unrelatedWildcardCount)
++    {
++        var sniDictionary = new Dictionary<string, SniConfig>
++            {
++                {
++                    "*.example.org",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "Short" }
++                    }
++                },
++                {
++                    "*.b.c.example.org",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "Long" }
++                    }
++                },
++                {
++                    "*",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "WildcardOnly" }
++                    }
++                }
++            };
++
++        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
++        var certificateConfigLoader = new MockCertificateConfigLoader();
++        var sniOptionsSelector = new SniOptionsSelector(
++            "TestEndpointName",
++            sniDictionary,
++            certificateConfigLoader,
++            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
++            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
++            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
++
++        var (options, _) = sniOptionsSelector.GetOptions(new MockConnectionContext(), serverName);
++
++        Assert.Equal(expectedCertificatePath, certificateConfigLoader.CertToPathDictionary[options.ServerCertificate]);
++    }
++
++    [Theory]
++    [InlineData("client.M\u00dcNCHEN.example.org", "Unicode", 0)]
++    [InlineData("client.xn--mnchen-3ya.example.org", "WildcardOnly", 0)]
++    [InlineData("client.\U00010400.example.org", "Supplementary", 0)]
++    [InlineData("client.M\u00dcNCHEN.example.org", "Unicode", 64)]
++    [InlineData("client.xn--mnchen-3ya.example.org", "WildcardOnly", 64)]
++    [InlineData("client.\U00010400.example.org", "Supplementary", 64)]
++    public void WildcardSuffixMatchingPreservesOrdinalIgnoreCaseAndRawIdnNames(string serverName, string expectedCertificatePath, int unrelatedWildcardCount)
++    {
++        var sniDictionary = new Dictionary<string, SniConfig>
++            {
++                {
++                    "*.m\u00fcnchen.example.org",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "Unicode" }
++                    }
++                },
++                {
++                    "*.\U00010428.example.org",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "Supplementary" }
++                    }
++                },
++                {
++                    "*",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "WildcardOnly" }
++                    }
++                }
++            };
++
++        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
++        var certificateConfigLoader = new MockCertificateConfigLoader();
++        var sniOptionsSelector = new SniOptionsSelector(
++            "TestEndpointName",
++            sniDictionary,
++            certificateConfigLoader,
++            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
++            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
++            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
++
++        var (options, _) = sniOptionsSelector.GetOptions(new MockConnectionContext(), serverName);
++
++        Assert.Equal(expectedCertificatePath, certificateConfigLoader.CertToPathDictionary[options.ServerCertificate]);
++    }
++
++    [Theory]
++    [InlineData(0)]
++    [InlineData(64)]
++    public void ReconstructingSelectorUsesUpdatedSniConfiguration(int unrelatedWildcardCount)
++    {
++        var sniDictionary = new Dictionary<string, SniConfig>
++            {
++                {
++                    "*.example.org",
++                    new SniConfig
++                    {
++                        Certificate = new CertificateConfig { Path = "Original" }
++                    }
++                }
++            };
++        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
++        var certificateConfigLoader = new MockCertificateConfigLoader();
++        var originalSelector = new SniOptionsSelector(
++            "TestEndpointName",
++            sniDictionary,
++            certificateConfigLoader,
++            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
++            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
++            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
++        var (originalOptions, _) = originalSelector.GetOptions(new MockConnectionContext(), "client.example.org");
++
++        sniDictionary["*.example.org"] = new SniConfig
++        {
++            Certificate = new CertificateConfig { Path = "Updated" }
++        };
++        var updatedSelector = new SniOptionsSelector(
++            "TestEndpointName",
++            sniDictionary,
++            certificateConfigLoader,
++            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
++            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
++            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
++
++        var (retainedOptions, _) = originalSelector.GetOptions(new MockConnectionContext(), "client.example.org");
++        var (updatedOptions, _) = updatedSelector.GetOptions(new MockConnectionContext(), "client.example.org");
++
++        Assert.Same(originalOptions, retainedOptions);
++        Assert.Equal("Original", certificateConfigLoader.CertToPathDictionary[retainedOptions.ServerCertificate]);
++        Assert.Equal("Updated", certificateConfigLoader.CertToPathDictionary[updatedOptions.ServerCertificate]);
++    }
++
+     [Fact]
+     public void ServerNameMatchingIsCaseInsensitive()
+     {
+@@ -1105,6 +1251,17 @@ public class SniOptionsSelectorTests
+         Assert.Empty(propertyNames);
+     }
+ 
++    private static void AddUnrelatedWildcards(Dictionary<string, SniConfig> sniDictionary, int count)
++    {
++        for (var index = 0; index < count; index++)
++        {
++            sniDictionary.Add($"*.unrelated{index}.other.test", new SniConfig
++            {
++                Certificate = new CertificateConfig { Path = "Unrelated" }
++            });
++        }
++    }
++
+     private class MockCertificateConfigLoader : ICertificateConfigLoader
+     {
+         public Dictionary<object, string> CertToPathDictionary { get; } = new Dictionary<object, string>(ReferenceEqualityComparer.Instance);
