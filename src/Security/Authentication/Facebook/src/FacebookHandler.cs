@@ -55,7 +55,27 @@ public class FacebookHandler : OAuthHandler<FacebookOptions>
             throw new HttpRequestException($"An error occurred when retrieving Facebook user information ({response.StatusCode}). Please check if the authentication information is correct and the corresponding Facebook Graph API is enabled.");
         }
 
-        using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted)))
+        var charset = response.Content.Headers.ContentType?.CharSet;
+        JsonDocument payload;
+        // Keep small responses on the string path to avoid transcoding buffer overhead.
+        if (charset is not null && string.Equals(charset, "utf-8", StringComparison.OrdinalIgnoreCase)
+            && response.Content.Headers.ContentLength >= 16 * 1024)
+        {
+            // Preserve HttpContent's replacement behavior for malformed UTF-8.
+            using var stream = Encoding.CreateTranscodingStream(
+                await response.Content.ReadAsStreamAsync(Context.RequestAborted),
+                Encoding.GetEncoding(charset),
+                Encoding.UTF8,
+                leaveOpen: true);
+            // The existing synchronous parse did not observe cancellation after buffering.
+            payload = await JsonDocument.ParseAsync(stream, cancellationToken: CancellationToken.None);
+        }
+        else
+        {
+            payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted));
+        }
+
+        using (payload)
         {
             var context = new OAuthCreatingTicketContext(new ClaimsPrincipal(identity), properties, Context, Scheme, Options, Backchannel, tokens, payload.RootElement);
             context.RunClaimActions();
