@@ -387,6 +387,115 @@ public class FormatFilterTests
         Assert.Empty(result.ContentTypes);
     }
 
+    [Theory]
+    [InlineData("application/json", "application/json", true)]
+    [InlineData("application/json; version=1", "application/json; version=1", true)]
+    [InlineData("application/json; version=1; version=2", "application/json; version=1; version=2", true)]
+    [InlineData("application/json", "APPLICATION/JSON", true)]
+    [InlineData("application/json", "application/vnd.example+json", true)]
+    [InlineData("application/json; version=1", "application/json; version=2", false)]
+    public void FormatFilter_SupportedMediaTypeMatching_PreservesParameters(
+        string requestedContentType,
+        string supportedContentType,
+        bool matches)
+    {
+        var mockObjects = new MockObjects("json", FormatSource.RouteData);
+        mockObjects.MvcOptions.FormatterMappings.SetMediaTypeMappingForFormat("json", requestedContentType);
+        var produces = new ProducesAttribute(new string(supportedContentType.AsSpan()));
+        var filter = new FormatFilter(mockObjects.OptionsManager, NullLoggerFactory.Instance);
+
+        for (var pass = 0; pass < 2; pass++)
+        {
+            var context = mockObjects.CreateResourceExecutingContext([produces]);
+            filter.OnResourceExecuting(context);
+
+            if (matches)
+            {
+                Assert.Null(context.Result);
+            }
+            else
+            {
+                Assert.IsType<NotFoundResult>(context.Result);
+            }
+        }
+    }
+
+    [Fact]
+    public void FormatFilter_ObservesUpdatedMetadataAndMappings()
+    {
+        var mockObjects = new MockObjects("json", FormatSource.RouteData);
+        var produces = new ProducesAttribute("application/json");
+        var filter = new FormatFilter(mockObjects.OptionsManager, NullLoggerFactory.Instance);
+        var context = mockObjects.CreateResourceExecutingContext([produces]);
+        filter.OnResourceExecuting(context);
+        Assert.Null(context.Result);
+
+        produces.ContentTypes[0] = "application/xml";
+        context = mockObjects.CreateResourceExecutingContext([produces]);
+        filter.OnResourceExecuting(context);
+        Assert.IsType<NotFoundResult>(context.Result);
+
+        mockObjects.MvcOptions.FormatterMappings.SetMediaTypeMappingForFormat("json", "application/xml");
+        context = mockObjects.CreateResourceExecutingContext([produces]);
+        filter.OnResourceExecuting(context);
+        Assert.Null(context.Result);
+
+        var resultContext = mockObjects.CreateResultExecutingContext();
+        filter.OnResultExecuting(resultContext);
+        var result = Assert.IsType<ObjectResult>(resultContext.Result);
+        Assert.Equal("application/xml", Assert.Single(result.ContentTypes));
+
+        mockObjects.MvcOptions.FormatterMappings.ClearMediaTypeMappingForFormat("json");
+        context = mockObjects.CreateResourceExecutingContext([produces]);
+        filter.OnResourceExecuting(context);
+        Assert.IsType<NotFoundResult>(context.Result);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FormatFilter_DoesNotSkipEarlierInvalidContentTypes(bool invalidFirst)
+    {
+        var mockObjects = new MockObjects("json", FormatSource.RouteData);
+        var produces = new ProducesAttribute("application/json");
+        produces.ContentTypes.Insert(invalidFirst ? 0 : 1, string.Empty);
+        var filter = new FormatFilter(mockObjects.OptionsManager, NullLoggerFactory.Instance);
+        var context = mockObjects.CreateResourceExecutingContext([produces]);
+
+        if (invalidFirst)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => filter.OnResourceExecuting(context));
+        }
+        else
+        {
+            filter.OnResourceExecuting(context);
+            Assert.Null(context.Result);
+        }
+    }
+
+    [Theory]
+    [InlineData("application/json;x=")]
+    [InlineData("")]
+    public void FormatFilter_DoesNotBypassParsingForIdenticalContentTypes(string contentType)
+    {
+        var mockObjects = new MockObjects("json", FormatSource.RouteData);
+        mockObjects.MvcOptions.FormatterMappings.SetMediaTypeMappingForFormat("json", new RawMappingHeader(contentType));
+        var produces = new ProducesAttribute(typeof(object));
+        produces.ContentTypes.Add(contentType);
+        var filter = new FormatFilter(mockObjects.OptionsManager, NullLoggerFactory.Instance);
+        var context = mockObjects.CreateResourceExecutingContext([produces]);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => filter.OnResourceExecuting(context));
+    }
+
+    private sealed class RawMappingHeader(string value) : MediaTypeHeaderValue("application/json")
+    {
+        public override string ToString()
+        {
+            return value;
+        }
+    }
+
     private class MockObjects
     {
         public MvcOptions MvcOptions { get; private set; }
