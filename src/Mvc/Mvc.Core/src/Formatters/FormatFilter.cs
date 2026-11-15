@@ -107,6 +107,14 @@ public partial class FormatFilter : IFormatFilter, IResourceFilter, IResultFilte
 
     private static bool IsSuperSetOfAnySupportedMediaType(string contentType, MediaTypeCollection supportedMediaTypes)
     {
+        // Empty and parameterized values must still be parsed to preserve their errors.
+        if (contentType.Length > 0 &&
+            string.Equals(contentType, supportedMediaTypes[0], StringComparison.Ordinal) &&
+            !contentType.Contains(';'))
+        {
+            return true;
+        }
+
         var parsedContentType = new MediaType(contentType);
         for (var i = 0; i < supportedMediaTypes.Count; i++)
         {
