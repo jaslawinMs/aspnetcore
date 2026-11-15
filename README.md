@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 56/358 finalized**: 40 drafts, 8 no-gain, 5 rejected and 3 duplicates;
-302 findings remain unfinished.
+**Progress: 57/358 finalized**: 40 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+301 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -54,6 +54,7 @@ well as the largest speedup.
 | F073 | [Draft jaslawinMs/aspnetcore#79](https://github.com/jaslawinMs/aspnetcore/pull/79); exact-owner gains68-85%, actual exact/default-declared selection38-39%, parameter6.07% cost and unresolved large client-suffix transient retained; two strategies/three pairs, qualified trade-off, not merge-ready | [OutputFormatter exact result negotiation](F073/README.md) |
 | F074 | [Draft jaslawinMs/aspnetcore#81](https://github.com/jaslawinMs/aspnetcore/pull/81); large escaped fragments save 19544B/op, long text improves 36.82%, full escaped descriptor median is 20.28% slower; all three pairs and control costs retained, allocation-focused qualified draft, not merge-ready | [Render-fragment parameter JSON string allocation](F074/README.md) |
 | F075 | Duplicate of active dotnet/aspnetcore#68295 at frozen head9ca33ec5; typed JsonElement intermediate already removed in that proposal, not merged; source-only overlap, no new benchmark or draft and no full-proposal equivalence/approval claim | [Typed parameter existing-work overlap](F075/README.md) |
+| F076 | Duplicate of active dotnet/aspnetcore#68295 at frozen head9ca33ec5; nested fragment JsonElement intermediate already removed in that proposal, not merged; independent source-only overlap, no new benchmark or draft and no full-proposal equivalence/approval claim | [Nested fragment existing-work overlap](F076/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
