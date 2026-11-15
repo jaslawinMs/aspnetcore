@@ -219,6 +219,22 @@ public class GlobbingUrlBuilderTest
         Assert.Collection(urlList, collectionAssertions.ToArray());
     }
 
+    [Fact]
+    public void OrdersGlobbedMatchResults_WithDirectorySegmentPrefixes()
+    {
+        var fileProvider = MakeFileProvider(new FileNode(null,
+        [
+            new FileNode("a", [new FileNode("site.css")]),
+            new FileNode("a-", [new FileNode("site.css")]),
+        ]));
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var globbingUrlBuilder = new GlobbingUrlBuilder(fileProvider, cache, PathString.Empty);
+
+        var urlList = globbingUrlBuilder.BuildUrlList(null, "**/*.css", excludePattern: null);
+
+        Assert.Equal(new[] { "/a-/site.css", "/a/site.css" }, urlList, StringComparer.Ordinal);
+    }
+
     [Theory]
     [InlineData("/sub")]
     [InlineData("/sub/again")]

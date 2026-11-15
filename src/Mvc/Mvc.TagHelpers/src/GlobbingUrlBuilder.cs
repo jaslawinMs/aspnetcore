@@ -222,8 +222,8 @@ public class GlobbingUrlBuilder
                 return xExtIndex - yExtIndex;
             }
 
-            var xNoExt = xExtIndex >= 0 ? x.Substring(0, xExtIndex) : x;
-            var yNoExt = yExtIndex >= 0 ? y.Substring(0, yExtIndex) : y;
+            var xNoExt = new StringSegment(x, 0, xLength);
+            var yNoExt = new StringSegment(y, 0, yLength);
 
             var result = 0;
             var xEnumerator = new StringTokenizer(xNoExt, PathSeparator).GetEnumerator();
@@ -244,13 +244,11 @@ public class GlobbingUrlBuilder
                 }
 
                 var length = Math.Max(xSegment.Length, ySegment.Length);
-                result = string.Compare(
-                    xSegment.Buffer,
-                    xSegment.Offset,
-                    ySegment.Buffer,
-                    ySegment.Offset,
-                    length,
-                    StringComparison.Ordinal);
+                // Preserve comparisons across segments but not into the removed extension.
+                result = xSegment.Buffer.AsSpan(xSegment.Offset, Math.Min(length, xLength - xSegment.Offset))
+                    .CompareTo(
+                        ySegment.Buffer.AsSpan(ySegment.Offset, Math.Min(length, yLength - ySegment.Offset)),
+                        StringComparison.Ordinal);
             }
 
             if (TryGetNextSegment(ref yEnumerator, out _))
