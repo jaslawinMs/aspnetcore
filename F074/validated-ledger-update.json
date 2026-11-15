@@ -1,0 +1,30 @@
+{
+  "id": "F074",
+  "finding": {
+    "card_id": "roundtrip-through-throwaway-intermediate",
+    "file": "src/Components/Server/src/Circuits/ComponentParameterDeserializer.cs",
+    "line_start": 59,
+    "line_end": 61,
+    "project": "Microsoft.AspNetCore.Components.Server",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "A parsed JsonElement is converted to raw JSON text and reparsed as a render-fragment descriptor.",
+    "explanation": "The parameter value is already a JsonElement, but GetRawText allocates a string that JsonSerializer.Deserialize immediately parses again. This occurs while processing component parameters and the intermediate text has no other consumer.",
+    "snippet": "var serialized = JsonSerializer.Deserialize<SerializedRenderFragment>(\n    value.GetRawText(),\n    ServerComponentSerializationSettings.JsonSerializationOptions);",
+    "suppressed": false
+  },
+  "status": "validated",
+  "notes": [
+    "Fresh default-branch intake; independent render-fragment parameter GetRawText seam only. F075 typed parameters and F076 shared attribute deserialization are separate. Read Components sample/permanent-boundary guidance; establish actual serializer/circuit/render-fragment producer, owner, sample and preservation before any shipping edit.",
+    "One-argument allocation-focused proposal: original/proposed47 managed and15 Selenium rows, canonical six-state browser and24 contracts pass;3/3 frozen pairs closed. Long text owner median36.82% faster; large escaped owner19544B/op less (~67%) and9.76% faster. Full escaped descriptor median20.28% slower (+20.28/-3.50/+32.68), volatile collections and typed-control timings retained. Qualified fork-only draft, explicitly not merge-ready."
+  ],
+  "branch": "autoperf/F074-render-fragment-parameter-deserialization",
+  "pr_url": null,
+  "updated_at": "2026-11-15T17:28:37.6563190+00:00"
+}

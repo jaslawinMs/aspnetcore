@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <ServerTestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Components.Server.Tests\Release\net12.0</ServerTestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Components\Server\src\Microsoft.AspNetCore.Components.Server.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj" />
+    <Reference Include="$(ServerTestBin)\Microsoft.*.dll"
+      Exclude="$(ServerTestBin)\*Test*.dll;$(ServerTestBin)\*Generator*.dll;$(ServerTestBin)\Microsoft.AspNetCore.Components.Server.dll;$(ServerTestBin)\Microsoft.AspNetCore.Components.Endpoints.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(ServerTestBin)\Microsoft.AspNetCore.Components.Server.dll')"
+      Text="Build actual Server deserializer tests Release first; do not substitute installed ASP.NET assemblies." />
+  </Target>
+</Project>

@@ -1,0 +1,35 @@
+<section id="f074-@Id">
+    <p id="f074-@Id-label">@Label</p>
+    <span id="f074-@Id-interactive">@_interactive</span>
+    <div id="f074-@Id-child">@ChildContent</div>
+    <button id="f074-@Id-increment" @onclick="Increment">Increment</button>
+    <span id="f074-@Id-count">@_count</span>
+</section>
+
+@code {
+    private bool _interactive;
+    private int _count;
+
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = "";
+
+    [Parameter]
+    public string Label { get; set; } = "";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private void Increment()
+    {
+        _count++;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _interactive = true;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,22 @@
+@page "/autoperf-fragment"
+
+<h1>F074 real captured fragment activation</h1>
+
+<F074FragmentCounter Id="plain" Label="ordinary typed label" @rendermode="InteractiveServer">
+    <div id="f074-plain-content" data-value="42">
+        <p>Hello from SSR</p>
+        <em id="f074-plain-emphasis">nested content</em>
+    </div>
+</F074FragmentCounter>
+
+<F074FragmentCounter Id="unicode" Label="escaped fragment" @rendermode="InteractiveServer">
+    <pre id="f074-unicode-content" data-fragment="@EscapedAttribute">@UnicodeText</pre>
+</F074FragmentCounter>
+
+<F074FragmentCounter Id="empty" Label="no fragment control" @rendermode="InteractiveServer" />
+
+@code {
+    private const string EscapedAttribute = "\u00E9\u6F22 \"quote\" \\ path <tag> & value";
+    private static readonly string UnicodeText = string.Concat(Enumerable.Repeat(
+        "\u00E9\u6F22\U0001F642 \"quoted\" \\ path <tag> & line\n", 64));
+}
