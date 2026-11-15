@@ -152,17 +152,27 @@ public abstract class RazorPage : RazorPageBase
 
     private async Task<HtmlString?> RenderSectionAsyncCore(string sectionName, bool required)
     {
-        if (_renderedSections.Contains(sectionName))
+        // Keep caller-owned lookup side effects behind the duplicate check.
+        var useSingleLookup = PreviousSectionWriters is Dictionary<string, RenderAsyncDelegate> sectionWriters &&
+            sectionWriters.GetType() == typeof(Dictionary<string, RenderAsyncDelegate>) &&
+            ReferenceEquals(sectionWriters.Comparer, StringComparer.OrdinalIgnoreCase);
+        RenderAsyncDelegate? renderDelegate = null;
+        var sectionFound = useSingleLookup && PreviousSectionWriters.TryGetValue(sectionName, out renderDelegate);
+
+        if (sectionFound ? !_renderedSections.Add(sectionName) : _renderedSections.Contains(sectionName))
         {
             var message = Resources.FormatSectionAlreadyRendered(nameof(RenderSectionAsync), Path, sectionName);
             throw new InvalidOperationException(message);
         }
 
-        if (PreviousSectionWriters.TryGetValue(sectionName, out var renderDelegate))
+        if (useSingleLookup ? sectionFound : PreviousSectionWriters.TryGetValue(sectionName, out renderDelegate))
         {
-            _renderedSections.Add(sectionName);
+            if (!useSingleLookup)
+            {
+                _renderedSections.Add(sectionName);
+            }
 
-            await renderDelegate();
+            await renderDelegate!();
 
             // Return a token value that allows the Write call that wraps the RenderSection \ RenderSectionAsync
             // to succeed.
