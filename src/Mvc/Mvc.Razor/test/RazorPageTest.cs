@@ -649,6 +649,167 @@ public class RazorPageTest
             ex.Message);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RenderSectionAsync_DuplicatePrecedesMissingSection(bool required)
+    {
+        var page = CreatePage(_ => { });
+        page.Path = "/Views/Shared/_Layout.cshtml";
+        var content = CreatePage(_ => { });
+        content.DefineSection("header", () => page.Output.WriteAsync("section"));
+        page.PreviousSectionWriters = content.SectionWriters;
+
+        Assert.Same(HtmlString.Empty, await page.RenderSectionAsync("HEADER"));
+        content.SectionWriters.Remove("header");
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("header", required));
+
+        Assert.Equal("RenderSectionAsync invocation in '/Views/Shared/_Layout.cshtml' is invalid. " +
+            "The section 'header' has already been rendered.", exception.Message);
+        Assert.Equal("section", page.RenderedContent);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RenderSectionAsync_MissingSectionCanBeDefinedLater(bool required)
+    {
+        var context = CreateViewContext(viewPath: "/Views/Content.cshtml");
+        context.ExecutingFilePath = "/Views/Shared/_Layout.cshtml";
+        var page = CreatePage(_ => { }, context);
+        var content = CreatePage(_ => { });
+        page.PreviousSectionWriters = content.SectionWriters;
+
+        if (required)
+        {
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("header", required));
+            Assert.Equal("The layout page '/Views/Shared/_Layout.cshtml' cannot find the section 'header' " +
+                "in the content page '/Views/Content.cshtml'.", exception.Message);
+        }
+        else
+        {
+            Assert.Null(await page.RenderSectionAsync("header", required));
+        }
+
+        content.DefineSection("header", () => page.Output.WriteAsync("section"));
+        Assert.Same(HtmlString.Empty, await page.RenderSectionAsync("HEADER"));
+        Assert.Equal("section", page.RenderedContent);
+        page.EnsureRenderedBodyOrSections();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RenderSectionAsync_DuplicatePrecedesThrowingDictionaryLookup(bool subclass)
+    {
+        var page = CreatePage(_ => { });
+        page.Path = "/Views/Shared/_Layout.cshtml";
+        RenderAsyncDelegate renderDelegate = () => page.Output.WriteAsync("section");
+        Mock<IDictionary<string, RenderAsyncDelegate>> sections;
+        if (subclass)
+        {
+            sections = new Mock<Dictionary<string, RenderAsyncDelegate>>(StringComparer.OrdinalIgnoreCase)
+                .As<IDictionary<string, RenderAsyncDelegate>>();
+        }
+        else
+        {
+            sections = new Mock<IDictionary<string, RenderAsyncDelegate>>();
+        }
+        sections.Setup(dictionary => dictionary.TryGetValue("header", out renderDelegate)).Returns(true);
+        page.PreviousSectionWriters = sections.Object;
+        Assert.Same(HtmlString.Empty, await page.RenderSectionAsync("header"));
+
+        sections.Setup(dictionary => dictionary.TryGetValue("header", out renderDelegate))
+            .Throws(new InvalidOperationException("lookup-failure"));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("header"));
+
+        Assert.Equal("RenderSectionAsync invocation in '/Views/Shared/_Layout.cshtml' is invalid. " +
+            "The section 'header' has already been rendered.", exception.Message);
+        Assert.Equal("section", page.RenderedContent);
+        sections.Verify(dictionary => dictionary.TryGetValue("header", out renderDelegate), Times.Once);
+    }
+
+    [Fact]
+    public async Task RenderSectionAsync_DuplicatePrecedesThrowingComparer()
+    {
+        var page = CreatePage(_ => { });
+        page.Path = "/Views/Shared/_Layout.cshtml";
+        var comparer = new Mock<IEqualityComparer<string>>();
+        comparer.Setup(value => value.GetHashCode(It.IsAny<string>()))
+            .Returns<string>(StringComparer.OrdinalIgnoreCase.GetHashCode);
+        comparer.Setup(value => value.Equals(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns<string, string>((first, second) => StringComparer.OrdinalIgnoreCase.Equals(first, second));
+        page.PreviousSectionWriters = new Dictionary<string, RenderAsyncDelegate>(comparer.Object)
+        {
+            ["header"] = () => page.Output.WriteAsync("section")
+        };
+        Assert.Same(HtmlString.Empty, await page.RenderSectionAsync("HEADER"));
+
+        comparer.Invocations.Clear();
+        comparer.Setup(value => value.GetHashCode(It.IsAny<string>()))
+            .Throws(new InvalidOperationException("comparer-failure"));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("header"));
+
+        Assert.Equal("RenderSectionAsync invocation in '/Views/Shared/_Layout.cshtml' is invalid. " +
+            "The section 'header' has already been rendered.", exception.Message);
+        Assert.Equal("section", page.RenderedContent);
+        comparer.Verify(value => value.GetHashCode(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RenderSectionAsync_PreservesReentrantDictionaryLookup()
+    {
+        var page = CreatePage(_ => { });
+        var lookups = 0;
+        var invocations = 0;
+        RenderAsyncDelegate renderDelegate = () =>
+        {
+            invocations++;
+            return page.Output.WriteAsync("section");
+        };
+        var sections = new Mock<IDictionary<string, RenderAsyncDelegate>>();
+        sections.Setup(dictionary => dictionary.TryGetValue("header", out renderDelegate))
+            .Callback(() =>
+            {
+                if (lookups++ == 0)
+                {
+                    Assert.Same(HtmlString.Empty, page.RenderSection("header"));
+                }
+            })
+            .Returns(true);
+        page.PreviousSectionWriters = sections.Object;
+
+        Assert.Same(HtmlString.Empty, await page.RenderSectionAsync("header"));
+
+        Assert.Equal(2, lookups);
+        Assert.Equal(2, invocations);
+        Assert.Equal("sectionsection", page.RenderedContent);
+    }
+
+    [Fact]
+    public async Task RenderSectionAsync_KeepsFailedSectionRendered()
+    {
+        var page = CreatePage(_ => { });
+        page.Path = "/Views/Shared/_Layout.cshtml";
+        var content = CreatePage(_ => { });
+        var invocations = 0;
+        content.DefineSection("header", () =>
+        {
+            invocations++;
+            return Task.FromException(new InvalidOperationException("delegate-failure"));
+        });
+        page.PreviousSectionWriters = content.SectionWriters;
+
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("HEADER"));
+        Assert.Equal("delegate-failure", failure.Message);
+        var duplicate = await Assert.ThrowsAsync<InvalidOperationException>(() => page.RenderSectionAsync("header"));
+
+        Assert.Equal("RenderSectionAsync invocation in '/Views/Shared/_Layout.cshtml' is invalid. " +
+            "The section 'header' has already been rendered.", duplicate.Message);
+        Assert.Equal(1, invocations);
+        Assert.Empty(page.RenderedContent);
+    }
+
     [Fact]
     public async Task EnsureRenderedBodyOrSections_ThrowsIfRenderBodyIsNotCalledFromPage_AndNoSectionsAreDefined()
     {
