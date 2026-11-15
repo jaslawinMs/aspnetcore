@@ -117,6 +117,17 @@ public abstract class OutputFormatter : IOutputFormatter, IApiResponseTypeMetada
         }
         else
         {
+            // The token parser can read beyond a segment's length, so require the buffer boundary.
+            if (SupportedMediaTypes.Count > 0 &&
+                SupportedMediaTypes[0] is { Length: > 0 } firstSupportedMediaType &&
+                context.ContentType.Offset + context.ContentType.Length == context.ContentType.Buffer?.Length &&
+                context.ContentType.Equals(firstSupportedMediaType, StringComparison.Ordinal) &&
+                firstSupportedMediaType.AsSpan().IndexOfAny(';', '*') < 0)
+            {
+                context.ContentType = new StringSegment(firstSupportedMediaType);
+                return true;
+            }
+
             var parsedContentType = new MediaType(context.ContentType);
             for (var i = 0; i < SupportedMediaTypes.Count; i++)
             {
