@@ -1,0 +1,402 @@
+diff --git a/src/Security/Authorization/Core/src/LoggingExtensions.cs b/src/Security/Authorization/Core/src/LoggingExtensions.cs
+index a8b0a70b35..58ca6c184b 100644
+--- a/src/Security/Authorization/Core/src/LoggingExtensions.cs
++++ b/src/Security/Authorization/Core/src/LoggingExtensions.cs
+@@ -12,7 +12,7 @@ internal static partial class LoggingExtensions
+     [LoggerMessage(1, LogLevel.Debug, "Authorization was successful.", EventName = "UserAuthorizationSucceeded")]
+     public static partial void UserAuthorizationSucceeded(this ILogger logger);
+ 
+-    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed")]
++    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed", SkipEnabledCheck = true)]
+     private static partial void UserAuthorizationFailed(this ILogger logger, string reason);
+ 
+     public static void UserAuthorizationFailed(this ILogger logger, AuthorizationFailure failure)
+@@ -23,9 +23,18 @@ internal static partial class LoggingExtensions
+             reason = failure.FailureReasons.Any()
+                 ? "Fail() was explicitly called. Authorization failed due to:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailureReasons.Select(reason => reason.Message))
+                 : "Fail() was explicitly called.";
++            if (!logger.IsEnabled(LogLevel.Information))
++            {
++                return;
++            }
+         }
+         else
+         {
++            if (!logger.IsEnabled(LogLevel.Information))
++            {
++                return;
++            }
++
+             reason = "These requirements were not met:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailedRequirements);
+         }
+ 
+diff --git a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+index c483446290..3ba31b4569 100644
+--- a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
++++ b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+@@ -1389,6 +1389,365 @@ public class DefaultAuthorizationServiceTests
+         // Assert
+     }
+ 
++    [Theory]
++    [InlineData(0)]
++    [InlineData(1)]
++    [InlineData(4)]
++    [InlineData(16)]
++    public async Task Authorize_InformationDisabled_DoesNotAllocateUnmetRequirementDiagnostics(int requirementCount)
++    {
++        var requirements = Enumerable.Range(0, requirementCount)
++            .Select(_ => new UnmetDiagnosticRequirement("requirement")).ToArray();
++        var disabled = new UnmetDiagnosticLogger(informationEnabled: false, capture: false);
++        var enabled = new UnmetDiagnosticLogger(informationEnabled: true, capture: false);
++        using var disabledProvider = BuildUnmetDiagnosticProvider(disabled, new UnmetDiagnosticEvaluator(disabled));
++        using var enabledProvider = BuildUnmetDiagnosticProvider(enabled, new UnmetDiagnosticEvaluator(enabled));
++        var disabledService = disabledProvider.GetRequiredService<IAuthorizationService>();
++        var enabledService = enabledProvider.GetRequiredService<IAuthorizationService>();
++        var user = new ClaimsPrincipal();
++        var resource = new object();
++        for (var i = 0; i < 16; i++)
++        {
++            disabled.Reset();
++            await disabledService.AuthorizeAsync(user, resource, requirements);
++            enabled.Reset();
++            await enabledService.AuthorizeAsync(user, resource, requirements);
++        }
++
++        foreach (var requirement in requirements)
++        {
++            requirement.ToStringCalls = 0;
++        }
++        disabled.Reset();
++        var disabledResult = await disabledService.AuthorizeAsync(user, resource, requirements);
++        var disabledAllocated = GC.GetAllocatedBytesForCurrentThread() - disabled.PostEvaluatorAllocated;
++        var disabledToStringCalls = requirements.Sum(requirement => requirement.ToStringCalls);
++        foreach (var requirement in requirements)
++        {
++            requirement.ToStringCalls = 0;
++        }
++        enabled.Reset();
++        var enabledResult = await enabledService.AuthorizeAsync(user, resource, requirements);
++        var enabledAllocated = GC.GetAllocatedBytesForCurrentThread() - enabled.PostEvaluatorAllocated;
++
++        Assert.Equal(0, disabled.DiagnosticAllocated);
++        Assert.Equal(0, disabledToStringCalls);
++        Assert.Equal(requirementCount, requirements.Sum(requirement => requirement.ToStringCalls));
++        Assert.Equal(1, disabled.InformationChecks);
++        Assert.Equal(1, enabled.InformationChecks);
++        Assert.Equal(0, disabled.LogCount);
++        Assert.True(enabledAllocated > disabledAllocated, $"Enabled {enabledAllocated}, disabled {disabledAllocated}");
++        AssertUnmetDiagnosticResult(disabledResult, requirements);
++        AssertUnmetDiagnosticResult(enabledResult, requirements);
++    }
++
++    [Theory]
++    [InlineData("Single", true)]
++    [InlineData("EmptyText", true)]
++    [InlineData("DuplicateText", true)]
++    [InlineData("MultilineText", true)]
++    [InlineData("NullText", true)]
++    [InlineData("Single", false)]
++    [InlineData("EmptyText", false)]
++    [InlineData("DuplicateText", false)]
++    [InlineData("MultilineText", false)]
++    [InlineData("NullText", false)]
++    public async Task Authorize_ShouldPreserveUnmetRequirementResultAndLogFields(string kind, bool informationEnabled)
++    {
++        (string[] texts, string expectedSuffix) = kind switch
++        {
++            "Single" => (new[] { "first" }, "first"),
++            "EmptyText" => (new[] { "", "last" }, Environment.NewLine + "last"),
++            "DuplicateText" => (new[] { "same", "same" }, "same" + Environment.NewLine + "same"),
++            "MultilineText" => (new[] { "first\nsecond", "last" }, "first\nsecond" + Environment.NewLine + "last"),
++            "NullText" => (new[] { null, "last" }, Environment.NewLine + "last"),
++            _ => throw new ArgumentOutOfRangeException(nameof(kind)),
++        };
++        var requirements = texts.Select(text => new UnmetDiagnosticRequirement(text)).ToArray();
++        var logger = new UnmetDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildUnmetDiagnosticProvider(logger, new DefaultAuthorizationEvaluator());
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), null, requirements);
++
++        AssertUnmetDiagnosticResult(result, requirements);
++        foreach (var requirement in requirements)
++        {
++            Assert.Equal(informationEnabled ? 1 : 0, requirement.ToStringCalls);
++        }
++        AssertUnmetDiagnosticLog(logger, "These requirements were not met:" + Environment.NewLine + expectedSuffix);
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task Authorize_ShouldLogOnlyActualPendingRequirements(bool informationEnabled)
++    {
++        var satisfied = new UnmetDiagnosticRequirement("satisfied");
++        var second = new UnmetDiagnosticRequirement("pending");
++        var third = new UnmetDiagnosticRequirement("pending");
++        var handler = new UnmetDiagnosticHandler([satisfied], [], fail: false);
++        var logger = new UnmetDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildUnmetDiagnosticProvider(logger, new DefaultAuthorizationEvaluator(), handler);
++        var service = provider.GetRequiredService<IAuthorizationService>();
++        var user = new ClaimsPrincipal();
++        var resource = new object();
++
++        var result = await service.AuthorizeAsync(user, resource, new[] { satisfied, second, satisfied, third });
++
++        Assert.Same(user, handler.Context.User);
++        Assert.Same(resource, handler.Context.Resource);
++        Assert.Equal(1, handler.Invocations);
++        AssertUnmetDiagnosticResult(result, [second, third]);
++        Assert.Equal(0, satisfied.ToStringCalls);
++        Assert.Equal(informationEnabled ? 1 : 0, second.ToStringCalls);
++        Assert.Equal(informationEnabled ? 1 : 0, third.ToStringCalls);
++        AssertUnmetDiagnosticLog(logger, "These requirements were not met:" + Environment.NewLine + "pending" + Environment.NewLine + "pending");
++    }
++
++    [Theory]
++    [InlineData(0, true)]
++    [InlineData(2, true)]
++    [InlineData(0, false)]
++    [InlineData(2, false)]
++    public async Task Authorize_ShouldPreserveEagerExplicitFailureDiagnostics(int reasonCount, bool informationEnabled)
++    {
++        var handler = new UnmetDiagnosticHandler([], Enumerable.Repeat("failure reason", reasonCount).ToArray(), fail: true);
++        var logger = new UnmetDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildUnmetDiagnosticProvider(logger, new UnmetDiagnosticEvaluator(logger), handler);
++        var service = provider.GetRequiredService<IAuthorizationService>();
++        var user = new ClaimsPrincipal();
++        var resource = new object();
++        var requirement = new UnmetDiagnosticRequirement("not joined");
++
++        var result = await service.AuthorizeAsync(user, resource, new[] { requirement });
++
++        Assert.Same(user, handler.Context.User);
++        Assert.Same(resource, handler.Context.Resource);
++        Assert.Equal(1, handler.Invocations);
++        Assert.False(result.Succeeded);
++        Assert.NotNull(result.Failure);
++        Assert.True(result.Failure.FailCalled);
++        Assert.Empty(result.Failure.FailedRequirements);
++        var reasons = result.Failure.FailureReasons.ToArray();
++        Assert.Equal(handler.Reasons.Length, reasons.Length);
++        for (var i = 0; i < reasons.Length; i++)
++        {
++            Assert.Same(handler.Reasons[i], reasons[i]);
++            Assert.Same(handler, reasons[i].Handler);
++            Assert.Equal("failure reason", reasons[i].Message);
++        }
++        Assert.Equal(0, requirement.ToStringCalls);
++        if (reasonCount > 0)
++        {
++            Assert.True(logger.DiagnosticAllocated > 0);
++        }
++        var expected = reasonCount == 0
++            ? "Fail() was explicitly called."
++            : "Fail() was explicitly called. Authorization failed due to:" + Environment.NewLine + "failure reason" + Environment.NewLine + "failure reason";
++        AssertUnmetDiagnosticLog(logger, expected);
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task Authorize_ShouldPreserveSuccessWithUnmetDiagnosticGuard(bool informationEnabled)
++    {
++        var logger = new UnmetDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildUnmetDiagnosticProvider(logger, new DefaultAuthorizationEvaluator());
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), null, new[] { new AssertionRequirement(_ => true) });
++
++        Assert.True(result.Succeeded);
++        Assert.Null(result.Failure);
++        Assert.Equal(0, logger.InformationChecks);
++        var entry = Assert.Single(logger.Entries);
++        Assert.Equal(LogLevel.Debug, entry.Level);
++        Assert.Equal(1, entry.Event.Id);
++        Assert.Equal("UserAuthorizationSucceeded", entry.Event.Name);
++        Assert.Null(entry.Exception);
++        Assert.Equal("Authorization was successful.", entry.Message);
++        var field = Assert.Single(entry.Fields);
++        Assert.Equal("{OriginalFormat}", field.Key);
++        Assert.Equal("Authorization was successful.", field.Value);
++    }
++
++    private static ServiceProvider BuildUnmetDiagnosticProvider(UnmetDiagnosticLogger logger, IAuthorizationEvaluator evaluator, params IAuthorizationHandler[] handlers)
++    {
++        var services = new ServiceCollection();
++        services.AddAuthorizationCore();
++        services.AddLogging();
++        services.AddSingleton<ILogger<DefaultAuthorizationService>>(logger);
++        services.AddSingleton(evaluator);
++        foreach (var handler in handlers)
++        {
++            services.AddSingleton(handler);
++        }
++
++        return services.BuildServiceProvider();
++    }
++
++    private static void AssertUnmetDiagnosticResult(AuthorizationResult result, UnmetDiagnosticRequirement[] requirements)
++    {
++        Assert.False(result.Succeeded);
++        Assert.NotNull(result.Failure);
++        Assert.False(result.Failure.FailCalled);
++        Assert.Empty(result.Failure.FailureReasons);
++        var actual = result.Failure.FailedRequirements.ToArray();
++        Assert.Equal(requirements.Length, actual.Length);
++        for (var i = 0; i < actual.Length; i++)
++        {
++            Assert.Same(requirements[i], actual[i]);
++        }
++    }
++
++    private static void AssertUnmetDiagnosticLog(UnmetDiagnosticLogger logger, string reason)
++    {
++        Assert.Equal(1, logger.InformationChecks);
++        if (!logger.InformationEnabled)
++        {
++            Assert.Empty(logger.Entries);
++            Assert.Equal(0, logger.LogCount);
++            return;
++        }
++
++        var entry = Assert.Single(logger.Entries);
++        Assert.Equal(LogLevel.Information, entry.Level);
++        Assert.Equal(2, entry.Event.Id);
++        Assert.Equal("UserAuthorizationFailed", entry.Event.Name);
++        Assert.Null(entry.Exception);
++        Assert.Equal("Authorization failed. " + reason, entry.Message);
++        Assert.Collection(entry.Fields,
++            field =>
++            {
++                Assert.Equal("Reason", field.Key);
++                Assert.Equal(reason, field.Value);
++            },
++            field =>
++            {
++                Assert.Equal("{OriginalFormat}", field.Key);
++                Assert.Equal("Authorization failed. {Reason}", field.Value);
++            });
++    }
++
++    private sealed class UnmetDiagnosticRequirement(string text) : IAuthorizationRequirement
++    {
++        public int ToStringCalls { get; set; }
++
++        public override string ToString()
++        {
++            ToStringCalls++;
++
++            return text;
++        }
++    }
++
++    private sealed class UnmetDiagnosticHandler : IAuthorizationHandler
++    {
++        private readonly IAuthorizationRequirement[] _satisfied;
++        private readonly bool _fail;
++
++        public UnmetDiagnosticHandler(IAuthorizationRequirement[] satisfied, string[] messages, bool fail)
++        {
++            _satisfied = satisfied;
++            _fail = fail;
++            Reasons = messages.Select(message => new AuthorizationFailureReason(this, message)).ToArray();
++        }
++
++        public AuthorizationHandlerContext Context { get; private set; }
++        public int Invocations { get; private set; }
++        public AuthorizationFailureReason[] Reasons { get; }
++
++        public Task HandleAsync(AuthorizationHandlerContext context)
++        {
++            Context = context;
++            Invocations++;
++            foreach (var requirement in _satisfied)
++            {
++                context.Succeed(requirement);
++            }
++            if (_fail)
++            {
++                if (Reasons.Length == 0)
++                {
++                    context.Fail();
++                }
++                else
++                {
++                    foreach (var reason in Reasons)
++                    {
++                        context.Fail(reason);
++                    }
++                }
++            }
++
++            return Task.CompletedTask;
++        }
++    }
++
++    private sealed class UnmetDiagnosticEvaluator(UnmetDiagnosticLogger logger) : IAuthorizationEvaluator
++    {
++        private readonly DefaultAuthorizationEvaluator _inner = new();
++
++        public AuthorizationResult Evaluate(AuthorizationHandlerContext context)
++        {
++            var result = _inner.Evaluate(context);
++            logger.PostEvaluatorAllocated = GC.GetAllocatedBytesForCurrentThread();
++
++            return result;
++        }
++    }
++
++    private sealed class UnmetDiagnosticLogger(bool informationEnabled, bool capture) : ILogger<DefaultAuthorizationService>
++    {
++        public bool InformationEnabled => informationEnabled;
++        public int InformationChecks { get; private set; }
++        public long PostEvaluatorAllocated { get; set; }
++        public long DiagnosticAllocated { get; private set; }
++        public int LogCount { get; private set; }
++        public List<UnmetDiagnosticEntry> Entries { get; } = new();
++
++        public void Reset()
++        {
++            InformationChecks = 0;
++            PostEvaluatorAllocated = 0;
++            DiagnosticAllocated = 0;
++            LogCount = 0;
++            Entries.Clear();
++        }
++
++        public IDisposable BeginScope<TState>(TState state) => null;
++
++        public bool IsEnabled(LogLevel logLevel)
++        {
++            if (logLevel == LogLevel.Information)
++            {
++                InformationChecks++;
++                if (InformationChecks == 1 && PostEvaluatorAllocated != 0)
++                {
++                    DiagnosticAllocated = GC.GetAllocatedBytesForCurrentThread() - PostEvaluatorAllocated;
++                }
++
++                return informationEnabled;
++            }
++
++            return logLevel == LogLevel.Debug;
++        }
++
++        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
++        {
++            LogCount++;
++            if (capture)
++            {
++                var fields = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object>>>(state);
++                Entries.Add(new(logLevel, eventId, exception, formatter(state, exception), fields.ToArray()));
++            }
++        }
++    }
++
++    private sealed record UnmetDiagnosticEntry(LogLevel Level, EventId Event, Exception Exception, string Message, KeyValuePair<string, object>[] Fields);
++
+     public static TheoryData<string> RequirementCollectionKinds => new() { "ReadOnlyCollection", "List", "Array", "Enumerable" };
+ 
+     private static IEnumerable<IAuthorizationRequirement> CreateRequirements(string kind, params IAuthorizationRequirement[] requirements)
