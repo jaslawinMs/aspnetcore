@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.AspNetCore.Internal;
@@ -312,5 +313,176 @@ public class CookieChunkingTests
                 "TestCookieC6=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=foo.com; path=/; secure; extension",
                 "TestCookieC7=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=foo.com; path=/; secure; extension"
             }, httpContext.Response.Headers[HeaderNames.SetCookie].ToArray());
+    }
+
+    [Theory]
+    [InlineData("LeadingZero")]
+    [InlineData("PlusSign")]
+    [InlineData("Overflow")]
+    [InlineData("TrailingNul")]
+    [InlineData("MissingEquals")]
+    public void DeleteChunkedCookieWithNonCanonicalResponseName_RetainsCookie(string caseId)
+    {
+        var (manager, context, options) = CreateChunkedCookieContext();
+        var suffix = caseId switch
+        {
+            "LeadingZero" => "C01",
+            "PlusSign" => "C+1",
+            "Overflow" => "C2147483648",
+            "TrailingNul" => "C1\0",
+            "MissingEquals" => "C1",
+            _ => throw new InvalidOperationException(caseId)
+        };
+        var retained = caseId == "MissingEquals" ? "TestCookie" + suffix : "TestCookie" + suffix + "=retained";
+        if (caseId is "TrailingNul" or "MissingEquals")
+        {
+            context.Response.Headers.Append(HeaderNames.SetCookie, retained);
+        }
+        else
+        {
+            context.Response.Cookies.Append("TestCookie" + suffix, "retained", options);
+        }
+
+        manager.DeleteCookie(context, "TestCookie", options);
+
+        Assert.Equal(new[]
+        {
+            retained,
+            "TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Fact]
+    public void DeleteChunkedCookieWithExtraRequestChunk_RemovesExtraResponseCookie()
+    {
+        var (manager, context, options) = CreateChunkedCookieContext();
+        context.Response.Cookies.Append("TestCookieC3", "extra", options);
+        SetRequestCookiesFromResponse(context);
+
+        manager.DeleteCookie(context, "TestCookie", options);
+
+        Assert.Equal(new[]
+        {
+            "TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DeleteChunkedCookieWithMissingOrEmptyFirstChunk_RetainsResponseChunks(bool empty)
+    {
+        var (manager, context, options) = CreateChunkedCookieContext();
+        var retained = context.Response.Headers.SetCookie.Skip(1).ToArray();
+        var requestCookies = context.Response.Headers.SetCookie.Select(value => SetCookieHeaderValue.Parse(value))
+            .Where(cookie => cookie.Name != "TestCookieC1")
+            .Select(cookie => cookie.Name + "=" + cookie.Value).ToList();
+        if (empty)
+        {
+            var emptyCookie = new DefaultHttpContext();
+            emptyCookie.Response.Cookies.Append("TestCookieC1", string.Empty, options);
+            var parsed = SetCookieHeaderValue.Parse(emptyCookie.Response.Headers.SetCookie[0]);
+            requestCookies.Add(parsed.Name + "=" + parsed.Value);
+        }
+        context.Request.Headers.Cookie = string.Join("; ", requestCookies);
+
+        manager.DeleteCookie(context, "TestCookie", options);
+
+        Assert.Equal(new[]
+        {
+            retained[0],
+            retained[1],
+            "TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Theory]
+    [InlineData("Test=Cookie")]
+    [InlineData("")]
+    public void DeleteCookieWithUnusualName_MatchesCompletePrefix(string key)
+    {
+        var context = new DefaultHttpContext();
+        context.Response.Headers.SetCookie = new[]
+        {
+            key + "=match",
+            "Unrelated=value",
+            key + "C1=unreceived"
+        };
+
+        new ChunkingCookieManager().DeleteCookie(context, key, new CookieOptions { Path = null });
+
+        Assert.Equal(new[]
+        {
+            "Unrelated=value",
+            key + "C1=unreceived",
+            key + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Fact]
+    public void DeleteCookieWithNullResponseHeader_DoesNotReplaceHeaders()
+    {
+        var (manager, context, options) = CreateChunkedCookieContext();
+        var original = new string[] { "Unrelated=value", null };
+        context.Response.Headers.SetCookie = new StringValues(original);
+
+        Assert.Throws<NullReferenceException>(() => manager.DeleteCookie(context, "TestCookie", options));
+        Assert.Equal(original, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Fact]
+    public void DeleteCookieWithDomainAndDifferentPath_UsesDomainFirst()
+    {
+        var manager = new ChunkingCookieManager();
+        var context = new DefaultHttpContext();
+        manager.AppendResponseCookie(context, "TestCookie", "value", new CookieOptions { Domain = "example.com", Path = "/other" });
+        SetRequestCookiesFromResponse(context);
+
+        manager.DeleteCookie(context, "TestCookie", new CookieOptions { Domain = "example.com", Path = "/requested" });
+
+        Assert.Equal(new[]
+        {
+            "TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=example.com; path=/requested"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    [Fact]
+    public void DeleteChunkedCookieWithDifferentResponseCase_RemovesCookies()
+    {
+        var (manager, context, options) = CreateChunkedCookieContext();
+        context.Response.Cookies.Append("testcookiec1", "replacement", options);
+
+        manager.DeleteCookie(context, "TestCookie", options);
+
+        Assert.Equal(new[]
+        {
+            "TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }, context.Response.Headers.SetCookie.ToArray());
+    }
+
+    private static (ChunkingCookieManager Manager, DefaultHttpContext Context, CookieOptions Options) CreateChunkedCookieContext()
+    {
+        var manager = new ChunkingCookieManager { ChunkSize = 64 };
+        var context = new DefaultHttpContext();
+        var options = new CookieOptions { Path = null };
+        manager.AppendResponseCookie(context, "TestCookie", new string('v', 100), options);
+        Assert.Equal("TestCookie=chunks-2", context.Response.Headers.SetCookie[0]);
+        Assert.Equal(3, context.Response.Headers.SetCookie.Count);
+        SetRequestCookiesFromResponse(context);
+
+        return (manager, context, options);
+    }
+
+    private static void SetRequestCookiesFromResponse(HttpContext context)
+    {
+        context.Request.Headers.Cookie = string.Join("; ", context.Response.Headers.SetCookie
+            .Select(value => SetCookieHeaderValue.Parse(value))
+            .Select(cookie => cookie.Name + "=" + cookie.Value));
     }
 }
