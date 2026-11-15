@@ -257,7 +257,7 @@ internal sealed class ChunkingCookieManager
         var pathHasValue = !string.IsNullOrEmpty(options.Path);
 
         Func<string, bool> rejectPredicate;
-        Func<string, bool> predicate = value => keys.Any(k => value.StartsWith(k, StringComparison.OrdinalIgnoreCase));
+        Func<string, bool> predicate = value => MatchesCookieKey(value, keys[0], keys.Count);
         if (domainHasValue)
         {
             rejectPredicate = value => predicate(value) && value.Contains("domain=" + options.Domain, StringComparison.OrdinalIgnoreCase);
@@ -306,6 +306,50 @@ internal sealed class ChunkingCookieManager
             Expires = DateTimeOffset.UnixEpoch,
             MaxAge = null, // Some browsers require this (https://github.com/dotnet/aspnetcore/issues/52159)
         });
+    }
+
+    private static bool MatchesCookieKey(string value, string keyPrefix, int keyCount)
+    {
+        var keyLength = keyPrefix.Length - 1;
+        if (value.Length <= keyLength ||
+            !value.AsSpan(0, keyLength).Equals(keyPrefix.AsSpan(0, keyLength), StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var suffix = value.AsSpan(keyLength);
+        if (suffix[0] == '=')
+        {
+            return true;
+        }
+
+        // Generated chunk keys have a canonical positive decimal number without leading zeros.
+        if (keyCount <= 1 || suffix.Length < 3 || suffix[0] is not ('C' or 'c') || suffix[1] is < '1' or > '9')
+        {
+            return false;
+        }
+
+        long chunk = 0;
+        for (var i = 1; i < suffix.Length; i++)
+        {
+            var character = suffix[i];
+            if (character == '=')
+            {
+                return true;
+            }
+            if (character is < '0' or > '9')
+            {
+                return false;
+            }
+
+            chunk = chunk * 10 + (character - '0');
+            if (chunk >= keyCount)
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     // Deletes unneeded cookie chunks, but not the primary cookie.
