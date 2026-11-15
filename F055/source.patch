@@ -1,0 +1,332 @@
+diff --git a/src/Security/Authorization/Core/src/LoggingExtensions.cs b/src/Security/Authorization/Core/src/LoggingExtensions.cs
+index a8b0a70b35..9b86130472 100644
+--- a/src/Security/Authorization/Core/src/LoggingExtensions.cs
++++ b/src/Security/Authorization/Core/src/LoggingExtensions.cs
+@@ -12,7 +12,7 @@ internal static partial class LoggingExtensions
+     [LoggerMessage(1, LogLevel.Debug, "Authorization was successful.", EventName = "UserAuthorizationSucceeded")]
+     public static partial void UserAuthorizationSucceeded(this ILogger logger);
+ 
+-    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed")]
++    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed", SkipEnabledCheck = true)]
+     private static partial void UserAuthorizationFailed(this ILogger logger, string reason);
+ 
+     public static void UserAuthorizationFailed(this ILogger logger, AuthorizationFailure failure)
+@@ -20,6 +20,11 @@ internal static partial class LoggingExtensions
+         string reason;
+         if (failure.FailCalled)
+         {
++            if (!logger.IsEnabled(LogLevel.Information))
++            {
++                return;
++            }
++
+             reason = failure.FailureReasons.Any()
+                 ? "Fail() was explicitly called. Authorization failed due to:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailureReasons.Select(reason => reason.Message))
+                 : "Fail() was explicitly called.";
+@@ -27,6 +32,10 @@ internal static partial class LoggingExtensions
+         else
+         {
+             reason = "These requirements were not met:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailedRequirements);
++            if (!logger.IsEnabled(LogLevel.Information))
++            {
++                return;
++            }
+         }
+ 
+         UserAuthorizationFailed(logger, reason);
+diff --git a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+index c483446290..3a56feea13 100644
+--- a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
++++ b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+@@ -1389,6 +1389,291 @@ public class DefaultAuthorizationServiceTests
+         // Assert
+     }
+ 
++    [Theory]
++    [InlineData(1)]
++    [InlineData(4)]
++    [InlineData(16)]
++    public async Task Authorize_InformationDisabled_DoesNotAllocateExplicitFailureDiagnostics(int reasonCount)
++    {
++        var handler = new DiagnosticFailureHandler(Enumerable.Repeat("failure reason", reasonCount).ToArray());
++        var disabled = new FailureDiagnosticLogger(informationEnabled: false, capture: false);
++        var enabled = new FailureDiagnosticLogger(informationEnabled: true, capture: false);
++        using var disabledProvider = BuildFailureDiagnosticProvider(disabled, new DiagnosticAllocationEvaluator(disabled), handler);
++        using var enabledProvider = BuildFailureDiagnosticProvider(enabled, new DiagnosticAllocationEvaluator(enabled), handler);
++        var disabledService = disabledProvider.GetRequiredService<IAuthorizationService>();
++        var enabledService = enabledProvider.GetRequiredService<IAuthorizationService>();
++        var user = new ClaimsPrincipal();
++        var resource = new object();
++        IAuthorizationRequirement[] requirements = [new LogRequirement()];
++        for (var i = 0; i < 16; i++)
++        {
++            disabled.Reset();
++            await disabledService.AuthorizeAsync(user, resource, requirements);
++            enabled.Reset();
++            await enabledService.AuthorizeAsync(user, resource, requirements);
++        }
++
++        disabled.Reset();
++        var disabledResult = await disabledService.AuthorizeAsync(user, resource, requirements);
++        var disabledAllocated = GC.GetAllocatedBytesForCurrentThread() - disabled.PostEvaluatorAllocated;
++        enabled.Reset();
++        var enabledResult = await enabledService.AuthorizeAsync(user, resource, requirements);
++        var enabledAllocated = GC.GetAllocatedBytesForCurrentThread() - enabled.PostEvaluatorAllocated;
++
++        Assert.Equal(0, disabled.DiagnosticAllocated);
++        Assert.Equal(1, disabled.InformationChecks);
++        Assert.Equal(1, enabled.InformationChecks);
++        Assert.Equal(0, disabled.LogCount);
++        Assert.True(enabledAllocated > disabledAllocated, $"Enabled {enabledAllocated}, disabled {disabledAllocated}");
++        AssertDiagnosticFailure(disabledResult, handler);
++        AssertDiagnosticFailure(enabledResult, handler);
++    }
++
++    [Theory]
++    [InlineData("", true)]
++    [InlineData("duplicate", true)]
++    [InlineData("first\nsecond", true)]
++    [InlineData("", false)]
++    [InlineData("duplicate", false)]
++    [InlineData("first\nsecond", false)]
++    public async Task Authorize_ShouldPreserveExplicitFailureReasonsAndLogFields(string message, bool informationEnabled)
++    {
++        var handler = new DiagnosticFailureHandler([message, "", message]);
++        var logger = new FailureDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildFailureDiagnosticProvider(logger, new DefaultAuthorizationEvaluator(), handler);
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), new object(), new[] { new LogRequirement() });
++
++        AssertDiagnosticFailure(result, handler);
++        var expected = "Fail() was explicitly called. Authorization failed due to:" + Environment.NewLine +
++            message + Environment.NewLine + Environment.NewLine + message;
++        AssertFailureDiagnostic(logger, expected);
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task Authorize_ShouldPreserveExplicitFailureWithoutReasons(bool informationEnabled)
++    {
++        var handler = new DiagnosticFailureHandler([]);
++        var logger = new FailureDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildFailureDiagnosticProvider(logger, new DefaultAuthorizationEvaluator(), handler);
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), null, new[] { new LogRequirement() });
++
++        AssertDiagnosticFailure(result, handler);
++        AssertFailureDiagnostic(logger, "Fail() was explicitly called.");
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task Authorize_ShouldPreserveUnmetRequirementDiagnostics(bool informationEnabled)
++    {
++        var first = new DiagnosticRequirement("first");
++        var second = new DiagnosticRequirement("second");
++        var logger = new FailureDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildFailureDiagnosticProvider(logger, new DefaultAuthorizationEvaluator());
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), null, new[] { first, second });
++
++        Assert.False(result.Succeeded);
++        Assert.NotNull(result.Failure);
++        Assert.False(result.Failure.FailCalled);
++        Assert.Empty(result.Failure.FailureReasons);
++        Assert.Equal(new IAuthorizationRequirement[] { first, second }, result.Failure.FailedRequirements);
++        Assert.Equal(1, first.ToStringCalls);
++        Assert.Equal(1, second.ToStringCalls);
++        AssertFailureDiagnostic(logger, "These requirements were not met:" + Environment.NewLine + "first" + Environment.NewLine + "second");
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task Authorize_ShouldPreserveSuccessDiagnostics(bool informationEnabled)
++    {
++        var logger = new FailureDiagnosticLogger(informationEnabled, capture: true);
++        using var provider = BuildFailureDiagnosticProvider(logger, new DefaultAuthorizationEvaluator());
++        var service = provider.GetRequiredService<IAuthorizationService>();
++
++        var result = await service.AuthorizeAsync(new ClaimsPrincipal(), null, new[] { new AssertionRequirement(_ => true) });
++
++        Assert.True(result.Succeeded);
++        Assert.Null(result.Failure);
++        Assert.Equal(0, logger.InformationChecks);
++        var entry = Assert.Single(logger.Entries);
++        Assert.Equal(LogLevel.Debug, entry.Level);
++        Assert.Equal(1, entry.Event.Id);
++        Assert.Equal("UserAuthorizationSucceeded", entry.Event.Name);
++        Assert.Null(entry.Exception);
++        Assert.Equal("Authorization was successful.", entry.Message);
++        var field = Assert.Single(entry.Fields);
++        Assert.Equal("{OriginalFormat}", field.Key);
++        Assert.Equal("Authorization was successful.", field.Value);
++    }
++
++    private static ServiceProvider BuildFailureDiagnosticProvider(FailureDiagnosticLogger logger, IAuthorizationEvaluator evaluator, params IAuthorizationHandler[] handlers)
++    {
++        var services = new ServiceCollection();
++        services.AddAuthorizationCore();
++        services.AddLogging();
++        services.AddSingleton<ILogger<DefaultAuthorizationService>>(logger);
++        services.AddSingleton(evaluator);
++        foreach (var handler in handlers)
++        {
++            services.AddSingleton(handler);
++        }
++
++        return services.BuildServiceProvider();
++    }
++
++    private static void AssertDiagnosticFailure(AuthorizationResult result, DiagnosticFailureHandler handler)
++    {
++        Assert.False(result.Succeeded);
++        Assert.NotNull(result.Failure);
++        Assert.True(result.Failure.FailCalled);
++        Assert.Empty(result.Failure.FailedRequirements);
++        var reasons = result.Failure.FailureReasons.ToArray();
++        Assert.Equal(handler.Reasons.Length, reasons.Length);
++        for (var i = 0; i < reasons.Length; i++)
++        {
++            Assert.Same(handler.Reasons[i], reasons[i]);
++            Assert.Same(handler, reasons[i].Handler);
++            Assert.Equal(handler.Reasons[i].Message, reasons[i].Message);
++        }
++    }
++
++    private static void AssertFailureDiagnostic(FailureDiagnosticLogger logger, string reason)
++    {
++        Assert.Equal(1, logger.InformationChecks);
++        if (!logger.InformationEnabled)
++        {
++            Assert.Empty(logger.Entries);
++            Assert.Equal(0, logger.LogCount);
++            return;
++        }
++
++        var entry = Assert.Single(logger.Entries);
++        Assert.Equal(LogLevel.Information, entry.Level);
++        Assert.Equal(2, entry.Event.Id);
++        Assert.Equal("UserAuthorizationFailed", entry.Event.Name);
++        Assert.Null(entry.Exception);
++        Assert.Equal("Authorization failed. " + reason, entry.Message);
++        Assert.Collection(entry.Fields,
++            field =>
++            {
++                Assert.Equal("Reason", field.Key);
++                Assert.Equal(reason, field.Value);
++            },
++            field =>
++            {
++                Assert.Equal("{OriginalFormat}", field.Key);
++                Assert.Equal("Authorization failed. {Reason}", field.Value);
++            });
++    }
++
++    private sealed class DiagnosticFailureHandler : IAuthorizationHandler
++    {
++        public DiagnosticFailureHandler(string[] messages)
++        {
++            Reasons = messages.Select(message => new AuthorizationFailureReason(this, message)).ToArray();
++        }
++
++        public AuthorizationFailureReason[] Reasons { get; }
++
++        public Task HandleAsync(AuthorizationHandlerContext context)
++        {
++            if (Reasons.Length == 0)
++            {
++                context.Fail();
++            }
++            else
++            {
++                foreach (var reason in Reasons)
++                {
++                    context.Fail(reason);
++                }
++            }
++
++            return Task.CompletedTask;
++        }
++    }
++
++    private sealed class DiagnosticRequirement(string name) : IAuthorizationRequirement
++    {
++        public int ToStringCalls { get; private set; }
++
++        public override string ToString()
++        {
++            ToStringCalls++;
++            return name;
++        }
++    }
++
++    private sealed class DiagnosticAllocationEvaluator(FailureDiagnosticLogger logger) : IAuthorizationEvaluator
++    {
++        private readonly DefaultAuthorizationEvaluator _inner = new();
++
++        public AuthorizationResult Evaluate(AuthorizationHandlerContext context)
++        {
++            var result = _inner.Evaluate(context);
++            logger.PostEvaluatorAllocated = GC.GetAllocatedBytesForCurrentThread();
++            return result;
++        }
++    }
++
++    private sealed class FailureDiagnosticLogger(bool informationEnabled, bool capture) : ILogger<DefaultAuthorizationService>
++    {
++        public bool InformationEnabled => informationEnabled;
++        public int InformationChecks { get; private set; }
++        public long PostEvaluatorAllocated { get; set; }
++        public long DiagnosticAllocated { get; private set; }
++        public int LogCount { get; private set; }
++        public List<FailureDiagnosticEntry> Entries { get; } = new();
++
++        public void Reset()
++        {
++            InformationChecks = 0;
++            PostEvaluatorAllocated = 0;
++            DiagnosticAllocated = 0;
++            LogCount = 0;
++            Entries.Clear();
++        }
++
++        public IDisposable BeginScope<TState>(TState state) => null;
++
++        public bool IsEnabled(LogLevel logLevel)
++        {
++            if (logLevel == LogLevel.Information)
++            {
++                InformationChecks++;
++                if (InformationChecks == 1 && PostEvaluatorAllocated != 0)
++                {
++                    DiagnosticAllocated = GC.GetAllocatedBytesForCurrentThread() - PostEvaluatorAllocated;
++                }
++
++                return informationEnabled;
++            }
++
++            return logLevel == LogLevel.Debug;
++        }
++
++        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
++        {
++            LogCount++;
++            if (capture)
++            {
++                var fields = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object>>>(state);
++                Entries.Add(new(logLevel, eventId, exception, formatter(state, exception), fields.ToArray()));
++            }
++        }
++    }
++
++    private sealed record FailureDiagnosticEntry(LogLevel Level, EventId Event, Exception Exception, string Message, KeyValuePair<string, object>[] Fields);
++
+     public static TheoryData<string> RequirementCollectionKinds => new() { "ReadOnlyCollection", "List", "Array", "Enumerable" };
+ 
+     private static IEnumerable<IAuthorizationRequirement> CreateRequirements(string kind, params IAuthorizationRequirement[] requirements)
