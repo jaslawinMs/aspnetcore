@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 57/358 finalized**: 40 drafts, 8 no-gain, 5 rejected and 4 duplicates;
-301 findings remain unfinished.
+**Progress: 58/358 finalized**: 41 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+300 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -57,6 +57,7 @@ well as the largest speedup.
 | F076 | Duplicate of active dotnet/aspnetcore#68295 at frozen head9ca33ec5; nested fragment JsonElement intermediate already removed in that proposal, not merged; independent source-only overlap, no new benchmark or draft and no full-proposal equivalence/approval claim | [Nested fragment existing-work overlap](F076/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
+| F080 | [Draft jaslawinMs/aspnetcore#83](https://github.com/jaslawinMs/aspnetcore/pull/83); ordinary bulk glob/cache fills improve21-22%, long direct78.52%, all reached direct allocations removed; rejected unmeasured buffer prototype and volatile bypass/identity controls retained, three-comparison budget closed | [Extensionless globbing path comparison slices](F080/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
 | F085 | No-gain; all heap unchanged, tiny lookup differences and actual parser/control non-wins retained | [Inline known HTTP method record experiment](F085/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |

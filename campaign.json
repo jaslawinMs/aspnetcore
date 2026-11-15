@@ -2327,11 +2327,15 @@
         "snippet": "var xNoExt = xExtIndex >= 0 ? x.Substring(0, xExtIndex) : x;\nvar yNoExt = yExtIndex >= 0 ? y.Substring(0, yExtIndex) : y;\nvar xEnumerator = new StringTokenizer(xNoExt, PathSeparator).GetEnumerator();\nvar yEnumerator = new StringTokenizer(yNoExt, PathSeparator).GetEnumerator();",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
-      "pr_url": null,
-      "updated_at": null
+      "status": "drafted",
+      "notes": [
+        "Current main uses two extensionless substrings during cache-fill comparisons. A naive StringSegment-only substitution can observe extensions through segment.Buffer;preserve clamped substring-buffer comparisons and existing nonterminal reads. Establish real matcher/file-provider ordering/cache controls;do not fix independent dotnet/aspnetcore#69975 cache-key or dotnet/aspnetcore#62134 ordered-pattern requests.",
+        "Original actual owner278FD978... passes29 owning rows,20 real comparer/matcher/cache contracts and529 signed comparison pairs. Actual cancellation change-token producer exposes new file after cache invalidation;warm hits avoid enumeration. Original source/PDB and tested/benchmark owner equality verified;0 measured pairs so far.",
+        "Finalized F080 as allocation-focused fork draft jaslawinMs/aspnetcore#83.3/3 unchanged-proposal AB/BA/AB comparisons:ordinary64/256-file cache fills21.74/21.54% faster,long virtual64 fills38.80%,long direct78.52%;all18 reached direct pairs become0B/op.All120 outcomes/60 pairs/960 samples and bypass/identity control costs retained.Original/selected29/29,unmeasured naive1 expected failure/28 passes,20 byte-identical contracts/529 signed pairs.Source/PDB/285 copied files/117 runtime assets and actual owner markers verified.96 immutable files at9c3008419953645bb10732bba035d209f7170b86;actual draft/head/body/2-file23-addition9-deletion scope/originating issue verified and immediate browser launch requested."
+      ],
+      "branch": "autoperf/F080-globbing-path-comparison-segments",
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/83",
+      "updated_at": "2026-11-15T10:29:26.1947856-08:00"
     },
     {
       "id": "F081",
