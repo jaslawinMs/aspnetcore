@@ -1,0 +1,53 @@
+{
+  "canonical": {
+    "id": "F059",
+    "finding": {
+      "card_id": "hashset-contains-before-add",
+      "file": "src/Mvc/Mvc.Razor/src/RazorPage.cs",
+      "line_start": 153,
+      "line_end": 163,
+      "project": "Microsoft.AspNetCore.Mvc.Razor",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "medium",
+      "confidence": "high",
+      "classification": "confirmed",
+      "hot_path": "high",
+      "tfm_sensitive": false,
+      "summary": "Razor section rendering probes the rendered-section set twice for a new section.",
+      "explanation": "RenderSectionAsyncCore tests _renderedSections.Contains(sectionName) and, after finding the render delegate, adds the same name to the same HashSet<string>. A successfully rendered new section pays separate membership and insertion probes. Use Add's Boolean result on the found-section path, but preserve the original duplicate-section exception precedence and the missing required/optional section behavior. In particular, do not unconditionally add the name before delegate lookup: an absent optional section must remain unrecorded. The set uses StringComparer.OrdinalIgnoreCase, which must be retained.",
+      "snippet": "_renderedSections.Add(sectionName);",
+      "suppressed": false,
+      "recommended_fix": "Use Add's Boolean result on the found-section path rather than a separate membership probe followed by insertion.",
+      "compatibility_notes": "Preserve the case-insensitive comparer, duplicate-error precedence, and missing required/optional section behavior. Do not record missing optional sections as rendered.",
+      "evidence_boundary": "source-only",
+      "finding_origin": "initial source inspection"
+    }
+  },
+  "alias": {
+    "id": "F060",
+    "finding": {
+      "card_id": "hashset-contains-before-add",
+      "file": "src/Mvc/Mvc.Razor/src/RazorPage.cs",
+      "line_start": 155,
+      "line_end": 163,
+      "project": "Microsoft.AspNetCore.Mvc.Razor",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "medium",
+      "confidence": "high",
+      "classification": "confirmed",
+      "hot_path": "high",
+      "tfm_sensitive": false,
+      "summary": "Razor section rendering probes the rendered-section set twice for a new section.",
+      "explanation": "RenderSectionAsyncCore checks _renderedSections.Contains(sectionName) and, after finding the render delegate, adds the same section name to the same HashSet. Successfully rendered new sections therefore pay separate membership and insertion probes on the request rendering path.",
+      "snippet": "if (_renderedSections.Contains(sectionName))\n{\n    throw ...;\n}\n...\n_renderedSections.Add(sectionName);",
+      "suppressed": false
+    }
+  },
+  "semantic_identity": "One RenderSectionAsyncCore rendered-section Contains-before-lookup/Add pair.",
+  "scan_ranges_overlap_and_alias_is_contained": true,
+  "current_original_source_exactly_matches_frozen_canonical": true
+}
