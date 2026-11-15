@@ -201,6 +201,13 @@ public class NavLink : ComponentBase, IDisposable
 
     private static bool EqualsHrefExactlyOrIfTrailingSlashAdded(ReadOnlySpan<char> currentUriAbsolute, ReadOnlySpan<char> hrefAbsolute)
     {
+        if (currentUriAbsolute.Length == hrefAbsolute.Length)
+        {
+            var commonPrefixLength = currentUriAbsolute.CommonPrefixLength(hrefAbsolute);
+            currentUriAbsolute = currentUriAbsolute.Slice(commonPrefixLength);
+            hrefAbsolute = hrefAbsolute.Slice(commonPrefixLength);
+        }
+
         if (currentUriAbsolute.SequenceEqual(hrefAbsolute, CaseInsensitiveComparer))
         {
             return true;

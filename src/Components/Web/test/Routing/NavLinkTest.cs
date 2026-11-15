@@ -45,6 +45,53 @@ public class NavLinkTest
         Assert.Equal("active", classValue);
     }
 
+    [Theory]
+    [InlineData("SameCase", "routes/item", "https://example.com/routes/item", NavLinkMatch.All, true)]
+    [InlineData("MixedCase", "routes/item", "https://example.com/ROUTES/ITEM", NavLinkMatch.All, true)]
+    [InlineData("LateMismatch", "routes/item", "https://example.com/routes/itez", NavLinkMatch.All, false)]
+    [InlineData("EarlyMismatch", "routes/item", "https://example.com/pages/item", NavLinkMatch.All, false)]
+    [InlineData("MissingHref", null, "https://example.com/routes/item", NavLinkMatch.All, false)]
+    [InlineData("EmptyHref", "", "https://example.com/", NavLinkMatch.All, true)]
+    [InlineData("HrefTrailingSlash", "routes/item/", "https://example.com/routes/item", NavLinkMatch.All, true)]
+    [InlineData("CurrentTrailingSlash", "routes/item", "https://example.com/routes/item/", NavLinkMatch.All, false)]
+    [InlineData("CurrentQueryAndFragment", "routes/item", "https://example.com/routes/item?view=FULL#section", NavLinkMatch.All, true)]
+    [InlineData("HrefQueryAndFragment", "routes/item?view=FULL#section", "https://example.com/routes/item", NavLinkMatch.All, true)]
+    [InlineData("PrefixSeparator", "routes/item", "https://example.com/routes/item/child", NavLinkMatch.Prefix, true)]
+    [InlineData("PrefixNonSeparator", "routes/item", "https://example.com/routes/itemized", NavLinkMatch.Prefix, false)]
+    [InlineData("EncodedUnicode", "routes/caf\u00e9", "https://example.com/routes/caf%C3%A9", NavLinkMatch.All, true)]
+    [InlineData("DifferentEncodedUnicode", "routes/caf\u00e9", "https://example.com/routes/caf%C3%AA", NavLinkMatch.All, false)]
+    public async Task NavLink_MatchingPreservesActiveClassAndAriaCurrent(
+        string caseName, string? href, string currentUri, NavLinkMatch match, bool expectedActive)
+    {
+        var navigationManager = new TestNavigationManager();
+        navigationManager.Initialize("https://example.com/", currentUri);
+
+        using var renderer = new TestRenderer();
+        var component = new NavLink { NavigationManager = navigationManager };
+        var componentId = renderer.AssignRootComponentId(component);
+        var attributes = new Dictionary<string, object> { ["class"] = "menu-link" };
+        if (href is not null)
+        {
+            attributes["href"] = href;
+        }
+
+        var parameters = ParameterView.FromDictionary(new Dictionary<string, object?>
+        {
+            [nameof(NavLink.Match)] = match,
+            [nameof(NavLink.AdditionalAttributes)] = attributes
+        });
+
+        await renderer.RenderRootComponentAsync(componentId, parameters);
+
+        var frames = renderer.Batches.Single().ReferenceFrames;
+        var expectedClass = expectedActive ? "menu-link active" : "menu-link";
+        var actualClass = frames.Single(f => f.AttributeName == "class").AttributeValue;
+        Assert.True(Equals(expectedClass, actualClass),
+            $"{caseName}: Expected class '{expectedClass}', but found '{actualClass}'.");
+        Assert.Equal(expectedActive ? "page" : null,
+            frames.FirstOrDefault(f => f.AttributeName == "aria-current").AttributeValue);
+    }
+
     private async Task<object?> RenderNavLinkAndGetAttributeAsync(
         string baseUri, string currentUri, string href, bool relativeToCurrentUri, string attributeName)
     {
