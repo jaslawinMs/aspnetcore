@@ -1,0 +1,22 @@
+{
+  "id": "F075",
+  "finding": {
+    "card_id": "roundtrip-through-throwaway-intermediate",
+    "file": "src/Components/Server/src/Circuits/ComponentParameterDeserializer.cs",
+    "line_start": 99,
+    "line_end": 102,
+    "project": "Microsoft.AspNetCore.Components.Server",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Each typed component parameter is stringified from JsonElement and reparsed.",
+    "explanation": "For non-null typed parameters, GetRawText materializes JSON text from an already-parsed JsonElement and the non-generic JsonSerializer.Deserialize overload immediately parses that text into the target type. The throwaway string is created per parameter.",
+    "snippet": "parameterValue = JsonSerializer.Deserialize(\n    value.GetRawText(),\n    parameterType,\n    ServerComponentSerializationSettings.JsonSerializationOptions);",
+    "suppressed": false
+  }
+}

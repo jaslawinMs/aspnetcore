@@ -1,0 +1,22 @@
+{
+  "id": "F076",
+  "finding": {
+    "card_id": "roundtrip-through-throwaway-intermediate",
+    "file": "src/Components/Shared/src/RenderFragmentSerializer.cs",
+    "line_start": 361,
+    "line_end": 361,
+    "project": "Microsoft.AspNetCore.Components.Server; Microsoft.AspNetCore.Components.Endpoints; Microsoft.AspNetCore.Components.WebAssembly",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "A JsonElement is converted to text only to be parsed again by JsonSerializer.",
+    "explanation": "DeserializeAttributeValue calls JsonElement.GetRawText() and immediately passes the resulting string to JsonSerializer.Deserialize. This materializes the complete JSON value as a temporary string before reparsing it. Deserializing directly from the JsonElement removes the throwaway representation while preserving serializer options.",
+    "snippet": "JsonElement je => JsonSerializer.Deserialize<SerializedRenderFragment>(je.GetRawText(), jsonOptions),",
+    "suppressed": false
+  }
+}
