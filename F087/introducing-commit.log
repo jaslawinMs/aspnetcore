@@ -1,0 +1,35 @@
+commit c7a1c5c982ab0468714b7d9c67175c02f3c1a0cc
+Author:     Korolev Dmitry <dmkorolev@microsoft.com>
+AuthorDate: Mon Oct 19 15:47:57 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Oct 19 15:47:57 2026 +0200
+
+    Validate active union cases in MVC (#69834)
+    
+    * init
+    
+    * Resolve MVC union case metadata before validation traversal
+    
+    Keep VisitChildren independent of union strategies and preserve explicit validation-state metadata and strategies. Identify the actual interface getter so unrelated public Value properties keep their own validation.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 0373e779-bf39-4f34-b837-5c6bf3eda99a
+    
+    * address PR review
+    
+    * address PR comment
+    
+    ---------
+    
+    Copilot-Session: 0373e779-bf39-4f34-b837-5c6bf3eda99a
+
+ src/Mvc/Mvc.Core/src/Microsoft.AspNetCore.Mvc.Core.WarningSuppressions.xml           |   6 ++
+ src/Mvc/Mvc.Core/src/ModelBinding/Metadata/DefaultModelMetadata.cs                   |  26 +++++++++
+ src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs       |  61 +++++++++++++++++++++
+ src/Mvc/Mvc.Core/src/ModelBinding/Validation/ValidationVisitor.cs                    |  39 +++++++++++++
+ src/Mvc/test/Mvc.FunctionalTests/SystemTextJsonInputFormatterTest.UnionValidation.cs |  75 +++++++++++++++++++++++++
+ src/Mvc/test/Mvc.IntegrationTests/UnionValidationIntegrationTest.cs                  | 565 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Mvc/test/WebSites/FormatterWebSite/Controllers/UnionsController.cs               |  24 ++++++++
+ src/Mvc/test/WebSites/FormatterWebSite/Models/UnionTypes.cs                          |  27 +++++++++
+ 8 files changed, 823 insertions(+)

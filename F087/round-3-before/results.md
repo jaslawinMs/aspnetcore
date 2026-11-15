@@ -1,0 +1,46 @@
+``` ini
+
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+
+OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+IterationCount=8  IterationTime=100.0000 ms  LaunchCount=1  
+WarmupCount=3  
+
+```
+|               Type |        Method |        Job | UnrollFactor |                 Case |         Mean |        Error |       StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|------------------- |-------------- |----------- |------------- |--------------------- |-------------:|-------------:|-------------:|-------:|------:|------:|----------:|
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |       **CustomStrategy** |     **166.6 ns** |      **6.90 ns** |      **3.61 ns** | **0.0069** |     **-** |     **-** |     **280 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **Decor(...)valid [24]** |   **1,896.5 ns** |     **48.41 ns** |     **25.32 ns** | **0.0375** |     **-** |     **-** |   **2,056 B** |
+|     UnionBenchmark |      Validate | Job-ZBXUHJ |           16 | Decor(...)valid [24] |  12,114.6 ns |  4,227.26 ns |  2,210.94 ns | 0.1437 |     - |     - |   7,706 B |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |              **Depth16** |  **19,123.5 ns** |  **1,080.50 ns** |    **565.12 ns** | **0.1883** |     **-** |     **-** |  **13,649 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |               **Depth4** |   **5,360.5 ns** |     **70.31 ns** |     **36.77 ns** | **0.1063** |     **-** |     **-** |   **4,144 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |         **Depth64Valid** |  **78,020.2 ns** | **11,799.14 ns** |  **6,171.18 ns** | **1.5432** |     **-** |     **-** |  **61,460 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **ExplicitInvalid** |   **8,257.3 ns** |     **93.53 ns** |     **48.92 ns** | **0.1653** |     **-** |     **-** |   **7,122 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |        **ExplicitValid** |   **8,257.7 ns** |    **715.29 ns** |    **374.11 ns** | **0.1596** |     **-** |     **-** |   **6,634 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |        **FilterEnabled** |   **1,937.4 ns** |     **41.48 ns** |     **21.70 ns** | **0.0386** |     **-** |     **-** |   **2,056 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |     **FilterSuppressed** |     **927.1 ns** |     **28.10 ns** |     **14.70 ns** | **0.0186** |     **-** |     **-** |     **928 B** |
+| **UnionColdBenchmark** | **ValidateBatch** | **Job-HKWCFD** |            **1** |      **FreshDeclared64** |  **96,452.9 ns** | **22,428.06 ns** | **11,730.31 ns** |      **-** |     **-** |     **-** |  **11,237 B** |
+| **UnionColdBenchmark** | **ValidateBatch** | **Job-HKWCFD** |            **1** |       **FreshDerived64** |  **42,960.0 ns** | **12,303.19 ns** |  **6,434.81 ns** |      **-** |     **-** |     **-** |  **17,291 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **Impli(...)valid [22]** | **146,703.9 ns** |  **7,878.05 ns** |  **4,120.37 ns** | **2.8409** |     **-** |     **-** | **118,945 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **ImplicitArray64Valid** | **104,547.5 ns** |  **5,097.60 ns** |  **2,666.14 ns** | **2.0492** |     **-** |     **-** |  **86,414 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **Impli(...)valid [21]** |  **16,971.0 ns** |    **280.85 ns** |    **146.89 ns** | **0.3360** |     **-** |     **-** |  **15,377 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |  **ImplicitArray8Valid** |  **13,921.2 ns** |  **1,140.93 ns** |    **596.73 ns** | **0.2654** |     **-** |     **-** |  **11,145 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |          **ImplicitInt** |   **1,233.4 ns** |     **45.33 ns** |     **23.71 ns** | **0.0121** |     **-** |     **-** |     **768 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **ImplicitInvalid** |   **1,958.4 ns** |    **137.80 ns** |     **72.07 ns** | **0.0387** |     **-** |     **-** |   **2,056 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |        **ImplicitValid** |   **1,737.1 ns** |     **62.68 ns** |     **32.78 ns** | **0.0342** |     **-** |     **-** |   **1,568 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |     **InheritedInvalid** |   **1,971.8 ns** |    **157.07 ns** |     **82.15 ns** | **0.0397** |     **-** |     **-** |   **2,056 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |     **InterfaceMixed64** | **136,478.4 ns** | **11,034.22 ns** |  **5,771.11 ns** | **2.6042** |     **-** |     **-** | **118,946 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **InterfaceMixed8** |  **15,753.5 ns** |    **918.30 ns** |    **480.29 ns** | **0.3049** |     **-** |     **-** |  **15,377 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |  **NamesakeCaseInvalid** |   **9,508.0 ns** |    **862.51 ns** |    **451.11 ns** | **0.1860** |     **-** |     **-** |   **7,706 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **Names(...)valid [23]** |   **9,225.4 ns** |    **113.01 ns** |     **59.11 ns** | **0.1822** |     **-** |     **-** |   **7,442 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **OverrideInvalid** |   **2,059.8 ns** |     **40.28 ns** |     **21.07 ns** | **0.0408** |     **-** |     **-** |   **2,056 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |     **PlainCheckedCase** |     **714.0 ns** |     **24.13 ns** |     **12.62 ns** | **0.0346** |     **-** |     **-** |   **1,392 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |          **PlainObject** |     **135.2 ns** |      **8.91 ns** |      **4.66 ns** | **0.0066** |     **-** |     **-** |     **256 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **SuppressedUnion** |   **7,094.0 ns** |     **83.15 ns** |     **43.49 ns** | **0.1406** |     **-** |     **-** |   **6,097 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |      **SuppressedValue** |     **896.4 ns** |     **15.83 ns** |      **8.28 ns** | **0.0178** |     **-** |     **-** |     **928 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** | **TopLevelValueInvalid** |   **1,230.4 ns** |     **78.53 ns** |     **41.07 ns** | **0.0357** |     **-** |     **-** |   **1,384 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |               **Wide32** |   **7,529.7 ns** |    **171.10 ns** |     **89.49 ns** | **0.1519** |     **-** |     **-** |   **6,920 B** |
+|     **UnionBenchmark** |      **Validate** | **Job-ZBXUHJ** |           **16** |                **Wide8** |   **3,459.4 ns** |     **50.94 ns** |     **26.64 ns** | **0.0682** |     **-** |     **-** |   **3,272 B** |

@@ -1,0 +1,93 @@
+commit c7a1c5c982ab0468714b7d9c67175c02f3c1a0cc
+Author:     Korolev Dmitry <dmkorolev@microsoft.com>
+AuthorDate: Mon Oct 19 15:47:57 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Oct 19 15:47:57 2026 +0200
+
+    Validate active union cases in MVC (#69834)
+    
+    * init
+    
+    * Resolve MVC union case metadata before validation traversal
+    
+    Keep VisitChildren independent of union strategies and preserve explicit validation-state metadata and strategies. Identify the actual interface getter so unrelated public Value properties keep their own validation.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 0373e779-bf39-4f34-b837-5c6bf3eda99a
+    
+    * address PR review
+    
+    * address PR comment
+    
+    ---------
+    
+    Copilot-Session: 0373e779-bf39-4f34-b837-5c6bf3eda99a
+
+diff --git a/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs b/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs
+new file mode 100644
+index 0000000000..2ff5e78c46
+--- /dev/null
++++ b/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs
+@@ -0,0 +1,61 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#nullable enable
++
++using System.Runtime.CompilerServices;
++using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
++
++namespace Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
++
++internal sealed class DefaultUnionValidationStrategy : IValidationStrategy
++{
++    private readonly IModelMetadataProvider _metadataProvider;
++
++    public DefaultUnionValidationStrategy(IModelMetadataProvider metadataProvider)
++    {
++        _metadataProvider = metadataProvider;
++    }
++
++    public IEnumerator<ValidationEntry> GetChildren(ModelMetadata metadata, string key, object model)
++    {
++        var hasValueProperty = false;
++        using var enumerator = DefaultComplexObjectValidationStrategy.Instance.GetChildren(metadata, key, model);
++        while (enumerator.MoveNext())
++        {
++            var entry = enumerator.Current;
++            if (IsUnionValueProperty(entry.Metadata, model.GetType()))
++            {
++                hasValueProperty = true;
++            }
++
++            yield return entry;
++        }
++
++        if (!hasValueProperty)
++        {
++            // IUnion.Value can be implemented explicitly.
++            yield return new ValidationEntry(
++                metadata is DefaultModelMetadata defaultMetadata
++                    ? defaultMetadata.CreateUnionValueMetadata()
++                    : _metadataProvider.GetMetadataForType(typeof(object)),
++                ModelNames.CreatePropertyModelName(key, nameof(IUnion.Value)),
++                () => ((IUnion)model).Value);
++        }
++    }
++
++    internal static bool IsUnionValueProperty(ModelMetadata metadata, Type unionType)
++    {
++        if (metadata.MetadataKind != ModelMetadataKind.Property || metadata.PropertyName != nameof(IUnion.Value))
++        {
++            return false;
++        }
++
++        var getter = metadata is DefaultModelMetadata propertyMetadata
++            ? propertyMetadata.Details.Key.PropertyInfo?.GetMethod
++            : metadata.ContainerType?.GetProperty(nameof(IUnion.Value))?.GetMethod;
++        var unionGetter = unionType.GetInterfaceMap(typeof(IUnion)).TargetMethods[0];
++
++        return getter is not null && (getter.DeclaringType == typeof(IUnion) || getter.GetBaseDefinition() == unionGetter.GetBaseDefinition());
++    }
++}

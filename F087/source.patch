@@ -1,0 +1,253 @@
+diff --git a/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs b/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs
+index 2ff5e78c46..f717eb594a 100644
+--- a/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs
++++ b/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs
+@@ -3,13 +3,19 @@
+ 
+ #nullable enable
+ 
++using System.Reflection;
++using System.Reflection.Metadata;
+ using System.Runtime.CompilerServices;
+ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+ 
++[assembly: MetadataUpdateHandler(typeof(Microsoft.AspNetCore.Mvc.ModelBinding.Validation.DefaultUnionValidationStrategy.MetadataUpdateHandler))]
++
+ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+ 
+ internal sealed class DefaultUnionValidationStrategy : IValidationStrategy
+ {
++    private static ConditionalWeakTable<Type, MethodInfo> _unionValueGetters = new();
++
+     private readonly IModelMetadataProvider _metadataProvider;
+ 
+     public DefaultUnionValidationStrategy(IModelMetadataProvider metadataProvider)
+@@ -54,8 +60,22 @@ internal sealed class DefaultUnionValidationStrategy : IValidationStrategy
+         var getter = metadata is DefaultModelMetadata propertyMetadata
+             ? propertyMetadata.Details.Key.PropertyInfo?.GetMethod
+             : metadata.ContainerType?.GetProperty(nameof(IUnion.Value))?.GetMethod;
+-        var unionGetter = unionType.GetInterfaceMap(typeof(IUnion)).TargetMethods[0];
++        var cache = Volatile.Read(ref _unionValueGetters);
++        if (!cache.TryGetValue(unionType, out var unionGetter))
++        {
++            unionGetter = unionType.GetInterfaceMap(typeof(IUnion)).TargetMethods[0];
++            cache.AddOrUpdate(unionType, unionGetter);
++        }
+ 
+         return getter is not null && (getter.DeclaringType == typeof(IUnion) || getter.GetBaseDefinition() == unionGetter.GetBaseDefinition());
+     }
++
++    internal static class MetadataUpdateHandler
++    {
++        public static void ClearCache(Type[]? _)
++        {
++            // In-flight lookups must not repopulate the replacement table.
++            Volatile.Write(ref _unionValueGetters, new ConditionalWeakTable<Type, MethodInfo>());
++        }
++    }
+ }
+diff --git a/src/Mvc/Mvc.Core/test/ModelBinding/Validation/DefaultUnionValidationStrategyTest.cs b/src/Mvc/Mvc.Core/test/ModelBinding/Validation/DefaultUnionValidationStrategyTest.cs
+new file mode 100644
+index 0000000000..156bd26f2b
+--- /dev/null
++++ b/src/Mvc/Mvc.Core/test/ModelBinding/Validation/DefaultUnionValidationStrategyTest.cs
+@@ -0,0 +1,92 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#nullable enable
++
++using System;
++using System.Reflection;
++using System.Reflection.Emit;
++using System.Runtime.CompilerServices;
++
++namespace Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
++
++public class DefaultUnionValidationStrategyTest
++{
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public void ClearCache_ReplacesPopulatedInterfaceMapCache(bool specificType)
++    {
++        var type = typeof(Union);
++        var metadata = new EmptyModelMetadataProvider().GetMetadataForProperty(typeof(IUnion), nameof(IUnion.Value));
++
++        Assert.True(DefaultUnionValidationStrategy.IsUnionValueProperty(metadata, type));
++        var cache = ReadCache();
++        Assert.True(cache.TryGetValue(type, out var getter));
++        Assert.Equal(type.GetInterfaceMap(typeof(IUnion)).TargetMethods[0], getter);
++
++        DefaultUnionValidationStrategy.MetadataUpdateHandler.ClearCache(specificType ? [type] : null);
++
++        var replacement = ReadCache();
++        Assert.NotSame(cache, replacement);
++        Assert.False(replacement.TryGetValue(type, out _));
++        Assert.True(DefaultUnionValidationStrategy.IsUnionValueProperty(metadata, type));
++        Assert.True(replacement.TryGetValue(type, out var replacementGetter));
++        Assert.Equal(getter, replacementGetter);
++    }
++
++    [Fact]
++    public void IsUnionValueProperty_DoesNotRetainCollectibleUnionType()
++    {
++        var reference = InspectCollectibleUnion();
++        for (var attempt = 0; attempt < 10 && IsAlive(reference); attempt++)
++        {
++            GC.Collect();
++            GC.WaitForPendingFinalizers();
++        }
++
++        Assert.False(IsAlive(reference));
++    }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    private static WeakReference<Type> InspectCollectibleUnion()
++    {
++        var assembly = AssemblyBuilder.DefineDynamicAssembly(
++            new AssemblyName($"CollectibleUnion_{Guid.NewGuid():N}"), AssemblyBuilderAccess.RunAndCollect);
++        var module = assembly.DefineDynamicModule("Union");
++        var builder = module.DefineType("Union", TypeAttributes.Public, typeof(object), [typeof(IUnion)]);
++        var getter = builder.DefineMethod("get_Value",
++            MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final |
++            MethodAttributes.NewSlot | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
++            typeof(object), Type.EmptyTypes);
++        var il = getter.GetILGenerator();
++        il.Emit(OpCodes.Ldnull);
++        il.Emit(OpCodes.Ret);
++        var property = builder.DefineProperty(nameof(IUnion.Value), PropertyAttributes.None, typeof(object), Type.EmptyTypes);
++        property.SetGetMethod(getter);
++        builder.DefineMethodOverride(getter, typeof(IUnion).GetProperty(nameof(IUnion.Value))!.GetMethod!);
++        var type = builder.CreateType()!;
++        var metadata = new EmptyModelMetadataProvider().GetMetadataForProperty(typeof(IUnion), nameof(IUnion.Value));
++
++        Assert.True(DefaultUnionValidationStrategy.IsUnionValueProperty(metadata, type));
++
++        return new WeakReference<Type>(type);
++    }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    private static bool IsAlive(WeakReference<Type> reference) => reference.TryGetTarget(out _);
++
++    private static ConditionalWeakTable<Type, MethodInfo> ReadCache()
++    {
++        var field = typeof(DefaultUnionValidationStrategy).GetField("_unionValueGetters",
++            BindingFlags.Static | BindingFlags.NonPublic);
++        Assert.NotNull(field);
++
++        return Assert.IsType<ConditionalWeakTable<Type, MethodInfo>>(field.GetValue(null));
++    }
++
++    private sealed class Union : IUnion
++    {
++        public object? Value => null;
++    }
++}
+diff --git a/src/Mvc/test/Mvc.IntegrationTests/UnionValidationIntegrationTest.cs b/src/Mvc/test/Mvc.IntegrationTests/UnionValidationIntegrationTest.cs
+index 49f78b4a2b..7c31282eda 100644
+--- a/src/Mvc/test/Mvc.IntegrationTests/UnionValidationIntegrationTest.cs
++++ b/src/Mvc/test/Mvc.IntegrationTests/UnionValidationIntegrationTest.cs
+@@ -426,6 +426,84 @@ public class UnionValidationIntegrationTest
+         Assert.Equal(suppressValue ? 0 : 1, context.ModelState.ErrorCount);
+     }
+ 
++    [Theory]
++    [InlineData("Implicit")]
++    [InlineData("Explicit")]
++    [InlineData("Namesake")]
++    public void Validate_RepeatedRuntimeUnionTypes_PreservesPropertyAndCaseValidation(string shape)
++    {
++        using var services = CreateServices();
++        var validator = services.GetRequiredService<IObjectModelValidator>();
++        for (var index = 0; index < 24; index++)
++        {
++            var context = CreateContext();
++            object model = shape switch
++            {
++                "Implicit" => new LengthUnion("long"),
++                "Explicit" => new ExplicitUnion(new ValidatableCase("invalid")),
++                "Namesake" => new UnionWithPublicNamesake("public", new ValidatableCase("invalid")),
++                _ => throw new InvalidOperationException("Unknown union shape."),
++            };
++
++            validator.Validate(context, null, "model", model);
++
++            Assert.False(context.ModelState.IsValid);
++            var entry = Assert.Single(context.ModelState);
++            Assert.Equal("model.Value", entry.Key);
++            var messages = entry.Value.Errors.Select(error => error.ErrorMessage).ToArray();
++            var expected = shape switch
++            {
++                "Implicit" => new[] { "The field Value must be a string or array type with a maximum length of '3'." },
++                "Explicit" => new[] { "Invalid case." },
++                _ => new[] { "Invalid case." },
++            };
++            Assert.Equal(expected, messages);
++        }
++    }
++
++    [Fact]
++    public void Validate_MixedUnionTypes_PreservesEachGetterIdentity()
++    {
++        using var services = CreateServices();
++        var context = CreateContext();
++
++        services.GetRequiredService<IObjectModelValidator>().Validate(context, null, "model", new MixedUnionEnvelope());
++
++        Assert.False(context.ModelState.IsValid);
++        Assert.Equal(3, context.ModelState.ErrorCount);
++        Assert.Equal(
++            new[] { "model.First.Value", "model.Second.Value", "model.Third.Value" },
++            context.ModelState.Select(entry => entry.Key).OrderBy(key => key, StringComparer.Ordinal).ToArray());
++        Assert.Equal("The field Value must be a string or array type with a maximum length of '3'.",
++            Assert.Single(context.ModelState["model.First.Value"].Errors).ErrorMessage);
++        Assert.Equal("Invalid case.", Assert.Single(context.ModelState["model.Second.Value"].Errors).ErrorMessage);
++        Assert.Equal("The Value field is required.", Assert.Single(context.ModelState["model.Third.Value"].Errors).ErrorMessage);
++    }
++
++    [Fact]
++    public void Validate_ConcurrentUnionTypes_PreservesPropertyAndCaseValidation()
++    {
++        using var services = CreateServices();
++        var validator = services.GetRequiredService<IObjectModelValidator>();
++
++        Parallel.For(0, 64, index =>
++        {
++            var context = CreateContext();
++            object model = index % 2 is 0
++                ? new LengthUnion("long")
++                : new ExplicitUnion(new ValidatableCase("invalid"));
++
++            validator.Validate(context, null, "model", model);
++
++            Assert.False(context.ModelState.IsValid);
++            var entry = Assert.Single(context.ModelState);
++            Assert.Equal("model.Value", entry.Key);
++            Assert.Equal(index % 2 is 0
++                ? "The field Value must be a string or array type with a maximum length of '3'."
++                : "Invalid case.", Assert.Single(entry.Value.Errors).ErrorMessage);
++        });
++    }
++
+     private static ServiceProvider CreateServices(Action<MvcOptions> configure = null, bool decorateMetadataProvider = false)
+     {
+         var services = new ServiceCollection();
+@@ -499,6 +577,17 @@ public class UnionValidationIntegrationTest
+         public object Value => value;
+     }
+ 
++    private class MixedUnionEnvelope
++    {
++        public LengthUnion First { get; } = new("long");
++
++        public ExplicitUnion Second { get; } = new(new ValidatableCase("invalid"));
++
++        public UnionWithPublicNamesake Third { get; } = new(null, new ValidatableCase("valid"));
++
++        public LengthUnion Fourth { get; } = new("ok");
++    }
++
+     [ValidateNever]
+     private class SuppressedExplicitUnion : IUnion
+     {
