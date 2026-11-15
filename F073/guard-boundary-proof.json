@@ -1,0 +1,84 @@
+{
+  "candidate": "F073",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actual_segment_boundaries": [
+    {
+      "suffix": "suffix",
+      "segment_equal_before_owner": true,
+      "result": false,
+      "selected": "application/json",
+      "producer": "actual public StringSegment and CanWriteResult token lexer"
+    },
+    {
+      "suffix": ", text/html",
+      "segment_equal_before_owner": true,
+      "result": true,
+      "selected": "application/json",
+      "producer": "actual public StringSegment and CanWriteResult token lexer"
+    }
+  ],
+  "actual_type_check_producers": [
+    {
+      "requested": "application/json",
+      "result": false,
+      "actual_error": null,
+      "type_checks": 1,
+      "supported_after": 0,
+      "producer": "actual virtual CanWriteType clears public configuration"
+    },
+    {
+      "requested": "",
+      "result": null,
+      "actual_error": "ArgumentOutOfRangeException(offset)",
+      "type_checks": 1,
+      "supported_after": 0,
+      "producer": "actual virtual CanWriteType clears public configuration"
+    }
+  ],
+  "actual_selector_producers": [
+    {
+      "raw_accept": "application/json",
+      "inputs": [
+        {
+          "Requested": "application/json",
+          "Offset": 0,
+          "ServerDefined": false
+        }
+      ],
+      "selected": "application/json",
+      "producer": "actual DefaultOutputFormatterSelector/AcceptHeaderParser"
+    },
+    {
+      "raw_accept": "text/html, application/json",
+      "inputs": [
+        {
+          "Requested": "text/html",
+          "Offset": 0,
+          "ServerDefined": false
+        },
+        {
+          "Requested": "application/json",
+          "Offset": 11,
+          "ServerDefined": false
+        }
+      ],
+      "selected": "application/json",
+      "producer": "actual DefaultOutputFormatterSelector/AcceptHeaderParser"
+    },
+    {
+      "raw_accept": "",
+      "inputs": [
+        {
+          "Requested": "application/json",
+          "Offset": 0,
+          "ServerDefined": true
+        }
+      ],
+      "selected": "application/json",
+      "producer": "actual DefaultOutputFormatterSelector/AcceptHeaderParser"
+    }
+  ],
+  "guard_requirement": "Requested segment must end at Buffer.Length; first supported item can be read only after rechecking Count after virtual CanWriteType.",
+  "source_owner_not_yet_edited": true,
+  "not_fixing_preexisting_segment_overread_or_parameter_parser_behavior": true
+}

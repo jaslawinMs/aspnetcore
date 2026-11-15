@@ -1,0 +1,177 @@
+diff --git a/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs b/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
+index f14215f6ec..8f0fcf35de 100644
+--- a/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
++++ b/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
+@@ -117,6 +117,17 @@ public abstract class OutputFormatter : IOutputFormatter, IApiResponseTypeMetada
+         }
+         else
+         {
++            // The token parser can read beyond a segment's length, so require the buffer boundary.
++            if (SupportedMediaTypes.Count > 0 &&
++                SupportedMediaTypes[0] is { Length: > 0 } firstSupportedMediaType &&
++                context.ContentType.Offset + context.ContentType.Length == context.ContentType.Buffer?.Length &&
++                context.ContentType.Equals(firstSupportedMediaType, StringComparison.Ordinal) &&
++                firstSupportedMediaType.AsSpan().IndexOfAny(';', '*') < 0)
++            {
++                context.ContentType = new StringSegment(firstSupportedMediaType);
++                return true;
++            }
++
+             var parsedContentType = new MediaType(context.ContentType);
+             for (var i = 0; i < SupportedMediaTypes.Count; i++)
+             {
+diff --git a/src/Mvc/Mvc.Core/test/Formatters/OutputFormatterTests.cs b/src/Mvc/Mvc.Core/test/Formatters/OutputFormatterTests.cs
+index 5c876c19c2..a2692143e1 100644
+--- a/src/Mvc/Mvc.Core/test/Formatters/OutputFormatterTests.cs
++++ b/src/Mvc/Mvc.Core/test/Formatters/OutputFormatterTests.cs
+@@ -184,6 +184,150 @@ public class OutputFormatterTests
+         Assert.Null(contentTypes);
+     }
+ 
++    [Theory]
++    [InlineData("application/json")]
++    [InlineData("APPLICATION/JSON")]
++    [InlineData(" application / json ")]
++    [InlineData("application")]
++    [InlineData("/json")]
++    [InlineData(" ")]
++    [InlineData("a/b+")]
++    [InlineData("application/vnd.example+json")]
++    public void CanWriteResult_IdenticalContentType_PreservesRawValue(string mediaType)
++    {
++        var formatter = new TestOutputFormatter();
++        var supportedMediaType = new string(mediaType.AsSpan());
++        formatter.SupportedMediaTypes.Clear();
++        formatter.SupportedMediaTypes.Add(supportedMediaType);
++        formatter.SupportedMediaTypes.Add("");
++        var requested = new StringSegment("prefix" + mediaType, 6, mediaType.Length);
++        var context = CreateCanWriteContext(mediaType);
++
++        foreach (var serverDefined in new[] { false, true })
++        {
++            context.ContentType = requested;
++            context.ContentTypeIsServerDefined = serverDefined;
++
++            Assert.True(formatter.CanWriteResult(context));
++            Assert.Same(supportedMediaType, context.ContentType.Buffer);
++            Assert.Equal(0, context.ContentType.Offset);
++            Assert.Equal(supportedMediaType.Length, context.ContentType.Length);
++            Assert.Equal(serverDefined, context.ContentTypeIsServerDefined);
++        }
++    }
++
++    [Theory]
++    [InlineData("")]
++    [InlineData("application/json; x=")]
++    public void CanWriteResult_IdenticalContentType_PreservesParsingErrors(string mediaType)
++    {
++        var formatter = new TestOutputFormatter();
++        formatter.SupportedMediaTypes.Clear();
++        formatter.SupportedMediaTypes.Add(mediaType);
++        var context = CreateCanWriteContext(mediaType);
++
++        Assert.True(context.ContentType.HasValue);
++        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => formatter.CanWriteResult(context));
++        Assert.Equal(mediaType.Length is 0 ? "offset" : "index", exception.ParamName);
++    }
++
++    [Theory]
++    [InlineData("suffix", false)]
++    [InlineData(", text/html", true)]
++    public void CanWriteResult_PreservesContentTypeSegmentBoundaries(string suffix, bool canWrite)
++    {
++        var formatter = new TestOutputFormatter();
++        formatter.SupportedMediaTypes.Clear();
++        formatter.SupportedMediaTypes.Add("application/json");
++        var context = CreateCanWriteContext("application/json");
++        context.ContentType = new StringSegment("prefixapplication/json" + suffix, 6, 16);
++
++        Assert.True(context.ContentType.Equals("application/json", StringComparison.Ordinal));
++        Assert.Equal(canWrite, formatter.CanWriteResult(context));
++    }
++
++    [Theory]
++    [InlineData("")]
++    [InlineData("application/json; x=")]
++    public void CanWriteResult_DoesNotSkipEarlierInvalidContentTypes(string mediaType)
++    {
++        var formatter = new TestOutputFormatter();
++        formatter.SupportedMediaTypes.Clear();
++        formatter.SupportedMediaTypes.Add(mediaType);
++        formatter.SupportedMediaTypes.Add("application/json");
++        var context = CreateCanWriteContext("application/json");
++
++        Assert.Throws<ArgumentOutOfRangeException>(() => formatter.CanWriteResult(context));
++    }
++
++    [Fact]
++    public void CanWriteResult_ObservesSupportedMediaTypeChanges()
++    {
++        var formatter = new TestOutputFormatter();
++        formatter.SupportedMediaTypes.Clear();
++        formatter.SupportedMediaTypes.Add("application/json");
++        var context = CreateCanWriteContext("application/json");
++
++        Assert.True(formatter.CanWriteResult(context));
++        var original = context.ContentType;
++        formatter.SupportedMediaTypes[0] = "application/xml";
++        formatter.SupportedMediaTypes.Add(new string("application/json".AsSpan()));
++        context.ContentType = new StringSegment("application/json");
++        Assert.True(formatter.CanWriteResult(context));
++        Assert.Same(formatter.SupportedMediaTypes[1], context.ContentType.Buffer);
++        Assert.Equal("application/json", original.Value);
++
++        formatter.SupportedMediaTypes.RemoveAt(1);
++        context.ContentType = new StringSegment("application/json");
++        Assert.False(formatter.CanWriteResult(context));
++        formatter.SupportedMediaTypes[0] = "application/json";
++        Assert.True(formatter.CanWriteResult(context));
++        Assert.Same(formatter.SupportedMediaTypes[0], context.ContentType.Buffer);
++    }
++
++    [Theory]
++    [InlineData("application/json")]
++    [InlineData("")]
++    public void CanWriteResult_ObservesMediaTypesChangedByCanWriteType(string contentType)
++    {
++        var formatter = new ClearingOutputFormatter();
++        var context = CreateCanWriteContext(contentType);
++
++        Assert.True(context.ContentType.HasValue);
++        if (contentType.Length is 0)
++        {
++            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => formatter.CanWriteResult(context));
++            Assert.Equal("offset", exception.ParamName);
++        }
++        else
++        {
++            Assert.False(formatter.CanWriteResult(context));
++        }
++
++        Assert.Empty(formatter.SupportedMediaTypes);
++    }
++
++    private static OutputFormatterWriteContext CreateCanWriteContext(string contentType)
++    {
++        return new OutputFormatterWriteContext(
++            new DefaultHttpContext(),
++            new TestHttpResponseStreamWriterFactory().CreateWriter,
++            typeof(object),
++            new object())
++        {
++            ContentType = new StringSegment(contentType),
++        };
++    }
++
++    private class ClearingOutputFormatter : TestOutputFormatter
++    {
++        protected override bool CanWriteType(Type type)
++        {
++            SupportedMediaTypes.Clear();
++            return true;
++        }
++    }
++
+     private class TypeSpecificFormatter : OutputFormatter
+     {
+         public List<Type> SupportedTypes { get; } = new List<Type>();
