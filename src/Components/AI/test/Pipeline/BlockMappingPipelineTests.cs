@@ -1,12 +1,150 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Microsoft.AspNetCore.Components.AI.Tests.Pipeline;
 
 public class BlockMappingPipelineTests
 {
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(16)]
+    public async Task Process_DebugDisabled_DoesNotReadContentsForDiagnostics(int contentCount)
+    {
+        var contents = CreateTrackedContents(contentCount);
+        int? readsAtFirstDebugCheck = null;
+        var logger = new Mock<ILogger>();
+        logger.Setup(l => l.IsEnabled(LogLevel.Debug)).Returns(() =>
+        {
+            readsAtFirstDebugCheck ??= contents.ReadCount;
+            return false;
+        });
+        var pipeline = new BlockMappingPipeline(new UIAgentOptions(), logger.Object);
+        var update = new ChatResponseUpdate
+        {
+            Role = ChatRole.Assistant,
+            MessageId = "diagnostic-response",
+            Contents = contents
+        };
+
+        var blocks = await ProcessAsync(pipeline, update);
+        pipeline.Finalize();
+
+        Assert.NotNull(readsAtFirstDebugCheck);
+        Assert.Equal(0, readsAtFirstDebugCheck.Value);
+        Assert.Equal(string.Concat(Enumerable.Range(0, contentCount).Select(i => $"token-{i};")),
+            string.Concat(blocks.Select(b => Assert.IsType<RichContentBlock>(b).RawText)));
+        Assert.All(blocks, b => Assert.Equal(BlockLifecycleState.Inactive, b.LifecycleState));
+        Assert.DoesNotContain(logger.Invocations, invocation =>
+            invocation.Method.Name == nameof(ILogger.Log) && invocation.Arguments[1] is EventId { Id: 1 });
+
+        var enabledContents = CreateTrackedContents(contentCount);
+        var enabledLogger = new Mock<ILogger>();
+        enabledLogger.Setup(l => l.IsEnabled(LogLevel.Debug)).Returns(true);
+        var enabledPipeline = new BlockMappingPipeline(new UIAgentOptions(), enabledLogger.Object);
+        var enabledBlocks = await ProcessAsync(enabledPipeline, new ChatResponseUpdate
+        {
+            Role = ChatRole.Assistant,
+            MessageId = "diagnostic-response",
+            Contents = enabledContents
+        });
+        enabledPipeline.Finalize();
+
+        Assert.Equal(contentCount, enabledContents.ReadCount - contents.ReadCount);
+        Assert.Equal(string.Concat(Enumerable.Range(0, contentCount).Select(i => $"token-{i};")),
+            string.Concat(enabledBlocks.Select(b => Assert.IsType<RichContentBlock>(b).RawText)));
+        Assert.All(enabledBlocks, b => Assert.Equal(BlockLifecycleState.Inactive, b.LifecycleState));
+    }
+
+    [Theory]
+    [InlineData("Text")]
+    [InlineData("Mixed")]
+    [InlineData("Empty")]
+    public async Task Process_DebugEnabled_PreservesProcessingUpdateFields(string scenario)
+    {
+        var logger = new Mock<ILogger>();
+        logger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+        var pipeline = new BlockMappingPipeline(new UIAgentOptions(), logger.Object);
+        IList<AIContent> contents = scenario switch
+        {
+            "Text" => [new TextContent("answer")],
+            "Mixed" => [new TextContent("answer"), new FunctionCallContent("diagnostic-call", "tool")],
+            "Empty" => [],
+            _ => throw new InvalidOperationException()
+        };
+        var update = new ChatResponseUpdate
+        {
+            Role = scenario == "Empty" ? null : ChatRole.Assistant,
+            MessageId = "diagnostic-response",
+            Contents = contents
+        };
+
+        var blocks = await ProcessAsync(pipeline, update);
+        pipeline.Finalize();
+
+        var invocation = Assert.Single(logger.Invocations.Where(i =>
+            i.Method.Name == nameof(ILogger.Log) && i.Arguments[1] is EventId { Id: 1 }));
+        Assert.Equal(LogLevel.Debug, invocation.Arguments[0]);
+        var state = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(invocation.Arguments[2]);
+        Assert.Equal(update.Role?.Value, Assert.Single(state.Where(p => p.Key == "Role")).Value);
+        Assert.Equal(contents.Count, Assert.Single(state.Where(p => p.Key == "ContentCount")).Value);
+        Assert.Equal(scenario switch
+        {
+            "Text" => "TextContent",
+            "Mixed" => "TextContent, FunctionCallContent",
+            _ => string.Empty
+        }, Assert.Single(state.Where(p => p.Key == "ContentTypes")).Value);
+        Assert.Equal("Processing update: Role={Role}, ContentCount={ContentCount}, ContentTypes=[{ContentTypes}]",
+            Assert.Single(state.Where(p => p.Key == "{OriginalFormat}")).Value);
+        if (scenario == "Empty")
+        {
+            Assert.Empty(blocks);
+        }
+        else
+        {
+            Assert.Equal("answer", Assert.IsType<RichContentBlock>(
+                Assert.Single(blocks.Where(b => b is RichContentBlock))).RawText);
+            Assert.Equal(scenario == "Mixed" ? 2 : 1, blocks.Count);
+        }
+        Assert.All(blocks, b => Assert.Equal(BlockLifecycleState.Inactive, b.LifecycleState));
+    }
+
+    [Fact]
+    public async Task Process_DebugEnabledAfterFirstUpdate_PreservesActiveBlockAndNotification()
+    {
+        var enabled = false;
+        var logger = new Mock<ILogger>();
+        logger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(() => enabled);
+        var pipeline = new BlockMappingPipeline(new UIAgentOptions(), logger.Object);
+        var blocks = await ProcessAsync(pipeline, CreateTextUpdate("diagnostic-response", "first"));
+        var block = Assert.IsType<RichContentBlock>(Assert.Single(blocks));
+        var notifications = 0;
+        using var subscription = block.OnChanged(() => notifications++);
+        enabled = true;
+
+        var more = await ProcessAsync(pipeline, CreateTextUpdate("diagnostic-response", "second"));
+
+        Assert.Empty(more);
+        Assert.Equal("firstsecond", block.RawText);
+        Assert.Equal("diagnostic-response", block.Id);
+        Assert.Equal(BlockLifecycleState.Active, block.LifecycleState);
+        Assert.Equal(1, notifications);
+        var invocation = Assert.Single(logger.Invocations.Where(i =>
+            i.Method.Name == nameof(ILogger.Log) && i.Arguments[1] is EventId { Id: 1 }));
+        var state = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(invocation.Arguments[2]);
+        Assert.Equal("assistant", Assert.Single(state.Where(p => p.Key == "Role")).Value);
+        Assert.Equal(1, Assert.Single(state.Where(p => p.Key == "ContentCount")).Value);
+        Assert.Equal("TextContent", Assert.Single(state.Where(p => p.Key == "ContentTypes")).Value);
+        pipeline.Finalize();
+        Assert.Equal(BlockLifecycleState.Inactive, block.LifecycleState);
+        Assert.Equal(2, notifications);
+    }
+
     [Fact]
     public async Task Process_SingleTextUpdate_EmitsOneRichContentBlock()
     {
@@ -242,6 +380,43 @@ public class BlockMappingPipelineTests
         }
 
         return blocks;
+    }
+
+    private static TrackingContents CreateTrackedContents(int count) => new(Enumerable.Range(0, count)
+        .Select(i => (AIContent)new TextContent($"token-{i};")).ToList());
+
+    private sealed class TrackingContents(List<AIContent> contents) : IList<AIContent>
+    {
+        public int ReadCount { get; private set; }
+        public int Count => contents.Count;
+        public bool IsReadOnly => false;
+        public AIContent this[int index]
+        {
+            get
+            {
+                ReadCount++;
+                return contents[index];
+            }
+            set => contents[index] = value;
+        }
+
+        public IEnumerator<AIContent> GetEnumerator()
+        {
+            for (var i = 0; i < Count; i++)
+            {
+                yield return this[i];
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public void Add(AIContent item) => contents.Add(item);
+        public void Clear() => contents.Clear();
+        public bool Contains(AIContent item) => contents.Contains(item);
+        public void CopyTo(AIContent[] array, int arrayIndex) => contents.CopyTo(array, arrayIndex);
+        public int IndexOf(AIContent item) => contents.IndexOf(item);
+        public void Insert(int index, AIContent item) => contents.Insert(index, item);
+        public bool Remove(AIContent item) => contents.Remove(item);
+        public void RemoveAt(int index) => contents.RemoveAt(index);
     }
 
     private sealed class UppercaseTextBlock : ContentBlock

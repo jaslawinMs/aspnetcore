@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Components.AI;
 
 internal static partial class BlockMappingPipelineLog
 {
-    [LoggerMessage(1, LogLevel.Debug, "Processing update: Role={Role}, ContentCount={ContentCount}, ContentTypes=[{ContentTypes}]")]
+    [LoggerMessage(1, LogLevel.Debug, "Processing update: Role={Role}, ContentCount={ContentCount}, ContentTypes=[{ContentTypes}]", SkipEnabledCheck = true)]
     internal static partial void ProcessingUpdate(ILogger logger, string? role, int contentCount, string contentTypes);
 
     [LoggerMessage(2, LogLevel.Debug, "Active handler {HandlerType} returned {ResultKind} for block {BlockId}")]
