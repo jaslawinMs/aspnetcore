@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.AcceptHeaderParsingBenchmark-20261114-160627</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>          Case</th><th> Mean</th><th> Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Run</td><td>Parse_AllInvalid_8</td><td>4,641.09 ns</td><td>2,869.437 ns</td><td>1,500.771 ns</td><td>-</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Run</td><td>Parse(...)First [27]</td><td>178.30 ns</td><td>3.957 ns</td><td>2.070 ns</td><td>0.0037</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse(...)dLast [26]</td><td>235.12 ns</td><td>4.916 ns</td><td>2.571 ns</td><td>0.0024</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_DuplicateValid</td><td>205.03 ns</td><td>12.945 ns</td><td>6.771 ns</td><td>0.0040</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse(...)Comma [24]</td><td>170.19 ns</td><td>2.925 ns</td><td>1.530 ns</td><td>0.0034</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse(...)y_End [22]</td><td>4,200.59 ns</td><td>96.186 ns</td><td>50.307 ns</td><td>-</td><td>-</td><td>-</td><td>976 B</td>
+</tr><tr><td>Run</td><td>Parse_InvalidEnd</td><td>96.40 ns</td><td>2.332 ns</td><td>1.220 ns</td><td>-</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Run</td><td>Parse_Invalid_1</td><td>171.82 ns</td><td>3.375 ns</td><td>1.765 ns</td><td>0.0035</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Invalid_32</td><td>2,910.93 ns</td><td>48.144 ns</td><td>25.180 ns</td><td>-</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Invalid_8</td><td>805.33 ns</td><td>21.178 ns</td><td>11.076 ns</td><td>-</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Mixed_8</td><td>858.75 ns</td><td>4.955 ns</td><td>2.592 ns</td><td>-</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse(...)aders [21]</td><td>239.19 ns</td><td>6.895 ns</td><td>3.606 ns</td><td>0.0024</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Nonfinite</td><td>256.45 ns</td><td>8.714 ns</td><td>4.558 ns</td><td>0.0025</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_OutOfRange</td><td>149.08 ns</td><td>8.190 ns</td><td>4.283 ns</td><td>0.0030</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_QuotedInvalid</td><td>201.56 ns</td><td>8.774 ns</td><td>4.589 ns</td><td>0.0040</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_QuotedValid</td><td>172.48 ns</td><td>4.753 ns</td><td>2.486 ns</td><td>0.0035</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Valid_1</td><td>89.51 ns</td><td>4.085 ns</td><td>2.137 ns</td><td>0.0036</td><td>-</td><td>-</td><td>152 B</td>
+</tr><tr><td>Run</td><td>Parse_Valid_8</td><td>1,033.66 ns</td><td>20.348 ns</td><td>10.642 ns</td><td>-</td><td>-</td><td>-</td><td>368 B</td>
+</tr><tr><td>Run</td><td>Publi(...)ality [23]</td><td>154.76 ns</td><td>3.130 ns</td><td>1.637 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Run</td><td>Publi(...)tyEnd [22]</td><td>4,151.66 ns</td><td>58.606 ns</td><td>30.652 ns</td><td>-</td><td>-</td><td>-</td><td>944 B</td>
+</tr><tr><td>Run</td><td>Publi(...)ality [21]</td><td>2,812.39 ns</td><td>24.667 ns</td><td>12.901 ns</td><td>-</td><td>-</td><td>-</td><td>624 B</td>
+</tr><tr><td>Run</td><td>Public_OutOfRange</td><td>98.50 ns</td><td>1.793 ns</td><td>0.938 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Run</td><td>Public_QuotedQuality</td><td>119.06 ns</td><td>1.962 ns</td><td>1.026 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Run</td><td>Public_ValidPlain</td><td>36.18 ns</td><td>0.567 ns</td><td>0.297 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Run</td><td>Public_ValidQuality</td><td>98.02 ns</td><td>1.184 ns</td><td>0.619 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Run</td><td>Selec(...)lid_8 [21]</td><td>1,230.60 ns</td><td>103.395 ns</td><td>54.078 ns</td><td>0.0365</td><td>-</td><td>-</td><td>1,384 B</td>
+</tr><tr><td>Run</td><td>Selec(...)gnore [22]</td><td>830.59 ns</td><td>40.253 ns</td><td>21.053 ns</td><td>0.0401</td><td>-</td><td>-</td><td>1,504 B</td>
+</tr><tr><td>Run</td><td>Selec(...)spect [23]</td><td>1,127.02 ns</td><td>57.091 ns</td><td>29.860 ns</td><td>0.0337</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selec(...)tyEnd [24]</td><td>4,840.46 ns</td><td>162.440 ns</td><td>84.959 ns</td><td>0.0479</td><td>-</td><td>-</td><td>2,328 B</td>
+</tr><tr><td>Run</td><td>Selector_Invalid_1</td><td>823.15 ns</td><td>33.434 ns</td><td>17.487 ns</td><td>0.0326</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_Invalid_32</td><td>4,054.49 ns</td><td>71.144 ns</td><td>37.210 ns</td><td>0.0373</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_Invalid_8</td><td>1,488.53 ns</td><td>39.364 ns</td><td>20.588 ns</td><td>0.0295</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_Mixed_8</td><td>1,695.28 ns</td><td>60.921 ns</td><td>31.863 ns</td><td>0.0335</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selec(...)aders [24]</td><td>915.71 ns</td><td>29.203 ns</td><td>15.274 ns</td><td>0.0313</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selec(...)rn406 [29]</td><td>935.25 ns</td><td>23.565 ns</td><td>12.325 ns</td><td>0.0380</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_ValidJson</td><td>814.05 ns</td><td>13.458 ns</td><td>7.039 ns</td><td>0.0327</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selec(...)ality [21]</td><td>1,134.67 ns</td><td>81.153 ns</td><td>42.444 ns</td><td>0.0334</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_ValidText</td><td>700.34 ns</td><td>23.597 ns</td><td>12.342 ns</td><td>0.0348</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr><tr><td>Run</td><td>Selector_ZeroQuality</td><td>912.33 ns</td><td>30.106 ns</td><td>15.746 ns</td><td>0.0361</td><td>-</td><td>-</td><td>1,464 B</td>
+</tr></tbody></table>
+</body>
+</html>

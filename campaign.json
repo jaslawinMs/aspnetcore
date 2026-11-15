@@ -1571,11 +1571,17 @@
         "snippet": "try\n{\n    length = GetMediaTypeWithQualityLength(value, currentIndex, out result);\n}\ncatch\n{\n    length = 0;\n}",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "validated",
+      "notes": [
+        "Original actual parser verified: exactly six FormatException-count rows fail, 157 controls/public-contract rows pass. Empty q= at end publicly throws ArgumentOutOfRangeException(index), while q= followed by comma throws FormatException; preserve both. Acceptance defined before shipping edits; actual-owner parser and request formatter-selector harness prepared.",
+        "Green actual-owner experiment: 163/163 tests, all 12 report-safe new rows, formatting and all 39 original parser/real request-selector outputs verified. Immutable 75-file DLL/JSON closure differs only in Mvc.Core. Starting first paired comparison; no tuning or measured comparison previously consumed.",
+        "Round1: all 17 malformed-quality non-public targets improve87.24–95.61% parser/71.17–94.02% selector, but public invalid-q adds168 B/op/+36.15%, plain valid Accept+19.74%. One hypothesis-driven inlining tune at the new internal seam is green:163/163, all12 unique rows, all39 outputs, identical75-file closure except owner. Starting round2 on separate after-2; remaining budget2.",
+        "Inlining tune rejected: valid public controls21–30% slower despite restored public throwing allocation. Final alternative returns invalid numeric segment to public double.Parse wrapper, preserving exact exception details; isolated final harness uses index checksum instead of observer interface foreach. Final164/164 tests/all13 rows pass; exact original reused-owner tests158 controls pass/six expected single-FormatException rows fail;39 outputs/messages verified. Starting last comparison3 with identical final harness/deps and original/proposed owner-only75-file closure; old snapshots/results retained, no fourth comparison.",
+        "Exactly3 comparisons/234 outcomes/234 actual receipts consumed; final source+corrected harness use only round3. All17 malformed-quality parser/selector targets improve70.71–95.73% and saveheap; full Selector_Invalid_32 -94.73%,16060→1464 B. Final public valid controls+8.73–25.28% and public invalid+16.23%/+168 B retained explicitly, not universal improvement.164 final tests/all13 unique rows green; exact original164 baseline158 controls pass/six expected exception-count failures; public exception types/parameters/messages preserved. No fourth comparison."
+      ],
+      "branch": "autoperf/F050-accept-header-parse-without-exception",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-14T16:26:00.4663004-08:00"
     },
     {
       "id": "F051",

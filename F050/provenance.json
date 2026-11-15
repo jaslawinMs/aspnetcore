@@ -1,0 +1,69 @@
+{
+  "candidate": "F050",
+  "disposition": "measured-malformed-quality-tradeoff-draft",
+  "baseline_revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "source_revision": "d16c7fc5d6fbcfaebac99940070f123b67fd5ddf",
+  "source_branch": "autoperf/F050-accept-header-parse-without-exception",
+  "source_hashes": [
+    {
+      "path": "src/Mvc/Mvc.Core/src/Formatters/AcceptHeaderParser.cs",
+      "sha256": "3CF292A2730BC42239E3B808CB19EEE9EB10D47F1AE4AE34F5ABCC4F57575E71"
+    },
+    {
+      "path": "src/Mvc/Mvc.Core/src/Formatters/MediaType.cs",
+      "sha256": "465120249DB3081CC9C5936FC1EC3BF89B63819E3C2A2225C5B652F623DE3325"
+    },
+    {
+      "path": "src/Mvc/Mvc.Core/test/Formatters/AcceptHeaderParserTest.cs",
+      "sha256": "A9F4FC479A26CF7A3FA824C731C0ADF396D2EBC2551D12AF5166C33C97FD2850"
+    }
+  ],
+  "final_snapshot": "after-3",
+  "final_before_snapshot": "before-final",
+  "final_report_rounds": [
+    3
+  ],
+  "discarded_prototype_rounds": [
+    1,
+    2
+  ],
+  "comparisons_consumed": 3,
+  "maximum_comparisons": 3,
+  "measured_observations_each": 8,
+  "fixed_cases": 39,
+  "raw_benchmark_outcomes": 234,
+  "matching_actual_producer_receipts": 234,
+  "recursive_closure_files_per_comparison": 75,
+  "only_changed_assembly_within_each_pair": "Microsoft.AspNetCore.Mvc.Core.dll",
+  "identical_harness_runtime_dependencies_within_each_pair": true,
+  "harness_revision_identical_across_all_rounds": false,
+  "final_harness_revision": "harness-final",
+  "original_final_owner_reuse": "Exact immutable original before Mvc.Core DLL/PDB with byte-identical final harness/runtime/deps/other assemblies; original source snapshots/hashes retained.",
+  "final_original_test_owner_reuse": "Final test DLL/deps with exact original before Mvc.Core DLL/PDB in isolated test output; no shipping source reset.",
+  "final_original_test_total": 164,
+  "final_original_controls_passed": 158,
+  "expected_original_real_exception_failures": 6,
+  "final_proposed_tests_passed": 164,
+  "final_focused_unique_rows": 13,
+  "successful_test_outcomes_across_five_valid_suites": 805,
+  "expected_original_failure_outcomes_across_two_suites": 12,
+  "existing_platform_skips": 0,
+  "actual_boundary": "Actual internal Accept parser via setup-only delegate, actual request Headers.Accept and real DefaultOutputFormatterSelector/StringOutputFormatter/SystemTextJsonOutputFormatter; material media-type/quality/buffer/offset and formatter/content-type outputs.",
+  "new_public_api_signature_or_default": false,
+  "shared_host": true,
+  "serial_builds_tests_and_measurements": true,
+  "build_maximum_nodes": 2,
+  "retained_regressions": [
+    "Final public valid factory controls+8.73-25.28%; Public_EmptyQualityEnd+6.30%.",
+    "Final Public_InvalidQuality+16.23%,456→624 B/op (+168), despite identical observed exception type/message.",
+    "Final Parse_OutOfRange+4.72%, Parse_Valid_1+2.03%, Parse_DuplicateValid+1.17%; unchanged heap.",
+    "Final Selector_UnsupportedReturn406+7.31%/CV5.63%, Selector_ValidQuality+2.52%/CV6.39%, Selector_ValidText+2.05%.",
+    "Discarded round1 public invalid+168 B and valid plain Accept+19.74%; discarded round2 valid public controls21-30% slower."
+  ],
+  "unverified_boundaries": [
+    "HTTP response serialization/network/application throughput, cold/JIT, contention and memory-pressure behavior.",
+    "JIT/frame/native-code attribution for timing/allocation shifts, including old observer interface foreach+56 B.",
+    "Other malformed header partitions; empty q= at end retains ArgumentOutOfRangeException fallback, not a no-exceptions-for-all-invalid-inputs claim.",
+    "Other runtime versions, platforms or dedicated-host performance."
+  ]
+}
