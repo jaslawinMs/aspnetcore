@@ -12,7 +12,7 @@ internal static partial class LoggingExtensions
     [LoggerMessage(1, LogLevel.Debug, "Authorization was successful.", EventName = "UserAuthorizationSucceeded")]
     public static partial void UserAuthorizationSucceeded(this ILogger logger);
 
-    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed")]
+    [LoggerMessage(2, LogLevel.Information, "Authorization failed. {Reason}", EventName = "UserAuthorizationFailed", SkipEnabledCheck = true)]
     private static partial void UserAuthorizationFailed(this ILogger logger, string reason);
 
     public static void UserAuthorizationFailed(this ILogger logger, AuthorizationFailure failure)
@@ -20,6 +20,11 @@ internal static partial class LoggingExtensions
         string reason;
         if (failure.FailCalled)
         {
+            if (!logger.IsEnabled(LogLevel.Information))
+            {
+                return;
+            }
+
             reason = failure.FailureReasons.Any()
                 ? "Fail() was explicitly called. Authorization failed due to:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailureReasons.Select(reason => reason.Message))
                 : "Fail() was explicitly called.";
@@ -27,6 +32,10 @@ internal static partial class LoggingExtensions
         else
         {
             reason = "These requirements were not met:" + Environment.NewLine + string.Join(Environment.NewLine, failure.FailedRequirements);
+            if (!logger.IsEnabled(LogLevel.Information))
+            {
+                return;
+            }
         }
 
         UserAuthorizationFailed(logger, reason);
