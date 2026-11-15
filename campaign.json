@@ -2199,11 +2199,14 @@
         "snippet": "parameterValue = JsonSerializer.Deserialize(\n    value.GetRawText(),\n    parameterType,\n    ServerComponentSerializationSettings.JsonSerializationOptions);",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "duplicate",
+      "notes": [
+        "Current upstream main still37e809e;active dotnet/aspnetcore#68295 head9ca33ec5 removes typed value.GetRawText via JsonElement/JsonTypeInfo overload. Verify immutable source before scoped duplicate disposition;do not claim its broad metadata-first proposal is equivalent or approved.",
+        "F075 duplicate of active dotnet/aspnetcore#68295 at immutable head9ca33ec5b0caa8ad1fd6e8b6ecddfe5671bc52dd:same typed component parameter value.GetRawText intermediate is removed. Not merged;no claim of77-file behavioral equivalence,API approval or performance gain.0 source changes,0 new benchmark projects,0 comparisons,0 new drafts. Actual current-main/native Git and upstream/API blob source identities pass;12 immutable files at1b0c9df556062a0fccd722490b0096d41b26bf8d and independent fork tracking branch at unchanged main verified. Reassess if upstream proposal is closed without merge."
+      ],
+      "branch": "autoperf/F075-typed-parameter-deserialization-overlap",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-15T09:50:45.7951607-08:00"
     },
     {
       "id": "F076",
@@ -2226,11 +2229,13 @@
         "snippet": "JsonElement je => JsonSerializer.Deserialize<SerializedRenderFragment>(je.GetRawText(), jsonOptions),",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "investigating",
+      "notes": [
+        "Active dotnet/aspnetcore#68295 also removes nested SerializedRenderFragment attribute je.GetRawText. Capture actual main and immutable head source,then assess only this exact allocation overlap;no broad API/options equivalence or timing claim."
+      ],
+      "branch": "autoperf/F076-nested-render-fragment-deserialization-overlap",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-15T09:46:53.9593349-08:00"
     },
     {
       "id": "F077",
