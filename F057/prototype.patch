@@ -1,0 +1,15 @@
+diff --git a/src/Components/Components/src/ChangeDetection.cs b/src/Components/Components/src/ChangeDetection.cs
+index 9fef8303d8..27be982adc 100644
+--- a/src/Components/Components/src/ChangeDetection.cs
++++ b/src/Components/Components/src/ChangeDetection.cs
+@@ -20,8 +20,8 @@ internal sealed class ChangeDetection
+ 
+     public static bool MayHaveChanged<T1, T2>(T1 oldValue, T2 newValue)
+     {
+-        var oldIsNotNull = oldValue != null;
+-        var newIsNotNull = newValue != null;
++        var oldIsNotNull = typeof(T1).IsValueType && Nullable.GetUnderlyingType(typeof(T1)) is null || oldValue is not null;
++        var newIsNotNull = typeof(T2).IsValueType && Nullable.GetUnderlyingType(typeof(T2)) is null || newValue is not null;
+         if (oldIsNotNull != newIsNotNull)
+         {
+             return true; // One's null and the other isn't, so different
