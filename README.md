@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 60/358 finalized**: 43 drafts, 8 no-gain, 5 rejected and 4 duplicates;
-298 findings remain unfinished.
+**Progress: 61/358 finalized**: 44 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+297 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -61,6 +61,7 @@ well as the largest speedup.
 | F081 | [Draft jaslawinMs/aspnetcore#85](https://github.com/jaslawinMs/aspnetcore/pull/85); selected large UTF8 saves 20-118.6 KB/op and 64 KiB improves 68.38%; small/typical UTF8 remains 11.72%/12.57% slower and large UTF16 14.02% slower; two strategies, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [Large Facebook UTF8 payload decoding](F081/README.md) |
 | F082 | [Draft jaslawinMs/aspnetcore#87](https://github.com/jaslawinMs/aspnetcore/pull/87); valid UTF8 small/1 KiB/16 KiB/64 KiB improves 13.67%/23.68%/53.08%/80.41%; malformed UTF8 large remains 20.36% slower with 16616 B/op extra; one strategy, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [MicrosoftAccount owned UTF8 memory parsing](F082/README.md) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
+| F084 | [Draft jaslawinMs/aspnetcore#89](https://github.com/jaslawinMs/aspnetcore/pull/89); selected ASCII32/64 paths improve 22.66%/32.96%, escaped/Unicode64 improve 38.92%/41.26% with lower heap; HEAD64/root remain 52.86%/49.41% slower, ordinary Two 4.12% and custom64 8.59% slower; two strategies, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [Default-encoder directory breadcrumb prefixes](F084/README.md) |
 | F085 | No-gain; all heap unchanged, tiny lookup differences and actual parser/control non-wins retained | [Inline known HTTP method record experiment](F085/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
