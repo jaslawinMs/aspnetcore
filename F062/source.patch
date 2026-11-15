@@ -1,0 +1,252 @@
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/src/Proxying/SpaProxy.cs b/src/Middleware/Spa/SpaServices.Extensions/src/Proxying/SpaProxy.cs
+index 92a2bbcc5c..a552c21f22 100644
+--- a/src/Middleware/Spa/SpaServices.Extensions/src/Proxying/SpaProxy.cs
++++ b/src/Middleware/Spa/SpaServices.Extensions/src/Proxying/SpaProxy.cs
+@@ -59,9 +59,10 @@ internal static class SpaProxy
+         bool proxy404s)
+     {
+         // Stop proxying if either the server or client wants to disconnect
+-        var proxyCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(
++        using var proxyCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
+             context.RequestAborted,
+-            applicationStoppingToken).Token;
++            applicationStoppingToken);
++        var proxyCancellationToken = proxyCancellationTokenSource.Token;
+ 
+         // We allow for the case where the target isn't known ahead of time, and want to
+         // delay proxied requests until the target becomes known. This is useful, for example,
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/test/SpaProxyTests.cs b/src/Middleware/Spa/SpaServices.Extensions/test/SpaProxyTests.cs
+index 87e31efef8..3887b1d705 100644
+--- a/src/Middleware/Spa/SpaServices.Extensions/test/SpaProxyTests.cs
++++ b/src/Middleware/Spa/SpaServices.Extensions/test/SpaProxyTests.cs
+@@ -11,6 +11,9 @@ using System.Net.Http;
+ using System.Net;
+ using System.Threading;
+ using Moq.Protected;
++using System.IO;
++using System.Runtime.CompilerServices;
++using System.Text;
+ 
+ namespace Microsoft.AspNetCore.SpaServices.Extensions.Tests;
+ 
+@@ -58,4 +61,220 @@ public class SpaProxyTests
+         var res = await SpaProxy.PerformProxyRequest(context, httpClient, baseUriTask, CancellationToken.None, true);
+         Assert.Equal(expected, forwardedRequestMessage.RequestUri.ToString());
+     }
++
++    [Theory]
++    [InlineData("Http200")]
++    [InlineData("Skipped404")]
++    [InlineData("Proxied404")]
++    [InlineData("BaseUriFailure")]
++    [InlineData("SendCanceled")]
++    [InlineData("SendIOException")]
++    [InlineData("SendHttpRequestException")]
++    [InlineData("CopyIOException")]
++    public void PerformProxyRequest_DoesNotRetainRequestCancellationSource(string outcome)
++    {
++        using var applicationStopping = new CancellationTokenSource();
++        var requestSource = CompleteProxyRequest(outcome, applicationStopping.Token);
++
++        GC.Collect();
++        GC.WaitForPendingFinalizers();
++        GC.Collect();
++
++        Assert.False(requestSource.TryGetTarget(out _));
++        GC.KeepAlive(applicationStopping);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public async Task PerformProxyRequest_KeepsCancellationLinkedUntilResponseCopyCompletes(bool failCopy)
++    {
++        using var applicationStopping = new CancellationTokenSource();
++        using var requestAborted = new CancellationTokenSource();
++        var (context, httpClient) = GetHttpContextAndClient("/test", "", static _ => { });
++        using (httpClient)
++        using (var responseBody = new ResponseCopyStream(failCopy))
++        {
++            context.RequestAborted = requestAborted.Token;
++            context.Response.Body = responseBody;
++            var proxyTask = SpaProxy.PerformProxyRequest(context, httpClient,
++                Task.FromResult(new Uri("http://localhost:3000")), applicationStopping.Token, proxy404s: true);
++
++            await responseBody.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
++            Assert.False(proxyTask.IsCompleted);
++            Assert.True(responseBody.Token.CanBeCanceled);
++            using (var registration = responseBody.Token.Register(static () => { }))
++            {
++                Assert.NotEqual(default(CancellationTokenRegistration), registration);
++            }
++
++            responseBody.Release.SetResult();
++            Assert.True(await proxyTask.WaitAsync(TimeSpan.FromSeconds(30)));
++            Assert.Equal(failCopy ? "" : "Test", Encoding.UTF8.GetString(responseBody.ToArray()));
++            using (var registration = responseBody.Token.Register(static () => { }))
++            {
++                Assert.Equal(default(CancellationTokenRegistration), registration);
++            }
++
++            applicationStopping.Cancel();
++            requestAborted.Cancel();
++            Assert.False(responseBody.Token.IsCancellationRequested);
++        }
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public async Task PerformProxyRequest_CancelsPendingResponseCopyFromEitherParent(bool stopApplication)
++    {
++        using var applicationStopping = new CancellationTokenSource();
++        using var requestAborted = new CancellationTokenSource();
++        var (context, httpClient) = GetHttpContextAndClient("/test", "", static _ => { });
++        using (httpClient)
++        using (var responseBody = new ResponseCopyStream())
++        {
++            context.RequestAborted = requestAborted.Token;
++            context.Response.Body = responseBody;
++            var proxyTask = SpaProxy.PerformProxyRequest(context, httpClient,
++                Task.FromResult(new Uri("http://localhost:3000")), applicationStopping.Token, proxy404s: true);
++
++            await responseBody.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
++            Assert.False(proxyTask.IsCompleted);
++            Assert.False(responseBody.Token.IsCancellationRequested);
++            (stopApplication ? applicationStopping : requestAborted).Cancel();
++
++            Assert.True(await proxyTask.WaitAsync(TimeSpan.FromSeconds(30)));
++            Assert.True(responseBody.Token.IsCancellationRequested);
++            Assert.Empty(responseBody.ToArray());
++            Assert.False((stopApplication ? requestAborted : applicationStopping).IsCancellationRequested);
++        }
++    }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    private static WeakReference<CancellationTokenSource> CompleteProxyRequest(string outcome, CancellationToken applicationStopping)
++    {
++        using var requestAborted = new CancellationTokenSource();
++        var requestSource = new WeakReference<CancellationTokenSource>(requestAborted);
++        var context = new DefaultHttpContext();
++        context.Request.Method = "GET";
++        context.Request.Path = "/test";
++        context.RequestAborted = requestAborted.Token;
++        using var responseBody = new ResponseCopyStream(outcome == "CopyIOException");
++        context.Response.Body = responseBody;
++        responseBody.Release.SetResult();
++
++        var messageHandler = new Mock<HttpMessageHandler>();
++        var send = messageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync",
++            ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
++        var sendFailure = new HttpRequestException("send failed");
++        switch (outcome)
++        {
++            case "SendCanceled":
++                send.ThrowsAsync(new OperationCanceledException("send canceled"));
++                break;
++            case "SendIOException":
++                send.ThrowsAsync(new IOException("send interrupted"));
++                break;
++            case "SendHttpRequestException":
++                send.ThrowsAsync(sendFailure);
++                break;
++            default:
++                send.ReturnsAsync(new HttpResponseMessage
++                {
++                    StatusCode = outcome is "Skipped404" or "Proxied404" ? HttpStatusCode.NotFound : HttpStatusCode.OK,
++                    Content = new StringContent("Test")
++                });
++                break;
++        }
++
++        using var httpClient = new HttpClient(messageHandler.Object);
++        var uriFailure = new InvalidOperationException("target unavailable");
++        var baseUriTask = outcome == "BaseUriFailure"
++            ? Task.FromException<Uri>(uriFailure)
++            : Task.FromResult(new Uri("http://localhost:3000"));
++        if (outcome == "BaseUriFailure")
++        {
++            var exception = Assert.Throws<InvalidOperationException>(() =>
++                SpaProxy.PerformProxyRequest(context, httpClient, baseUriTask, applicationStopping, proxy404s: true)
++                    .GetAwaiter().GetResult());
++            Assert.Same(uriFailure, exception);
++        }
++        else if (outcome == "SendHttpRequestException")
++        {
++            var exception = Assert.Throws<HttpRequestException>(() =>
++                SpaProxy.PerformProxyRequest(context, httpClient, baseUriTask, applicationStopping, proxy404s: true)
++                    .GetAwaiter().GetResult());
++            Assert.Same(sendFailure, exception.InnerException);
++            Assert.Contains("http://localhost:3000/test", exception.Message);
++        }
++        else
++        {
++            var result = SpaProxy.PerformProxyRequest(context, httpClient, baseUriTask, applicationStopping,
++                proxy404s: outcome != "Skipped404").GetAwaiter().GetResult();
++            Assert.Equal(outcome != "Skipped404", result);
++            Assert.Equal(outcome == "Proxied404" ? 404 : 200, context.Response.StatusCode);
++            Assert.Equal(outcome is "Http200" or "Proxied404" ? "Test" : "",
++                Encoding.UTF8.GetString(responseBody.ToArray()));
++        }
++
++        return requestSource;
++    }
++
++    private sealed class ResponseCopyStream(bool failCopy = false) : Stream
++    {
++        private readonly MemoryStream _written = new();
++
++        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
++        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
++        public CancellationToken Token { get; private set; }
++        public override bool CanRead => false;
++        public override bool CanSeek => false;
++        public override bool CanWrite => true;
++        public override long Length => _written.Length;
++        public override long Position
++        {
++            get => _written.Position;
++            set => throw new NotSupportedException();
++        }
++
++        public byte[] ToArray() => _written.ToArray();
++        public override void Flush() => _written.Flush();
++        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
++        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
++        public override void SetLength(long value) => throw new NotSupportedException();
++        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
++
++        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
++        {
++            return WriteCoreAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
++        }
++
++        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
++        {
++            return WriteCoreAsync(buffer, cancellationToken);
++        }
++
++        private async ValueTask WriteCoreAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
++        {
++            Token = cancellationToken;
++            Started.TrySetResult();
++            await Release.Task.WaitAsync(cancellationToken);
++            if (failCopy)
++            {
++                throw new IOException("copy interrupted");
++            }
++
++            _written.Write(buffer.Span);
++        }
++
++        protected override void Dispose(bool disposing)
++        {
++            if (disposing)
++            {
++                _written.Dispose();
++            }
++
++            base.Dispose(disposing);
++        }
++    }
+ }

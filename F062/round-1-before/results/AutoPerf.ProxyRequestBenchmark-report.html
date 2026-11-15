@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.ProxyRequestBenchmark-20261115-005025</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>         Method</th><th>        Recipe</th><th>  Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ProxyCompletedRequest</td><td>EmptyHttp</td><td>310.443 &mu;s</td><td>43.3781 &mu;s</td><td>22.6876 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>ProxyCompletedRequest</td><td>FactoryThrows</td><td>7.477 &mu;s</td><td>0.3382 &mu;s</td><td>0.1769 &mu;s</td><td>-</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>ProxyCompletedRequest</td><td>FaultedUri</td><td>2,294.508 &mu;s</td><td>322.0388 &mu;s</td><td>168.4325 &mu;s</td><td>41.6667</td><td>41.6667</td><td>41.6667</td><td>6,147 KB</td>
+</tr><tr><td>ProxyCompletedRequest</td><td>Http200</td><td>171.317 &mu;s</td><td>41.1976 &mu;s</td><td>21.5471 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>ProxyCompletedRequest</td><td>Http2(...)quest [26]</td><td>161.606 &mu;s</td><td>14.4858 &mu;s</td><td>7.5764 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>ProxyCompletedRequest</td><td>Http404</td><td>160.696 &mu;s</td><td>21.1787 &mu;s</td><td>11.0768 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr></tbody></table>
+</body>
+</html>

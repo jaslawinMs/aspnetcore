@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Middleware\Spa\SpaServices.Extensions\src\Microsoft.AspNetCore.SpaServices.Extensions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Middleware\WebSockets\src\Microsoft.AspNetCore.WebSockets.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Kestrel\src\Microsoft.AspNetCore.Server.Kestrel.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Microsoft.AspNetCore.Server.Kestrel.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Transport.Sockets\src\Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Transport.Quic\src\Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Transport.NamedPipes\src\Microsoft.AspNetCore.Server.Kestrel.Transport.NamedPipes.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SpaServices.Extensions.Tests\Release\net12.0\Microsoft.*.dll"
+               Exclude="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SpaServices.Extensions.Tests\Release\net12.0\*Test*.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SpaServices.Extensions.Tests\Release\net12.0\*Generator*.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SpaServices.Extensions.Tests\Release\net12.0\Microsoft.AspNetCore.SpaServices.Extensions.dll" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SpaServices.Extensions.Tests\Release\net12.0\Microsoft.AspNetCore.SpaServices.Extensions.dll')"
+           Text="Build SpaProxyTests Release first; use current-repo shipping dependencies, not an installed ASP.NET framework." />
+  </Target>
+</Project>
