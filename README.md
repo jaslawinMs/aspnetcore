@@ -37,6 +37,7 @@ well as the largest speedup.
 | F054 | [Draft jaslawinMs/aspnetcore#59](https://github.com/jaslawinMs/aspnetcore/pull/59); all16 reached targets lower heap, six repeatable timing wins, unstable first-case/control costs and failed broad-allocation probe retained | [Guarded function catch-up diagnostics](F054/README.md) |
 | F055 | [Draft jaslawinMs/aspnetcore#61](https://github.com/jaslawinMs/aspnetcore/pull/61); all18 filtered-reason targets faster/lower heap in both final pairs, five higher enabled medians and three repeated literal-control costs retained | [Guarded explicit-failure reason diagnostics](F055/README.md) |
 | F056 | [Draft jaslawinMs/aspnetcore#63](https://github.com/jaslawinMs/aspnetcore/pull/63); all22 filtered-unmet targets faster/lower heap in all three pairs, all15 higher control medians and five repeated control costs retained | [Guarded unmet-requirement diagnostics](F056/README.md) |
+| F057 | No-gain; all114 warmed heap pairs unchanged, no target faster every pair, Tier0 resource savings and nullable-control regressions retained; source restored | [Generic component null-check boxing](F057/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
