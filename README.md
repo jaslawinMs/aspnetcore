@@ -40,6 +40,7 @@ well as the largest speedup.
 | F057 | No-gain; all114 warmed heap pairs unchanged, no target faster every pair, Tier0 resource savings and nullable-control regressions retained; source restored | [Generic component null-check boxing](F057/README.md) |
 | F058 | Rejected; shipped value-type collections select a different validator, original Tier0 default checks already allocate zero; all22 heap pairs unchanged and public/control timing differences retained; source restored | [Default header collection null check](F058/README.md) |
 | F059 | [Draft jaslawinMs/aspnetcore#65](https://github.com/jaslawinMs/aspnetcore/pull/65); eight repeated normal-view timing wins, untouched no-sections improvement, volatile helper-long case and ordinal fallback costs retained; no structural heap saving | [Guarded Razor rendered-section membership](F059/README.md) |
+| F060 | Duplicate of F059; same method and probe pair, exact fresh original source identity; canonical measurements reused, zero new comparisons or second draft | [Razor section semantic alias](F060/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
