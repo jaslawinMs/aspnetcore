@@ -1,0 +1,314 @@
+diff --git a/src/Components/AI/src/Pipeline/BlockMappingPipeline.cs b/src/Components/AI/src/Pipeline/BlockMappingPipeline.cs
+index 46228004cf..1a55981acf 100644
+--- a/src/Components/AI/src/Pipeline/BlockMappingPipeline.cs
++++ b/src/Components/AI/src/Pipeline/BlockMappingPipeline.cs
+@@ -122,7 +122,10 @@ internal class BlockMappingPipeline
+                     {
+                         var catchUpResult = activeEntry.Invoke(context);
+ 
+-                        BlockMappingPipelineLog.ActiveHandlerResult(_logger, emitBlock.GetType().Name, catchUpResult.Kind.ToString(), emitBlock.Id);
++                        if (_logger.IsEnabled(LogLevel.Debug))
++                        {
++                            BlockMappingPipelineLog.ActiveHandlerResult(_logger, emitBlock.GetType().Name, catchUpResult.Kind.ToString(), emitBlock.Id);
++                        }
+ 
+                         if (catchUpResult.Kind == HandleResult.ResultKind.Complete)
+                         {
+diff --git a/src/Components/AI/test/Pipeline/BlockMappingPipelineTests.cs b/src/Components/AI/test/Pipeline/BlockMappingPipelineTests.cs
+index 5735d17c97..fa500e0f67 100644
+--- a/src/Components/AI/test/Pipeline/BlockMappingPipelineTests.cs
++++ b/src/Components/AI/test/Pipeline/BlockMappingPipelineTests.cs
+@@ -2,11 +2,142 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.Extensions.AI;
++using Microsoft.Extensions.Logging;
++using Moq;
+ 
+ namespace Microsoft.AspNetCore.Components.AI.Tests.Pipeline;
+ 
+ public class BlockMappingPipelineTests
+ {
++    [Theory]
++    [InlineData(1, false)]
++    [InlineData(4, false)]
++    [InlineData(16, false)]
++    [InlineData(1, true)]
++    [InlineData(4, true)]
++    [InlineData(16, true)]
++    public async Task Process_DebugDisabled_CatchUpDoesNotAllocateDiagnostics(int callCount, bool completed)
++    {
++        var logger = new CatchUpAllocationLogger();
++        var options = new UIAgentOptions();
++        options.AddBlockHandler(new AllocationTrackingFunctionHandler(logger));
++        for (var warmup = 0; warmup < 16; warmup++)
++        {
++            foreach (var enabled in new[] { false, true })
++            {
++                logger.Reset(enabled);
++                var warmPipeline = new BlockMappingPipeline(options, logger);
++                await ProcessAsync(warmPipeline, CreateFunctionUpdate(1, completed));
++                warmPipeline.Finalize();
++            }
++        }
++
++        logger.Reset(enabled: false);
++        var pipeline = new BlockMappingPipeline(options, logger);
++        var update = CreateFunctionUpdate(callCount, completed);
++        var blocks = await ProcessAsync(pipeline, update);
++        var disabledCatchUpAllocated = logger.CatchUpAllocated;
++        pipeline.Finalize();
++
++        Assert.Equal(callCount, logger.CheckpointCount);
++        Assert.Equal(callCount, logger.EmissionCheckpointCount);
++        Assert.Equal(0, logger.DiagnosticAllocated);
++        AssertFunctionBlocks(blocks, update, callCount, completed);
++
++        logger.Reset(enabled: true);
++        var enabledPipeline = new BlockMappingPipeline(options, logger);
++        var enabledBlocks = await ProcessAsync(enabledPipeline, update);
++        var enabledCatchUpAllocated = logger.CatchUpAllocated;
++        enabledPipeline.Finalize();
++
++        Assert.Equal(callCount, logger.CheckpointCount);
++        Assert.Equal(callCount, logger.EmissionCheckpointCount);
++        Assert.True(enabledCatchUpAllocated > disabledCatchUpAllocated,
++            $"Complete catch-up diagnostics must allocate only when enabled; enabled={enabledCatchUpAllocated}, disabled={disabledCatchUpAllocated}.");
++        AssertFunctionBlocks(enabledBlocks, update, callCount, completed);
++    }
++
++    [Theory]
++    [InlineData(false, false)]
++    [InlineData(true, false)]
++    [InlineData(true, true)]
++    public async Task Process_DebugEnabled_PreservesCatchUpFieldsAndFunctionState(bool completed, bool resultFirst)
++    {
++        var logger = new Mock<ILogger>();
++        logger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
++        var pipeline = new BlockMappingPipeline(new UIAgentOptions(), logger.Object);
++        var call = new FunctionCallContent("catch-up-call", "tool",
++            new Dictionary<string, object?> { ["index"] = 0 });
++        var result = new FunctionResultContent("catch-up-call", "result");
++        var update = new ChatResponseUpdate
++        {
++            Role = ChatRole.Assistant,
++            AuthorName = "provider",
++            Contents = completed ? resultFirst ? [result, call] : [call, result] : [call]
++        };
++
++        var blocks = await ProcessAsync(pipeline, update);
++
++        var block = Assert.IsType<FunctionInvocationContentBlock>(Assert.Single(blocks));
++        Assert.Same(call, block.Call);
++        Assert.Same(call.Arguments, block.Arguments);
++        Assert.Equal("tool", block.ToolName);
++        Assert.Equal(ChatRole.Assistant, block.Role);
++        Assert.Equal("provider", block.AuthorName);
++        Assert.Equal(completed, block.HasResult);
++        Assert.Same(completed ? result : null, block.Result);
++        Assert.Equal(completed ? BlockLifecycleState.Inactive : BlockLifecycleState.Active, block.LifecycleState);
++        AssertCatchUpLog(logger, block, completed ? "Complete" : "Pass");
++        var notifications = 0;
++        using var subscription = block.OnChanged(() => notifications++);
++        pipeline.Finalize();
++        Assert.Equal(BlockLifecycleState.Inactive, block.LifecycleState);
++        Assert.Equal(completed ? 0 : 1, notifications);
++    }
++
++    [Fact]
++    public async Task Process_DebugEnabled_RegisteredCatchUpUpdatePreservesFieldsAndLifecycle()
++    {
++        var logger = new Mock<ILogger>();
++        logger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
++        var options = new UIAgentOptions();
++        options.AddBlockHandler(new CatchUpUpdateFunctionHandler());
++        var pipeline = new BlockMappingPipeline(options, logger.Object);
++        var update = CreateFunctionUpdate(1, completed: false);
++
++        var blocks = await ProcessAsync(pipeline, update);
++
++        var block = Assert.IsType<FunctionInvocationContentBlock>(Assert.Single(blocks));
++        Assert.Same(update.Contents[0], block.Call);
++        Assert.False(block.HasResult);
++        Assert.Equal(BlockLifecycleState.Active, block.LifecycleState);
++        AssertCatchUpLog(logger, block, "Update");
++        var notifications = 0;
++        using var subscription = block.OnChanged(() => notifications++);
++        pipeline.Finalize();
++        Assert.Equal(BlockLifecycleState.Inactive, block.LifecycleState);
++        Assert.Equal(1, notifications);
++    }
++
++    [Fact]
++    public async Task Process_DebugDisabled_ActiveHandlerStillFiltersResult()
++    {
++        var logger = new Mock<ILogger>();
++        logger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns((LogLevel level) => level >= LogLevel.Information);
++        var pipeline = new BlockMappingPipeline(new UIAgentOptions(), logger.Object);
++        var first = await ProcessAsync(pipeline, CreateTextUpdate("active-response", "first"));
++
++        var more = await ProcessAsync(pipeline, CreateTextUpdate("active-response", "second"));
++        pipeline.Finalize();
++
++        Assert.Empty(more);
++        var block = Assert.IsType<RichContentBlock>(Assert.Single(first));
++        Assert.Equal("firstsecond", block.RawText);
++        Assert.Equal(BlockLifecycleState.Inactive, block.LifecycleState);
++        Assert.DoesNotContain(logger.Invocations, i =>
++            i.Method.Name == nameof(ILogger.Log) && i.Arguments[1] is EventId { Id: 2 });
++    }
++
+     [Fact]
+     public async Task Process_SingleTextUpdate_EmitsOneRichContentBlock()
+     {
+@@ -244,6 +375,150 @@ public class BlockMappingPipelineTests
+         return blocks;
+     }
+ 
++    private static ChatResponseUpdate CreateFunctionUpdate(int callCount, bool completed)
++    {
++        var update = new ChatResponseUpdate
++        {
++            Role = ChatRole.Assistant,
++            AuthorName = "provider",
++            Contents = []
++        };
++        for (var i = 0; i < callCount; i++)
++        {
++            var id = $"catch-up-{i}";
++            update.Contents.Add(new FunctionCallContent(id, "tool", new Dictionary<string, object?> { ["index"] = i }));
++            if (completed)
++            {
++                update.Contents.Add(new FunctionResultContent(id, $"result-{i}"));
++            }
++        }
++
++        return update;
++    }
++
++    private static void AssertFunctionBlocks(IReadOnlyList<ContentBlock> blocks, ChatResponseUpdate update, int callCount, bool completed)
++    {
++        var calls = update.Contents.OfType<FunctionCallContent>().ToArray();
++        var results = update.Contents.OfType<FunctionResultContent>().ToArray();
++        Assert.Equal(callCount, blocks.Count);
++        for (var i = 0; i < callCount; i++)
++        {
++            var block = Assert.IsType<FunctionInvocationContentBlock>(blocks[i]);
++            Assert.Same(calls[i], block.Call);
++            Assert.Same(calls[i].Arguments, block.Arguments);
++            Assert.Equal(calls[i].CallId, block.Id);
++            Assert.Equal("tool", block.ToolName);
++            Assert.Equal(update.Role, block.Role);
++            Assert.Equal(update.AuthorName, block.AuthorName);
++            Assert.Equal(completed, block.HasResult);
++            Assert.Same(completed ? results[i] : null, block.Result);
++            Assert.Equal(BlockLifecycleState.Inactive, block.LifecycleState);
++        }
++    }
++
++    private static void AssertCatchUpLog(Mock<ILogger> logger, FunctionInvocationContentBlock block, string kind)
++    {
++        var invocation = Assert.Single(logger.Invocations.Where(i =>
++            i.Method.Name == nameof(ILogger.Log) && i.Arguments[1] is EventId { Id: 2 }));
++        Assert.Equal(LogLevel.Debug, invocation.Arguments[0]);
++        var state = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(invocation.Arguments[2]);
++        Assert.Equal(nameof(FunctionInvocationContentBlock), Assert.Single(state.Where(p => p.Key == "HandlerType")).Value);
++        Assert.Equal(kind, Assert.Single(state.Where(p => p.Key == "ResultKind")).Value);
++        Assert.Equal(block.Id, Assert.Single(state.Where(p => p.Key == "BlockId")).Value);
++        Assert.Equal("Active handler {HandlerType} returned {ResultKind} for block {BlockId}",
++            Assert.Single(state.Where(p => p.Key == "{OriginalFormat}")).Value);
++    }
++
++    private sealed class AllocationTrackingFunctionHandler(CatchUpAllocationLogger logger) : ContentBlockHandler<FunctionInvocationContentBlock>
++    {
++        private readonly FunctionInvocationHandler _handler = new();
++
++        public override BlockMappingResult<FunctionInvocationContentBlock> Handle(BlockMappingContext context, FunctionInvocationContentBlock state)
++        {
++            var catchUp = state.Call is not null;
++            var result = _handler.Handle(context, state);
++            if (catchUp)
++            {
++                logger.MarkCatchUpReturn();
++            }
++
++            return result;
++        }
++    }
++
++    private sealed class CatchUpAllocationLogger : ILogger
++    {
++        private long _returnedAt;
++        private bool _armed;
++        private bool _awaitingEmission;
++        private bool _enabled;
++        public int CheckpointCount { get; private set; }
++        public int EmissionCheckpointCount { get; private set; }
++        public long DiagnosticAllocated { get; private set; }
++        public long CatchUpAllocated { get; private set; }
++
++        public void Reset(bool enabled)
++        {
++            _enabled = enabled;
++            _armed = false;
++            _awaitingEmission = false;
++            CheckpointCount = 0;
++            EmissionCheckpointCount = 0;
++            DiagnosticAllocated = 0;
++            CatchUpAllocated = 0;
++        }
++
++        public void MarkCatchUpReturn()
++        {
++            _armed = true;
++            _awaitingEmission = true;
++            _returnedAt = GC.GetAllocatedBytesForCurrentThread();
++        }
++
++        public bool IsEnabled(LogLevel logLevel)
++        {
++            if (logLevel == LogLevel.Debug && _armed)
++            {
++                DiagnosticAllocated += GC.GetAllocatedBytesForCurrentThread() - _returnedAt;
++                CheckpointCount++;
++                _armed = false;
++            }
++            if (logLevel == LogLevel.Information && _awaitingEmission)
++            {
++                CatchUpAllocated += GC.GetAllocatedBytesForCurrentThread() - _returnedAt;
++                EmissionCheckpointCount++;
++                _awaitingEmission = false;
++            }
++
++            return logLevel != LogLevel.None && (logLevel >= LogLevel.Information || logLevel == LogLevel.Debug && _enabled);
++        }
++
++        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
++        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
++            Func<TState, Exception?, string> formatter)
++        {
++            if (logLevel == LogLevel.Debug && !_enabled)
++            {
++                throw new InvalidOperationException("Disabled diagnostic sink invoked.");
++            }
++        }
++    }
++
++    private sealed class CatchUpUpdateFunctionHandler : ContentBlockHandler<FunctionInvocationContentBlock>
++    {
++        private readonly FunctionInvocationHandler _handler = new();
++
++        public override BlockMappingResult<FunctionInvocationContentBlock> Handle(BlockMappingContext context, FunctionInvocationContentBlock state)
++        {
++            var catchUp = state.Call is not null;
++            var result = _handler.Handle(context, state);
++
++            return catchUp && result.Kind == BlockMappingResult<FunctionInvocationContentBlock>.ResultKind.Pass
++                ? BlockMappingResult<FunctionInvocationContentBlock>.Update(state)
++                : result;
++        }
++    }
++
+     private sealed class UppercaseTextBlock : ContentBlock
+     {
+         public string Text { get; set; } = "";
