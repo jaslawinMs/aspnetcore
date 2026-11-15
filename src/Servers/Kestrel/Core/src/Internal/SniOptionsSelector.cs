@@ -18,6 +18,7 @@ internal sealed class SniOptionsSelector
 {
     private const string WildcardHost = "*";
     private const string WildcardPrefix = "*.";
+    private const int WildcardPrefixLookupThreshold = 8;
 
     private readonly string _endpointName;
     private readonly ILogger<HttpsConnectionMiddleware> _logger;
@@ -27,6 +28,7 @@ internal sealed class SniOptionsSelector
 
     private readonly Dictionary<string, SniOptions> _exactNameOptions = new Dictionary<string, SniOptions>(StringComparer.OrdinalIgnoreCase);
     private readonly SortedList<string, SniOptions> _wildcardPrefixOptions = new SortedList<string, SniOptions>(LongestStringFirstComparer.Instance);
+    private readonly Dictionary<string, SniOptions>? _wildcardPrefixOptionsLookup;
     private readonly SniOptions? _wildcardOptions;
 
     public SniOptionsSelector(
@@ -111,6 +113,11 @@ internal sealed class SniOptionsSelector
                 _exactNameOptions.Add(name, sniOptions);
             }
         }
+
+        if (_wildcardPrefixOptions.Count > WildcardPrefixLookupThreshold)
+        {
+            _wildcardPrefixOptionsLookup = new Dictionary<string, SniOptions>(_wildcardPrefixOptions, StringComparer.OrdinalIgnoreCase);
+        }
     }
 
     public (SslServerAuthenticationOptions, ClientCertificateMode) GetOptions(ConnectionContext connection, string serverName)
@@ -119,12 +126,20 @@ internal sealed class SniOptionsSelector
 
         if (!string.IsNullOrEmpty(serverName) && !_exactNameOptions.TryGetValue(serverName, out sniOptions) && IsValidSniServerName(serverName))
         {
-            foreach (var (suffix, options) in _wildcardPrefixOptions)
+            if (_wildcardPrefixOptionsLookup is { } wildcardLookup)
             {
-                if (serverName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                sniOptions = GetIndexedWildcardOptions(serverName, wildcardLookup);
+            }
+            else
+            {
+                for (var i = 0; i < _wildcardPrefixOptions.Count; i++)
                 {
-                    sniOptions = options;
-                    break;
+                    var suffix = _wildcardPrefixOptions.GetKeyAtIndex(i);
+                    if (serverName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        sniOptions = _wildcardPrefixOptions.GetValueAtIndex(i);
+                        break;
+                    }
                 }
             }
         }
@@ -174,6 +189,33 @@ internal sealed class SniOptionsSelector
         }
 
         return (sslOptions, sniOptions.ClientCertificateMode);
+    }
+
+    private SniOptions? GetIndexedWildcardOptions(string serverName, Dictionary<string, SniOptions> wildcardOptions)
+    {
+        // Preserve the best-case scan without hashing when the longest suffix matches.
+        var longestSuffix = _wildcardPrefixOptions.GetKeyAtIndex(0);
+        if (serverName.EndsWith(longestSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            return _wildcardPrefixOptions.GetValueAtIndex(0);
+        }
+
+        var wildcardLookup = wildcardOptions.GetAlternateLookup<ReadOnlySpan<char>>();
+        var serverNameSpan = serverName.AsSpan();
+        var dotIndex = serverNameSpan.IndexOf('.');
+        while (dotIndex >= 0)
+        {
+            serverNameSpan = serverNameSpan[dotIndex..];
+            if (wildcardLookup.TryGetValue(serverNameSpan, out var options))
+            {
+                return options;
+            }
+
+            serverNameSpan = serverNameSpan[1..];
+            dotIndex = serverNameSpan.IndexOf('.');
+        }
+
+        return null;
     }
 
     // RFC 6066 §3 requires the SNI server_name to be a syntactically valid DNS hostname and

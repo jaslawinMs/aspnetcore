@@ -134,6 +134,152 @@ public class SniOptionsSelectorTests
         Assert.Equal("Short", pathDictionary[aSubdomainOptions.ServerCertificate]);
     }
 
+    [Theory]
+    [InlineData("a.b.c.EXAMPLE.org", "Long", 0)]
+    [InlineData("b.c.example.org", "Short", 0)]
+    [InlineData("a.b.d.c.example.org", "Short", 0)]
+    [InlineData("xexample.org", "WildcardOnly", 0)]
+    [InlineData("a.b.c.EXAMPLE.org", "Long", 64)]
+    [InlineData("b.c.example.org", "Short", 64)]
+    [InlineData("a.b.d.c.example.org", "Short", 64)]
+    [InlineData("xexample.org", "WildcardOnly", 64)]
+    public void MatchesWildcardSuffixesAtSuccessiveLabelBoundaries(string serverName, string expectedCertificatePath, int unrelatedWildcardCount)
+    {
+        var sniDictionary = new Dictionary<string, SniConfig>
+            {
+                {
+                    "*.example.org",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "Short" }
+                    }
+                },
+                {
+                    "*.b.c.example.org",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "Long" }
+                    }
+                },
+                {
+                    "*",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "WildcardOnly" }
+                    }
+                }
+            };
+
+        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
+        var certificateConfigLoader = new MockCertificateConfigLoader();
+        var sniOptionsSelector = new SniOptionsSelector(
+            "TestEndpointName",
+            sniDictionary,
+            certificateConfigLoader,
+            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
+            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
+            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
+
+        var (options, _) = sniOptionsSelector.GetOptions(new MockConnectionContext(), serverName);
+
+        Assert.Equal(expectedCertificatePath, certificateConfigLoader.CertToPathDictionary[options.ServerCertificate]);
+    }
+
+    [Theory]
+    [InlineData("client.M\u00dcNCHEN.example.org", "Unicode", 0)]
+    [InlineData("client.xn--mnchen-3ya.example.org", "WildcardOnly", 0)]
+    [InlineData("client.\U00010400.example.org", "Supplementary", 0)]
+    [InlineData("client.M\u00dcNCHEN.example.org", "Unicode", 64)]
+    [InlineData("client.xn--mnchen-3ya.example.org", "WildcardOnly", 64)]
+    [InlineData("client.\U00010400.example.org", "Supplementary", 64)]
+    public void WildcardSuffixMatchingPreservesOrdinalIgnoreCaseAndRawIdnNames(string serverName, string expectedCertificatePath, int unrelatedWildcardCount)
+    {
+        var sniDictionary = new Dictionary<string, SniConfig>
+            {
+                {
+                    "*.m\u00fcnchen.example.org",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "Unicode" }
+                    }
+                },
+                {
+                    "*.\U00010428.example.org",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "Supplementary" }
+                    }
+                },
+                {
+                    "*",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "WildcardOnly" }
+                    }
+                }
+            };
+
+        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
+        var certificateConfigLoader = new MockCertificateConfigLoader();
+        var sniOptionsSelector = new SniOptionsSelector(
+            "TestEndpointName",
+            sniDictionary,
+            certificateConfigLoader,
+            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
+            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
+            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
+
+        var (options, _) = sniOptionsSelector.GetOptions(new MockConnectionContext(), serverName);
+
+        Assert.Equal(expectedCertificatePath, certificateConfigLoader.CertToPathDictionary[options.ServerCertificate]);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(64)]
+    public void ReconstructingSelectorUsesUpdatedSniConfiguration(int unrelatedWildcardCount)
+    {
+        var sniDictionary = new Dictionary<string, SniConfig>
+            {
+                {
+                    "*.example.org",
+                    new SniConfig
+                    {
+                        Certificate = new CertificateConfig { Path = "Original" }
+                    }
+                }
+            };
+        AddUnrelatedWildcards(sniDictionary, unrelatedWildcardCount);
+        var certificateConfigLoader = new MockCertificateConfigLoader();
+        var originalSelector = new SniOptionsSelector(
+            "TestEndpointName",
+            sniDictionary,
+            certificateConfigLoader,
+            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
+            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
+            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
+        var (originalOptions, _) = originalSelector.GetOptions(new MockConnectionContext(), "client.example.org");
+
+        sniDictionary["*.example.org"] = new SniConfig
+        {
+            Certificate = new CertificateConfig { Path = "Updated" }
+        };
+        var updatedSelector = new SniOptionsSelector(
+            "TestEndpointName",
+            sniDictionary,
+            certificateConfigLoader,
+            fallbackHttpsOptions: new HttpsConnectionAdapterOptions(),
+            fallbackHttpProtocols: HttpProtocols.Http1AndHttp2,
+            logger: Mock.Of<ILogger<HttpsConnectionMiddleware>>());
+
+        var (retainedOptions, _) = originalSelector.GetOptions(new MockConnectionContext(), "client.example.org");
+        var (updatedOptions, _) = updatedSelector.GetOptions(new MockConnectionContext(), "client.example.org");
+
+        Assert.Same(originalOptions, retainedOptions);
+        Assert.Equal("Original", certificateConfigLoader.CertToPathDictionary[retainedOptions.ServerCertificate]);
+        Assert.Equal("Updated", certificateConfigLoader.CertToPathDictionary[updatedOptions.ServerCertificate]);
+    }
+
     [Fact]
     public void ServerNameMatchingIsCaseInsensitive()
     {
@@ -1103,6 +1249,17 @@ public class SniOptionsSelectorTests
 
         // Ensure we've checked every property. When new properties get added, we'll have to update this test along with the CloneSslOptions implementation.
         Assert.Empty(propertyNames);
+    }
+
+    private static void AddUnrelatedWildcards(Dictionary<string, SniConfig> sniDictionary, int count)
+    {
+        for (var index = 0; index < count; index++)
+        {
+            sniDictionary.Add($"*.unrelated{index}.other.test", new SniConfig
+            {
+                Certificate = new CertificateConfig { Path = "Unrelated" }
+            });
+        }
     }
 
     private class MockCertificateConfigLoader : ICertificateConfigLoader
