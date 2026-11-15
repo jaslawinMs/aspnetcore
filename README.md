@@ -45,6 +45,7 @@ well as the largest speedup.
 | F062 | [Draft jaslawinMs/aspnetcore#69](https://github.com/jaslawinMs/aspnetcore/pull/69); scoped cleanup and 52-95% large prepared-stop medians, ordinary latency unsupported; first harness artifact and both cold single-GC residuals retained | [SPA proxy cancellation lifetime](F062/README.md) |
 | F068 | Draft proposal | [ModelState breadth-first enumeration](F068/README.md) |
 | F069 | [Draft jaslawinMs/aspnetcore#71](https://github.com/jaslawinMs/aspnetcore/pull/71); large warm lookup gains68-96%, small timing non-wins and extra startup/index costs retained; final strategy measured in one pair only | [Large SNI wildcard selection](F069/README.md) |
+| F070 | [Draft jaslawinMs/aspnetcore#73](https://github.com/jaslawinMs/aspnetcore/pull/73); 64-link menu gains67-69%, fully mixed prepared60-111% and trailing180% regressions retained; qualified trade-off, explicitly not merge-ready | [NavLink common-prefix casing](F070/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
