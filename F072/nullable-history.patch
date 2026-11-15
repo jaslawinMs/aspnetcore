@@ -1,0 +1,19 @@
+commit fab448a153e8e2683a652f1fd1e8ef7d917c3110
+Author: Bart Koelman <10324372+bkoelman@users.noreply.github.com>
+Date:   Tue Aug 5 05:51:55 2025 +0200
+
+    Change `contentType` parameter in `GetSupportedContentTypes` to nullable (#63040)
+
+diff --git a/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs b/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
+index 362171af2b..f14215f6ec 100644
+--- a/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
++++ b/src/Mvc/Mvc.Core/src/Formatters/OutputFormatter.cs
+@@ -30,7 +30,7 @@ public abstract class OutputFormatter : IOutputFormatter, IApiResponseTypeMetada
+ 
+     /// <inheritdoc />
+     public virtual IReadOnlyList<string>? GetSupportedContentTypes(
+-        string contentType,
++        string? contentType,
+         Type objectType)
+     {
+         if (SupportedMediaTypes.Count == 0)

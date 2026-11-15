@@ -1,0 +1,18 @@
+{
+  "candidate": "F072",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "owner": "OutputFormatter.GetSupportedContentTypes",
+  "defined_before_owner_edit": true,
+  "actual_boundary": "Response-format metadata generation through ApiResponseTypeProvider/DefaultApiDescriptionProvider, cached by ApiDescriptionGroupCollectionProvider; not assumed per-request negotiation.",
+  "proposal_scope": "Avoid unnecessary parsing for null requested content types and nonempty supported strings containing neither parameter nor wildcard delimiters. No collection/action/process cache.",
+  "requirements": [
+    "Preserve ordered, original raw result strings and null versus nonnull list behavior.",
+    "Preserve wildcard/parameter matching, malformed-parameter and empty-string errors.",
+    "Observe every public SupportedMediaTypes change and existing CanWriteType ordering.",
+    "Preserve CanWriteResult as an adjacent unchanged-method control; F073 remains independent.",
+    "Prove actual MVC controller discovery produces metadata inputs and inspect ApiDescription response formats; warm cached metadata must not reach the owner.",
+    "Use actual in-tree owners, identical frozen harness/settings/dependencies apart from MVC.Core.",
+    "Run at most three serialized measured comparisons, retaining all regressions/variance/no-gain and avoiding universal or HTTP throughput claims.",
+    "Publish reproducible project, exact commands/runtime/source identities and complete raw evidence before a justified fork-only draft."
+  ]
+}
