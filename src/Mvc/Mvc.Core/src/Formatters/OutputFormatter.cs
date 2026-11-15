@@ -53,6 +53,19 @@ public abstract class OutputFormatter : IOutputFormatter, IApiResponseTypeMetada
 
         foreach (var mediaType in SupportedMediaTypes)
         {
+            // Empty, parameterized, or wildcard values still need the original parser.
+            if (contentType is null && mediaType.Length > 0 &&
+                !mediaType.AsSpan().ContainsAny(';', '*'))
+            {
+                if (mediaTypes is null)
+                {
+                    mediaTypes = new List<string>(SupportedMediaTypes.Count);
+                }
+
+                mediaTypes.Add(mediaType);
+                continue;
+            }
+
             var parsedMediaType = new MediaType(mediaType);
             if (parsedMediaType.HasWildcard)
             {
