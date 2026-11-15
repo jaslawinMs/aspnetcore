@@ -10,6 +10,9 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
+**Progress: 53/358 finalized**: 38 drafts, 8 no-gain, 5 rejected and 2 duplicates;
+305 findings remain unfinished.
+
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
 as speculative optimization PRs. Incompatible replacements are marked
@@ -47,6 +50,7 @@ well as the largest speedup.
 | F069 | [Draft jaslawinMs/aspnetcore#71](https://github.com/jaslawinMs/aspnetcore/pull/71); large warm lookup gains68-96%, small timing non-wins and extra startup/index costs retained; final strategy measured in one pair only | [Large SNI wildcard selection](F069/README.md) |
 | F070 | [Draft jaslawinMs/aspnetcore#73](https://github.com/jaslawinMs/aspnetcore/pull/73); 64-link menu gains67-69%, fully mixed prepared60-111% and trailing180% regressions retained; qualified trade-off, explicitly not merge-ready | [NavLink common-prefix casing](F070/README.md) |
 | F071 | [Draft jaslawinMs/aspnetcore#75](https://github.com/jaslawinMs/aspnetcore/pull/75); exact long/vendor gains54-68%, JSON fallback costs22-26%, unchanged heap and unstable first-row observations retained; qualified trade-off, explicitly not merge-ready | [FormatFilter first-match parsing](F071/README.md) |
+| F072 | [Draft jaslawinMs/aspnetcore#77](https://github.com/jaslawinMs/aspnetcore/pull/77); null-query gains55-90%, larger real metadata9.79%, typical metadata non-win and wildcard-only10.47% cost retained; two strategies/three pairs, qualified trade-off, not merge-ready | [OutputFormatter unconstrained metadata parsing](F072/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
