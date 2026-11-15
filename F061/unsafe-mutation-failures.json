@@ -1,0 +1,18 @@
+[
+  {
+    "test": "Microsoft.AspNetCore.Internal.CookieChunkingTests.DeleteCookieWithUnusualName_MatchesCompletePrefix(key: \"Test=Cookie\")",
+    "message": "Assert.Equal() Failure: Collections differ\r\n                              ↓ (pos 1)\r\nExpected: [\"Unrelated=value\", \"Test=CookieC1=unreceived\", \"Test=Cookie=; expires=Thu, 01 Jan 1970 00:00:00 GM\"···]\r\nActual:   [\"Unrelated=value\", \"Test=Cookie=; expires=Thu, 01 Jan 1970 00:00:00 GM\"···]\r\n                              ↑ (pos 1)"
+  },
+  {
+    "test": "Microsoft.AspNetCore.Internal.CookieChunkingTests.DeleteChunkedCookieWithExtraRequestChunk_RemovesExtraResponseCookie",
+    "message": "Assert.Equal() Failure: Collections differ\r\n           ↓ (pos 0)\r\nExpected: [\"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\nActual:   [\"TestCookieC3=extra\", \"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\n           ↑ (pos 0)"
+  },
+  {
+    "test": "Microsoft.AspNetCore.Internal.CookieChunkingTests.DeleteChunkedCookieWithNonCanonicalResponseName_RetainsCookie(caseId: \"TrailingNul\")",
+    "message": "Assert.Equal() Failure: Collections differ\r\n           ↓ (pos 0)\r\nExpected: [\"TestCookieC1\\0=retained\", \"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\nActual:   [\"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\n           ↑ (pos 0)"
+  },
+  {
+    "test": "Microsoft.AspNetCore.Internal.CookieChunkingTests.DeleteChunkedCookieWithNonCanonicalResponseName_RetainsCookie(caseId: \"LeadingZero\")",
+    "message": "Assert.Equal() Failure: Collections differ\r\n           ↓ (pos 0)\r\nExpected: [\"TestCookieC01=retained\", \"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\nActual:   [\"TestCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT\", \"TestCookieC1=; expires=Thu, 01 Jan 1970 00:00:00 G\"···, \"TestCookieC2=; expires=Thu, 01 Jan 1970 00:00:00 G\"···]\r\n           ↑ (pos 0)"
+  }
+]
