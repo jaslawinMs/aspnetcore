@@ -179,8 +179,12 @@ public class UIAgent : IDisposable
         await foreach (var update in _chatClient.GetStreamingResponseAsync(
             requestMessages, chatOptions, cancellationToken).ConfigureAwait(false))
         {
-            var contentTypes = string.Join(", ", update.Contents.Select(c => c.GetType().Name));
-            UIAgentLog.ReceivedUpdate(_logger, updateIndex++, update.Role?.Value, contentTypes);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                var contentTypes = string.Join(", ", update.Contents.Select(c => c.GetType().Name));
+                UIAgentLog.ReceivedUpdate(_logger, updateIndex, update.Role?.Value, contentTypes);
+            }
+            updateIndex++;
 
             responseUpdates.Add(update);
             var processUpdate = ApplyStateMapper(update);
