@@ -10,7 +10,7 @@ internal static partial class UIAgentLog
     [LoggerMessage(100, LogLevel.Information, "SendMessageAsync: Streaming assistant response")]
     internal static partial void StreamingAssistantResponse(ILogger logger);
 
-    [LoggerMessage(101, LogLevel.Debug, "SendMessageAsync: Received update #{Index} Role={Role}, ContentTypes=[{ContentTypes}]")]
+    [LoggerMessage(101, LogLevel.Debug, "SendMessageAsync: Received update #{Index} Role={Role}, ContentTypes=[{ContentTypes}]", SkipEnabledCheck = true)]
     internal static partial void ReceivedUpdate(ILogger logger, int index, string? role, string contentTypes);
 
     [LoggerMessage(102, LogLevel.Information, "SendMessageAsync: Stream complete. Total updates={UpdateCount}")]
