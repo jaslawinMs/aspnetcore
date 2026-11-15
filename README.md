@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 54/358 finalized**: 39 drafts, 8 no-gain, 5 rejected and 2 duplicates;
-304 findings remain unfinished.
+**Progress: 55/358 finalized**: 40 drafts, 8 no-gain, 5 rejected and 2 duplicates;
+303 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -52,6 +52,7 @@ well as the largest speedup.
 | F071 | [Draft jaslawinMs/aspnetcore#75](https://github.com/jaslawinMs/aspnetcore/pull/75); exact long/vendor gains54-68%, JSON fallback costs22-26%, unchanged heap and unstable first-row observations retained; qualified trade-off, explicitly not merge-ready | [FormatFilter first-match parsing](F071/README.md) |
 | F072 | [Draft jaslawinMs/aspnetcore#77](https://github.com/jaslawinMs/aspnetcore/pull/77); null-query gains55-90%, larger real metadata9.79%, typical metadata non-win and wildcard-only10.47% cost retained; two strategies/three pairs, qualified trade-off, not merge-ready | [OutputFormatter unconstrained metadata parsing](F072/README.md) |
 | F073 | [Draft jaslawinMs/aspnetcore#79](https://github.com/jaslawinMs/aspnetcore/pull/79); exact-owner gains68-85%, actual exact/default-declared selection38-39%, parameter6.07% cost and unresolved large client-suffix transient retained; two strategies/three pairs, qualified trade-off, not merge-ready | [OutputFormatter exact result negotiation](F073/README.md) |
+| F074 | [Draft jaslawinMs/aspnetcore#81](https://github.com/jaslawinMs/aspnetcore/pull/81); large escaped fragments save 19544B/op, long text improves 36.82%, full escaped descriptor median is 20.28% slower; all three pairs and control costs retained, allocation-focused qualified draft, not merge-ready | [Render-fragment parameter JSON string allocation](F074/README.md) |
 | F077 | Rejected; three public conversion contracts change despite large-case gains | [Newtonsoft JSON Patch token bridge](F077/README.md) |
 | F079 | Draft proposal; unchanged SetCookie control regressions retained | [CookieHeaderValue span concatenation](F079/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/24) |
 | F083 | Draft proposal | [Bounded invariant-lowercase rewrite-map lookup](F083/README.md) |
