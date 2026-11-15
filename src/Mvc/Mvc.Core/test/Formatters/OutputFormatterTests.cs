@@ -184,6 +184,69 @@ public class OutputFormatterTests
         Assert.Null(contentTypes);
     }
 
+    [Theory]
+    [InlineData("application/json", true)]
+    [InlineData("APPLICATION/JSON", true)]
+    [InlineData(" application / json ", true)]
+    [InlineData("application/json;version=1", true)]
+    [InlineData("application/json; x=\"a;b\"", true)]
+    [InlineData("application/*+json", false)]
+    [InlineData("text/plain;*", false)]
+    [InlineData("*/*", false)]
+    [InlineData("application", true)]
+    public void GetSupportedContentTypes_NullContentType_PreservesRawValues(string mediaType, bool supported)
+    {
+        var formatter = new TestOutputFormatter();
+        formatter.SupportedMediaTypes.Clear();
+        formatter.SupportedMediaTypes.Add(mediaType);
+
+        var result = formatter.GetSupportedContentTypes(contentType: null, typeof(object));
+
+        if (supported)
+        {
+            Assert.Same(mediaType, Assert.Single(result));
+        }
+        else
+        {
+            Assert.Null(result);
+        }
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("application/json; x=")]
+    public void GetSupportedContentTypes_NullContentType_PreservesParsingErrors(string mediaType)
+    {
+        var formatter = new TestOutputFormatter();
+        formatter.SupportedMediaTypes.Clear();
+        formatter.SupportedMediaTypes.Add(mediaType);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => formatter.GetSupportedContentTypes(contentType: null, typeof(object)));
+    }
+
+    [Fact]
+    public void GetSupportedContentTypes_ObservesSupportedMediaTypeChanges()
+    {
+        var formatter = new TestOutputFormatter();
+        formatter.SupportedMediaTypes.Clear();
+        formatter.SupportedMediaTypes.Add("application/json");
+        var original = formatter.GetSupportedContentTypes(contentType: null, typeof(object));
+        Assert.Equal(["application/json"], original);
+
+        formatter.SupportedMediaTypes[0] = "application/xml";
+        formatter.SupportedMediaTypes.Add("text/plain");
+        Assert.Equal(["application/xml", "text/plain"],
+            formatter.GetSupportedContentTypes(contentType: null, typeof(object)));
+        Assert.Equal(["application/json"], original);
+
+        formatter.SupportedMediaTypes.RemoveAt(0);
+        Assert.Equal(["text/plain"], formatter.GetSupportedContentTypes(contentType: null, typeof(object)));
+        formatter.SupportedMediaTypes.Clear();
+        Assert.Throws<InvalidOperationException>(
+            () => formatter.GetSupportedContentTypes(contentType: null, typeof(object)));
+    }
+
     private class TypeSpecificFormatter : OutputFormatter
     {
         public List<Type> SupportedTypes { get; } = new List<Type>();
