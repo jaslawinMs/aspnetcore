@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <MvcTestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.Core.Test\Release\net12.0</MvcTestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <Reference Include="$(MvcTestBin)\Microsoft.*.dll"
+      Exclude="$(MvcTestBin)\*Test*.dll;$(MvcTestBin)\*Generator*.dll;$(MvcTestBin)\Microsoft.AspNetCore.Mvc.Core.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(MvcTestBin)\Microsoft.AspNetCore.Mvc.Core.dll')"
+      Text="Build the actual FormatFilterTests Release first; do not substitute installed ASP.NET assemblies." />
+  </Target>
+</Project>

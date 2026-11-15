@@ -1,0 +1,31 @@
+{
+  "candidate": "F071",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F071-format-filter-parsing",
+  "source_commit": "7296b9b765674bcbc5ffc02927e59b1114c43999",
+  "selected_snapshot": "after-3",
+  "qualified_fork_only_not_merge_ready": true,
+  "source_change": "First nonempty ordinal-identical parameterless entry bypasses media-type parsing; original fallback and metadata producers are untouched.",
+  "source_lines_added": 8,
+  "test_lines_added": 109,
+  "existing_lines_changed": 0,
+  "measured_comparisons": 3,
+  "final_strategy_comparisons": 1,
+  "comparison_budget_closed": true,
+  "superseded_strategies": [
+    "Round 1: reuse the requested parsed value for each ordinal-identical supported entry.",
+    "Round 2: first parameterless raw equality after constructing the requested MediaType."
+  ],
+  "scanner_cache_prescription_not_adopted": "Public ProducesAttribute.ContentTypes, mappings and arbitrary metadata providers are mutable and execute on every request.",
+  "instability": "Original ExactJson1 has very high spread in rounds 2 and 3; neither apparent 76.68% nor 82.75% gain is credible large-win evidence.",
+  "limitations": [
+    "Prepared real-owner resource-filter microbenchmark, not HTTP throughput or startup.",
+    "No universal gain or production first-match distribution established.",
+    "Late/missing/mixed/suffix fallback costs are retained; no causal JIT claim.",
+    "Allocations are unchanged; no retained-memory result.",
+    "Preservation tests pass on original and final, not a functional-red bug fix.",
+    "Shared Windows host; no power/affinity/machine changes or parallel CPU-heavy jobs."
+  ],
+  "raw_reports_and_logs_copied_without_transformation": true,
+  "binaries_not_published": true
+}
