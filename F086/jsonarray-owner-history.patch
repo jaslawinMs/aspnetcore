@@ -1,0 +1,52 @@
+commit 072d32a7b3064d1b2dc4e82e5f22ca75ee1fbbc2
+Author:     HPOD00019 <123089574+HPOD00019@users.noreply.github.com>
+AuthorDate: Wed Feb 25 03:31:35 2026 +0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Feb 24 20:31:35 2026 +0000
+
+    Fixing JsonPatchDocument bug  (#65470)
+
+diff --git a/src/Features/JsonPatch.SystemTextJson/src/Internal/ListAdapter.cs b/src/Features/JsonPatch.SystemTextJson/src/Internal/ListAdapter.cs
+index 8f481928fe..cc1e672069 100644
+--- a/src/Features/JsonPatch.SystemTextJson/src/Internal/ListAdapter.cs
++++ b/src/Features/JsonPatch.SystemTextJson/src/Internal/ListAdapter.cs
+@@ -2,7 +2,6 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System;
+-using System.Collections;
+ using System.Collections.Generic;
+ using System.Text.Json;
+ using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Helpers;
+@@ -147,11 +146,9 @@ internal class ListAdapter : IAdapter
+ 
+     public virtual bool TryTraverse(object target, string segment, JsonSerializerOptions serializerOptions, out object value, out string errorMessage)
+     {
+-        var list = target as IList;
+-        if (list == null)
++        if (!TryGetListTypeArgument(target, out _, out errorMessage))
+         {
+             value = null;
+-            errorMessage = null;
+             return false;
+         }
+ 
+@@ -162,14 +159,16 @@ internal class ListAdapter : IAdapter
+             return false;
+         }
+ 
+-        if (index < 0 || index >= list.Count)
++        var count = GenericListOrJsonArrayUtilities.GetCount(target);
++
++        if (index < 0 || index >= count)
+         {
+             value = null;
+             errorMessage = Resources.FormatIndexOutOfBounds(segment);
+             return false;
+         }
+ 
+-        value = list[index];
++        value = GenericListOrJsonArrayUtilities.GetElementAt(target, index);
+         errorMessage = null;
+         return true;
+     }

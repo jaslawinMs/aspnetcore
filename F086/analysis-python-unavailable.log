@@ -1,0 +1,42 @@
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+node:internal/errors:999
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python -c 
+import json,sys,xml.etree.ElementTree as E
+out=[]
+for name in sys.argv[1:]:
+    root=E.parse(name).getroot()
+    ns={'t':'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+    rows=[]
+    for row in root.findall('t:Results/t:UnitTestResult',ns):
+        message=row.find('t:Output/t:ErrorInfo/t:Message',ns)
+        rows.append({'name':row.attrib['testName'],'outcome':row.attrib['outcome'],'message':None if message is None else message.text})
+    out.append(rows)
+print(json.dumps(out))
+ C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F086\tests-before\results.trx C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F086\tests-naive-strong\results.trx C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F086\tests-after\results.trx
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+
+
+    at genericNodeError (node:internal/errors:999:15)
+    at wrappedFn (node:internal/errors:544:14)
+    at checkExecSyncError (node:child_process:990:11)
+    at execFileSync (node:child_process:1026:15)
+    at file:///C:/Users/jaslawin/.copilot/session-state/a24edcfd-1bb9-4160-afce-6ba54b1b7f00/files/F086-reproduce-analysis.mjs:151:26
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  status: 9009,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.\r\n'
+  ],
+  pid: 4332,
+  stdout: '',
+  stderr: 'Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.\r\n'
+}
+
+Node.js v26.13.0
