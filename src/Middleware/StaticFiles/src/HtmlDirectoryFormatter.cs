@@ -102,14 +102,34 @@ public class HtmlDirectoryFormatter : IDirectoryFormatter
             @"
     <header><h1>{0} <a href=""/"">/</a>", HtmlEncode(Resources.HtmlDir_IndexOf));
 
-        string cumulativePath = "/";
-        foreach (var segment in requestPath.Value!.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        var segments = requestPath.Value!.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        // Custom Encode(string) overrides can depend on the complete prefix.
+        if (segments.Length > 2 && ReferenceEquals(_htmlEncoder, HtmlEncoder.Default))
         {
-            cumulativePath = cumulativePath + segment + "/";
-            builder.AppendFormat(
-                CultureInfo.InvariantCulture,
-                @"<a href=""{0}"">{1}/</a>",
-                HtmlEncode(cumulativePath), HtmlEncode(segment));
+            for (var i = 0; i < segments.Length; i++)
+            {
+                segments[i] = HtmlEncode(segments[i]);
+            }
+            var encodedPath = "/" + string.Join('/', segments) + "/";
+            var prefixLength = 1;
+            foreach (var segment in segments)
+            {
+                prefixLength += segment.Length + 1;
+                builder.Append(@"<a href=""").Append(encodedPath, 0, prefixLength)
+                    .Append("\">").Append(segment).Append("/</a>");
+            }
+        }
+        else
+        {
+            string cumulativePath = "/";
+            foreach (var segment in segments)
+            {
+                cumulativePath = cumulativePath + segment + "/";
+                builder.AppendFormat(
+                    CultureInfo.InvariantCulture,
+                    @"<a href=""{0}"">{1}/</a>",
+                    HtmlEncode(cumulativePath), HtmlEncode(segment));
+            }
         }
 
         builder.AppendFormat(
