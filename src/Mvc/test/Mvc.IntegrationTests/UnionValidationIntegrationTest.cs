@@ -426,6 +426,84 @@ public class UnionValidationIntegrationTest
         Assert.Equal(suppressValue ? 0 : 1, context.ModelState.ErrorCount);
     }
 
+    [Theory]
+    [InlineData("Implicit")]
+    [InlineData("Explicit")]
+    [InlineData("Namesake")]
+    public void Validate_RepeatedRuntimeUnionTypes_PreservesPropertyAndCaseValidation(string shape)
+    {
+        using var services = CreateServices();
+        var validator = services.GetRequiredService<IObjectModelValidator>();
+        for (var index = 0; index < 24; index++)
+        {
+            var context = CreateContext();
+            object model = shape switch
+            {
+                "Implicit" => new LengthUnion("long"),
+                "Explicit" => new ExplicitUnion(new ValidatableCase("invalid")),
+                "Namesake" => new UnionWithPublicNamesake("public", new ValidatableCase("invalid")),
+                _ => throw new InvalidOperationException("Unknown union shape."),
+            };
+
+            validator.Validate(context, null, "model", model);
+
+            Assert.False(context.ModelState.IsValid);
+            var entry = Assert.Single(context.ModelState);
+            Assert.Equal("model.Value", entry.Key);
+            var messages = entry.Value.Errors.Select(error => error.ErrorMessage).ToArray();
+            var expected = shape switch
+            {
+                "Implicit" => new[] { "The field Value must be a string or array type with a maximum length of '3'." },
+                "Explicit" => new[] { "Invalid case." },
+                _ => new[] { "Invalid case." },
+            };
+            Assert.Equal(expected, messages);
+        }
+    }
+
+    [Fact]
+    public void Validate_MixedUnionTypes_PreservesEachGetterIdentity()
+    {
+        using var services = CreateServices();
+        var context = CreateContext();
+
+        services.GetRequiredService<IObjectModelValidator>().Validate(context, null, "model", new MixedUnionEnvelope());
+
+        Assert.False(context.ModelState.IsValid);
+        Assert.Equal(3, context.ModelState.ErrorCount);
+        Assert.Equal(
+            new[] { "model.First.Value", "model.Second.Value", "model.Third.Value" },
+            context.ModelState.Select(entry => entry.Key).OrderBy(key => key, StringComparer.Ordinal).ToArray());
+        Assert.Equal("The field Value must be a string or array type with a maximum length of '3'.",
+            Assert.Single(context.ModelState["model.First.Value"].Errors).ErrorMessage);
+        Assert.Equal("Invalid case.", Assert.Single(context.ModelState["model.Second.Value"].Errors).ErrorMessage);
+        Assert.Equal("The Value field is required.", Assert.Single(context.ModelState["model.Third.Value"].Errors).ErrorMessage);
+    }
+
+    [Fact]
+    public void Validate_ConcurrentUnionTypes_PreservesPropertyAndCaseValidation()
+    {
+        using var services = CreateServices();
+        var validator = services.GetRequiredService<IObjectModelValidator>();
+
+        Parallel.For(0, 64, index =>
+        {
+            var context = CreateContext();
+            object model = index % 2 is 0
+                ? new LengthUnion("long")
+                : new ExplicitUnion(new ValidatableCase("invalid"));
+
+            validator.Validate(context, null, "model", model);
+
+            Assert.False(context.ModelState.IsValid);
+            var entry = Assert.Single(context.ModelState);
+            Assert.Equal("model.Value", entry.Key);
+            Assert.Equal(index % 2 is 0
+                ? "The field Value must be a string or array type with a maximum length of '3'."
+                : "Invalid case.", Assert.Single(entry.Value.Errors).ErrorMessage);
+        });
+    }
+
     private static ServiceProvider CreateServices(Action<MvcOptions> configure = null, bool decorateMetadataProvider = false)
     {
         var services = new ServiceCollection();
@@ -497,6 +575,17 @@ public class UnionValidationIntegrationTest
     {
         [MaxLength(3)]
         public object Value => value;
+    }
+
+    private class MixedUnionEnvelope
+    {
+        public LengthUnion First { get; } = new("long");
+
+        public ExplicitUnion Second { get; } = new(new ValidatableCase("invalid"));
+
+        public UnionWithPublicNamesake Third { get; } = new(null, new ValidatableCase("valid"));
+
+        public LengthUnion Fourth { get; } = new("ok");
     }
 
     [ValidateNever]

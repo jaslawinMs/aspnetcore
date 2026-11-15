@@ -3,13 +3,19 @@
 
 #nullable enable
 
+using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+
+[assembly: MetadataUpdateHandler(typeof(Microsoft.AspNetCore.Mvc.ModelBinding.Validation.DefaultUnionValidationStrategy.MetadataUpdateHandler))]
 
 namespace Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 internal sealed class DefaultUnionValidationStrategy : IValidationStrategy
 {
+    private static ConditionalWeakTable<Type, MethodInfo> _unionValueGetters = new();
+
     private readonly IModelMetadataProvider _metadataProvider;
 
     public DefaultUnionValidationStrategy(IModelMetadataProvider metadataProvider)
@@ -54,8 +60,22 @@ internal sealed class DefaultUnionValidationStrategy : IValidationStrategy
         var getter = metadata is DefaultModelMetadata propertyMetadata
             ? propertyMetadata.Details.Key.PropertyInfo?.GetMethod
             : metadata.ContainerType?.GetProperty(nameof(IUnion.Value))?.GetMethod;
-        var unionGetter = unionType.GetInterfaceMap(typeof(IUnion)).TargetMethods[0];
+        var cache = Volatile.Read(ref _unionValueGetters);
+        if (!cache.TryGetValue(unionType, out var unionGetter))
+        {
+            unionGetter = unionType.GetInterfaceMap(typeof(IUnion)).TargetMethods[0];
+            cache.AddOrUpdate(unionType, unionGetter);
+        }
 
         return getter is not null && (getter.DeclaringType == typeof(IUnion) || getter.GetBaseDefinition() == unionGetter.GetBaseDefinition());
+    }
+
+    internal static class MetadataUpdateHandler
+    {
+        public static void ClearCache(Type[]? _)
+        {
+            // In-flight lookups must not repopulate the replacement table.
+            Volatile.Write(ref _unionValueGetters, new ConditionalWeakTable<Type, MethodInfo>());
+        }
     }
 }
