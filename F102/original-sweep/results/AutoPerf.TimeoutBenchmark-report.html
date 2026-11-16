@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TimeoutBenchmark-20261116-043621</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>                      Method</th><th>Policy</th><th>Workload</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Finite</td><td>Inline</td><td>1,533.1 ns</td><td>1,346.69 ns</td><td>704.35 ns</td><td>-</td><td>-</td><td>-</td><td>856 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Finite</td><td>Deferred</td><td>914.0 ns</td><td>7.73 ns</td><td>4.04 ns</td><td>0.0181</td><td>-</td><td>-</td><td>992 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Finite</td><td>Overlap8</td><td>7,484.6 ns</td><td>229.96 ns</td><td>120.27 ns</td><td>0.2219</td><td>-</td><td>-</td><td>8,280 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Infinite</td><td>Inline</td><td>579.8 ns</td><td>8.56 ns</td><td>4.48 ns</td><td>0.0115</td><td>-</td><td>-</td><td>456 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Infinite</td><td>Deferred</td><td>707.6 ns</td><td>9.55 ns</td><td>4.99 ns</td><td>0.0139</td><td>-</td><td>-</td><td>592 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>Infinite</td><td>Overlap8</td><td>5,692.6 ns</td><td>63.03 ns</td><td>32.97 ns</td><td>0.1120</td><td>-</td><td>-</td><td>5,080 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>ExplicitNone</td><td>Inline</td><td>581.3 ns</td><td>33.66 ns</td><td>17.60 ns</td><td>0.0112</td><td>-</td><td>-</td><td>456 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>ExplicitNone</td><td>Deferred</td><td>704.5 ns</td><td>9.61 ns</td><td>5.02 ns</td><td>0.0138</td><td>-</td><td>-</td><td>592 B</td>
+</tr><tr><td>ActualExplicitPropertyWriteTimeout</td><td>ExplicitNone</td><td>Overlap8</td><td>5,646.0 ns</td><td>84.33 ns</td><td>44.10 ns</td><td>0.1108</td><td>-</td><td>-</td><td>5,080 B</td>
+</tr></tbody></table>
+</body>
+</html>
