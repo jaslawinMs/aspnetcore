@@ -1,0 +1,55 @@
+@page "/autoperf-f111"
+@using System.Security.Cryptography
+@using System.Text
+
+<PageTitle>F111 serialization preservation</PageTitle>
+
+<h1>F111 serialization preservation</h1>
+<p id="f111-status">@_status</p>
+<p id="f111-length">@_length</p>
+<p id="f111-hash">@_hash</p>
+<p id="f111-integers">@_integers</p>
+<a id="f111-write" href="/autoperf-f111?action=write" data-enhance-nav="false">Store typed data</a>
+<a id="f111-read" href="/autoperf-f111?action=read" data-enhance-nav="false">Read and consume typed data</a>
+
+@code {
+    [CascadingParameter]
+    public ITempData TempData { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "action")]
+    public string? Action { get; set; }
+
+    private string _status = "ready";
+    private int _length;
+    private string _hash = "missing";
+    private string _integers = "missing";
+
+    protected override void OnInitialized()
+    {
+        if (Action is "write")
+        {
+            var payload = new string('A', 2048) + string.Concat(Enumerable.Repeat("<&\\\"\n \u00e9\u4e2d\U0001F30D", 64));
+            TempData["F111Payload"] = payload;
+            TempData["F111Integers"] = new[] { 7, 11, 19 };
+            _status = "stored";
+            _length = payload.Length;
+            _hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+        }
+        else if (Action is "read")
+        {
+            if (TempData.TryGetValue("F111Payload", out var stored) && stored is string payload)
+            {
+                _status = "read";
+                _length = payload.Length;
+                _hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+                _integers = TempData.TryGetValue("F111Integers", out var integers) && integers is int[] values
+                    ? string.Join(',', values)
+                    : "wrong type";
+            }
+            else
+            {
+                _status = "consumed";
+            }
+        }
+    }
+}

@@ -1,0 +1,30 @@
+diff --git a/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs b/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
+index fee9293b35..45dcbfc462 100644
+--- a/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
++++ b/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
+@@ -1,6 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using System.Buffers;
+ using System.Diagnostics.CodeAnalysis;
+ using System.Text.Json;
+ using Microsoft.AspNetCore.Internal;
+@@ -157,7 +158,7 @@ internal sealed class JsonStoredDataSerializer : IStoredDataSerializer
+ 
+     public byte[] SerializeData(IDictionary<string, object?> data)
+     {
+-        using var buffer = new MemoryStream();
++        using var buffer = new PooledArrayBufferWriter<byte>();
+         using var writer = new Utf8JsonWriter(buffer);
+ 
+         writer.WriteStartObject();
+@@ -171,7 +172,7 @@ internal sealed class JsonStoredDataSerializer : IStoredDataSerializer
+         writer.WriteEndObject();
+         writer.Flush();
+ 
+-        return buffer.ToArray();
++        return buffer.WrittenSpan.ToArray();
+     }
+ 
+     private void WriteEntry(Utf8JsonWriter writer, object? value, Type? type)

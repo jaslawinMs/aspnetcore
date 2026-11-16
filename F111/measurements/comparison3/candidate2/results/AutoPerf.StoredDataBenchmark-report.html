@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.StoredDataBenchmark-20261116-110331</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>   Method</th><th>       Case</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>SerializeOrSave</td><td>DataAbove4K</td><td>1,222.56 ns</td><td>460.348 ns</td><td>240.771 ns</td><td>0.1168</td><td>-</td><td>-</td><td>4,352 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataArray256</td><td>2,391.56 ns</td><td>375.827 ns</td><td>196.565 ns</td><td>0.0232</td><td>-</td><td>-</td><td>1,272 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataAscii128K</td><td>91,474.86 ns</td><td>8,133.686 ns</td><td>4,254.075 ns</td><td>1.9841</td><td>1.9841</td><td>1.9841</td><td>131,378 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataAscii16K</td><td>3,377.14 ns</td><td>532.673 ns</td><td>278.598 ns</td><td>0.4257</td><td>-</td><td>-</td><td>16,680 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataAscii1K</td><td>480.42 ns</td><td>111.727 ns</td><td>58.435 ns</td><td>0.0335</td><td>-</td><td>-</td><td>1,320 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataAt4K</td><td>1,182.02 ns</td><td>244.116 ns</td><td>127.677 ns</td><td>0.1130</td><td>-</td><td>-</td><td>4,344 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataBelow4K</td><td>1,170.86 ns</td><td>363.346 ns</td><td>190.037 ns</td><td>0.1072</td><td>-</td><td>-</td><td>4,344 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataEmpty</td><td>74.91 ns</td><td>14.246 ns</td><td>7.451 ns</td><td>0.0050</td><td>-</td><td>-</td><td>200 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataEntries16</td><td>2,284.47 ns</td><td>221.912 ns</td><td>116.064 ns</td><td>0.0440</td><td>-</td><td>-</td><td>1,664 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataEntries256</td><td>34,280.68 ns</td><td>3,045.183 ns</td><td>1,592.689 ns</td><td>0.6443</td><td>-</td><td>-</td><td>22,786 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataEnum</td><td>2,418.68 ns</td><td>31.604 ns</td><td>16.530 ns</td><td>0.0254</td><td>-</td><td>-</td><td>1,296 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataEscaped16K</td><td>118,143.89 ns</td><td>1,593.634 ns</td><td>833.501 ns</td><td>1.2019</td><td>-</td><td>-</td><td>72,399 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataNested</td><td>2,676.20 ns</td><td>203.725 ns</td><td>106.552 ns</td><td>0.0262</td><td>-</td><td>-</td><td>1,448 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataNull</td><td>111.20 ns</td><td>12.970 ns</td><td>6.784 ns</td><td>0.0061</td><td>-</td><td>-</td><td>264 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataScalar</td><td>798.69 ns</td><td>21.610 ns</td><td>11.302 ns</td><td>0.0085</td><td>-</td><td>-</td><td>536 B</td>
+</tr><tr><td>SerializeOrSave</td><td>DataUnicode16K</td><td>139,848.11 ns</td><td>9,280.704 ns</td><td>4,853.988 ns</td><td>1.3021</td><td>1.3021</td><td>1.3021</td><td>98,610 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionAscii128K</td><td>142,225.42 ns</td><td>17,420.418 ns</td><td>9,111.216 ns</td><td>2.7174</td><td>2.7174</td><td>2.7174</td><td>262,586 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionAscii16K</td><td>7,682.03 ns</td><td>1,969.781 ns</td><td>1,030.234 ns</td><td>0.8300</td><td>-</td><td>-</td><td>33,217 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionEmpty</td><td>53.61 ns</td><td>3.172 ns</td><td>1.659 ns</td><td>0.0018</td><td>-</td><td>-</td><td>80 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionEntries256</td><td>35,999.89 ns</td><td>816.030 ns</td><td>426.800 ns</td><td>1.0776</td><td>-</td><td>-</td><td>45,426 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionEscaped16K</td><td>128,848.34 ns</td><td>10,720.869 ns</td><td>5,607.222 ns</td><td>3.7500</td><td>-</td><td>-</td><td>144,648 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionNested</td><td>3,036.41 ns</td><td>67.851 ns</td><td>35.488 ns</td><td>0.0296</td><td>-</td><td>-</td><td>2,088 B</td>
+</tr><tr><td>SerializeOrSave</td><td>SessionScalar</td><td>1,027.22 ns</td><td>188.755 ns</td><td>98.723 ns</td><td>0.0217</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>SerializeOrSave</td><td>ValueArray256</td><td>3,397.17 ns</td><td>413.571 ns</td><td>216.305 ns</td><td>0.2233</td><td>-</td><td>-</td><td>9,056 B</td>
+</tr><tr><td>SerializeOrSave</td><td>ValueNested</td><td>3,311.77 ns</td><td>263.216 ns</td><td>137.667 ns</td><td>0.0870</td><td>-</td><td>-</td><td>3,592 B</td>
+</tr><tr><td>SerializeOrSave</td><td>ValueString16K</td><td>14,828.98 ns</td><td>4,250.834 ns</td><td>2,223.268 ns</td><td>3.2189</td><td>0.2682</td><td>-</td><td>115,745 B</td>
+</tr><tr><td>SerializeOrSave</td><td>ValueStringSmall</td><td>300.50 ns</td><td>65.986 ns</td><td>34.512 ns</td><td>0.0233</td><td>-</td><td>-</td><td>888 B</td>
+</tr><tr><td>SerializeOrSave</td><td>ValueUnicode16K</td><td>300,941.55 ns</td><td>34,490.166 ns</td><td>18,039.024 ns</td><td>8.5227</td><td>8.5227</td><td>8.5227</td><td>492,604 B</td>
+</tr></tbody></table>
+</body>
+</html>
