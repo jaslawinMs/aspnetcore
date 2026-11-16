@@ -1,0 +1,17 @@
+{
+  "candidate": "F115",
+  "disposition": "rejected-local-boxing-removal",
+  "sourceChanged": false,
+  "sourceComparisons": 0,
+  "performancePrJustified": false,
+  "branch": "autoperf/F115-list-element-boxing",
+  "reason": "Actual internal helper/adapter/visitor/deep-equality path is object-valued. Generic IList<int> read returning object still allocates24B;native int-return0B changes the result/escape contract and is not a candidate. Real public JSON Patch Test observes legal non-generic1731 rather than generic731. Mutable boxed structs must remain isolated from list storage,and current list mutation must stay visible. No compatible local source proposal or gain demonstrated.",
+  "qualification": "This rejects the detected blanket/drop-in boxing-removal suggestion,not every future generic adapter/serializer redesign or caching strategy. The owning ListAdapter/IAdapter are internal,not public API. One original pressure profile is not a before/after comparison. No HTTP,production-frequency or application-wide improvement claimed.",
+  "resourceBoundary": "Real helper,actual factory-selected adapter and converter-produced public JsonPatchDocument.ApplyTo;separate typed/native diagnostics explicitly different-contract.",
+  "attemptsPreserved": [
+    "Initial test-auditor61/81 expansion failure;child tests all passed,no rerun.",
+    "Initial invalid-exporter CLI rejection;zero benchmark workloads/setups/results.",
+    "Completed profile outer filename-glob failure;child exited0,28cases/224results,no rerun."
+  ],
+  "evaluatedAt": "2026-11-16T21:36:14.6076649+00:00"
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.ListReadBenchmark-20261116-133027</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  LaunchCount=1  
+WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th> Method</th><th>          Case</th><th>  Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ReadOrProcess</td><td>GetInt</td><td>133.271 ns</td><td>16.2683 ns</td><td>8.5086 ns</td><td>0.0027</td><td>-</td><td>-</td><td>144 B</td>
+</tr><tr><td>ReadOrProcess</td><td>GetJsonArray</td><td>126.114 ns</td><td>1.8115 ns</td><td>0.9474 ns</td><td>0.0013</td><td>-</td><td>-</td><td>88 B</td>
+</tr><tr><td>ReadOrProcess</td><td>GetNullableNull</td><td>144.302 ns</td><td>21.2058 ns</td><td>11.0911 ns</td><td>0.0029</td><td>-</td><td>-</td><td>120 B</td>
+</tr><tr><td>ReadOrProcess</td><td>GetNullableValue</td><td>174.668 ns</td><td>118.8229 ns</td><td>62.1467 ns</td><td>0.0029</td><td>-</td><td>-</td><td>144 B</td>
+</tr><tr><td>ReadOrProcess</td><td>GetString</td><td>141.164 ns</td><td>13.2450 ns</td><td>6.9274 ns</td><td>0.0027</td><td>-</td><td>-</td><td>120 B</td>
+</tr><tr><td>ReadOrProcess</td><td>PatchCopyInt</td><td>893.741 ns</td><td>65.6109 ns</td><td>34.3158 ns</td><td>0.0185</td><td>-</td><td>-</td><td>808 B</td>
+</tr><tr><td>ReadOrProcess</td><td>PatchCopyString</td><td>1,334.183 ns</td><td>188.0416 ns</td><td>98.3494 ns</td><td>0.0130</td><td>-</td><td>-</td><td>824 B</td>
+</tr><tr><td>ReadOrProcess</td><td>PatchTestInt</td><td>925.699 ns</td><td>88.2924 ns</td><td>46.1786 ns</td><td>0.0187</td><td>-</td><td>-</td><td>768 B</td>
+</tr><tr><td>ReadOrProcess</td><td>PatchTestInt8</td><td>7,378.268 ns</td><td>964.2663 ns</td><td>504.3299 ns</td><td>0.1419</td><td>-</td><td>-</td><td>5,865 B</td>
+</tr><tr><td>ReadOrProcess</td><td>Patch(...)ember [24]</td><td>851.594 ns</td><td>18.1374 ns</td><td>9.4862 ns</td><td>0.0085</td><td>-</td><td>-</td><td>624 B</td>
+</tr><tr><td>ReadOrProcess</td><td>Patch(...)eNull [21]</td><td>438.559 ns</td><td>39.4682 ns</td><td>20.6426 ns</td><td>0.0087</td><td>-</td><td>-</td><td>472 B</td>
+</tr><tr><td>ReadOrProcess</td><td>Patch(...)Value [22]</td><td>1,200.735 ns</td><td>269.9634 ns</td><td>141.1961 ns</td><td>0.0111</td><td>-</td><td>-</td><td>776 B</td>
+</tr><tr><td>ReadOrProcess</td><td>Patch(...)ember [24]</td><td>1,151.526 ns</td><td>21.8329 ns</td><td>11.4190 ns</td><td>0.0230</td><td>-</td><td>-</td><td>920 B</td>
+</tr><tr><td>ReadOrProcess</td><td>PatchTestScalar</td><td>813.192 ns</td><td>47.3092 ns</td><td>24.7436 ns</td><td>0.0079</td><td>-</td><td>-</td><td>544 B</td>
+</tr><tr><td>ReadOrProcess</td><td>Patch(...)ember [21]</td><td>1,169.798 ns</td><td>124.0978 ns</td><td>64.9055 ns</td><td>0.0227</td><td>-</td><td>-</td><td>944 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadDecimal</td><td>18.538 ns</td><td>0.3720 ns</td><td>0.1946 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadGuid</td><td>19.018 ns</td><td>1.6690 ns</td><td>0.8729 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadInt</td><td>12.891 ns</td><td>1.2720 ns</td><td>0.6653 ns</td><td>0.0005</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadJsonArrayNull</td><td>11.613 ns</td><td>0.4658 ns</td><td>0.2436 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadJsonArrayValue</td><td>12.565 ns</td><td>0.2016 ns</td><td>0.1054 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadLong</td><td>17.315 ns</td><td>1.5154 ns</td><td>0.7926 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadMutableStruct</td><td>18.857 ns</td><td>1.1701 ns</td><td>0.6120 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadNullableNull</td><td>10.086 ns</td><td>0.1826 ns</td><td>0.0955 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadNullableValue</td><td>17.561 ns</td><td>0.3287 ns</td><td>0.1719 ns</td><td>0.0004</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadPreboxedObject</td><td>10.370 ns</td><td>0.1274 ns</td><td>0.0666 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadReference</td><td>10.497 ns</td><td>0.2052 ns</td><td>0.1073 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>ReadString</td><td>9.348 ns</td><td>0.1242 ns</td><td>0.0650 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrProcess</td><td>TraverseStruct</td><td>140.483 ns</td><td>2.3174 ns</td><td>1.2120 ns</td><td>0.0029</td><td>-</td><td>-</td><td>152 B</td>
+</tr></tbody></table>
+</body>
+</html>
