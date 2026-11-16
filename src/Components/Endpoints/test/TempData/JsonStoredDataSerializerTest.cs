@@ -3,7 +3,16 @@
 
 using System;
 using System.Collections;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Test.Helpers;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace Microsoft.AspNetCore.Components.Endpoints;
 
@@ -556,6 +565,90 @@ public class JsonStoredDataSerializerTest
     }
 
     [Fact]
+    public void SerializeValue_PreservesOwnedBytesAcrossSubsequentCalls()
+    {
+        var serializer = CreateSerializer();
+        var bytes = serializer.SerializeValue("retained", typeof(string));
+        var expected = Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":\"retained\"}");
+
+        serializer.SerializeValue(new string('x', 100_000), typeof(string));
+        var next = serializer.SerializeValue("retained", typeof(string));
+
+        Assert.Equal(expected, bytes);
+        Assert.Equal(expected, next);
+        Assert.NotSame(bytes, next);
+    }
+
+    [Theory]
+    [InlineData(16)]
+    [InlineData(4096)]
+    [InlineData(131072)]
+    public void SerializeValue_PreservesLargeEscapedOutputAndDeclaredType(int length)
+    {
+        var serializer = CreateSerializer();
+        var value = new string('x', length) + "\"<&\\\n\u00e9\u4e2d\U0001F30D";
+        var expected = Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":"
+            + JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerDefaults.Web)) + "}");
+
+        var bytes = serializer.SerializeValue(value, typeof(string));
+        var deserialized = Assert.IsType<string>(serializer.DeserializeValue(bytes, typeof(string)));
+
+        Assert.Equal(expected, bytes);
+        Assert.Equal(value, deserialized);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SerializeValue_PreservesFailureBeforeSessionReplacementAndRecovers(bool unsupportedType)
+    {
+        var serializer = CreateSerializer();
+        var supplier = new SessionCascadingValueSupplier(serializer, NullLogger<SessionCascadingValueSupplier>.Instance);
+        var session = new Mock<ISession>();
+        byte[] previous = [1, 3, 5];
+        var stored = previous;
+        session.Setup(value => value.Set("stored-value", It.IsAny<byte[]>()))
+            .Callback<string, byte[]>((key, bytes) => stored = bytes);
+        var feature = new Mock<ISessionFeature>();
+        feature.SetupGet(value => value.Session).Returns(session.Object);
+        using var services = new ServiceCollection().AddLogging().BuildServiceProvider();
+        var context = new DefaultHttpContext { RequestServices = services };
+        context.Features.Set(feature.Object);
+        supplier.SetRequestContext(context);
+        object nested = "leaf";
+        for (var index = 0; index < 600; index++)
+        {
+            nested = new object[] { nested };
+        }
+        var component = new SessionValueComponent { Value = unsupportedType ? new IntPtr(42) : nested };
+        using var renderer = new TestRenderer();
+        var componentState = new ComponentState(renderer, 0, component, null);
+        var attribute = new SupplyParameterFromSessionAttribute { Name = "stored-value" };
+        var parameter = new CascadingParameterInfo(attribute, nameof(SessionValueComponent.Value), typeof(object));
+        using var subscription = supplier.CreateSubscription(componentState, attribute, parameter);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => supplier.PersistAllValues());
+
+        if (unsupportedType)
+        {
+            Assert.Equal("Cannot serialize type 'System.IntPtr'.", exception.Message);
+        }
+        else
+        {
+            Assert.Contains("depth", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        Assert.Same(previous, stored);
+        session.Verify(value => value.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Never);
+
+        component.Value = "recovered";
+        await supplier.PersistAllValues();
+
+        Assert.Equal(Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":\"recovered\"}"), stored);
+        Assert.Equal("recovered", serializer.DeserializeValue(stored, typeof(string)));
+        session.Verify(value => value.Set("stored-value", It.IsAny<byte[]>()), Times.Once);
+    }
+
+    [Fact]
     public void ReserializingDeserializedData_IsByteIdentical()
     {
         // Locks the reasoning behind deriving the type from value.GetType() at serialization time
@@ -580,6 +673,11 @@ public class JsonStoredDataSerializerTest
     private class TestItem
     {
         public int DummyInt { get; set; }
+    }
+
+    private sealed class SessionValueComponent : ComponentBase
+    {
+        public object Value { get; set; }
     }
 
     private enum TestEnum
