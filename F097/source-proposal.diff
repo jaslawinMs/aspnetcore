@@ -1,0 +1,248 @@
+diff --git a/src/Components/JSInterop/src/JSRuntime.cs b/src/Components/JSInterop/src/JSRuntime.cs
+index ad4dd95c2b..b195a9f70a 100644
+--- a/src/Components/JSInterop/src/JSRuntime.cs
++++ b/src/Components/JSInterop/src/JSRuntime.cs
+@@ -23,6 +23,8 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
+     private readonly ConcurrentDictionary<long, IPendingAsyncCall> _pendingTasks = new();
+     private readonly ConcurrentDictionary<long, IDotNetObjectReference> _trackedRefsById = new();
+     private readonly ConcurrentDictionary<long, CancellationTokenRegistration> _cancellationRegistrations = new();
++    private CancellationTokenSource? _cachedDefaultTimeoutCancellationTokenSource;
++    private bool _defaultTimeoutSourcePoolClosed;
+ 
+     internal readonly ArrayBuilder<byte[]> ByteArraysToBeRevived = new();
+ 
+@@ -123,14 +125,52 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
+     {
+         if (DefaultAsyncTimeout.HasValue)
+         {
+-            using var cts = new CancellationTokenSource(DefaultAsyncTimeout.Value);
+-            // We need to await here due to the using
+-            return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);
++            var cts = Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null);
++            try
++            {
++                var timeout = DefaultAsyncTimeout.Value;
++                if (cts is null)
++                {
++                    cts = new CancellationTokenSource(timeout);
++                }
++                else if (timeout == TimeSpan.Zero)
++                {
++                    cts.Cancel();
++                }
++                else
++                {
++                    cts.CancelAfter(timeout);
++                }
++
++                // We need to await here before returning the timeout source.
++                return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);
++            }
++            finally
++            {
++                if (cts is not null)
++                {
++                    ReturnDefaultTimeoutCancellationTokenSource(cts);
++                }
++            }
+         }
+ 
+         return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, CancellationToken.None, args);
+     }
+ 
++    private void ReturnDefaultTimeoutCancellationTokenSource(CancellationTokenSource cts)
++    {
++        // TryReset also rejects a timer whose cancellation callback has already been queued.
++        if (Volatile.Read(ref _defaultTimeoutSourcePoolClosed) || !cts.TryReset() ||
++            Interlocked.CompareExchange(ref _cachedDefaultTimeoutCancellationTokenSource, cts, null) is not null)
++        {
++            cts.Dispose();
++        }
++        else if (Volatile.Read(ref _defaultTimeoutSourcePoolClosed))
++        {
++            Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null)?.Dispose();
++        }
++    }
++
+     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "We expect application code is configured to ensure JS interop arguments are linker friendly.")]
+     internal ValueTask<TValue> InvokeAsync<[DynamicallyAccessedMembers(JsonSerialized)] TValue>(
+         long targetInstanceId,
+@@ -143,11 +183,12 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
+         var pendingCall = new PendingAsyncCall<TValue>();
+         if (cancellationToken.CanBeCanceled)
+         {
+-            _cancellationRegistrations[taskId] = cancellationToken.Register(() =>
++            _cancellationRegistrations[taskId] = cancellationToken.Register(static (state, token) =>
+             {
+-                pendingCall.Cancel(cancellationToken);
+-                CleanupTasksAndRegistrations(taskId);
+-            });
++                var registrationState = ((JSRuntime Runtime, long TaskId, PendingAsyncCall<TValue> PendingCall))state!;
++                registrationState.PendingCall.Cancel(token);
++                registrationState.Runtime.CleanupTasksAndRegistrations(registrationState.TaskId);
++            }, (this, taskId, pendingCall));
+         }
+         _pendingTasks[taskId] = pendingCall;
+ 
+@@ -386,5 +427,10 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
+     /// <summary>
+     /// Dispose the JSRuntime.
+     /// </summary>
+-    public void Dispose() => ByteArraysToBeRevived.Dispose();
++    public void Dispose()
++    {
++        Volatile.Write(ref _defaultTimeoutSourcePoolClosed, true);
++        Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null)?.Dispose();
++        ByteArraysToBeRevived.Dispose();
++    }
+ }
+diff --git a/src/Components/JSInterop/test/JSRuntimeTest.cs b/src/Components/JSInterop/test/JSRuntimeTest.cs
+index a97166b521..4d030ae206 100644
+--- a/src/Components/JSInterop/test/JSRuntimeTest.cs
++++ b/src/Components/JSInterop/test/JSRuntimeTest.cs
+@@ -82,6 +82,122 @@ public class JSRuntimeTest
+         await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
+     }
+ 
++    [Fact]
++    public async Task InvokeAsync_CancellationExceptionPreservesExplicitCallerToken()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        using var cts = new CancellationTokenSource();
++        runtime.DefaultTimeout = TimeSpan.Zero;
++        var task = runtime.InvokeAsync<int>("explicit token", cts.Token, []);
++
++        Assert.False(task.IsCompleted);
++        Assert.Equal(2, runtime.BeginInvokeCalls.Count);
++        cts.Cancel();
++        var exception = await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
++
++        Assert.Equal(cts.Token, exception.CancellationToken);
++        Assert.True(task.IsCanceled);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_ZeroDefaultTimeoutDoesNotDispatchAfterCompletedCall()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        runtime.DefaultTimeout = TimeSpan.Zero;
++
++        var task = runtime.InvokeAsync<int>("zero", []);
++
++        Assert.True(task.IsCanceled);
++        await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
++        Assert.Single(runtime.BeginInvokeCalls);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_CanceledDefaultTokenIsNotReused()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
++        var first = runtime.InvokeAsync<int>("first timeout", []);
++        var firstException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await first);
++        runtime.DefaultTimeout = TimeSpan.FromSeconds(10);
++        var completed = runtime.InvokeAsync<int>("completed", []);
++        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
++        Assert.Equal(731, await completed);
++        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
++        var second = runtime.InvokeAsync<int>("second timeout", []);
++        var secondException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await second);
++
++        Assert.True(firstException.CancellationToken.IsCancellationRequested);
++        Assert.True(secondException.CancellationToken.IsCancellationRequested);
++        Assert.NotEqual(firstException.CancellationToken, secondException.CancellationToken);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_ExplicitNoneOverridesDefaultAfterCompletedCall()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
++        var defaultTask = runtime.InvokeAsync<int>("default", []);
++        var overrideTask = runtime.InvokeAsync<int>("override", CancellationToken.None, []);
++        var overrideHandle = runtime.BeginInvokeCalls[^1].AsyncHandle;
++
++        await Assert.ThrowsAsync<TaskCanceledException>(async () => await defaultTask);
++        Assert.False(overrideTask.IsCompleted);
++        CompleteCall(runtime, overrideHandle);
++
++        Assert.Equal(731, await overrideTask);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_OverlappingDefaultCallsHaveIndependentCancellationTokens()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
++        var first = runtime.InvokeAsync<int>("first", []);
++        var second = runtime.InvokeAsync<int>("second", []);
++        var third = runtime.InvokeAsync<int>("third", []);
++        var firstException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await first);
++        var secondException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await second);
++        var thirdException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await third);
++
++        Assert.NotEqual(firstException.CancellationToken, secondException.CancellationToken);
++        Assert.NotEqual(firstException.CancellationToken, thirdException.CancellationToken);
++        Assert.NotEqual(secondException.CancellationToken, thirdException.CancellationToken);
++        Assert.True(firstException.CancellationToken.IsCancellationRequested);
++        Assert.True(secondException.CancellationToken.IsCancellationRequested);
++        Assert.True(thirdException.CancellationToken.IsCancellationRequested);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_DisposeDoesNotCancelPendingDefaultCall()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        var task = runtime.InvokeAsync<int>("pending", []);
++        var handle = runtime.BeginInvokeCalls[^1].AsyncHandle;
++
++        runtime.Dispose();
++
++        Assert.False(task.IsCompleted);
++        CompleteCall(runtime, handle);
++        Assert.Equal(731, await task);
++    }
++
++    [Fact]
++    public async Task InvokeAsync_InvalidDefaultTimeoutAfterCompletedCallPreservesValidation()
++    {
++        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
++        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(-2);
++        var task = runtime.InvokeAsync<int>("invalid", []);
++        var exception = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await task);
++
++        Assert.Equal("delay", exception.ParamName);
++        Assert.Single(runtime.BeginInvokeCalls);
++        runtime.DefaultTimeout = TimeSpan.FromSeconds(10);
++        var completed = runtime.InvokeAsync<int>("completed", []);
++        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
++        Assert.Equal(731, await completed);
++    }
++
+     [Fact]
+     public void PendingAsyncCall_CompletionAfterCancellationDoesNotThrow()
+     {
+@@ -440,6 +556,22 @@ public class JSRuntimeTest
+         Assert.Equal("The current JavaScript runtime does not support reading data streams.", exception.Message);
+     }
+ 
++    private static async Task<TestJSRuntime> CreateRuntimeWithCompletedDefaultCallAsync()
++    {
++        var runtime = new TestJSRuntime { DefaultTimeout = TimeSpan.FromSeconds(10) };
++        var completed = runtime.InvokeAsync<int>("warm", []);
++        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
++        Assert.Equal(731, await completed);
++
++        return runtime;
++    }
++
++    private static void CompleteCall(TestJSRuntime runtime, long taskId)
++    {
++        var reader = new Utf8JsonReader("731"u8);
++        runtime.EndInvokeJS(taskId, succeeded: true, ref reader);
++    }
++
+     private class JSError
+     {
+         public DotNetInvocationInfo InvocationInfo { get; set; }

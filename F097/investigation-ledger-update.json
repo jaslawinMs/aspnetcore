@@ -1,0 +1,29 @@
+{
+  "id": "F097",
+  "finding": {
+    "card_id": "cancellationtokensource-timeout-timer-hot-path",
+    "file": "src/Components/JSInterop/src/JSRuntime.cs",
+    "line_start": 124,
+    "line_end": 128,
+    "project": "Microsoft.JSInterop",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Default-timeout JavaScript interop creates a timeout CTS for every invocation.",
+    "explanation": "When DefaultAsyncTimeout is configured, every InvokeAsync call allocates a CancellationTokenSource and schedules a timeout timer before dispatching the interop operation. JS interop can be invoked frequently, but the actual call rate is application-dependent, so the source shape is classified likely rather than confirmed.",
+    "snippet": "if (DefaultAsyncTimeout.HasValue)\n{\n    using var cts = new CancellationTokenSource(DefaultAsyncTimeout.Value);\n    return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);\n}",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Investigating runtime-owned default CTS independently of F096 public object-reference TimeSpan token constraints; no shipping edit or candidate presumed."
+  ],
+  "branch": "autoperf/F097-js-runtime-default-timeouts",
+  "pr_url": null,
+  "updated_at": "2026-11-16T08:36:47.8217670+00:00"
+}

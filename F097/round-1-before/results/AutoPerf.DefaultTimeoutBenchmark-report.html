@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.DefaultTimeoutBenchmark-20261116-012638</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>        Method</th><th>Operation</th><th>Policy</th><th>Workload</th><th> Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Finite</td><td>WindowInline</td><td>1,787.9 ns</td><td>1,260.23 ns</td><td>659.13 ns</td><td>-</td><td>-</td><td>-</td><td>856 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Finite</td><td>WindowDeferred</td><td>1,097.9 ns</td><td>12.80 ns</td><td>6.69 ns</td><td>0.0217</td><td>-</td><td>-</td><td>1,192 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Finite</td><td>ObjectInline</td><td>885.1 ns</td><td>76.17 ns</td><td>39.84 ns</td><td>0.0178</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Finite</td><td>ObjectDeferred</td><td>1,107.9 ns</td><td>20.23 ns</td><td>10.58 ns</td><td>0.0218</td><td>-</td><td>-</td><td>1,192 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Finite</td><td>Overlap8</td><td>8,911.5 ns</td><td>106.70 ns</td><td>55.81 ns</td><td>0.2615</td><td>-</td><td>-</td><td>9,880 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Unconfigured</td><td>WindowInline</td><td>648.0 ns</td><td>14.24 ns</td><td>7.45 ns</td><td>0.0063</td><td>-</td><td>-</td><td>464 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Unconfigured</td><td>WindowDeferred</td><td>890.7 ns</td><td>16.33 ns</td><td>8.54 ns</td><td>0.0175</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Unconfigured</td><td>ObjectInline</td><td>660.2 ns</td><td>22.81 ns</td><td>11.93 ns</td><td>0.0065</td><td>-</td><td>-</td><td>464 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Unconfigured</td><td>ObjectDeferred</td><td>891.4 ns</td><td>10.80 ns</td><td>5.65 ns</td><td>0.0176</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Invoke</td><td>Unconfigured</td><td>Overlap8</td><td>6,998.7 ns</td><td>65.79 ns</td><td>34.41 ns</td><td>0.1387</td><td>-</td><td>-</td><td>6,680 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Finite</td><td>WindowInline</td><td>930.2 ns</td><td>14.45 ns</td><td>7.56 ns</td><td>0.0183</td><td>-</td><td>-</td><td>840 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Finite</td><td>WindowDeferred</td><td>1,296.8 ns</td><td>22.53 ns</td><td>11.79 ns</td><td>0.0259</td><td>-</td><td>-</td><td>1,312 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Finite</td><td>ObjectInline</td><td>937.1 ns</td><td>11.53 ns</td><td>6.03 ns</td><td>0.0201</td><td>-</td><td>-</td><td>840 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Finite</td><td>ObjectDeferred</td><td>1,308.0 ns</td><td>19.33 ns</td><td>10.11 ns</td><td>0.0257</td><td>-</td><td>-</td><td>1,312 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Finite</td><td>Overlap8</td><td>10,231.1 ns</td><td>169.20 ns</td><td>88.50 ns</td><td>0.2029</td><td>-</td><td>-</td><td>10,841 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Unconfigured</td><td>WindowInline</td><td>705.4 ns</td><td>10.44 ns</td><td>5.46 ns</td><td>0.0071</td><td>-</td><td>-</td><td>440 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Unconfigured</td><td>WindowDeferred</td><td>1,085.5 ns</td><td>14.96 ns</td><td>7.82 ns</td><td>0.0215</td><td>-</td><td>-</td><td>912 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Unconfigured</td><td>ObjectInline</td><td>696.1 ns</td><td>5.01 ns</td><td>2.62 ns</td><td>0.0069</td><td>-</td><td>-</td><td>440 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Unconfigured</td><td>ObjectDeferred</td><td>1,085.6 ns</td><td>19.26 ns</td><td>10.07 ns</td><td>0.0214</td><td>-</td><td>-</td><td>912 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>InvokeVoid</td><td>Unconfigured</td><td>Overlap8</td><td>8,357.3 ns</td><td>211.46 ns</td><td>110.60 ns</td><td>0.1682</td><td>-</td><td>-</td><td>7,640 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Finite</td><td>WindowInline</td><td>1,002.9 ns</td><td>16.39 ns</td><td>8.57 ns</td><td>0.0200</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Finite</td><td>WindowDeferred</td><td>1,290.9 ns</td><td>11.86 ns</td><td>6.20 ns</td><td>0.0252</td><td>-</td><td>-</td><td>1,264 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Finite</td><td>ObjectInline</td><td>1,006.0 ns</td><td>36.69 ns</td><td>19.19 ns</td><td>0.0197</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Finite</td><td>ObjectDeferred</td><td>1,278.8 ns</td><td>22.11 ns</td><td>11.57 ns</td><td>0.0254</td><td>-</td><td>-</td><td>1,264 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Finite</td><td>Overlap8</td><td>10,174.3 ns</td><td>289.05 ns</td><td>151.18 ns</td><td>0.2000</td><td>-</td><td>-</td><td>10,457 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Unconfigured</td><td>WindowInline</td><td>786.3 ns</td><td>10.24 ns</td><td>5.35 ns</td><td>0.0078</td><td>-</td><td>-</td><td>528 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Unconfigured</td><td>WindowDeferred</td><td>1,068.8 ns</td><td>22.86 ns</td><td>11.96 ns</td><td>0.0211</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Unconfigured</td><td>ObjectInline</td><td>788.0 ns</td><td>17.39 ns</td><td>9.09 ns</td><td>0.0078</td><td>-</td><td>-</td><td>528 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Unconfigured</td><td>ObjectDeferred</td><td>1,071.1 ns</td><td>88.04 ns</td><td>46.05 ns</td><td>0.0208</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Constructor</td><td>Unconfigured</td><td>Overlap8</td><td>8,333.2 ns</td><td>70.61 ns</td><td>36.93 ns</td><td>0.1653</td><td>-</td><td>-</td><td>7,256 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Finite</td><td>WindowInline</td><td>688.6 ns</td><td>4.86 ns</td><td>2.54 ns</td><td>0.0200</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Finite</td><td>WindowDeferred</td><td>934.7 ns</td><td>15.82 ns</td><td>8.27 ns</td><td>0.0276</td><td>-</td><td>-</td><td>1,120 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Finite</td><td>ObjectInline</td><td>678.8 ns</td><td>8.58 ns</td><td>4.49 ns</td><td>0.0201</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Finite</td><td>ObjectDeferred</td><td>939.2 ns</td><td>16.23 ns</td><td>8.49 ns</td><td>0.0274</td><td>-</td><td>-</td><td>1,120 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Finite</td><td>Overlap8</td><td>7,392.3 ns</td><td>95.65 ns</td><td>50.03 ns</td><td>0.2173</td><td>-</td><td>-</td><td>9,304 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Unconfigured</td><td>WindowInline</td><td>460.5 ns</td><td>32.40 ns</td><td>16.95 ns</td><td>0.0091</td><td>-</td><td>-</td><td>392 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Unconfigured</td><td>WindowDeferred</td><td>691.4 ns</td><td>9.18 ns</td><td>4.80 ns</td><td>0.0137</td><td>-</td><td>-</td><td>720 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Unconfigured</td><td>ObjectInline</td><td>461.1 ns</td><td>13.51 ns</td><td>7.06 ns</td><td>0.0091</td><td>-</td><td>-</td><td>392 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Unconfigured</td><td>ObjectDeferred</td><td>706.0 ns</td><td>16.29 ns</td><td>8.52 ns</td><td>0.0137</td><td>-</td><td>-</td><td>720 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Get</td><td>Unconfigured</td><td>Overlap8</td><td>5,781.1 ns</td><td>47.96 ns</td><td>25.08 ns</td><td>0.1653</td><td>-</td><td>-</td><td>6,104 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Finite</td><td>WindowInline</td><td>862.6 ns</td><td>23.01 ns</td><td>12.03 ns</td><td>0.0171</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Finite</td><td>WindowDeferred</td><td>1,292.9 ns</td><td>27.39 ns</td><td>14.32 ns</td><td>0.0255</td><td>-</td><td>-</td><td>1,336 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Finite</td><td>ObjectInline</td><td>902.6 ns</td><td>11.51 ns</td><td>6.02 ns</td><td>0.0178</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Finite</td><td>ObjectDeferred</td><td>1,311.2 ns</td><td>97.44 ns</td><td>50.96 ns</td><td>0.0274</td><td>-</td><td>-</td><td>1,336 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Finite</td><td>Overlap8</td><td>10,000.6 ns</td><td>147.82 ns</td><td>77.32 ns</td><td>0.2939</td><td>-</td><td>-</td><td>11,033 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Unconfigured</td><td>WindowInline</td><td>632.2 ns</td><td>11.09 ns</td><td>5.80 ns</td><td>0.0063</td><td>-</td><td>-</td><td>464 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Unconfigured</td><td>WindowDeferred</td><td>1,046.7 ns</td><td>17.76 ns</td><td>9.29 ns</td><td>0.0208</td><td>-</td><td>-</td><td>936 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Unconfigured</td><td>ObjectInline</td><td>676.6 ns</td><td>8.20 ns</td><td>4.29 ns</td><td>0.0067</td><td>-</td><td>-</td><td>464 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Unconfigured</td><td>ObjectDeferred</td><td>1,076.9 ns</td><td>19.50 ns</td><td>10.20 ns</td><td>0.0214</td><td>-</td><td>-</td><td>936 B</td>
+</tr><tr><td>ActualDefaultTimeout</td><td>Set</td><td>Unconfigured</td><td>Overlap8</td><td>8,133.9 ns</td><td>149.54 ns</td><td>78.21 ns</td><td>0.1611</td><td>-</td><td>-</td><td>7,832 B</td>
+</tr></tbody></table>
+</body>
+</html>

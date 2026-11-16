@@ -1,0 +1,320 @@
+commit 9372816b7c436e06da6d6426e0863b3677aac83c
+Author: Pranav K <prkrishn@hotmail.com>
+Date:   Wed Aug 14 12:24:35 2019 -0700
+
+    API Review: JSRuntime (dotnet/extensions#2166)
+    
+    * API Review: JSRuntime
+    
+    * Rename JSRuntimeBase -> JSRuntime
+    * Rename JSInProcessRuntimeBase -> JSInProcessRuntime
+    * Rename DotNetObjectRef -> DotNetObjectReference
+    * Update JSRuntime to return ValueTask
+    * Make InvokeAsync APIs that explicitly cancels and API that default cancels more crisp
+    * Introduce void invoking APIs
+    * Fixup method names on DotNetDispatcher
+    
+    \n\nCommit migrated from https://github.com/dotnet/extensions/commit/93d3ae448551cac29af8cf882b31047f5da0dadc
+
+diff --git a/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs b/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
+index d7ee372a73..6edc725177 100644
+--- a/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
++++ b/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
+@@ -1,7 +1,6 @@
+ // Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+-using System.Collections.Generic;
+ using System.Threading;
+ using System.Threading.Tasks;
+ 
+@@ -14,21 +13,28 @@ namespace Microsoft.JSInterop
+     {
+         /// <summary>
+         /// Invokes the specified JavaScript function asynchronously.
++        /// <para>
++        /// <see cref="JSRuntime"/> will apply timeouts to this operation based on the value configured in <see cref="JSRuntime.DefaultAsyncTimeout"/>. To dispatch a call with a different timeout, or no timeout,
++        /// consider using <see cref="InvokeAsync{TValue}(string, CancellationToken, object[])" />.
++        /// </para>
+         /// </summary>
+         /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
+         /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
+         /// <param name="args">JSON-serializable arguments.</param>
+         /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
+-        Task<TValue> InvokeAsync<TValue>(string identifier, params object[] args);
++        ValueTask<TValue> InvokeAsync<TValue>(string identifier, object[] args);
+ 
+         /// <summary>
+         /// Invokes the specified JavaScript function asynchronously.
+         /// </summary>
+         /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
+         /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="cancellationToken">
++        /// A cancellation token to signal the cancellation of the operation. Specifying this parameter will override any default cancellations such as due to timeouts
++        /// (<see cref="JSRuntime.DefaultAsyncTimeout"/>) from being applied.
++        /// </param>
+         /// <param name="args">JSON-serializable arguments.</param>
+-        /// <param name="cancellationToken">A cancellation token to signal the cancellation of the operation.</param>
+         /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
+-        Task<TValue> InvokeAsync<TValue>(string identifier, IEnumerable<object> args, CancellationToken cancellationToken = default);
++        ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object[] args);
+     }
+ }
+diff --git a/src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs b/src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs
+index ae097ca68e..598b47c4d4 100644
+--- a/src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs
++++ b/src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs
+@@ -2,19 +2,38 @@
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+ using System;
++using System.Collections.Concurrent;
++using System.Linq;
++using System.Text.Json;
+ using System.Threading;
++using System.Threading.Tasks;
++using Microsoft.JSInterop.Infrastructure;
+ 
+ namespace Microsoft.JSInterop
+ {
+     /// <summary>
+-    /// Provides mechanisms for accessing the current <see cref="IJSRuntime"/>.
++    /// Abstract base class for a JavaScript runtime.
+     /// </summary>
+-    public static class JSRuntime
++    public abstract partial class JSRuntime : IJSRuntime
+     {
+         private static readonly AsyncLocal<IJSRuntime> _currentJSRuntime = new AsyncLocal<IJSRuntime>();
+ 
+         internal static IJSRuntime Current => _currentJSRuntime.Value;
+ 
++        private long _nextPendingTaskId = 1; // Start at 1 because zero signals "no response needed"
++        private readonly ConcurrentDictionary<long, object> _pendingTasks
++            = new ConcurrentDictionary<long, object>();
++
++        private readonly ConcurrentDictionary<long, CancellationTokenRegistration> _cancellationRegistrations =
++            new ConcurrentDictionary<long, CancellationTokenRegistration>();
++
++        internal DotNetObjectReferenceManager ObjectRefManager { get; } = new DotNetObjectReferenceManager();
++
++        /// <summary>
++        /// Gets or sets the default timeout for asynchronous JavaScript calls.
++        /// </summary>
++        protected TimeSpan? DefaultAsyncTimeout { get; set; }
++
+         /// <summary>
+         /// Sets the current JS runtime to the supplied instance.
+         ///
+@@ -26,5 +45,151 @@ namespace Microsoft.JSInterop
+             _currentJSRuntime.Value = instance
+                 ?? throw new ArgumentNullException(nameof(instance));
+         }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// <para>
++        /// <see cref="JSRuntime"/> will apply timeouts to this operation based on the value configured in <see cref="DefaultAsyncTimeout"/>. To dispatch a call with a different, or no timeout,
++        /// consider using <see cref="InvokeAsync{TValue}(string, CancellationToken, object[])" />.
++        /// </para>
++        /// </summary>
++        /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
++        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object[] args)
++        {
++            if (DefaultAsyncTimeout.HasValue)
++            {
++                return InvokeWithDefaultCancellation<TValue>(identifier, args);
++            }
++
++            return InvokeAsync<TValue>(identifier, CancellationToken.None, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="cancellationToken">
++        /// A cancellation token to signal the cancellation of the operation. Specifying this parameter will override any default cancellations such as due to timeouts
++        /// (<see cref="JSRuntime.DefaultAsyncTimeout"/>) from being applied.
++        /// </param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
++        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object[] args)
++        {
++            var taskId = Interlocked.Increment(ref _nextPendingTaskId);
++            var tcs = new TaskCompletionSource<TValue>(TaskContinuationOptions.RunContinuationsAsynchronously);
++            if (cancellationToken != default)
++            {
++                _cancellationRegistrations[taskId] = cancellationToken.Register(() =>
++                {
++                    tcs.TrySetCanceled(cancellationToken);
++                    CleanupTasksAndRegistrations(taskId);
++                });
++            }
++            _pendingTasks[taskId] = tcs;
++
++            try
++            {
++                if (cancellationToken.IsCancellationRequested)
++                {
++                    tcs.TrySetCanceled(cancellationToken);
++                    CleanupTasksAndRegistrations(taskId);
++
++                    return new ValueTask<TValue>(tcs.Task);
++                }
++
++                var argsJson = args?.Any() == true ?
++                    JsonSerializer.Serialize(args, JsonSerializerOptionsProvider.Options) :
++                    null;
++                BeginInvokeJS(taskId, identifier, argsJson);
++
++                return new ValueTask<TValue>(tcs.Task);
++            }
++            catch
++            {
++                CleanupTasksAndRegistrations(taskId);
++                throw;
++            }
++        }
++
++        private void CleanupTasksAndRegistrations(long taskId)
++        {
++            _pendingTasks.TryRemove(taskId, out _);
++            if (_cancellationRegistrations.TryRemove(taskId, out var registration))
++            {
++                registration.Dispose();
++            }
++        }
++
++        private async ValueTask<T> InvokeWithDefaultCancellation<T>(string identifier, object[] args)
++        {
++            using (var cts = new CancellationTokenSource(DefaultAsyncTimeout.Value))
++            {
++                // We need to await here due to the using
++                return await InvokeAsync<T>(identifier, cts.Token, args);
++            }
++        }
++
++        /// <summary>
++        /// Begins an asynchronous function invocation.
++        /// </summary>
++        /// <param name="taskId">The identifier for the function invocation, or zero if no async callback is required.</param>
++        /// <param name="identifier">The identifier for the function to invoke.</param>
++        /// <param name="argsJson">A JSON representation of the arguments.</param>
++        protected abstract void BeginInvokeJS(long taskId, string identifier, string argsJson);
++
++        /// <summary>
++        /// Completes an async JS interop call from JavaScript to .NET
++        /// </summary>
++        /// <param name="callId">The id of the JavaScript callback to execute on completion.</param>
++        /// <param name="success">Whether the operation succeeded or not.</param>
++        /// <param name="resultOrError">The result of the operation or an object containing error details.</param>
++        /// <param name="assemblyName">The name of the method assembly if the invocation was for a static method.</param>
++        /// <param name="methodIdentifier">The identifier for the method within the assembly.</param>
++        /// <param name="dotNetObjectId">The tracking id of the dotnet object if the invocation was for an instance method.</param>
++        protected internal abstract void EndInvokeDotNet(
++            string callId,
++            bool success,
++            object resultOrError,
++            string assemblyName,
++            string methodIdentifier,
++            long dotNetObjectId);
++
++        internal void EndInvokeJS(long taskId, bool succeeded, ref Utf8JsonReader jsonReader)
++        {
++            if (!_pendingTasks.TryRemove(taskId, out var tcs))
++            {
++                // We should simply return if we can't find an id for the invocation.
++                // This likely means that the method that initiated the call defined a timeout and stopped waiting.
++                return;
++            }
++
++            CleanupTasksAndRegistrations(taskId);
++
++            try
++            {
++                if (succeeded)
++                {
++                    var resultType = TaskGenericsUtil.GetTaskCompletionSourceResultType(tcs);
++
++                    var result = JsonSerializer.Deserialize(ref jsonReader, resultType, JsonSerializerOptionsProvider.Options);
++                    TaskGenericsUtil.SetTaskCompletionSourceResult(tcs, result);
++                }
++                else
++                {
++                    var exceptionText = jsonReader.GetString() ?? string.Empty;
++                    TaskGenericsUtil.SetTaskCompletionSourceException(tcs, new JSException(exceptionText));
++                }
++            }
++            catch (Exception exception)
++            {
++                var message = $"An exception occurred executing JS interop: {exception.Message}. See InnerException for more details.";
++                TaskGenericsUtil.SetTaskCompletionSourceException(tcs, new JSException(message, exception));
++            }
++        }
+     }
+ }
+diff --git a/src/JSInterop/Microsoft.JSInterop/test/TestJSRuntime.cs b/src/JSInterop/Microsoft.JSInterop/test/TestJSRuntime.cs
+index c4e6b05c5b..48782fc4df 100644
+--- a/src/JSInterop/Microsoft.JSInterop/test/TestJSRuntime.cs
++++ b/src/JSInterop/Microsoft.JSInterop/test/TestJSRuntime.cs
+@@ -6,7 +6,7 @@ using System.Threading.Tasks;
+ 
+ namespace Microsoft.JSInterop
+ {
+-    internal class TestJSRuntime : JSRuntimeBase
++    internal class TestJSRuntime : JSRuntime
+     {
+         protected override void BeginInvokeJS(long asyncHandle, string identifier, string argsJson)
+         {
+@@ -18,7 +18,7 @@ namespace Microsoft.JSInterop
+             throw new NotImplementedException();
+         }
+ 
+-        public static async Task WithJSRuntime(Action<JSRuntimeBase> testCode)
++        public static async Task WithJSRuntime(Action<JSRuntime> testCode)
+         {
+             // Since the tests rely on the asynclocal JSRuntime.Current, ensure we
+             // are on a distinct async context with a non-null JSRuntime.Current
+diff --git a/src/JSInterop/Mono.WebAssembly.Interop/src/MonoWebAssemblyJSRuntime.cs b/src/JSInterop/Mono.WebAssembly.Interop/src/MonoWebAssemblyJSRuntime.cs
+index e65df172f8..0e292a3e3c 100644
+--- a/src/JSInterop/Mono.WebAssembly.Interop/src/MonoWebAssemblyJSRuntime.cs
++++ b/src/JSInterop/Mono.WebAssembly.Interop/src/MonoWebAssemblyJSRuntime.cs
+@@ -5,6 +5,7 @@ using System;
+ using System.Runtime.ExceptionServices;
+ using System.Text.Json;
+ using Microsoft.JSInterop;
++using Microsoft.JSInterop.Infrastructure;
+ using WebAssembly.JSInterop;
+ 
+ namespace Mono.WebAssembly.Interop
+@@ -13,7 +14,7 @@ namespace Mono.WebAssembly.Interop
+     /// Provides methods for invoking JavaScript functions for applications running
+     /// on the Mono WebAssembly runtime.
+     /// </summary>
+-    public class MonoWebAssemblyJSRuntime : JSInProcessRuntimeBase
++    public class MonoWebAssemblyJSRuntime : JSInProcessRuntime
+     {
+         /// <inheritdoc />
+         protected override string InvokeJS(string identifier, string argsJson)
+@@ -37,7 +38,7 @@ namespace Mono.WebAssembly.Interop
+ 
+         // Invoked via Mono's JS interop mechanism (invoke_method)
+         private static void EndInvokeJS(string argsJson)
+-            => DotNetDispatcher.EndInvoke(argsJson);
++            => DotNetDispatcher.EndInvokeJS(argsJson);
+ 
+         // Invoked via Mono's JS interop mechanism (invoke_method)
+         private static void BeginInvokeDotNet(string callId, string assemblyNameOrDotNetObjectId, string methodIdentifier, string argsJson)
+@@ -58,7 +59,7 @@ namespace Mono.WebAssembly.Interop
+                 assemblyName = assemblyNameOrDotNetObjectId;
+             }
+ 
+-            DotNetDispatcher.BeginInvoke(callId, assemblyName, methodIdentifier, dotNetObjectId, argsJson);
++            DotNetDispatcher.BeginInvokeDotNet(callId, assemblyName, methodIdentifier, dotNetObjectId, argsJson);
+         }
+ 
+         protected override void EndInvokeDotNet(

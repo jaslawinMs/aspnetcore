@@ -1,0 +1,26 @@
+{
+  "candidate": "F097",
+  "sourceOrHarnessOrMeasurementChanged": false,
+  "resourceAcceptanceChanged": false,
+  "comparisonBudgetConsumed": 3,
+  "failures": [
+    {
+      "kind": "derived-auditor-code-source-filter",
+      "actual": 10,
+      "incorrectExpected": 9,
+      "reason": "The initial includes('/src/') filter counted the csproj as a C# PDB source. The actual recorded9 owner C# documents and5 harness documents were already correct.",
+      "correction": "Filter .cs files explicitly.",
+      "rawErrorRetainedInSessionToolOutput": true
+    },
+    {
+      "kind": "derived-auditor-fixed-timed-allocation-assumption",
+      "actual": 799,
+      "incorrectExpected": 800,
+      "reason": "A rounded reported finite Set/Overlap8 saved799B, not the800B seen in pair1. Exact raw GC rounding was already verified.",
+      "correction": "Keep all actual outcome and range values instead of imposing a first-pair exact allocation delta.",
+      "rawLog": "standalone-audit.log"
+    }
+  ],
+  "finalActualAudit": "standalone-audit-final.log",
+  "note": "These are preparation-auditor failures, not new benchmark comparisons or shipping defect/red tests. All actual semantic/resource and measured source binaries remain unchanged."
+}
