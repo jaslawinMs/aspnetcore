@@ -1,0 +1,29 @@
+{
+  "id": "F096",
+  "finding": {
+    "card_id": "cancellationtokensource-timeout-timer-hot-path",
+    "file": "src/Components/JSInterop/src/JSObjectReferenceExtensions.cs",
+    "line_start": 97,
+    "line_end": 202,
+    "project": "Microsoft.JSInterop",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Five timeout overloads allocate and schedule a new CTS timer for each JS operation.",
+    "explanation": "The timeout overloads for invocation, constructor invocation, property reads, and property writes each create a CancellationTokenSource(timeout). Every finite-timeout call therefore allocates a CTS and schedules a one-shot timer. This is a source-supported timer-pressure shape, but classification is likely because call rate and whether callers treat each invocation as the intended outer timeout boundary are not visible in this file.",
+    "snippet": "using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Starting independent managed JS-object timeout lifecycle investigation from campaign baseline after finalized F095. Finite deadlines/cancellation/disposal must remain; no candidate or performance claim yet."
+  ],
+  "branch": "autoperf/F096-js-object-reference-timeouts",
+  "pr_url": null,
+  "updated_at": "2026-11-16T07:42:22.4213156+00:00"
+}

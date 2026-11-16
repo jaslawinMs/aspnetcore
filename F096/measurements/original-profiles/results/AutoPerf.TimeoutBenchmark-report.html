@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TimeoutBenchmark-20261116-001341</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>Operation</th><th>Policy</th><th>Reply</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Invoke</td><td>Constructor</td><td>Finite</td><td>Deferred</td><td>1,902.3 ns</td><td>1,779.63 ns</td><td>930.78 ns</td><td>-</td><td>-</td><td>-</td><td>920 B</td>
+</tr><tr><td>Invoke</td><td>Constructor</td><td>Finite</td><td>Inline</td><td>939.9 ns</td><td>21.57 ns</td><td>11.28 ns</td><td>0.0188</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>Invoke</td><td>Constructor</td><td>Infinite</td><td>Deferred</td><td>715.3 ns</td><td>13.55 ns</td><td>7.08 ns</td><td>0.0071</td><td>-</td><td>-</td><td>528 B</td>
+</tr><tr><td>Invoke</td><td>Constructor</td><td>Infinite</td><td>Inline</td><td>719.6 ns</td><td>8.42 ns</td><td>4.40 ns</td><td>0.0072</td><td>-</td><td>-</td><td>528 B</td>
+</tr><tr><td>Invoke</td><td>Get</td><td>Finite</td><td>Deferred</td><td>638.9 ns</td><td>11.35 ns</td><td>5.94 ns</td><td>0.0190</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>Invoke</td><td>Get</td><td>Finite</td><td>Inline</td><td>654.5 ns</td><td>17.50 ns</td><td>9.15 ns</td><td>0.0195</td><td>-</td><td>-</td><td>792 B</td>
+</tr><tr><td>Invoke</td><td>Get</td><td>Infinite</td><td>Deferred</td><td>430.2 ns</td><td>7.13 ns</td><td>3.73 ns</td><td>0.0085</td><td>-</td><td>-</td><td>392 B</td>
+</tr><tr><td>Invoke</td><td>Get</td><td>Infinite</td><td>Inline</td><td>438.8 ns</td><td>5.53 ns</td><td>2.89 ns</td><td>0.0088</td><td>-</td><td>-</td><td>392 B</td>
+</tr><tr><td>Invoke</td><td>Invoke</td><td>Finite</td><td>Deferred</td><td>971.6 ns</td><td>19.18 ns</td><td>10.03 ns</td><td>0.0191</td><td>-</td><td>-</td><td>1,016 B</td>
+</tr><tr><td>Invoke</td><td>Invoke</td><td>Finite</td><td>Inline</td><td>886.5 ns</td><td>28.62 ns</td><td>14.97 ns</td><td>0.0178</td><td>-</td><td>-</td><td>936 B</td>
+</tr><tr><td>Invoke</td><td>Invoke</td><td>Infinite</td><td>Deferred</td><td>758.4 ns</td><td>35.90 ns</td><td>18.78 ns</td><td>0.0153</td><td>-</td><td>-</td><td>616 B</td>
+</tr><tr><td>Invoke</td><td>Invoke</td><td>Infinite</td><td>Inline</td><td>706.3 ns</td><td>44.47 ns</td><td>23.26 ns</td><td>0.0138</td><td>-</td><td>-</td><td>536 B</td>
+</tr><tr><td>Invoke</td><td>InvokeVoid</td><td>Finite</td><td>Deferred</td><td>1,237.1 ns</td><td>348.98 ns</td><td>182.52 ns</td><td>0.0224</td><td>-</td><td>-</td><td>992 B</td>
+</tr><tr><td>Invoke</td><td>InvokeVoid</td><td>Finite</td><td>Inline</td><td>869.7 ns</td><td>14.26 ns</td><td>7.46 ns</td><td>0.0171</td><td>-</td><td>-</td><td>840 B</td>
+</tr><tr><td>Invoke</td><td>InvokeVoid</td><td>Infinite</td><td>Deferred</td><td>768.3 ns</td><td>13.17 ns</td><td>6.89 ns</td><td>0.0151</td><td>-</td><td>-</td><td>592 B</td>
+</tr><tr><td>Invoke</td><td>InvokeVoid</td><td>Infinite</td><td>Inline</td><td>684.3 ns</td><td>13.08 ns</td><td>6.84 ns</td><td>0.0066</td><td>-</td><td>-</td><td>440 B</td>
+</tr><tr><td>Invoke</td><td>Set</td><td>Finite</td><td>Deferred</td><td>910.3 ns</td><td>54.82 ns</td><td>28.67 ns</td><td>0.0184</td><td>-</td><td>-</td><td>1,008 B</td>
+</tr><tr><td>Invoke</td><td>Set</td><td>Finite</td><td>Inline</td><td>850.8 ns</td><td>82.51 ns</td><td>43.15 ns</td><td>0.0166</td><td>-</td><td>-</td><td>864 B</td>
+</tr><tr><td>Invoke</td><td>Set</td><td>Infinite</td><td>Deferred</td><td>745.1 ns</td><td>11.99 ns</td><td>6.27 ns</td><td>0.0147</td><td>-</td><td>-</td><td>608 B</td>
+</tr><tr><td>Invoke</td><td>Set</td><td>Infinite</td><td>Inline</td><td>656.4 ns</td><td>10.30 ns</td><td>5.38 ns</td><td>0.0064</td><td>-</td><td>-</td><td>464 B</td>
+</tr></tbody></table>
+</body>
+</html>
