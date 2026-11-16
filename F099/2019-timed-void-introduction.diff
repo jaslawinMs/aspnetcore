@@ -1,0 +1,208 @@
+commit 9372816b7c436e06da6d6426e0863b3677aac83c
+Author: Pranav K <prkrishn@hotmail.com>
+Date:   Wed Aug 14 12:24:35 2019 -0700
+
+    API Review: JSRuntime (dotnet/extensions#2166)
+    
+    * API Review: JSRuntime
+    
+    * Rename JSRuntimeBase -> JSRuntime
+    * Rename JSInProcessRuntimeBase -> JSInProcessRuntime
+    * Rename DotNetObjectRef -> DotNetObjectReference
+    * Update JSRuntime to return ValueTask
+    * Make InvokeAsync APIs that explicitly cancels and API that default cancels more crisp
+    * Introduce void invoking APIs
+    * Fixup method names on DotNetDispatcher
+    
+    \n\nCommit migrated from https://github.com/dotnet/extensions/commit/93d3ae448551cac29af8cf882b31047f5da0dadc
+
+diff --git a/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs b/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
+index d7ee372a73..6edc725177 100644
+--- a/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
++++ b/src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs
+@@ -1,7 +1,6 @@
+ // Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+-using System.Collections.Generic;
+ using System.Threading;
+ using System.Threading.Tasks;
+ 
+@@ -14,21 +13,28 @@ namespace Microsoft.JSInterop
+     {
+         /// <summary>
+         /// Invokes the specified JavaScript function asynchronously.
++        /// <para>
++        /// <see cref="JSRuntime"/> will apply timeouts to this operation based on the value configured in <see cref="JSRuntime.DefaultAsyncTimeout"/>. To dispatch a call with a different timeout, or no timeout,
++        /// consider using <see cref="InvokeAsync{TValue}(string, CancellationToken, object[])" />.
++        /// </para>
+         /// </summary>
+         /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
+         /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
+         /// <param name="args">JSON-serializable arguments.</param>
+         /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
+-        Task<TValue> InvokeAsync<TValue>(string identifier, params object[] args);
++        ValueTask<TValue> InvokeAsync<TValue>(string identifier, object[] args);
+ 
+         /// <summary>
+         /// Invokes the specified JavaScript function asynchronously.
+         /// </summary>
+         /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
+         /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="cancellationToken">
++        /// A cancellation token to signal the cancellation of the operation. Specifying this parameter will override any default cancellations such as due to timeouts
++        /// (<see cref="JSRuntime.DefaultAsyncTimeout"/>) from being applied.
++        /// </param>
+         /// <param name="args">JSON-serializable arguments.</param>
+-        /// <param name="cancellationToken">A cancellation token to signal the cancellation of the operation.</param>
+         /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
+-        Task<TValue> InvokeAsync<TValue>(string identifier, IEnumerable<object> args, CancellationToken cancellationToken = default);
++        ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object[] args);
+     }
+ }
+diff --git a/src/JSInterop/Microsoft.JSInterop/src/JSRuntimeExtensions.cs b/src/JSInterop/Microsoft.JSInterop/src/JSRuntimeExtensions.cs
+new file mode 100644
+index 0000000000..ff4d3fd152
+--- /dev/null
++++ b/src/JSInterop/Microsoft.JSInterop/src/JSRuntimeExtensions.cs
+@@ -0,0 +1,140 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace Microsoft.JSInterop
++{
++    /// <summary>
++    /// Extensions for <see cref="IJSRuntime"/>.
++    /// </summary>
++    public static class JSRuntimeExtensions
++    {
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>A <see cref="ValueTask"/> that represents the asynchronous invocation operation.</returns>
++        public static async ValueTask InvokeVoidAsync(this IJSRuntime jsRuntime, string identifier, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++            await jsRuntime.InvokeAsync<object>(identifier, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// <para>
++        /// <see cref="JSRuntime"/> will apply timeouts to this operation based on the value configured in <see cref="JSRuntime.DefaultAsyncTimeout"/>. To dispatch a call with a different timeout, or no timeout,
++        /// consider using <see cref="IJSRuntime.InvokeAsync{TValue}(string, CancellationToken, object[])" />.
++        /// </para>
++        /// </summary>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
++        public static ValueTask<TValue> InvokeAsync<TValue>(this IJSRuntime jsRuntime, string identifier, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++            return jsRuntime.InvokeAsync<TValue>(identifier, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <typeparam name="TValue">The JSON-serializable return type.</typeparam>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="cancellationToken">
++        /// A cancellation token to signal the cancellation of the operation. Specifying this parameter will override any default cancellations such as due to timeouts
++        /// (<see cref="JSRuntime.DefaultAsyncTimeout"/>) from being applied.
++        /// </param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>An instance of <typeparamref name="TValue"/> obtained by JSON-deserializing the return value.</returns>
++        public static ValueTask<TValue> InvokeAsync<TValue>(this IJSRuntime jsRuntime, string identifier, CancellationToken cancellationToken, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++            return jsRuntime.InvokeAsync<TValue>(identifier, cancellationToken, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="cancellationToken">
++        /// A cancellation token to signal the cancellation of the operation. Specifying this parameter will override any default cancellations such as due to timeouts
++        /// (<see cref="JSRuntime.DefaultAsyncTimeout"/>) from being applied.
++        /// </param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>A <see cref="ValueTask"/> that represents the asynchronous invocation operation.</returns>
++        public static async ValueTask InvokeVoidAsync(this IJSRuntime jsRuntime, string identifier, CancellationToken cancellationToken, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++            await jsRuntime.InvokeAsync<object>(identifier, cancellationToken, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="timeout">The duration after which to cancel the async operation. Overrides default timeouts (<see cref="JSRuntime.DefaultAsyncTimeout"/>).</param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>A <see cref="ValueTask"/> that represents the asynchronous invocation operation.</returns>
++        public static async ValueTask<TValue> InvokeAsync<TValue>(this IJSRuntime jsRuntime, string identifier, TimeSpan timeout, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++
++            using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);
++            var cancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
++
++            return await jsRuntime.InvokeAsync<TValue>(identifier, cancellationToken, args);
++        }
++
++        /// <summary>
++        /// Invokes the specified JavaScript function asynchronously.
++        /// </summary>
++        /// <param name="jsRuntime">The <see cref="IJSRuntime"/>.</param>
++        /// <param name="identifier">An identifier for the function to invoke. For example, the value <code>"someScope.someFunction"</code> will invoke the function <code>window.someScope.someFunction</code>.</param>
++        /// <param name="timeout">The duration after which to cancel the async operation. Overrides default timeouts (<see cref="JSRuntime.DefaultAsyncTimeout"/>).</param>
++        /// <param name="args">JSON-serializable arguments.</param>
++        /// <returns>A <see cref="ValueTask"/> that represents the asynchronous invocation operation.</returns>
++        public static async ValueTask InvokeVoidAsync(this IJSRuntime jsRuntime, string identifier, TimeSpan timeout, params object[] args)
++        {
++            if (jsRuntime is null)
++            {
++                throw new ArgumentNullException(nameof(jsRuntime));
++            }
++
++            using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);
++            var cancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
++
++            await jsRuntime.InvokeAsync<object>(identifier, cancellationToken, args);
++        }
++    }
++}
