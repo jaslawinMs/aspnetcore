@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -76,7 +75,12 @@ public class GoogleHandler : OAuthHandler<GoogleOptions>
         SetQueryParam(queryStrings, properties, GoogleChallengeProperties.ApprovalPromptKey);
         SetQueryParam(queryStrings, properties, GoogleChallengeProperties.PromptParameterKey);
         SetQueryParam(queryStrings, properties, GoogleChallengeProperties.LoginHintKey);
-        SetQueryParam(queryStrings, properties, GoogleChallengeProperties.IncludeGrantedScopesKey, v => v?.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(), (bool?)null);
+        SetQueryParam(queryStrings, properties, GoogleChallengeProperties.IncludeGrantedScopesKey, v => v switch
+        {
+            true => "true",
+            false => "false",
+            null => null,
+        }, (bool?)null);
 
         // Some properties are removed when setting query params above, so the state has to be reset
         queryStrings["state"] = Options.StateDataFormat.Protect(properties);
