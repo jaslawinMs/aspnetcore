@@ -3,7 +3,11 @@
 
 using System;
 using System.Collections;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace Microsoft.AspNetCore.Components.Endpoints;
 
@@ -575,6 +579,109 @@ public class JsonStoredDataSerializerTest
         var secondBytes = serializer.SerializeData(roundTripped);
 
         Assert.Equal(firstBytes, secondBytes);
+    }
+
+    [Fact]
+    public void SerializeData_PreservesOwnedBytesAcrossSubsequentCalls()
+    {
+        var serializer = CreateSerializer();
+        var data = new Dictionary<string, object> { ["Value"] = "first" };
+        var expected = "{\"Value\":{\"type\":\"System.String\",\"value\":\"first\"}}"u8.ToArray();
+
+        var first = serializer.SerializeData(data);
+        serializer.SerializeData(new Dictionary<string, object> { ["Value"] = new string('A', 131072) });
+
+        Assert.Equal(expected, first);
+        first[0] = 0;
+        var second = serializer.SerializeData(data);
+
+        Assert.NotSame(first, second);
+        Assert.Equal(expected, second);
+    }
+
+    [Theory]
+    [InlineData(16)]
+    [InlineData(4096)]
+    [InlineData(131072)]
+    public void SerializeData_PreservesLargeEscapedOutputAndPropertyOrder(int length)
+    {
+        var serializer = CreateSerializer();
+        var text = new string('<', length) + "\u00e9\u4e2d\U0001F30D\\\"\n";
+        var data = new Dictionary<string, object>
+        {
+            ["First"] = null,
+            ["Text"] = text,
+            ["Last"] = new int[] { 7, 11, 19 },
+        };
+        var encodedText = JsonSerializer.Serialize(text, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var expected = Encoding.UTF8.GetBytes("{\"First\":null,\"Text\":{\"type\":\"System.String\",\"value\":" +
+            encodedText + "},\"Last\":{\"type\":\"System.Int32[]\",\"value\":[7,11,19]}}");
+
+        var bytes = serializer.SerializeData(data);
+
+        Assert.Equal(expected, bytes);
+        var roundTripped = serializer.DeserializeData(JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(bytes)!);
+        Assert.Null(roundTripped["First"]);
+        Assert.Equal(text, Assert.IsType<string>(roundTripped["Text"]));
+        Assert.Equal(new int[] { 7, 11, 19 }, Assert.IsType<int[]>(roundTripped["Last"]));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SerializeData_PreservesFailureBeforeStorageAndRecovers(bool throwingEnumeration)
+    {
+        var serializer = CreateSerializer();
+        var session = new Mock<ISession>();
+        var context = new DefaultHttpContext { Session = session.Object };
+        var provider = new SessionStorageTempDataProvider(serializer, NullLogger<SessionStorageTempDataProvider>.Instance);
+        var enumerationException = new InvalidOperationException("Enumeration failed after a written prefix.");
+        IDictionary<string, object> data;
+        if (throwingEnumeration)
+        {
+            data = new ThrowingStoredDataDictionary(enumerationException) { ["Value"] = true };
+        }
+        else
+        {
+            object value = 42;
+            for (var index = 0; index < 600; index++)
+            {
+                value = new object[] { value };
+            }
+            data = new Dictionary<string, object> { ["Deep"] = value };
+        }
+
+        var exception = Assert.Throws<InvalidOperationException>(() => provider.SaveTempData(context, data));
+
+        if (throwingEnumeration)
+        {
+            Assert.Same(enumerationException, exception);
+        }
+        else
+        {
+            Assert.Contains("depth", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        session.Verify(value => value.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Never);
+
+        var validData = new Dictionary<string, object> { ["After"] = 37 };
+        var expected = "{\"After\":{\"type\":\"System.Int32\",\"value\":37}}"u8.ToArray();
+        provider.SaveTempData(context, validData);
+
+        session.Verify(value => value.Set(SessionStorageTempDataProvider.TempDataSessionStateKey,
+            It.Is<byte[]>(bytes => bytes.SequenceEqual(expected))), Times.Once);
+    }
+
+    private sealed class ThrowingStoredDataDictionary(InvalidOperationException exception)
+        : Dictionary<string, object>, IEnumerable<KeyValuePair<string, object>>
+    {
+        IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
+            => Enumerate().GetEnumerator();
+
+        private IEnumerable<KeyValuePair<string, object>> Enumerate()
+        {
+            yield return new("WrittenPrefix", new string('A', 16384));
+            throw exception;
+        }
     }
 
     private class TestItem
