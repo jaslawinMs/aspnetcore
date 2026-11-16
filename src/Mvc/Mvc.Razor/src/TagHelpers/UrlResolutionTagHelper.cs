@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Html;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
 
@@ -53,6 +55,8 @@ public class UrlResolutionTagHelper : TagHelper
 {
     // Valid whitespace characters defined by the HTML5 spec.
     private static readonly SearchValues<char> ValidAttributeWhitespaceChars = SearchValues.Create("\t\n\u000C\r ");
+
+    private static readonly ObjectPool<StringBuilder> StringBuilderPool = ObjectPool.Create(new StringBuilderPooledObjectPolicy());
 
     private static readonly Dictionary<string, string[]> ElementAttributeLookups =
         new(StringComparer.OrdinalIgnoreCase)
@@ -181,10 +185,18 @@ public class UrlResolutionTagHelper : TagHelper
                     }
                     else
                     {
-                        using (var writer = new StringWriter())
+                        var builder = StringBuilderPool.Get();
+                        try
                         {
-                            htmlContent.WriteTo(writer, HtmlEncoder);
-                            stringValue = writer.ToString();
+                            using (var writer = new StringWriter(builder))
+                            {
+                                htmlContent.WriteTo(writer, HtmlEncoder);
+                                stringValue = writer.ToString();
+                            }
+                        }
+                        finally
+                        {
+                            StringBuilderPool.Return(builder);
                         }
                     }
 
