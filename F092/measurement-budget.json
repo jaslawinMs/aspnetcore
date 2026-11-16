@@ -1,0 +1,31 @@
+{
+  "candidate": "F092",
+  "maximum_comparisons": 3,
+  "consumed_comparisons": 3,
+  "status": "closed",
+  "preparation_failures": [
+    {
+      "stage": "unmeasured original manual setup",
+      "failure": "Response.StartAsync fires headers but does not return the TestHost response message; the live application then waited for its release.",
+      "correction": "Use the actual ResponseBodyPipeWriter.FlushAsync first-write producer to return response headers while retaining a genuinely pending body.",
+      "measured_workload_executed": false,
+      "resource_assertion_reached": false
+    },
+    {
+      "stage": "unmeasured original EOF setup receipt",
+      "failure": "Reading the application HttpContext.BodyWriter after real EOF completion accessed a disposed context feature collection.",
+      "correction": "Capture the real public PipeWriter reference while the prepared request is active; use its observed type for EOF receipts without dereferencing the completed application context.",
+      "measured_workload_executed": false,
+      "resource_assertion_reached": false
+    },
+    {
+      "stage": "unmeasured original manual owner identity",
+      "failure": "Public HttpClient exposes the real runtime StreamContent.ReadOnlyStream wrapper, not the TestHost owner type.",
+      "correction": "Prepare the actual owner through public TestServer.SendAsync returned HttpContext.Body; retain the real HttpClient wrapper, complete EOF and trailer copying in the public-request benchmark.",
+      "measured_workload_executed": false,
+      "resource_assertion_reached": false
+    }
+  ],
+  "strategy": "Consume an already-successfully-completed actual memory read without AsTask; preserve the existing pending/faulted task wait.",
+  "note": "No measured workload or shipping implementation yet. Functional preservation is distinct from the original/candidate task-wrapper resource check."
+}

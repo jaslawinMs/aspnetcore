@@ -1,0 +1,30 @@
+{
+  "id": "F092",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Hosting/TestHost/src/ResponseBodyReaderStream.cs",
+    "line_start": 67,
+    "line_end": 70,
+    "project": "Microsoft.AspNetCore.TestHost",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Synchronous response reads block on an asynchronous pipe read.",
+    "explanation": "Every synchronous Stream.Read call invokes the asynchronous PipeReader-backed ReadAsync operation and blocks with GetAwaiter().GetResult(). When response bytes are not already available, the calling thread remains occupied until pipe I/O completes.",
+    "snippet": "return ReadAsync(buffer, offset, count, CancellationToken.None).GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "F091 finalized; investigating required sync Stream contract and actual public TestServer producer before any change. No comparison consumed.",
+    "Actual current-owner wrapper reproduction is red/green72B to0;15 identical real-producer observations,26/26 original/selected preservation tests,126-file/58-runtime owner-only closure and actual portable-PDB proofs. Starting round1;required pending wait retained."
+  ],
+  "branch": "autoperf/F092-sync-response-value-task",
+  "pr_url": null,
+  "updated_at": "2026-11-16T04:29:52.8924287+00:00"
+}

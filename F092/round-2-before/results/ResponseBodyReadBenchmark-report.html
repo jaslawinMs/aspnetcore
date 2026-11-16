@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>ResponseBodyReadBenchmark-20261115-203417</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>       Method</th><th>Profile</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>PreparedSync</td><td>Cached1</td><td>171.78 ns</td><td>4.000 ns</td><td>2.092 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Cached1</td><td>180.42 ns</td><td>2.128 ns</td><td>1.113 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Cached1</td><td>76,945.53 ns</td><td>4,306.731 ns</td><td>2,252.504 ns</td><td>-</td><td>-</td><td>-</td><td>9,812 B</td>
+</tr><tr><td>PreparedSync</td><td>Cached8</td><td>175.98 ns</td><td>2.953 ns</td><td>1.545 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Cached8</td><td>183.20 ns</td><td>3.524 ns</td><td>1.843 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Cached8</td><td>28,481.92 ns</td><td>1,940.026 ns</td><td>1,014.671 ns</td><td>-</td><td>-</td><td>-</td><td>9,496 B</td>
+</tr><tr><td>PreparedSync</td><td>Eof</td><td>30.06 ns</td><td>0.899 ns</td><td>0.470 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Eof</td><td>30.23 ns</td><td>0.549 ns</td><td>0.287 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PublicSync</td><td>Eof</td><td>29,470.29 ns</td><td>2,165.661 ns</td><td>1,132.683 ns</td><td>-</td><td>-</td><td>-</td><td>9,444 B</td>
+</tr><tr><td>PreparedSync</td><td>Partial16</td><td>194.73 ns</td><td>7.211 ns</td><td>3.771 ns</td><td>0.0019</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Partial16</td><td>178.00 ns</td><td>17.136 ns</td><td>8.962 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Partial16</td><td>28,568.91 ns</td><td>1,235.328 ns</td><td>646.100 ns</td><td>-</td><td>-</td><td>-</td><td>9,590 B</td>
+</tr><tr><td>PreparedSync</td><td>Uncached16</td><td>186.61 ns</td><td>8.090 ns</td><td>4.231 ns</td><td>0.0019</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Uncached16</td><td>175.30 ns</td><td>4.997 ns</td><td>2.614 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Uncached16</td><td>29,392.18 ns</td><td>2,866.185 ns</td><td>1,499.070 ns</td><td>-</td><td>-</td><td>-</td><td>9,587 B</td>
+</tr><tr><td>PreparedSync</td><td>Uncached256</td><td>190.61 ns</td><td>3.137 ns</td><td>1.641 ns</td><td>0.0019</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Uncached256</td><td>177.89 ns</td><td>6.859 ns</td><td>3.587 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Uncached256</td><td>29,751.45 ns</td><td>2,456.591 ns</td><td>1,284.845 ns</td><td>-</td><td>-</td><td>-</td><td>9,589 B</td>
+</tr><tr><td>PreparedSync</td><td>Uncached4096</td><td>254.23 ns</td><td>7.193 ns</td><td>3.762 ns</td><td>0.0026</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Uncached4096</td><td>232.59 ns</td><td>11.325 ns</td><td>5.923 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Uncached4096</td><td>31,557.83 ns</td><td>1,998.810 ns</td><td>1,045.416 ns</td><td>-</td><td>-</td><td>-</td><td>9,583 B</td>
+</tr><tr><td>PreparedSync</td><td>Uncached9</td><td>185.54 ns</td><td>4.542 ns</td><td>2.376 ns</td><td>0.0019</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>PreparedMemoryAsync</td><td>Uncached9</td><td>173.22 ns</td><td>4.465 ns</td><td>2.336 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>PublicSync</td><td>Uncached9</td><td>29,177.29 ns</td><td>2,421.928 ns</td><td>1,266.715 ns</td><td>-</td><td>-</td><td>-</td><td>9,585 B</td>
+</tr></tbody></table>
+</body>
+</html>
