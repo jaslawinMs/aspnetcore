@@ -23,6 +23,8 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
     private readonly ConcurrentDictionary<long, IPendingAsyncCall> _pendingTasks = new();
     private readonly ConcurrentDictionary<long, IDotNetObjectReference> _trackedRefsById = new();
     private readonly ConcurrentDictionary<long, CancellationTokenRegistration> _cancellationRegistrations = new();
+    private CancellationTokenSource? _cachedDefaultTimeoutCancellationTokenSource;
+    private bool _defaultTimeoutSourcePoolClosed;
 
     internal readonly ArrayBuilder<byte[]> ByteArraysToBeRevived = new();
 
@@ -123,12 +125,50 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
     {
         if (DefaultAsyncTimeout.HasValue)
         {
-            using var cts = new CancellationTokenSource(DefaultAsyncTimeout.Value);
-            // We need to await here due to the using
-            return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);
+            var cts = Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null);
+            try
+            {
+                var timeout = DefaultAsyncTimeout.Value;
+                if (cts is null)
+                {
+                    cts = new CancellationTokenSource(timeout);
+                }
+                else if (timeout == TimeSpan.Zero)
+                {
+                    cts.Cancel();
+                }
+                else
+                {
+                    cts.CancelAfter(timeout);
+                }
+
+                // We need to await here before returning the timeout source.
+                return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);
+            }
+            finally
+            {
+                if (cts is not null)
+                {
+                    ReturnDefaultTimeoutCancellationTokenSource(cts);
+                }
+            }
         }
 
         return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, CancellationToken.None, args);
+    }
+
+    private void ReturnDefaultTimeoutCancellationTokenSource(CancellationTokenSource cts)
+    {
+        // TryReset also rejects a timer whose cancellation callback has already been queued.
+        if (Volatile.Read(ref _defaultTimeoutSourcePoolClosed) || !cts.TryReset() ||
+            Interlocked.CompareExchange(ref _cachedDefaultTimeoutCancellationTokenSource, cts, null) is not null)
+        {
+            cts.Dispose();
+        }
+        else if (Volatile.Read(ref _defaultTimeoutSourcePoolClosed))
+        {
+            Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null)?.Dispose();
+        }
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "We expect application code is configured to ensure JS interop arguments are linker friendly.")]
@@ -143,11 +183,12 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
         var pendingCall = new PendingAsyncCall<TValue>();
         if (cancellationToken.CanBeCanceled)
         {
-            _cancellationRegistrations[taskId] = cancellationToken.Register(() =>
+            _cancellationRegistrations[taskId] = cancellationToken.Register(static (state, token) =>
             {
-                pendingCall.Cancel(cancellationToken);
-                CleanupTasksAndRegistrations(taskId);
-            });
+                var registrationState = ((JSRuntime Runtime, long TaskId, PendingAsyncCall<TValue> PendingCall))state!;
+                registrationState.PendingCall.Cancel(token);
+                registrationState.Runtime.CleanupTasksAndRegistrations(registrationState.TaskId);
+            }, (this, taskId, pendingCall));
         }
         _pendingTasks[taskId] = pendingCall;
 
@@ -386,5 +427,10 @@ public abstract partial class JSRuntime : IJSRuntime, IDisposable
     /// <summary>
     /// Dispose the JSRuntime.
     /// </summary>
-    public void Dispose() => ByteArraysToBeRevived.Dispose();
+    public void Dispose()
+    {
+        Volatile.Write(ref _defaultTimeoutSourcePoolClosed, true);
+        Interlocked.Exchange(ref _cachedDefaultTimeoutCancellationTokenSource, null)?.Dispose();
+        ByteArraysToBeRevived.Dispose();
+    }
 }
