@@ -1,0 +1,31 @@
+{
+  "id": "F088",
+  "finding": {
+    "card_id": "unnecessary-string-allocations",
+    "file": "src/Components/AI/src/Components/MessageListContext.cs",
+    "line_start": 352,
+    "line_end": 352,
+    "project": "Microsoft.AspNetCore.Components.AI",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Table-cell rendering lowercases an enum string for every aligned cell.",
+    "explanation": "The nested table rendering loop calls ToString() and then ToLowerInvariant() on TableColumnAlignment for each aligned cell, creating two intermediate strings on a render path. A direct mapping to the required CSS token avoids the chained allocations.",
+    "snippet": "$\"sc-ai-rich-text__table-cell--{table.Alignment[columnIndex].ToString().ToLowerInvariant()}\"",
+    "suppressed": false
+  },
+  "status": "validated",
+  "notes": [
+    "Fresh main37e809e and owner introduction dotnet/aspnetcore#68324/0b72e0b verified;active dotnet/aspnetcore#68672 owner patch doesnot change table seam. Original scoped Windows wrapper build passes with one existing dependency diagnostic. Real core producer is provider-supplied RichTextContent -> mapping handler -> MessageListContext,not built-in Markdown/Markdig;Dojo fixture mapper doesnot establish table-parser reachability. None/missing guard andunknown enum fallback mustremain. No shipping source edits or measurements.",
+    "Originalclassidentityrows3/3failedAssert.Same;selected29/29andunchangedexistingrichtextbrowsermatrix1/1green.Original/selectedcanonicalInteractiveServergated2-to-8tableandplaincontrolsverified;temporarysample/proberemovedandprojectbyte-restored.SixnewrowsandPDBsourcesverified,scopedformatchecks0.Budget0/3;prepareactualRenderBlockandUIAgent/AgentBoundary/MessageList/HtmlRendererpathswithguard-readoraclesandcustom-rendererbypasscontrol.",
+    "Three comparisons closed; actual198/33 outcomes/paired profiles,1584 result and actual/result console rows,198 identical contract states,9 PDB proofs,82 actual XML executions79pass3expectedresourcefailures,original/selected browser plus existing matrix pass. Qualified: large full median26.71% faster/62.32% lowerheap;small Center full+8.29% slower allthree and fallback/control costs retained. Exact2file173additions1deletion source:cba203d9b5db57b4c87adb1bd7dac8ec1e0a84ae. Not merge-ready; publication pending."
+  ],
+  "branch": "autoperf/F088-table-alignment-classes",
+  "pr_url": null,
+  "updated_at": "2026-11-16T00:31:39.1657596+00:00"
+}

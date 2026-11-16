@@ -1,0 +1,404 @@
+commit 0b72e0b152fa94ada8fa7b74bb6d75b27d13023b
+Author:     Javier Calvarro Nelson <32700855+ilonatommy@users.noreply.github.com>
+AuthorDate: Fri Aug 14 14:37:37 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Aug 14 14:37:37 2026 +0200
+
+    [Blazor] Add Components.AI rich text rendering (#68324)
+    
+    * feat(ai): add structured rich text content
+    
+    Model formatted assistant output as a protocol-neutral RichTextNode hierarchy and map complete streaming snapshots into RichContentBlock instances. Replacing snapshots atomically keeps renderers from observing partially mutated trees while plain text continues to map to paragraph and text nodes.
+    
+    Render the structured nodes through the existing message-list fallback with safe URL handling and encoded HTML source, so consumers can preserve formatting without coupling the product to AG-UI or a Markdown implementation.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * feat(dojo): render formatted Agentic Chat responses
+    
+    Decorate the real AGUIChatClient with a streaming formatter that accumulates text received over HTTP/SSE and emits complete RichTextContent snapshots. The wrapper leaves non-text AG-UI content untouched, preserving the DojoClient-to-AGUI.Client and AGUIDojoApi-to-AGUI.Server boundary for later tool scenarios.
+    
+    Parse the Agentic Chat Markdown into protocol-neutral nodes in DojoClient and make the credential-free API fixture stream headings, emphasis, lists, and inline code for manual use.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * test(ai): cover rich text mapping and browser rendering
+    
+    Cover structured snapshot replacement, plain-text paragraph mapping, node metadata, recursive rendering, URL filtering, and HTML encoding in the product tests. The focused AIApp page renders a broad node matrix without AG-UI dependencies so product behavior is independently reviewable.
+    
+    Add an Agentic Chat rich-text browser test that still launches DojoClient and AGUIDojoApi separately, overrides only the API model, and asserts Markdown formatting after the response crosses AGUI.Server, HTTP/SSE, and AGUI.Client. The generated recording is intentionally deferred to the next commit.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * generated(ai): add formatted chat recording
+    
+    Record the two deterministic model checkpoints used by the Agentic Chat rich-text browser test: the initial heading and inline formatting, followed by the linked rendering-mode list. The model remains the only replaced service, so replay still exercises the real AG-UI request and SSE response path.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * fix(ai): address rich text review feedback
+    
+    Scope streamed formatting state by message ID so chunks belonging to one assistant message coalesce without crossing message boundaries, while unidentified and non-text updates pass through unchanged.
+    
+    Isolate recursive render-tree sequence spaces with regions, add coverage for changing heterogeneous sibling shapes, and document that rich nodes are parser-independent presentation semantics, including footnote and forced-line-break mappings.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 79fac448-b5ce-4329-98d3-581fc16a5222
+    
+    * fix(ai): preserve rich text message semantics
+    
+    Keep plain text alongside structured snapshots so conversation history remains complete, split rich blocks when message IDs change, and isolate table render sequences. Clarify the snapshot copy contract and cover the regressions with focused tests.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 04aec5b8-440c-4951-ab76-b093ddf1d844
+    
+    * test(ai): keep formatter coverage focused
+    
+    Remove the additional recording client and multi-turn history test while retaining the requested message identity assertions.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 04aec5b8-440c-4951-ab76-b093ddf1d844
+    
+    ---------
+    
+    Co-authored-by: Milos Kotlar <kotlarmilos@gmail.com>
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    Copilot-Session: 79fac448-b5ce-4329-98d3-581fc16a5222
+    Copilot-Session: 04aec5b8-440c-4951-ab76-b093ddf1d844
+
+diff --git a/src/Components/AI/src/Components/MessageListContext.cs b/src/Components/AI/src/Components/MessageListContext.cs
+index 1f2b54631b..2194c823ac 100644
+--- a/src/Components/AI/src/Components/MessageListContext.cs
++++ b/src/Components/AI/src/Components/MessageListContext.cs
+@@ -1,6 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using Microsoft.AspNetCore.Components.Rendering;
+ using Microsoft.Extensions.AI;
+ 
+ namespace Microsoft.AspNetCore.Components.AI;
+@@ -47,7 +48,14 @@ public class MessageListContext
+                     ? "sc-ai-message__content sc-ai-message__content--streaming"
+                     : "sc-ai-message__content";
+                 builder.AddAttribute(5, "class", contentClass);
+-                builder.AddContent(6, rich.RawText);
++                if (rich.Content.Count > 0)
++                {
++                    RenderRichTextNodes(builder, rich.Content);
++                }
++                else
++                {
++                    builder.AddContent(6, rich.RawText);
++                }
+                 builder.CloseElement(); // content div
+                 builder.CloseElement(); // bubble div
+                 builder.CloseElement(); // message div
+@@ -75,4 +83,296 @@ public class MessageListContext
+         _registrations.Remove(registration);
+         OnRegistrationsChanged?.Invoke();
+     }
++
++    private static void RenderRichTextNodes(
++        RenderTreeBuilder builder,
++        IReadOnlyList<RichTextNode> nodes)
++    {
++        foreach (var node in nodes)
++        {
++            builder.OpenRegion(0);
++            RenderRichTextNode(builder, node);
++            builder.CloseRegion();
++        }
++    }
++
++    private static void RenderRichTextNode(RenderTreeBuilder builder, RichTextNode node)
++    {
++        switch (node)
++        {
++            case TextNode text:
++                builder.AddContent(0, text.Text);
++                break;
++            case ParagraphNode:
++                RenderElement(builder, "p", "sc-ai-rich-text__paragraph", node.Children);
++                break;
++            case HeadingNode heading:
++                RenderElement(
++                    builder,
++                    $"h{Math.Clamp(heading.Level, 1, 6)}",
++                    "sc-ai-rich-text__heading",
++                    node.Children);
++                break;
++            case EmphasisNode:
++                RenderElement(builder, "em", null, node.Children);
++                break;
++            case StrongNode:
++                RenderElement(builder, "strong", null, node.Children);
++                break;
++            case StrikethroughNode:
++                RenderElement(builder, "s", null, node.Children);
++                break;
++            case InlineCodeNode inlineCode:
++                builder.OpenElement(0, "code");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__inline-code");
++                builder.AddContent(2, inlineCode.Code);
++                builder.CloseElement();
++                break;
++            case CodeBlockNode codeBlock:
++                builder.OpenElement(0, "pre");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__code-block");
++                builder.OpenElement(2, "code");
++                if (!string.IsNullOrEmpty(codeBlock.Language))
++                {
++                    builder.AddAttribute(3, "data-language", codeBlock.Language);
++                }
++                builder.AddContent(4, codeBlock.Code);
++                builder.CloseElement();
++                builder.CloseElement();
++                break;
++            case BlockQuoteNode:
++                RenderElement(builder, "blockquote", "sc-ai-rich-text__quote", node.Children);
++                break;
++            case LineBreakNode:
++                builder.OpenElement(0, "br");
++                builder.CloseElement();
++                break;
++            case ThematicBreakNode:
++                builder.OpenElement(0, "hr");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__thematic-break");
++                builder.CloseElement();
++                break;
++            case ListNode list:
++                builder.OpenElement(0, list.Ordered ? "ol" : "ul");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__list");
++                if (list.Ordered && list.Start is not null)
++                {
++                    builder.AddAttribute(2, "start", list.Start.Value);
++                }
++                RenderRichTextNodes(builder, list.Children);
++                builder.CloseElement();
++                break;
++            case ListItemNode item:
++                builder.OpenElement(0, "li");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__list-item");
++                if (item.Checked is not null)
++                {
++                    builder.OpenElement(2, "input");
++                    builder.AddAttribute(3, "type", "checkbox");
++                    builder.AddAttribute(4, "disabled", true);
++                    if (item.Checked.Value)
++                    {
++                        builder.AddAttribute(5, "checked", true);
++                    }
++                    builder.CloseElement();
++                }
++                RenderRichTextNodes(builder, item.Children);
++                builder.CloseElement();
++                break;
++            case LinkNode link:
++                RenderLink(builder, link);
++                break;
++            case ImageNode image:
++                RenderImage(builder, image);
++                break;
++            case DefinitionNode definition:
++                builder.OpenElement(0, "span");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__definition");
++                builder.AddContent(2, $"[{definition.Label}]: {definition.Url}");
++                builder.CloseElement();
++                break;
++            case LinkReferenceNode linkReference:
++                RenderReference(builder, linkReference.Label, linkReference.Children);
++                break;
++            case ImageReferenceNode imageReference:
++                builder.OpenElement(0, "span");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__image-reference");
++                builder.AddContent(2, imageReference.Alt ?? imageReference.Label);
++                builder.CloseElement();
++                break;
++            case FootnoteNode:
++                RenderElement(builder, "aside", "sc-ai-rich-text__footnote", node.Children);
++                break;
++            case FootnoteReferenceNode footnoteReference:
++                builder.OpenElement(0, "sup");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__footnote-reference");
++                builder.AddContent(2, footnoteReference.Label);
++                builder.CloseElement();
++                break;
++            case FootnoteDefinitionNode footnoteDefinition:
++                builder.OpenElement(0, "aside");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__footnote-definition");
++                builder.AddAttribute(2, "data-label", footnoteDefinition.Label);
++                RenderRichTextNodes(builder, footnoteDefinition.Children);
++                builder.CloseElement();
++                break;
++            case HtmlNode html:
++                builder.OpenElement(0, "code");
++                builder.AddAttribute(1, "class", "sc-ai-rich-text__html");
++                builder.AddContent(2, html.Value);
++                builder.CloseElement();
++                break;
++            case TableNode table:
++                RenderTable(builder, table);
++                break;
++            case TableRowNode:
++            case TableCellNode:
++                RenderRichTextNodes(builder, node.Children);
++                break;
++            default:
++                RenderRichTextNodes(builder, node.Children);
++                break;
++        }
++    }
++
++    private static void RenderElement(
++        RenderTreeBuilder builder,
++        string elementName,
++        string? className,
++        IReadOnlyList<RichTextNode> children)
++    {
++        builder.OpenElement(0, elementName);
++        if (className is not null)
++        {
++            builder.AddAttribute(1, "class", className);
++        }
++        RenderRichTextNodes(builder, children);
++        builder.CloseElement();
++    }
++
++    private static void RenderLink(RenderTreeBuilder builder, LinkNode link)
++    {
++        var safeUrl = GetSafeUrl(link.Url, allowMailTo: true);
++        if (safeUrl is null)
++        {
++            RenderRichTextNodes(builder, link.Children);
++            return;
++        }
++
++        builder.OpenElement(0, "a");
++        builder.AddAttribute(1, "href", safeUrl);
++        if (link.Title is not null)
++        {
++            builder.AddAttribute(2, "title", link.Title);
++        }
++        RenderRichTextNodes(builder, link.Children);
++        builder.CloseElement();
++    }
++
++    private static void RenderImage(RenderTreeBuilder builder, ImageNode image)
++    {
++        var safeUrl = GetSafeUrl(image.Url, allowMailTo: false);
++        if (safeUrl is null)
++        {
++            builder.AddContent(0, image.Alt);
++            return;
++        }
++
++        builder.OpenElement(0, "img");
++        builder.AddAttribute(1, "src", safeUrl);
++        builder.AddAttribute(2, "alt", image.Alt ?? string.Empty);
++        if (image.Title is not null)
++        {
++            builder.AddAttribute(3, "title", image.Title);
++        }
++        builder.CloseElement();
++    }
++
++    private static void RenderReference(
++        RenderTreeBuilder builder,
++        string label,
++        IReadOnlyList<RichTextNode> children)
++    {
++        builder.OpenElement(0, "span");
++        builder.AddAttribute(1, "class", "sc-ai-rich-text__link-reference");
++        if (children.Count > 0)
++        {
++            RenderRichTextNodes(builder, children);
++        }
++        else
++        {
++            builder.AddContent(2, label);
++        }
++        builder.CloseElement();
++    }
++
++    private static void RenderTable(RenderTreeBuilder builder, TableNode table)
++    {
++        builder.OpenElement(0, "div");
++        builder.AddAttribute(1, "class", "sc-ai-rich-text__table-container");
++        builder.OpenElement(2, "table");
++        builder.AddAttribute(3, "class", "sc-ai-rich-text__table");
++        builder.OpenElement(4, "tbody");
++
++        foreach (var child in table.Children)
++        {
++            if (child is not TableRowNode row)
++            {
++                continue;
++            }
++
++            builder.OpenRegion(5);
++            builder.OpenElement(0, "tr");
++            var columnIndex = 0;
++            foreach (var rowChild in row.Children)
++            {
++                if (rowChild is not TableCellNode cell)
++                {
++                    continue;
++                }
++
++                builder.OpenRegion(1);
++                builder.OpenElement(0, "td");
++                if (columnIndex < table.Alignment.Count &&
++                    table.Alignment[columnIndex] != TableColumnAlignment.None)
++                {
++                    builder.AddAttribute(
++                        1,
++                        "class",
++                        $"sc-ai-rich-text__table-cell--{table.Alignment[columnIndex].ToString().ToLowerInvariant()}");
++                }
++                RenderRichTextNodes(builder, cell.Children);
++                builder.CloseElement();
++                builder.CloseRegion();
++                columnIndex++;
++            }
++            builder.CloseElement();
++            builder.CloseRegion();
++        }
++
++        builder.CloseElement();
++        builder.CloseElement();
++        builder.CloseElement();
++    }
++
++    private static string? GetSafeUrl(string url, bool allowMailTo)
++    {
++        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var uri))
++        {
++            return null;
++        }
++
++        if (!uri.IsAbsoluteUri)
++        {
++            return url;
++        }
++
++        if (uri.Scheme is "http" or "https" ||
++            (allowMailTo && uri.Scheme == "mailto"))
++        {
++            return url;
++        }
++
++        return null;
++    }
+ }
