@@ -11,7 +11,7 @@ internal sealed class WebAssemblyScrollToLocationHash : IScrollToLocationHash
 
     public Task RefreshScrollPositionForHash(string locationAbsolute)
     {
-        var hashIndex = locationAbsolute.IndexOf("#", StringComparison.Ordinal);
+        var hashIndex = locationAbsolute.IndexOf('#');
 
         if (hashIndex > -1 && locationAbsolute.Length > hashIndex + 1)
         {
