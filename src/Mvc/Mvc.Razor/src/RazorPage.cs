@@ -108,7 +108,12 @@ public abstract class RazorPage : RazorPageBase
         EnsureMethodCanBeInvoked(nameof(RenderSection));
 
         var task = RenderSectionAsyncCore(name, required);
-        return task.GetAwaiter().GetResult();
+        if (task.IsCompletedSuccessfully)
+        {
+            return task.GetAwaiter().GetResult();
+        }
+
+        return task.AsTask().GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -147,10 +152,10 @@ public abstract class RazorPage : RazorPageBase
         ArgumentNullException.ThrowIfNull(name);
 
         EnsureMethodCanBeInvoked(nameof(RenderSectionAsync));
-        return RenderSectionAsyncCore(name, required);
+        return RenderSectionAsyncCore(name, required).AsTask();
     }
 
-    private async Task<HtmlString?> RenderSectionAsyncCore(string sectionName, bool required)
+    private async ValueTask<HtmlString?> RenderSectionAsyncCore(string sectionName, bool required)
     {
         if (_renderedSections.Contains(sectionName))
         {
