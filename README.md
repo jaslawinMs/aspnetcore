@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 68/358 finalized**: 50 drafts, 9 no-gain, 5 rejected and 4 duplicates;
-290 findings remain unfinished.
+**Progress: 69/358 finalized**: 51 drafts, 9 no-gain, 5 rejected and 4 duplicates;
+289 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -71,6 +71,7 @@ well as the largest speedup.
 | F091 | [Draft jaslawinMs/aspnetcore#99](https://github.com/jaslawinMs/aspnetcore/pull/99); typed challenges save approximately 32 B/op, only 0.16-0.26% of total allocation; no repeatable speedup, four repeated target regressions and first-case/control variability retained; one strategy, 3/3 budget closed, allocation-only draft, **not merge-ready** | [Google Boolean query formatting](F091/README.md) |
 | F092 | [Draft jaslawinMs/aspnetcore#101](https://github.com/jaslawinMs/aspnetcore/pull/101); guaranteed-completed prepared reads save exactly 72 B/op, 56.25%; public targets save only 52-67 B/op, 0.54-0.70%, without material full-request speedup; required pending waits, low-CV 24.96% large-read regression and all timing/control movement retained; one strategy, 3/3 budget closed, allocation-focused draft, **not merge-ready** | [Completed synchronous TestHost response reads](F092/README.md) |
 | F093 | No-gain; original already uses cached Task.CompletedTask and zero disposal-only bytes, all42 prepared heap pairs unchanged; tiny target medians, repeated Sync16 cost and untouched-control variability retained; source/owner DLL/PDB restored, no performance PR,3/3 budget closed | [Synchronous request-services disposal](F093/README.md) |
+| F094 | [Draft jaslawinMs/aspnetcore#103](https://github.com/jaslawinMs/aspnetcore/pull/103); completed synchronous section wrapper72B to0B, actual full-view allocation only0.73-10.44% lower in pair1; no material full-view speedup, first-case119.15% regression, async/pending/control costs retained; required waits/public Task APIs preserved, one strategy,3/3 budget closed, allocation-focused draft, **not merge-ready** | [Completed synchronous Razor section task materialization](F094/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
