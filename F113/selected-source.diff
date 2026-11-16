@@ -1,0 +1,124 @@
+diff --git a/src/Mvc/Mvc.TagHelpers/src/Cache/DistributedCacheTagHelperService.cs b/src/Mvc/Mvc.TagHelpers/src/Cache/DistributedCacheTagHelperService.cs
+index a188825c80..932e6ddba3 100644
+--- a/src/Mvc/Mvc.TagHelpers/src/Cache/DistributedCacheTagHelperService.cs
++++ b/src/Mvc/Mvc.TagHelpers/src/Cache/DistributedCacheTagHelperService.cs
+@@ -163,16 +163,14 @@ public partial class DistributedCacheTagHelperService : IDistributedCacheTagHelp
+ 
+     private static byte[] Encode(byte[] value, byte[] serializedKey)
+     {
+-        using (var buffer = new MemoryStream())
+-        {
+-            var keyLength = BitConverter.GetBytes(serializedKey.Length);
++        var keyLength = BitConverter.GetBytes(serializedKey.Length);
++        var buffer = new byte[checked(keyLength.Length + serializedKey.Length + value.Length)];
+ 
+-            buffer.Write(keyLength, 0, keyLength.Length);
+-            buffer.Write(serializedKey, 0, serializedKey.Length);
+-            buffer.Write(value, 0, value.Length);
++        keyLength.CopyTo(buffer, 0);
++        serializedKey.CopyTo(buffer, keyLength.Length);
++        value.CopyTo(buffer, keyLength.Length + serializedKey.Length);
+ 
+-            return buffer.ToArray();
+-        }
++        return buffer;
+     }
+ 
+     private static byte[] Decode(byte[] value, byte[] expectedKey)
+diff --git a/src/Mvc/Mvc.TagHelpers/test/DistributedCacheTagHelperTest.cs b/src/Mvc/Mvc.TagHelpers/test/DistributedCacheTagHelperTest.cs
+index 9fc2556e1a..24af37ed8d 100644
+--- a/src/Mvc/Mvc.TagHelpers/test/DistributedCacheTagHelperTest.cs
++++ b/src/Mvc/Mvc.TagHelpers/test/DistributedCacheTagHelperTest.cs
+@@ -733,6 +733,92 @@ public class DistributedCacheTagHelperTest
+         Assert.Equal(deserialized.ToString(), content);
+     }
+ 
++    [Theory]
++    [InlineData(0)]
++    [InlineData(32)]
++    [InlineData(16384)]
++    [InlineData(131072)]
++    public async Task ProcessAsync_PreservesEncodedCacheBytesAndReadsCachedContent(int contentLength)
++    {
++        var storage = GetStorage();
++        var service = new DistributedCacheTagHelperService(
++            storage,
++            GetFormatter(),
++            new HtmlTestEncoder(),
++            NullLoggerFactory.Instance);
++        var tagHelper = new DistributedCacheTagHelper(service, new HtmlTestEncoder())
++        {
++            Name = "entry-\u00e9\u4e2d" + new string('k', contentLength >= 16384 ? 4096 : 8),
++            ViewContext = GetViewContext(),
++        };
++        var content = new string('x', contentLength);
++        if (contentLength > 0)
++        {
++            content += "<b>\u00e9\u4e2d\U0001F30D</b>";
++        }
++        var key = new CacheTagKey(tagHelper);
++        var keyBytes = Encoding.UTF8.GetBytes(key.GenerateKey());
++        var expected = BitConverter.GetBytes(keyBytes.Length)
++            .Concat(keyBytes)
++            .Concat(Encoding.UTF8.GetBytes(content))
++            .ToArray();
++        var output = GetTagHelperOutput(childContent: content);
++
++        await tagHelper.ProcessAsync(GetTagHelperContext(), output);
++
++        var stored = await storage.GetAsync(key.GenerateHashedKey());
++        Assert.Equal(expected, stored);
++        Assert.Equal(content, output.Content.GetContent());
++
++        var next = new TagHelperOutput("distributed-cache", new TagHelperAttributeList(),
++            (_, _) => throw new InvalidOperationException("The cached entry should not render its child content again."));
++
++        await tagHelper.ProcessAsync(GetTagHelperContext(), next);
++
++        Assert.Equal(content, next.Content.GetContent());
++        Assert.Null(next.TagName);
++    }
++
++    [Fact]
++    public async Task ProcessAsync_PreservesStoredBytesAcrossFormatterMutationAndSubsequentCalls()
++    {
++        byte[] value = [0, 1, 2, 127, 255];
++        var formatter = new Mock<IDistributedCacheTagHelperFormatter>();
++        formatter.Setup(item => item.SerializeAsync(It.IsAny<DistributedCacheTagHelperFormattingContext>()))
++            .Returns(() => Task.FromResult(value));
++        var storage = GetStorage();
++        var service = new DistributedCacheTagHelperService(
++            storage,
++            formatter.Object,
++            new HtmlTestEncoder(),
++            NullLoggerFactory.Instance);
++        var tagHelper = new DistributedCacheTagHelper(service, new HtmlTestEncoder())
++        {
++            Name = "retained",
++            ViewContext = GetViewContext(),
++        };
++        var key = new CacheTagKey(tagHelper);
++        var keyBytes = Encoding.UTF8.GetBytes(key.GenerateKey());
++        var expected = BitConverter.GetBytes(keyBytes.Length).Concat(keyBytes).Concat(value).ToArray();
++
++        await tagHelper.ProcessAsync(GetTagHelperContext(), GetTagHelperOutput());
++
++        var retained = await storage.GetAsync(key.GenerateHashedKey());
++        value[0] = 42;
++        value = new byte[131072];
++        Array.Fill(value, (byte)0xCC);
++        tagHelper.Name = "subsequent";
++
++        await tagHelper.ProcessAsync(GetTagHelperContext(), GetTagHelperOutput());
++
++        var subsequent = await storage.GetAsync(new CacheTagKey(tagHelper).GenerateHashedKey());
++        var subsequentKeyBytes = Encoding.UTF8.GetBytes(new CacheTagKey(tagHelper).GenerateKey());
++        Assert.Equal(BitConverter.GetBytes(subsequentKeyBytes.Length).Concat(subsequentKeyBytes).Concat(value).ToArray(), subsequent);
++        Assert.Equal(expected, retained);
++        Assert.Equal(expected, await storage.GetAsync(key.GenerateHashedKey()));
++        Assert.NotSame(retained, subsequent);
++    }
++
+     private static ViewContext GetViewContext()
+     {
+         var actionContext = new ActionContext(new DefaultHttpContext(), new RouteData(), new ActionDescriptor());

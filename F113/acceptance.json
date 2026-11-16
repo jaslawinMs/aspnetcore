@@ -1,0 +1,68 @@
+{
+  "candidate": "F113",
+  "definedBeforeShippingEdits": true,
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F113-distributed-cache-encode",
+  "owner": "DistributedCacheTagHelperService.Encode",
+  "requirements": [
+    "Preserve exact native BitConverter Int32 key-byte-count prefix,unhashed UTF8 key bytes and complete formatter payload order/length.",
+    "Preserve independently owned output,including after input mutations and subsequent larger calls.",
+    "Exercise real public AddMvcCore/AddCacheTagHelper registrations,actual formatter/storage/MemoryDistributedCache,and DistributedCacheTagHelper.ProcessAsync cache-miss and subsequent hit.",
+    "Use explicit cache.Remove within every timed miss operation so the owning Encode path is actually reached;retain removal/lifecycle costs and avoid claiming pure encoder time for those cases.",
+    "Keep Decode,worker gating/cache keys/expiration/child rendering/defaults/public API/dependencies/TFMs unchanged.",
+    "Original/new semantic preservation rows pass on original and selected owner;frozen allocation goals supply expected original-red/selected-green resource evidence.",
+    "Freeze the complete original application/runtime closure and identical harness/fixtures;candidate may replace only actual Mvc.TagHelpers DLL/PDB.",
+    "At most3 measured source comparisons;stop early on clear large gains,retain all controls/costs/variation,and publish no-gain/rejection if applicable."
+  ],
+  "permanentTestBoundary": {
+    "class": "Microsoft.AspNetCore.Mvc.TagHelpers.DistributedCacheTagHelperTest",
+    "project": "src\\Mvc\\Mvc.TagHelpers\\test\\Microsoft.AspNetCore.Mvc.TagHelpers.Test.csproj",
+    "selected": "Actual public tag-helper ProcessAsync,real formatter/storage and observed binary cache entry/next cache hit;one legitimate custom-formatter input-ownership control.",
+    "newCases": [
+      "ProcessAsync_PreservesEncodedCacheBytesAndReadsCachedContent(contentLength:0)",
+      "ProcessAsync_PreservesEncodedCacheBytesAndReadsCachedContent(contentLength:32)",
+      "ProcessAsync_PreservesEncodedCacheBytesAndReadsCachedContent(contentLength:16384)",
+      "ProcessAsync_PreservesEncodedCacheBytesAndReadsCachedContent(contentLength:131072)",
+      "ProcessAsync_PreservesStoredBytesAcrossFormatterMutationAndSubsequentCalls"
+    ],
+    "hostedHttpOrBrowserNeededForThisManagedContract": false,
+    "notClaimed": "No Razor page/HTTP/browser render throughput,external distributed store transport,or cross-machine endianness execution."
+  },
+  "measurement": {
+    "cases": 28,
+    "preselectedTargets": ["Encode16K","Encode128K","EncodeEscaped16K","EncodeUnicode16K","EncodeBothLarge","Miss16K","Miss128K"],
+    "resourceReductionRequiredPercent": {
+      "Encode16K": 25,
+      "Encode128K": 25,
+      "EncodeEscaped16K": 25,
+      "EncodeUnicode16K": 25,
+      "EncodeBothLarge": 25,
+      "Miss16K": 5,
+      "Miss128K": 5
+    },
+    "sameThreadSamplesPerCase": 5,
+    "everyResourceSampleMustMeetPreEditAbsoluteGoal": true,
+    "benchmarkDotNet": "0.13.0",
+    "toolchain": "Actual InProcessEmitToolchain;not mislabeled no-emit",
+    "warmups": 3,
+    "retainedResults": 8,
+    "requestedIterationTimeMs": 100,
+    "outliers": "DontRemove",
+    "publicMiss": "Cache eviction plus public tag-helper processing/new output,real UTF8 formatting/envelope/storage with prepared child TagHelperContent;not a complete Razor/HTTP request.",
+    "direct": "Harness-only private Encode delegate bound once outside timing;inputs produced using actual framework CacheTagKey,TagHelperContent/HtmlEncoder and formatter outside timing.",
+    "controls": "Actual cache hits,disabled tag-helper and real formatter-only costs;every control outcome retained.",
+    "encodedBoundaryControls": "255/256/257 and65535/65536/65537 exact encoded lengths;not claims about the loaded GC's LOH cutoff."
+  },
+  "excludedOrUnverified": [
+    "Allocation failures/process exhaustion and combined input lengths exceeding representable managed byte-array capacity are not forced on this shared machine;do not claim exact failure-type/heap-limit equivalence there.",
+    "Only Windows x64 little-endian execution is measured;unchanged BitConverter header preserves the source-level native-endian convention.",
+    "No assumed many-large-resize-copy count,exact runtime MemoryStream growth factor,production cache-miss/input frequency,external store I/O,concurrent load,or application-wide gain.",
+    "Existing deterministic owning worker-concurrency tests are preservation controls,not a performance/load result."
+  ],
+  "sharedMachine": {
+    "cpuHeavyWorkSerialized": true,
+    "maximumBuildNodes": 2,
+    "noPowerPriorityAffinityChanges": true,
+    "noUnrelatedProcessTermination": true
+  }
+}

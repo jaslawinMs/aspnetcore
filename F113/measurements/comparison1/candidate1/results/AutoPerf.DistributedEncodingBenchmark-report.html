@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.DistributedEncodingBenchmark-20261116-124648</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  LaunchCount=1  
+WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>   Method</th><th>      Case</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>EncodeOrProcess</td><td>Disabled16K</td><td>57.81 ns</td><td>4.840 ns</td><td>2.532 ns</td><td>0.0049</td><td>-</td><td>-</td><td>184 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Encode128K</td><td>69,319.13 ns</td><td>8,750.436 ns</td><td>4,576.647 ns</td><td>1.2500</td><td>1.2500</td><td>1.2500</td><td>131,176 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Encode16K</td><td>2,565.26 ns</td><td>608.573 ns</td><td>318.296 ns</td><td>0.4445</td><td>-</td><td>-</td><td>16,488 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Encode1K</td><td>210.19 ns</td><td>27.415 ns</td><td>14.339 ns</td><td>0.0284</td><td>-</td><td>-</td><td>1,128 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeAbove256</td><td>65.53 ns</td><td>3.183 ns</td><td>1.665 ns</td><td>0.0081</td><td>-</td><td>-</td><td>320 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeAbove64K</td><td>7,599.93 ns</td><td>3,153.931 ns</td><td>1,649.567 ns</td><td>2.2392</td><td>0.1976</td><td>-</td><td>65,600 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeAt256</td><td>60.44 ns</td><td>8.043 ns</td><td>4.206 ns</td><td>0.0077</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeAt64K</td><td>7,249.01 ns</td><td>1,537.702 ns</td><td>804.248 ns</td><td>2.2251</td><td>0.1963</td><td>-</td><td>65,592 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeBelow256</td><td>60.65 ns</td><td>4.184 ns</td><td>2.189 ns</td><td>0.0078</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeBelow64K</td><td>7,598.83 ns</td><td>3,196.493 ns</td><td>1,671.828 ns</td><td>2.2278</td><td>0.2408</td><td>-</td><td>65,592 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeBothLarge</td><td>71,955.01 ns</td><td>13,097.765 ns</td><td>6,850.384 ns</td><td>1.2626</td><td>1.2626</td><td>1.2626</td><td>135,264 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeEmpty</td><td>35.83 ns</td><td>1.851 ns</td><td>0.968 ns</td><td>0.0028</td><td>-</td><td>-</td><td>104 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeEscaped16K</td><td>7,604.83 ns</td><td>1,022.767 ns</td><td>534.927 ns</td><td>2.2321</td><td>0.1313</td><td>-</td><td>71,096 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeLongKey</td><td>726.10 ns</td><td>62.705 ns</td><td>32.796 ns</td><td>0.1071</td><td>-</td><td>-</td><td>4,224 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeSmall</td><td>39.65 ns</td><td>5.284 ns</td><td>2.764 ns</td><td>0.0035</td><td>-</td><td>-</td><td>136 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>EncodeUnicode16K</td><td>51,483.97 ns</td><td>8,483.832 ns</td><td>4,437.208 ns</td><td>0.9470</td><td>0.9470</td><td>0.9470</td><td>94,307 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Formatter16K</td><td>3,480.84 ns</td><td>396.552 ns</td><td>207.405 ns</td><td>0.4306</td><td>-</td><td>-</td><td>16,480 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>FormatterSmall</td><td>42.23 ns</td><td>2.011 ns</td><td>1.052 ns</td><td>0.0032</td><td>-</td><td>-</td><td>128 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Hit128K</td><td>197,269.91 ns</td><td>40,375.822 ns</td><td>21,117.335 ns</td><td>4.0323</td><td>4.0323</td><td>4.0323</td><td>394,674 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Hit16K</td><td>8,545.81 ns</td><td>1,584.853 ns</td><td>828.909 ns</td><td>1.3112</td><td>0.0874</td><td>-</td><td>50,592 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>HitSmall</td><td>1,001.92 ns</td><td>77.511 ns</td><td>40.540 ns</td><td>0.0388</td><td>-</td><td>-</td><td>1,536 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Miss128K</td><td>391,131.59 ns</td><td>66,745.293 ns</td><td>34,909.079 ns</td><td>7.8125</td><td>7.8125</td><td>7.8125</td><td>788,235 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Miss16K</td><td>18,024.27 ns</td><td>1,513.176 ns</td><td>791.420 ns</td><td>2.6114</td><td>0.1741</td><td>-</td><td>100,073 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>Miss1K</td><td>2,507.40 ns</td><td>221.433 ns</td><td>115.814 ns</td><td>0.1955</td><td>-</td><td>-</td><td>7,912 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>MissEscaped16K</td><td>213,950.43 ns</td><td>9,099.799 ns</td><td>4,759.371 ns</td><td>10.0806</td><td>2.0161</td><td>2.0161</td><td>433,130 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>MissLongKey</td><td>13,274.73 ns</td><td>251.974 ns</td><td>131.787 ns</td><td>0.7928</td><td>-</td><td>-</td><td>30,625 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>MissSmall</td><td>1,266.85 ns</td><td>57.258 ns</td><td>29.947 ns</td><td>0.0502</td><td>-</td><td>-</td><td>1,960 B</td>
+</tr><tr><td>EncodeOrProcess</td><td>MissUnicode16K</td><td>375,753.39 ns</td><td>20,167.687 ns</td><td>10,548.090 ns</td><td>10.4167</td><td>6.9444</td><td>6.9444</td><td>567,463 B</td>
+</tr></tbody></table>
+</body>
+</html>
