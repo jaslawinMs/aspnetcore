@@ -1,0 +1,164 @@
+# F101 exact recorded commands and actual outcomes
+
+Every fresh dotnet shell starts in C:\src\aspnetcore and activates `. .\activate.ps1`. Owning source remained37e809ead5824bc753a1c3d56f11615bdb1296c5 without shipping edits. CPU-heavy work serialized/max2 build nodes;one original9-case actual int-property sweep,zero source comparisons. Original deadline failure not repaired/credited as speedup;Get has no input args or serialization.
+
+## frozen-generic-reuse-equivalence-red-command.json / row1: Actual exit1
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.dll' '--require-generic-reuse-equivalence' '--artifacts' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\verification\frozen-generic-reuse-equivalence-red'
+```
+
+## frozen-original-characterization-command.json / row1: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.dll' '--characterize' '--artifacts' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\verification\frozen-original-characterization'
+```
+
+## frozen-original-deadline-red-command.json / row1: Actual exit1
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.dll' '--require-deadlines' '--artifacts' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\verification\frozen-original-deadline-red'
+```
+
+## harness-build-final-command.json / row1: Actual exit0
+```powershell
+dotnet 'build' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\AutoPerf.Benchmarks.csproj' '--no-restore' '-c' 'Release' '-m:2' '--verbosity' 'minimal'
+```
+
+## harness-restore-command.json / row1: Actual exit0
+```powershell
+dotnet 'restore' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\AutoPerf.Benchmarks.csproj' '--disable-parallel' '--verbosity' 'quiet' '-m:2' '-p:Configuration=Release'
+```
+
+## harness-whitespace-apply-command.json / row1: Actual exit0
+```powershell
+dotnet 'format' 'whitespace' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\AutoPerf.Benchmarks.csproj' '--no-restore' '--verbosity' 'quiet'
+```
+
+## harness-whitespace-final-command.json / row1: Actual exit0
+```powershell
+dotnet 'format' 'whitespace' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\AutoPerf.Benchmarks.csproj' '--no-restore' '--verify-no-changes' '--verbosity' 'quiet'
+```
+
+## owning-tests-original-command.json / row1: Actual exit0
+```powershell
+dotnet 'test' 'src\Components\JSInterop\test\Microsoft.JSInterop.Tests.csproj' '--no-restore' '--no-build' '-c' 'Release' '-m:2' '-p:UseIisNativeAssets=false' '--filter' 'FullyQualifiedName~JSRuntimeExtensionsTest|FullyQualifiedName=Microsoft.JSInterop.JSRuntimeTest.InvokeAsync_CancelsAsyncTask_AfterDefaultTimeout|FullyQualifiedName=Microsoft.JSInterop.JSRuntimeTest.InvokeAsync_CompletesSuccessfullyBeforeTimeout|FullyQualifiedName=Microsoft.JSInterop.JSRuntimeTest.InvokeAsync_CancelsAsyncTasksWhenCancellationTokenFires|FullyQualifiedName=Microsoft.JSInterop.JSRuntimeTest.InvokeAsync_DoesNotStartWorkWhenCancellationHasBeenRequested|FullyQualifiedName=Microsoft.JSInterop.Tests.JSObjectReferenceTest.JSObjectReference_InvokeAsync_CallsUnderlyingJSRuntimeInvokeAsync|FullyQualifiedName=Microsoft.JSInterop.Tests.JSObjectReferenceTest.JSObjectReference_Dispose_DisallowsFurtherInteropCalls|FullyQualifiedName=Microsoft.JSInterop.Tests.JSObjectReferenceTest.JSObjectReference_DisposeAsync_IgnoresJSDisconnectedException|FullyQualifiedName=Microsoft.JSInterop.Tests.JSObjectReferenceTest.JSObjectReference_DisposeAsync_IgnoresJSDisconnectedException_OnMultipleCalls' '--logger' 'trx;LogFileName=owning-original.trx' '--results-directory' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\tests\original' '-v:q'
+```
+
+## owning-tests-source-pdb-commands.json / row1: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\src\aspnetcore\artifacts\bin\Microsoft.JSInterop.Tests\Release\net12.0\Microsoft.JSInterop.Tests.pdb' 'JSRuntimeExtensionsTest.cs' 'C:\src\aspnetcore\src\Components\JSInterop\test\JSRuntimeExtensionsTest.cs'
+```
+
+## owning-tests-source-pdb-commands.json / row2: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\src\aspnetcore\artifacts\bin\Microsoft.JSInterop.Tests\Release\net12.0\Microsoft.JSInterop.Tests.pdb' 'JSRuntimeTest.cs' 'C:\src\aspnetcore\src\Components\JSInterop\test\JSRuntimeTest.cs'
+```
+
+## owning-tests-source-pdb-commands.json / row3: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\src\aspnetcore\artifacts\bin\Microsoft.JSInterop.Tests\Release\net12.0\Microsoft.JSInterop.Tests.pdb' 'JSObjectReferenceTest.cs' 'C:\src\aspnetcore\src\Components\JSInterop\test\JSObjectReferenceTest.cs'
+```
+
+## pdb-original-commands.json / row1: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.pdb' 'CorelibEvidence.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\CorelibEvidence.cs'
+```
+
+## pdb-original-commands.json / row2: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.pdb' 'Program.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\Program.cs'
+```
+
+## pdb-original-commands.json / row3: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.pdb' 'RuntimeBoundary.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\RuntimeBoundary.cs'
+```
+
+## pdb-original-commands.json / row4: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.pdb' 'TimeoutBenchmark.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\TimeoutBenchmark.cs'
+```
+
+## pdb-original-commands.json / row5: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.pdb' 'TimeoutProbe.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\harness\TimeoutProbe.cs'
+```
+
+## pdb-original-commands.json / row6: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSRuntimeExtensions.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\JSRuntimeExtensions.cs'
+```
+
+## pdb-original-commands.json / row7: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'IJSRuntime.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\IJSRuntime.cs'
+```
+
+## pdb-original-commands.json / row8: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSRuntime.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\JSRuntime.cs'
+```
+
+## pdb-original-commands.json / row9: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'IJSObjectReference.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\IJSObjectReference.cs'
+```
+
+## pdb-original-commands.json / row10: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSObjectReference.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Implementation\JSObjectReference.cs'
+```
+
+## pdb-original-commands.json / row11: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSObjectReferenceJsonConverter.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Infrastructure\JSObjectReferenceJsonConverter.cs'
+```
+
+## pdb-original-commands.json / row12: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSObjectReferenceJsonWorker.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Implementation\JSObjectReferenceJsonWorker.cs'
+```
+
+## pdb-original-commands.json / row13: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'PendingAsyncCall.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Infrastructure\PendingAsyncCall.cs'
+```
+
+## pdb-original-commands.json / row14: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSInvocationInfo.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Infrastructure\JSInvocationInfo.cs'
+```
+
+## pdb-original-commands.json / row15: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'DotNetDispatcher.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Infrastructure\DotNetDispatcher.cs'
+```
+
+## pdb-original-commands.json / row16: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F071\tools\bin\Release\net12.0\AutoPerf.Evidence.dll' 'pdb' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\Microsoft.JSInterop.pdb' 'JSInteropJsonTypeInfoResolver.cs' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\producer-source\src\Components\JSInterop\src\Infrastructure\JSInteropJsonTypeInfoResolver.cs'
+```
+
+## One actual original-only typed property BDN sweep: Actual exit0
+```powershell
+dotnet 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\binaries\original\AutoPerf.Benchmarks.dll' '--filter' '*TimeoutBenchmark*' '--inProcess' '--exporters' 'json' 'csv' '--artifacts' 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F101\original-sweep' '--job' 'Short' '--warmupCount' '3' '--iterationCount' '8' '--iterationTime' '100' '--outliers' 'DontRemove'
+```
+
+## Actual preparation parser failure before any statements executed: Actual exit1
+```powershell
+& 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\F101-prepare.ps1'
+```
+
+Preparation:firstscript actualexit1,redirection target on following physical line;exact originalscript/error/hash and unchanged priorbranch/no run retained. Corrected before new C# formatting/build;not benchmark/probe/source-comparison failure. Format/apply and verify passed before first build;0 warnings/errors.
+Owning tests:exit0,16 exact passed/0 failed/0 skipped/positive durations. Existing baseline controls reused with --no-build and three exact test-source/PDB/local-owner associations;not dedicated timed-property coverage. Frozen characterization:actual/expected0;require-original-deadlines:actual/expected1;require-public-reuse-equivalence:actual/expected1. All three reach25 observations/3original failed deadlines/3actual awaited controls/3warm+3fresh rows. Not a compiled source replacement/redgreen fix/speedup.
+
+## Actual independent unchanged source branch: Passed,exits0
+```powershell
+git --no-pager diff --check
+git diff --quiet HEAD --
+git '-c' 'credential.helper=' '-c' 'credential.helper=!gh auth git-credential' 'push' 'autoperf' 'autoperf/F101-js-runtime-property-read-timeouts'
+gh 'api' 'repos/jaslawinMs/aspnetcore/git/ref/heads/autoperf/F101-js-runtime-property-read-timeouts'
+```
+Actual remote ref37e809ead5824bc753a1c3d56f11615bdb1296c5;no source optimization commit or performance PR.
+
+`node .\reproduce-analysis.mjs <absolute-capsule> --verify`:Passed,exit0 on exact copied inputs;9 int-property outcomes/72 results/27 warmups/9 owner-harness-PID/GetValue3/Default0/typed731/reference-property-target47 setups,19 source/Git identities,16 executable PBD records,25 observations in three modes/resources/real pending/deadline/token/result producers,16 control tests/3 source proofs,all GC/rounding/sample-statistics/CI arithmetic and exact preparation failure. Not independent confidence-distribution quantiles or omitted binary rehash.
+`.\audit-owning-tests.ps1 -RunRoot <absolute-capsule> -Verify`:Passed;16 exact result/definition/execution IDs,positive durations,zero skips.
+`node F101-closure.mjs <absolute-actual-local-run> --verify`:Passed,exit0 before/after actual sweep and before packaging;62 frozen files/20 declared runtime assets. Requires omitted original local binaries,not portable binary rehash.
