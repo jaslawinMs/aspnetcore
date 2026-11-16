@@ -1,0 +1,37 @@
+{
+  "candidate": "F098",
+  "shippingSourceModified": false,
+  "benchmarkComparisonsConsumed": 0,
+  "preparationFailures": [
+    {
+      "kind": "harness-whitespace-verification",
+      "buildHadZeroWarningsAndErrors": true,
+      "probeOrBenchmarkExecutedBeforeFailure": false,
+      "correction": "Archive original harness source/binaries and format only five external harness C# files, then rebuild0 warnings/errors and verify whitespace before freeze.",
+      "rawFailedCommand": "harness-whitespace-verify-command.json",
+      "rawFailedLog": "harness-whitespace-verify.log",
+      "archive": "preparation/initial-harness"
+    },
+    {
+      "kind": "source-canonicalization-verifier",
+      "file": "src/Components/JSInterop/test/Microsoft.JSInterop.Tests.csproj",
+      "actualCurrentBaselineWorkingGitBlob": "9fc0f976b0e5ffc0e874b4cb3911e3d7f40d6b40",
+      "substantiveSourceDifference": false,
+      "reason": "ReadAllText stripped the legitimate UTF8 BOM before remote-byte comparison. Git blobs already matched.",
+      "correction": "Decode actual UTF8 bytes preserving BOM and normalize only CRLF. Existing partial eight-file copies rehashed, not overwritten; all nine scoped source canonical bytes then verified.",
+      "rawFailedLog": "capture-source.log",
+      "successfulLog": "capture-source-final.log"
+    },
+    {
+      "kind": "portable-auditor-execution-schema",
+      "actualBenchmarkFailed": false,
+      "sourceComparisonConsumed": false,
+      "reason": "The recorded execution is one JSON object, not an array. Initial auditor asserted array length before any output was emitted.",
+      "correction": "Wrap that exact recorded object for the single-execution audit; no recorded command, benchmark, result or goal changed.",
+      "rawFailedLog": "audit-preparation-1.log",
+      "successfulLog": "measurement-audit.log"
+    }
+  ],
+  "initialActualOriginalProbe": "initial-compatibility-command.json",
+  "note": "Only preparation formatting/canonical comparison assumptions changed. No test goal weakened, shipping source edited, or timed/source comparison consumed."
+}

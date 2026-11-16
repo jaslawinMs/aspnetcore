@@ -1,0 +1,49 @@
+commit 9372816b7c436e06da6d6426e0863b3677aac83c
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Wed Aug 14 12:24:35 2019 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Aug 14 12:24:35 2019 -0700
+
+    API Review: JSRuntime (dotnet/extensions#2166)
+    
+    * API Review: JSRuntime
+    
+    * Rename JSRuntimeBase -> JSRuntime
+    * Rename JSInProcessRuntimeBase -> JSInProcessRuntime
+    * Rename DotNetObjectRef -> DotNetObjectReference
+    * Update JSRuntime to return ValueTask
+    * Make InvokeAsync APIs that explicitly cancels and API that default cancels more crisp
+    * Introduce void invoking APIs
+    * Fixup method names on DotNetDispatcher
+    
+    \n\nCommit migrated from https://github.com/dotnet/extensions/commit/93d3ae448551cac29af8cf882b31047f5da0dadc
+
+ src/JSInterop/Microsoft.JSInterop/ref/Microsoft.JSInterop.netcoreapp3.0.cs                                                                    |  63 ++++++++++++++--------
+ src/JSInterop/Microsoft.JSInterop/ref/Microsoft.JSInterop.netstandard2.0.cs                                                                   |  63 ++++++++++++++--------
+ src/JSInterop/Microsoft.JSInterop/src/{DotNetObjectRef.cs => DotNetObjectReference.cs}                                                        |  14 ++---
+ src/JSInterop/Microsoft.JSInterop/src/{DotNetObjectRefOfT.cs => DotNetObjectReferenceOfT.cs}                                                  |  18 +++----
+ src/JSInterop/Microsoft.JSInterop/src/IJSRuntime.cs                                                                                           |  14 +++--
+ src/JSInterop/Microsoft.JSInterop/src/{ => Infrastructure}/DotNetDispatcher.cs                                                                |  28 +++++-----
+ src/JSInterop/Microsoft.JSInterop/src/{ => Infrastructure}/DotNetObjectReferenceJsonConverter.cs                                              |  12 ++---
+ src/JSInterop/Microsoft.JSInterop/src/{DotNetObjectRefJsonConverterFactory.cs => Infrastructure/DotNetObjectReferenceJsonConverterFactory.cs} |   4 +-
+ src/JSInterop/Microsoft.JSInterop/src/{DotNetObjectRefManager.cs => Infrastructure/DotNetObjectReferenceManager.cs}                           |  20 +++----
+ src/JSInterop/Microsoft.JSInterop/src/{IDotNetObjectRef.cs => Infrastructure/IDotNetObjectReference.cs}                                       |   4 +-
+ src/JSInterop/Microsoft.JSInterop/src/{ => Infrastructure}/TaskGenericsUtil.cs                                                                |   2 +-
+ src/JSInterop/Microsoft.JSInterop/src/{JSInProcessRuntimeBase.cs => JSInProcessRuntime.cs}                                                    |   2 +-
+ src/JSInterop/Microsoft.JSInterop/src/JSInProcessRuntimeExtensions.cs                                                                         |  29 ++++++++++
+ src/JSInterop/Microsoft.JSInterop/src/JSInvokableAttribute.cs                                                                                 |   2 +-
+ src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs                                                                                            | 169 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ src/JSInterop/Microsoft.JSInterop/src/JSRuntimeBase.cs                                                                                        | 174 -----------------------------------------------------------
+ src/JSInterop/Microsoft.JSInterop/src/JSRuntimeExtensions.cs                                                                                  | 140 +++++++++++++++++++++++++++++++++++++++++++++++
+ src/JSInterop/Microsoft.JSInterop/test/{DotNetObjectRefTest.cs => DotNetObjectReferenceTest.cs}                                               |   6 +--
+ src/JSInterop/Microsoft.JSInterop/test/{ => Infrastructure}/DotNetDispatcherTest.cs                                                           |  78 +++++++++++++--------------
+ src/JSInterop/Microsoft.JSInterop/test/{ => Infrastructure}/DotNetObjectReferenceJsonConverterTest.cs                                         |  34 ++++++------
+ src/JSInterop/Microsoft.JSInterop/test/JSInProcessRuntimeExtensionsTest.cs                                                                    |  27 ++++++++++
+ src/JSInterop/Microsoft.JSInterop/test/{JSInProcessRuntimeBaseTest.cs => JSInProcessRuntimeTest.cs}                                           |  18 +++----
+ src/JSInterop/Microsoft.JSInterop/test/JSRuntimeBaseTest.cs                                                                                   | 386 ----------------------------------------------------------------------------------------------------------------------------------
+ src/JSInterop/Microsoft.JSInterop/test/JSRuntimeExtensionsTest.cs                                                                             | 181 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/JSInterop/Microsoft.JSInterop/test/JSRuntimeTest.cs                                                                                       | 380 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ src/JSInterop/Microsoft.JSInterop/test/TestJSRuntime.cs                                                                                       |   4 +-
+ src/JSInterop/Mono.WebAssembly.Interop/ref/Mono.WebAssembly.Interop.netstandard2.0.cs                                                         |   2 +-
+ src/JSInterop/Mono.WebAssembly.Interop/src/MonoWebAssemblyJSRuntime.cs                                                                        |   7 +--
+ 28 files changed, 1133 insertions(+), 748 deletions(-)

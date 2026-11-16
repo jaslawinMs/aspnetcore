@@ -1,0 +1,28 @@
+{
+  "candidate": "F098",
+  "decision": "reject-generic-removal-or-unconditional-cts-reset-reuse",
+  "shippingSourceModified": false,
+  "isCompiledReplacementCandidate": false,
+  "owner": "JSRuntimeExtensions.InvokeAsync<T>(IJSRuntime, string, TimeSpan, object[])",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "currentDefault": "d7870e7ec8da214eb96f96f5512aad0d89bfef11",
+  "exactCurrentBaselineWorkingSourceIdentities": 9,
+  "actualOriginalObservationsPerProbe": 18,
+  "originalOwningTestsPassed": 8,
+  "evidence": [
+    "Three actual timed public-extension/retaining-IJSRuntime/JSRuntime producer deadlines cancel and preserve their actual passed token. Removing the finite CTS would change the token/deadline contract.",
+    "Infinity already uses CancellationToken.None without creating a CTS; its cheaper allocation is not an equivalent finite-timeout optimization.",
+    "Actual successful timed extension passes a public consumer a never-canceled token; a later original real deadline cancels only its own distinct token.",
+    "Separate real public CTS.TryReset/CancelAfter control, consumed by the same actual public IJSRuntime and JSRuntime path, changes an earlier successful retained token when the later call cancels. Its identity is reused; original retained token stays uncanceled.",
+    "Public TryReset documentation explicitly warns that components holding an indirect token reference observe the reset source's current state."
+  ],
+  "limitations": [
+    "The public CTS control is a compatibility counterexample at the token-consumer/reset boundary, not a compiled shipping timeout-extension candidate or red/green shipped fix.",
+    "F097's private nonvirtual default-timeout owner does not imply compatibility for arbitrary public IJSRuntime token consumers.",
+    "An owner-specific lifecycle/API redesign is not universally disproved, implemented, benchmarked or implicitly approved.",
+    "No sibling constructor/get/set timeout bug is fixed or used as a substitute for this InvokeAsync finding; no browser, JavaScript execution, WebAssembly or application frequency/throughput proof."
+  ],
+  "expectedCompatibilityRedCommand": "frozen-generic-reuse-equivalence-red-command.json",
+  "actualOriginalCompatibleCommand": "frozen-original-compatible-command.json",
+  "timedPlan": "One original9-case source sweep only, no source A/B comparison and no performance PR."
+}

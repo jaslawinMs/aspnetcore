@@ -1,0 +1,29 @@
+{
+  "id": "F098",
+  "finding": {
+    "card_id": "cancellationtokensource-timeout-timer-hot-path",
+    "file": "src/Components/JSInterop/src/JSRuntimeExtensions.cs",
+    "line_start": 97,
+    "line_end": 100,
+    "project": "Microsoft.JSInterop",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "The timed InvokeAsync overload creates a timeout CTS per interop call.",
+    "explanation": "Each finite-timeout call constructs and disposes a CancellationTokenSource, scheduling timer-queue work for that JavaScript invocation. The overload may be used on high-frequency interop paths, but caller frequency is not visible here, so the occurrence is likely.",
+    "snippet": "using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);\nvar cancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;\nreturn await jsRuntime.InvokeAsync<TValue>(identifier, cancellationToken, args);",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Independent public IJSRuntime explicit-timeout owner; current baseline/source and public token-consumer contract investigation started. F097 finalized as private-default allocation draft105; no F098 shipping edit, benchmark comparison or disposition yet."
+  ],
+  "branch": "autoperf/F098-js-runtime-explicit-timeouts",
+  "pr_url": null,
+  "updated_at": "2026-11-16T10:11:18.9704932+00:00"
+}
