@@ -66,7 +66,8 @@ internal sealed class ResponseBodyReaderStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        return ReadAsync(buffer, offset, count, CancellationToken.None).GetAwaiter().GetResult();
+        var readTask = ReadAsync(buffer.AsMemory(offset, count), CancellationToken.None);
+        return readTask.IsCompletedSuccessfully ? readTask.Result : readTask.AsTask().GetAwaiter().GetResult();
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

@@ -154,6 +154,33 @@ public class ResponseBodyTests
         Assert.Equal(contentBytes[0], bytes[0]);
     }
 
+    [Theory]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(256)]
+    public async Task BodyStream_SynchronousRead_PreservesOffsetShortReadAndEof(int byteCount)
+    {
+        var contentBytes = Enumerable.Range(0, byteCount).Select(i => (byte)(i % 239)).ToArray();
+        var contentFlushed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var host = await CreateHost(async httpContext =>
+        {
+            await httpContext.Response.BodyWriter.WriteAsync(contentBytes);
+            contentFlushed.SetResult();
+        });
+
+        using var client = host.GetTestServer().CreateClient();
+        using var response = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
+        var stream = await response.Content.ReadAsStreamAsync();
+        await contentFlushed.Task.DefaultTimeout();
+        var bytes = Enumerable.Repeat((byte)255, byteCount + 4).ToArray();
+
+        Assert.Equal(byteCount, stream.Read(bytes, 2, byteCount + 1));
+        Assert.Equal(contentBytes, bytes[2..(byteCount + 2)]);
+        Assert.All(bytes[..2], value => Assert.Equal((byte)255, value));
+        Assert.All(bytes[(byteCount + 2)..], value => Assert.Equal((byte)255, value));
+        Assert.Equal(0, stream.Read(bytes, 2, byteCount));
+    }
+
     private Task<IHost> CreateHost(RequestDelegate appDelegate)
     {
         return new HostBuilder()
