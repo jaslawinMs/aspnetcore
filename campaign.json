@@ -2908,11 +2908,14 @@
         "snippet": "using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);\nvar cancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;\nawait jsRuntime.InvokeAsync<IJSVoidResult>(identifier, cancellationToken, args);",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "rejected",
+      "notes": [
+        "Continuing the restored retained finding,not a new scan. Timed InvokeVoidAsync has a real public IJSRuntime consumer and await-owned per-call finite CTS. Establish void-result/actual cancellation/token-retention semantics independently before generic removal/reset gate;no shipping edits or performance claim.",
+        "F099 finalized rejected generic finite CTS removal/unconditional reset-reuse for actual timed public InvokeVoidAsync. Independent fork branchautoperf/F099-js-runtime-explicit-void-timeouts remains unchanged37e809e;actual remote ref verified,no optimization/shipping/API/default/dependency/visibility change or performancePR.11 currentdefaultd787/baseline/working blobs/canonical bytes verified with BOM;actual2019timed API and2021IJSVoidResult evolution retained. New actual void-returning/null-reply harness reaches20 semantic observations per frozen mode,including framework marker loaded from owner9737FA... and nearesttyped731 diagnostic control,3real100ms deadlines,configureddefault vs None/infinity,zero publicentry/no dispatch,timer lifetime5errors/realserialization getter gate8overlappingdistincttokens/1success7cancels and explicit pendingdispose. Original earlier successful publicconsumer token remainsuncanceled;real publicTryReset/CancelAfter void consumer counterexample cancels earlier reusedtoken,actualexpected equivalenceexit1 vs original0;not compiled replacement/redgreenfix or universal owner-specific redesign disproof. Actual8exact baseline no-build owner tests positive durations/zero skips and source/PDB/localowner=frozen;12 executable ownerproducerharnessPDBdocs plus puremarker source/type binding,1testPBD,62file20runtimeassetclosure liveverifiedbeforeafter. One original9-case actual-void sweep72results27warmups9exact ownerharnessPID/protocolreceipts allGC/rounding/sample/statistical/CIarithmetic audited,not independentCIquantiles;identicalharness3807FC... . Original finite-infinity400Bsingle/3200B8batch is differentdeadline-contract pressure,no speedup;infinity-None pendingadapter8B/64B disclosed notmodified. Firstfiniteinline CV40.217723846971% retained without causalnoise or reliablelatencyclaim;all warm5000/fresh20 actual successfulvoidcompletion calipers/phasevariation retained,freshruntime225-226KB includesruntime/serializer not isolatedCTS/coldthroughput.3max sourcebudget0comparisons closed,oneoriginalsweep only. ManagedJSInterop documented boundary,no browserJS/circuit/networkserver/WebAssemblyNativeAOT/frequency/productionthroughput or everydisposerace claim. Format before firstbuild/0warnings errors,no F098 outputs substituted. Exact116byteidenticalcopies/4fa6e81b1e692e4ccd12f7c856cd2fc76baf728a allactualremoteblobs verified,rawDLLPDBomitted/publicauditsrecordproofsnot omittedbytes. SharedWindowsCPUserial/max2nodes,nopowerpriorityaffinity/unrelatedchanges;rawCRLFpreserved/scoped authoredwhitespace."
+      ],
+      "branch": "autoperf/F099-js-runtime-explicit-void-timeouts",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-16T03:13:33.5954098-08:00"
     },
     {
       "id": "F100",
