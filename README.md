@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 71/358 finalized**: 51 drafts, 10 no-gain, 6 rejected and 4 duplicates;
-287 findings remain unfinished.
+**Progress: 72/358 finalized**: 52 drafts, 10 no-gain, 6 rejected and 4 duplicates;
+286 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -74,6 +74,7 @@ well as the largest speedup.
 | F094 | [Draft jaslawinMs/aspnetcore#103](https://github.com/jaslawinMs/aspnetcore/pull/103); completed synchronous section wrapper72B to0B, actual full-view allocation only0.73-10.44% lower in pair1; no material full-view speedup, first-case119.15% regression, async/pending/control costs retained; required waits/public Task APIs preserved, one strategy,3/3 budget closed, allocation-focused draft, **not merge-ready** | [Completed synchronous Razor section task materialization](F094/README.md) |
 | F095 | No-gain; original warmed bridge already0B and all18 warm heap pairs unchanged; tiny cached5.48%/0.92% medians retained, cold bridge slower every pair,169.87% unchanged-source control slowdown and gated variability preserved; required wait retained, exact source/owner DLL/PDB restored, no performance PR,3/3 budget closed | [Obsolete synchronous page-loader bridge](F095/README.md) |
 | F096 | Rejected generic CTS removal/reuse; finite/infinity costs differ by approximately400B per request but have different deadline contracts; real retained-token reuse counterexample and all9 original constructor/get/set deadline failures preserved; no shipping fix/performance PR,0 source comparisons/one original20-case sweep | [JS object timeout-source lifetime and original pressure](F096/README.md) |
+| F097 | [Draft jaslawinMs/aspnetcore#105](https://github.com/jaslawinMs/aspnetcore/pull/105); warmed defaults save352B/call, timed finite single allocation26.35-44.44% lower; overlap8 saves799-800B/batch but14/15 means regress, Get12.11% slower; changed no-default controls, idle/cold costs and52.25% CV retained; actual resource400B/red to96B/green below unchanged100B goal,53 semantic observations and41 original/proposed tests each;3/3 budget closed, qualified allocation-focused draft, **not merge-ready** | [Private JSRuntime default timeout reuse](F097/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |

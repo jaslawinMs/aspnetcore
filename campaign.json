@@ -2848,11 +2848,14 @@
         "snippet": "if (DefaultAsyncTimeout.HasValue)\n{\n    using var cts = new CancellationTokenSource(DefaultAsyncTimeout.Value);\n    return await InvokeAsync<TValue>(targetInstanceId, identifier, callType, cts.Token, args);\n}",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
-      "pr_url": null,
-      "updated_at": null
+      "status": "drafted",
+      "notes": [
+        "Investigating runtime-owned default CTS independently of F096 public object-reference TimeSpan token constraints; no shipping edit or candidate presumed.",
+        "Finalized F097 qualified allocation-focused fork draft jaslawinMs/aspnetcore#105,not merge-ready;issue104,independent JSRuntime54 additions/8 deletions and JSRuntimeTest132 additions. Private one-slot default CTS reuse only after completed ownership/successful reset,exact zero synchronousCancel;Dispose closes/drains idle slot,preserves pending leased work/postDisposebehavior;static stateful cancellation registration preserves caller token/context/cleanup. NoAPI/default/dependency/visibility/crossassemblyprivate change. Actual warmed finite/infinity singles352B saved,timed finite26.35-44.44%allocation;finite8batch799-800B saved7.24-8.60%,14/15mean timings regress/Get12.11%slower. Changed unconfiguredcontrols48Bsingle/384Bbatchsaved,24/75meanregressions,max15.86%slower;not timer-only attribution. FirstfiniteInvokeWindowInline means -3.23/+37.79/-17.55%,medianthird28.26%slower,maxCV52.25%;all150pairs/300outcomes/2400results/900warmups/300actualownerharnessPIDsetup receipts retained,audited GCrounding/samplemeanvarianceSDSEmedian/CIinternalarithmetic,not independentCIquantiles. Same frozen original/proposed harnessAD21...53actualsemantics15warm15fresh-runtime resources;strict finite-control overhead400B original/red96Bfinal/green<100B,shutdown288B>=200B. Prototype1 saving288B but112Bfailedgoal retained;first expected-green actualexit1/rebuiltharness5D07 archived,unchangedharness repeatfailedsame;no BDNrunconsumed by prototype1. Same41case compiledtestassembly original/proposed41eachpositive duration/no skips,earlier34/40phasespreserved,7newfocusedfacts;green-greensemanticsnot fabricatedcorrectnessred.28ownerproducerharnessPDBproofs+1testsourceproof,62file/20runtimeassetclosuresonlyownerDLLPDBdiffer. Actualsourcecommit320899074ce737cc0773a2101eebb674c3af0586 associated with preserved measured/PDBfiles onlyGitCRLFtoLFcanonicalization,not relabeled binaryversionmetadata. Latestdefaultd7870e7e stillall14baselineblobsidentical;notwholebranchbuild/runtimeproof. MeasuredCoreLibinformationalpubliccommit404,actual compiled ctorzero/resetILinspected,publicreference distinct;no privateobjectstate/access. Managed JSInteropexception selected,no JavaScript/browser/UI/circuit/transportserver/WebAssembly/frequency/hotpath/throughput/every-disposerace or isolatedlayout/coldthroughput claim;real CTS/publicwindowdeadline and actualconverterobject timedprotocol/replies boundaries. IdleCTS/timer/registration and instancefieldsretained,fresh-runtime costs/variationdisclosed. Immutable/528byteidenticalcopies7c46e8b225f6ebf9651efc4a0a1efab823eb860a verifiedallactualremoteblobs;template/fullallpairs/exactcommands/body/source/closingissue verified;browser immediatelyrequested,notvisuallyverified.3/3ABBAABclosed/noextra tuning. SharedWindowsCPUserial/max2nodes,nopoweraffinity/unrelatedchanges. Raw binariesomitted/publicauditrecordsnotrehashingomittedbytes. InitialpublicationwhitespacecheckflaggedpreservedCRLF;scopedcore.whitespacecr-at-eolcheckpassedwithoutnormalizingrawcopies."
+      ],
+      "branch": "autoperf/F097-js-runtime-default-timeouts",
+      "pr_url": "https://github.com/jaslawinMs/aspnetcore/pull/105",
+      "updated_at": "2026-11-16T02:04:07.653706-08:00"
     },
     {
       "id": "F098",
