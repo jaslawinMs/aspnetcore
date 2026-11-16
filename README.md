@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 65/358 finalized**: 48 drafts, 8 no-gain, 5 rejected and 4 duplicates;
-293 findings remain unfinished.
+**Progress: 66/358 finalized**: 49 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+292 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -68,6 +68,7 @@ well as the largest speedup.
 | F088 | [Draft jaslawinMs/aspnetcore#95](https://github.com/jaslawinMs/aspnetcore/pull/95); large full table improves 26.71% with 62.32% less allocation, prepared large 43.55% faster; small Center full has an 8.29% slower median and regresses in every pair, fallback/control costs retained; one strategy, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [Rich-text table alignment classes](F088/README.md) |
 | F089 | [Draft jaslawinMs/aspnetcore#97](https://github.com/jaslawinMs/aspnetcore/pull/97); desktop actual no-import short/query owner improves 20-24% in both pairs, native custom calipers observe 1-14% reductions without an unchanged timing control; all allocations unchanged, substantial untouched diagnostic movement and native variability retained; one strategy, combined 3/3 budget closed, qualified timing draft, **not merge-ready** | [URI fragment delimiter search](F089/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
+| F091 | [Draft jaslawinMs/aspnetcore#99](https://github.com/jaslawinMs/aspnetcore/pull/99); typed challenges save approximately 32 B/op, only 0.16-0.26% of total allocation; no repeatable speedup, four repeated target regressions and first-case/control variability retained; one strategy, 3/3 budget closed, allocation-only draft, **not merge-ready** | [Google Boolean query formatting](F091/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
