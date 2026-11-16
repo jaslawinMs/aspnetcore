@@ -1,0 +1,26 @@
+{
+  "id": "F093",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Http/Http/src/Features/RequestServicesFeature.cs",
+    "line_start": 85,
+    "line_end": 88,
+    "severity": "medium",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "The synchronous request-services disposal boundary can block on asynchronous scope disposal.",
+    "explanation": "RequestServicesFeature.Dispose converts DisposeAsync to Task and synchronously waits with GetAwaiter().GetResult(). The normal response registration uses asynchronous disposal, so this is not established as the common request path, but direct synchronous disposal of a scope with incomplete asynchronous cleanup blocks the caller. Any change must retain the IDisposable compatibility boundary and the current exception/disposal ordering.",
+    "snippet": "    /// <inheritdoc />\n    public void Dispose()\n    {\n        DisposeAsync().AsTask().GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "Starting independent actual request-services sync-disposal evaluation. Required pending wait and normal async response registration must be distinguished; completed non-generic ValueTask.AsTask already returns cached Task.CompletedTask, so no task-wrapper allocation premise is assumed.",
+    "Actual DefaultHttpContext/DI owner and real TestHost registered-response cleanup verified, four pending sync waits and ten matching observations; original and selected disposal-only resource checks already zero/cached Task.CompletedTask. Both actual three owning tests pass;126-file/58-runtime only Http DLL/PDB closure and source/PDB proofs. Measuring one completed-success consumption strategy with no allocation premise."
+  ],
+  "branch": "autoperf/F093-sync-request-dispose",
+  "pr_url": null,
+  "updated_at": "2026-11-16T05:08:48.5951858+00:00"
+}

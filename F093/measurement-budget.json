@@ -1,0 +1,25 @@
+{
+  "candidate": "F093",
+  "maximum_comparisons": 3,
+  "consumed_comparisons": 3,
+  "status": "closed",
+  "strategy": "Consume only a successfully completed non-generic disposal ValueTask directly; retain existing task conversion and wait for pending or failed disposal.",
+  "preparation_failures": [
+    {
+      "stage": "unmeasured original BenchmarkDotNet declaration discovery",
+      "failure": "BenchmarkDotNet 0.13 excludes sealed benchmark classes; the discovery command exited zero but reported no benchmarks.",
+      "correction": "Use a public non-sealed benchmark class, validate all four exact declared methods rather than the exit code, then refreeze the unchanged-strategy original harness before timing.",
+      "measured_workload_executed": false,
+      "functional_and_zero_resource_verification_previously_passed": true
+    }
+  ],
+  "preparation_warnings": [
+    {
+      "stage": "unmeasured first original harness build",
+      "warning": "A mistyped explicit WebEncoders project path produced MSB9008. Build and all original actual verification cases passed because the real dependency was also supplied transitively.",
+      "correction": "Use the exact existing Microsoft.Extensions.WebEncoders project reference, restore the changed external manifest, rebuild and repeat original verification before freezing or timing.",
+      "measured_workload_executed": false
+    }
+  ],
+  "note": "All three immutable unchanged-strategy AB/BA/AB comparisons completed,28 cases in each successful launch. Original/candidate disposal-only check already zero and cached Task.CompletedTask; all raw target/control/no-gain/regression outcomes must be retained. No further comparison permitted."
+}

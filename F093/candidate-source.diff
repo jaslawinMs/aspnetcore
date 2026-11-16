@@ -1,0 +1,20 @@
+diff --git a/src/Http/Http/src/Features/RequestServicesFeature.cs b/src/Http/Http/src/Features/RequestServicesFeature.cs
+index 4ec046682d..ae271b9c85 100644
+--- a/src/Http/Http/src/Features/RequestServicesFeature.cs
++++ b/src/Http/Http/src/Features/RequestServicesFeature.cs
+@@ -85,6 +85,14 @@ public class RequestServicesFeature : IServiceProvidersFeature, IDisposable, IAs
+     /// <inheritdoc />
+     public void Dispose()
+     {
+-        DisposeAsync().AsTask().GetAwaiter().GetResult();
++        var disposeTask = DisposeAsync();
++        if (disposeTask.IsCompletedSuccessfully)
++        {
++            disposeTask.GetAwaiter().GetResult();
++        }
++        else
++        {
++            disposeTask.AsTask().GetAwaiter().GetResult();
++        }
+     }
+ }

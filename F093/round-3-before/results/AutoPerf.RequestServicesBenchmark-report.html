@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.RequestServicesBenchmark-20261115-211613</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>         Method</th><th>   Profile</th><th> Mean</th><th> Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>PreparedSync</td><td>AsyncCompleted1</td><td>712.6 ns</td><td>50.32 ns</td><td>26.32 ns</td><td>0.0413</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PreparedAsync</td><td>AsyncCompleted1</td><td>704.1 ns</td><td>30.87 ns</td><td>16.15 ns</td><td>0.0421</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>AsyncCompleted1</td><td>88,759.6 ns</td><td>6,450.87 ns</td><td>3,373.93 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>AsyncCompleted1</td><td>80,712.5 ns</td><td>13,022.55 ns</td><td>6,811.05 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PreparedSync</td><td>AsyncCompleted16</td><td>2,585.7 ns</td><td>263.61 ns</td><td>137.87 ns</td><td>0.0799</td><td>-</td><td>-</td><td>4 KB</td>
+</tr><tr><td>PreparedAsync</td><td>AsyncCompleted16</td><td>2,537.9 ns</td><td>30.24 ns</td><td>15.82 ns</td><td>0.0767</td><td>-</td><td>-</td><td>4 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>AsyncCompleted16</td><td>36,648.6 ns</td><td>2,298.85 ns</td><td>1,202.35 ns</td><td>-</td><td>-</td><td>-</td><td>12 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>AsyncCompleted16</td><td>36,768.9 ns</td><td>1,701.16 ns</td><td>889.74 ns</td><td>-</td><td>-</td><td>-</td><td>12 KB</td>
+</tr><tr><td>PreparedSync</td><td>DualCompleted1</td><td>730.2 ns</td><td>107.74 ns</td><td>56.35 ns</td><td>0.0475</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PreparedAsync</td><td>DualCompleted1</td><td>708.9 ns</td><td>73.84 ns</td><td>38.62 ns</td><td>0.0413</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>DualCompleted1</td><td>33,826.3 ns</td><td>1,082.44 ns</td><td>566.14 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>DualCompleted1</td><td>33,499.0 ns</td><td>607.10 ns</td><td>317.52 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PreparedSync</td><td>EmptyScope</td><td>505.1 ns</td><td>76.59 ns</td><td>40.06 ns</td><td>0.0349</td><td>-</td><td>-</td><td>1 KB</td>
+</tr><tr><td>PreparedAsync</td><td>EmptyScope</td><td>491.3 ns</td><td>49.88 ns</td><td>26.09 ns</td><td>0.0344</td><td>-</td><td>-</td><td>1 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>EmptyScope</td><td>33,608.3 ns</td><td>2,089.47 ns</td><td>1,092.83 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>EmptyScope</td><td>33,265.2 ns</td><td>814.93 ns</td><td>426.22 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PreparedSync</td><td>SourceCompleted1</td><td>730.7 ns</td><td>19.70 ns</td><td>10.30 ns</td><td>0.0427</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PreparedAsync</td><td>SourceCompleted1</td><td>749.9 ns</td><td>94.29 ns</td><td>49.31 ns</td><td>0.0439</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>SourceCompleted1</td><td>34,113.1 ns</td><td>1,769.92 ns</td><td>925.70 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>SourceCompleted1</td><td>34,598.2 ns</td><td>696.36 ns</td><td>364.21 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PreparedSync</td><td>Sync1</td><td>725.0 ns</td><td>63.70 ns</td><td>33.32 ns</td><td>0.0416</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PreparedAsync</td><td>Sync1</td><td>728.2 ns</td><td>22.10 ns</td><td>11.56 ns</td><td>0.0436</td><td>-</td><td>-</td><td>2 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>Sync1</td><td>34,483.1 ns</td><td>1,586.08 ns</td><td>829.55 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>Sync1</td><td>33,983.7 ns</td><td>1,763.30 ns</td><td>922.24 ns</td><td>-</td><td>-</td><td>-</td><td>10 KB</td>
+</tr><tr><td>PreparedSync</td><td>Sync16</td><td>2,645.5 ns</td><td>138.18 ns</td><td>72.27 ns</td><td>0.0775</td><td>-</td><td>-</td><td>4 KB</td>
+</tr><tr><td>PreparedAsync</td><td>Sync16</td><td>2,631.3 ns</td><td>37.97 ns</td><td>19.86 ns</td><td>0.0787</td><td>-</td><td>-</td><td>4 KB</td>
+</tr><tr><td>PublicExplicitSync</td><td>Sync16</td><td>36,840.0 ns</td><td>2,196.98 ns</td><td>1,149.07 ns</td><td>-</td><td>-</td><td>-</td><td>12 KB</td>
+</tr><tr><td>PublicRegisteredAsync</td><td>Sync16</td><td>37,456.6 ns</td><td>2,450.27 ns</td><td>1,281.54 ns</td><td>-</td><td>-</td><td>-</td><td>12 KB</td>
+</tr></tbody></table>
+</body>
+</html>
