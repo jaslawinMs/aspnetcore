@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 81/358 finalized**: 54 drafts, 11 no-gain, 12 rejected and 4 duplicates;
-277 findings remain unfinished.
+**Progress: 82/358 finalized**: 55 drafts, 11 no-gain, 12 rejected and 4 duplicates;
+276 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -87,6 +87,7 @@ well as the largest speedup.
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F109 | [Draft jaslawinMs/aspnetcore#109](https://github.com/jaslawinMs/aspnetcore/pull/109); malformed non-whitespace targets70.48-98.23% faster in final pairs; valid-large2.43/5.97% slower,empty/whitespace failures20.18-33.99% slower and192to296B,unprotect7.89/9.71% slower; original caliper contradiction/all controls retained,10 selected tests/4 expected red rows,3/3 comparisons closed,qualified component draft, **not merge-ready** | [Malformed Identity token Base64 preflight](F109/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
+| F111 | [Draft jaslawinMs/aspnetcore#111](https://github.com/jaslawinMs/aspnetcore/pull/111); seven warmed large-payload targets41.57-74.88% lower time/68.56-85.70% fewer allocated B/op in both selected pairs; unchanged-control costs up20.30%/CV19.694%,cold misses/retained pool heap unmeasured; original7resource red/selected7green,12selected tests,3/3 comparisons closed,conditional pooled component draft, **not merge-ready** | [Pooled stored-data serialization buffers](F111/README.md) |
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
