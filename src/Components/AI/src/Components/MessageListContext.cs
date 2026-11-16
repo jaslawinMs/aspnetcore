@@ -349,7 +349,13 @@ public class MessageListContext
                     builder.AddAttribute(
                         1,
                         "class",
-                        $"sc-ai-rich-text__table-cell--{table.Alignment[columnIndex].ToString().ToLowerInvariant()}");
+                        table.Alignment[columnIndex] switch
+                        {
+                            TableColumnAlignment.Left => "sc-ai-rich-text__table-cell--left",
+                            TableColumnAlignment.Center => "sc-ai-rich-text__table-cell--center",
+                            TableColumnAlignment.Right => "sc-ai-rich-text__table-cell--right",
+                            var alignment => $"sc-ai-rich-text__table-cell--{alignment.ToString().ToLowerInvariant()}",
+                        });
                 }
                 RenderRichTextNodes(builder, cell.Children);
                 builder.CloseElement();

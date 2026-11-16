@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Components.AI.Tests.TestFramework;
 using Microsoft.AspNetCore.Components.AI.Tests.TestHelpers;
+using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.Extensions.AI;
 
 namespace Microsoft.AspNetCore.Components.AI.Tests.Components;
@@ -119,6 +120,75 @@ public class MessageListTests
         Assert.Contains("<ul", finalHtml);
         Assert.Contains("Final list item", finalHtml);
         Assert.DoesNotContain("Initial paragraph", finalHtml);
+    }
+
+    [Theory]
+    [InlineData(TableColumnAlignment.Left, "sc-ai-rich-text__table-cell--left")]
+    [InlineData(TableColumnAlignment.Center, "sc-ai-rich-text__table-cell--center")]
+    [InlineData(TableColumnAlignment.Right, "sc-ai-rich-text__table-cell--right")]
+    public async Task RichTextTable_ReusesDefinedAlignmentClasses(
+        TableColumnAlignment alignment, string expectedClass)
+    {
+        var table = CreateTable(
+            [alignment, alignment, alignment],
+            ["r1c1", "r1c2", "r1c3"],
+            ["r2c1", "r2c2", "r2c3"]);
+        var cut = RenderMessageList(_ => EmitTableResponse(table));
+        var context = GetAgentContext(cut);
+
+        await cut.InvokeAsync(() => context.SendMessageAsync("Render the table"));
+
+        var cells = GetTableCells(cut);
+        Assert.Equal(["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r2c3"],
+            cells.Select(cell => cell.Text));
+        Assert.All(cells, cell => Assert.Equal(expectedClass, cell.ClassName));
+        for (var index = 1; index < cells.Length; index++)
+        {
+            Assert.Same(cells[0].ClassName, cells[index].ClassName);
+        }
+    }
+
+    [Fact]
+    public async Task RichTextTable_PreservesNoneMissingAndUndefinedAlignments()
+    {
+        var table = CreateTable(
+            [TableColumnAlignment.None, (TableColumnAlignment)(-1), (TableColumnAlignment)42],
+            ["none", "negative", "positive", "missing"]);
+        table.AddChild(new TextNode("Ignored non-row"));
+        ((TableRowNode)table.Children[0]).AddChild(new TextNode("Ignored non-cell"));
+        var cut = RenderMessageList(_ => EmitTableResponse(table));
+        var context = GetAgentContext(cut);
+
+        await cut.InvokeAsync(() => context.SendMessageAsync("Render the table"));
+
+        (string Text, string? ClassName)[] expected =
+        [
+            ("none", null),
+            ("negative", "sc-ai-rich-text__table-cell---1"),
+            ("positive", "sc-ai-rich-text__table-cell--42"),
+            ("missing", null),
+        ];
+        Assert.Equal(expected, GetTableCells(cut));
+        Assert.DoesNotContain("Ignored", cut.GetHtml());
+    }
+
+    [Theory]
+    [InlineData(TableColumnAlignment.None, "sc-ai-rich-text__table-cell--none")]
+    [InlineData((TableColumnAlignment)42, "sc-ai-rich-text__table-cell--42")]
+    public async Task RichTextTable_FormatsTheSecondAlignmentRead(
+        TableColumnAlignment secondAlignment, string expectedClass)
+    {
+        var alignment = new ChangingTableAlignment(secondAlignment);
+        var table = CreateTable(alignment, ["cell"]);
+        var cut = RenderMessageList(_ => EmitTableResponse(table));
+        var context = GetAgentContext(cut);
+
+        await cut.InvokeAsync(() => context.SendMessageAsync("Render the table"));
+
+        var cell = Assert.Single(GetTableCells(cut));
+        Assert.Equal("cell", cell.Text);
+        Assert.Equal(expectedClass, cell.ClassName);
+        Assert.Equal(2 * alignment.CountReads, alignment.ValueReads);
     }
 
     [Fact]
@@ -307,6 +377,102 @@ public class MessageListTests
                     ]),
             ],
         };
+    }
+
+    private static async IAsyncEnumerable<ChatResponseUpdate> EmitTableResponse(TableNode table)
+    {
+        yield return new ChatResponseUpdate
+        {
+            Role = ChatRole.Assistant,
+            MessageId = "table-alignment",
+            Contents = [new RichTextContent("Structured table", [table])],
+        };
+
+        await Task.CompletedTask;
+    }
+
+    private static TableNode CreateTable(
+        IReadOnlyList<TableColumnAlignment> alignment, params string[][] rows)
+    {
+        var table = new TableNode { Alignment = alignment };
+        foreach (var row in rows)
+        {
+            table.AddChild(Node<TableRowNode>(
+                row.Select(text => Node<TableCellNode>(new TextNode(text))).ToArray()));
+        }
+
+        return table;
+    }
+
+    private static (string Text, string? ClassName)[] GetTableCells(
+        RenderedComponent<AgentBoundary> cut)
+    {
+        var frames = cut.FindComponent<MessageList>()
+            .FindComponent<CascadingValue<MessageListContext>>().GetFrames();
+        var cells = new List<(string Text, string? ClassName)>();
+        for (var index = 0; index < frames.Count; index++)
+        {
+            var frame = frames.Array[index];
+            if (frame.FrameType is not RenderTreeFrameType.Element || frame.ElementName != "td")
+            {
+                continue;
+            }
+
+            var text = string.Empty;
+            string? className = null;
+            for (var childIndex = index + 1; childIndex < index + frame.ElementSubtreeLength; childIndex++)
+            {
+                var child = frames.Array[childIndex];
+                if (child.FrameType is RenderTreeFrameType.Attribute && child.AttributeName == "class")
+                {
+                    className = Assert.IsType<string>(child.AttributeValue);
+                }
+                else if (child.FrameType is RenderTreeFrameType.Text)
+                {
+                    text += child.TextContent;
+                }
+            }
+            cells.Add((text, className));
+        }
+
+        return [.. cells];
+    }
+
+    private sealed class ChangingTableAlignment(TableColumnAlignment secondAlignment)
+        : IReadOnlyList<TableColumnAlignment>
+    {
+        public int CountReads { get; private set; }
+        public int ValueReads { get; private set; }
+
+        public int Count
+        {
+            get
+            {
+                CountReads++;
+                return 1;
+            }
+        }
+
+        public TableColumnAlignment this[int index]
+        {
+            get
+            {
+                if (index != 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                ValueReads++;
+                return ValueReads % 2 == 1 ? TableColumnAlignment.Left : secondAlignment;
+            }
+        }
+
+        public IEnumerator<TableColumnAlignment> GetEnumerator()
+        {
+            yield return this[0];
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     private static TNode Node<TNode>(params RichTextNode[] children)
