@@ -163,16 +163,14 @@ public partial class DistributedCacheTagHelperService : IDistributedCacheTagHelp
 
     private static byte[] Encode(byte[] value, byte[] serializedKey)
     {
-        using (var buffer = new MemoryStream())
-        {
-            var keyLength = BitConverter.GetBytes(serializedKey.Length);
+        var keyLength = BitConverter.GetBytes(serializedKey.Length);
+        var buffer = new byte[checked(keyLength.Length + serializedKey.Length + value.Length)];
 
-            buffer.Write(keyLength, 0, keyLength.Length);
-            buffer.Write(serializedKey, 0, serializedKey.Length);
-            buffer.Write(value, 0, value.Length);
+        keyLength.CopyTo(buffer, 0);
+        serializedKey.CopyTo(buffer, keyLength.Length);
+        value.CopyTo(buffer, keyLength.Length + serializedKey.Length);
 
-            return buffer.ToArray();
-        }
+        return buffer;
     }
 
     private static byte[] Decode(byte[] value, byte[] expectedKey)
