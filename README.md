@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 80/358 finalized**: 53 drafts, 11 no-gain, 12 rejected and 4 duplicates;
-278 findings remain unfinished.
+**Progress: 81/358 finalized**: 54 drafts, 11 no-gain, 12 rejected and 4 duplicates;
+277 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -85,6 +85,7 @@ well as the largest speedup.
 | F105 | Rejected incompatible public-struct return; original nonempty traversal56B/empty0B,non-generic88/568/4152B; actual factory/public-DI validation and public Reset/reference/live-view/mutation controls pass,10 owning Facts; separate near-zero concrete calipers and all variation retained,no traced cause or compatible gain; unchanged source,no draft,zero comparisons/one original24-case profile,budget closed | [Validation-state public enumerator contract](F105/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
+| F109 | [Draft jaslawinMs/aspnetcore#109](https://github.com/jaslawinMs/aspnetcore/pull/109); malformed non-whitespace targets70.48-98.23% faster in final pairs; valid-large2.43/5.97% slower,empty/whitespace failures20.18-33.99% slower and192to296B,unprotect7.89/9.71% slower; original caliper contradiction/all controls retained,10 selected tests/4 expected red rows,3/3 comparisons closed,qualified component draft, **not merge-ready** | [Malformed Identity token Base64 preflight](F109/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
