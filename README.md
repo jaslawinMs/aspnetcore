@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 86/358 finalized**: 58 drafts, 11 no-gain, 13 rejected and 4 duplicates;
-272 findings remain unfinished.
+**Progress: 87/358 finalized**: 59 drafts, 11 no-gain, 13 rejected and 4 duplicates;
+271 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -99,6 +99,7 @@ relabeled. See the [execution policy and historical clarification](F113/README.m
 | F113 | [Draft jaslawinMs/aspnetcore#115](https://github.com/jaslawinMs/aspnetcore/pull/115); prepared public16K/128K evict-plus-miss targets8.60-34.61% lower time/14.29-14.37% fewer allocated B/op,large direct encoder50.06-50.82% fewer bytes; unchanged Disabled16K control50.26% slower/maxCV68.36%,aggregate-array/OOM exception equivalence unverified; original7resource red/selected7green,19selected tests,3/3 comparisons closed,settings-preserving independently owned component draft, **not merge-ready** | [Exact owned distributed-cache entry buffers](F113/README.md) |
 | F115 | Rejected local unboxing;actual object-valued reads box24/32B,generic-to-object still24B,native-int0B is different-contract;real public divergent-indexer/mutable-box controls,81 owner rows and original28-case pressure retained;no source change/PR,0 comparisons | [JSON Patch object-valued list reads](F115/README.md) |
 | F116 | [Draft jaslawinMs/aspnetcore#116](https://github.com/jaslawinMs/aspnetcore/pull/116);second-port24/48B ->0,first-queue2.49-6.66% and third-getter4.36-23.90% repeated costs retained;3/3 comparisons,qualified allocation-only,**not merge-ready**;cold snapshot-label defect independently repaired without retiming | [Bounded endpoint-port boxing cache](F116/README.md) |
+| F118 | [Draft jaslawinMs/aspnetcore#117](https://github.com/jaslawinMs/aspnetcore/pull/117);general-content1K4392 ->2200B,real runner same;oversized8Kcosts/control drift retained;ordinary Razor already bypasses;3/3 comparisons,qualified allocation-only,**not merge-ready** | [Bounded URL content builders](F118/README.md) |
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
