@@ -1,0 +1,62 @@
+commit 39e52578d354a6a7abb3f6169d5ac2174ffe4551
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Mon Mar 4 14:45:59 2019 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Mar 4 14:45:59 2019 -0800
+
+    Make page load async when using endpoint routing (#7938)
+    
+    * Make page load async
+    
+    Fixes #8016
+
+diff --git a/src/Mvc/Mvc.RazorPages/src/Infrastructure/IPageLoader.cs b/src/Mvc/Mvc.RazorPages/src/Infrastructure/IPageLoader.cs
+index 5d9a9cc0c4..e1d87515b5 100644
+--- a/src/Mvc/Mvc.RazorPages/src/Infrastructure/IPageLoader.cs
++++ b/src/Mvc/Mvc.RazorPages/src/Infrastructure/IPageLoader.cs
+@@ -1,11 +1,14 @@
+ ﻿// Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
++using System;
++
+ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
+ {
+     /// <summary>
+     /// Creates a <see cref="CompiledPageActionDescriptor"/> from a <see cref="PageActionDescriptor"/>.
+     /// </summary>
++    [Obsolete("This type is obsolete. Use " + nameof(PageLoader) + " instead.")]
+     public interface IPageLoader
+     {
+         /// <summary>
+diff --git a/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+new file mode 100644
+index 0000000000..f2e914ddf5
+--- /dev/null
++++ b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+@@ -0,0 +1,25 @@
++﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Threading.Tasks;
++
++namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
++{
++    /// <summary>
++    /// Creates a <see cref="CompiledPageActionDescriptor"/> from a <see cref="PageActionDescriptor"/>.
++    /// </summary>
++#pragma warning disable CS0618 // Type or member is obsolete
++    public abstract class PageLoader : IPageLoader
++#pragma warning restore CS0618 // Type or member is obsolete
++    {
++        /// <summary>
++        /// Produces a <see cref="CompiledPageActionDescriptor"/> given a <see cref="PageActionDescriptor"/>.
++        /// </summary>
++        /// <param name="actionDescriptor">The <see cref="PageActionDescriptor"/>.</param>
++        /// <returns>A <see cref="Task"/> that on completion returns a <see cref="CompiledPageActionDescriptor"/>.</returns>
++        public abstract Task<CompiledPageActionDescriptor> LoadAsync(PageActionDescriptor actionDescriptor);
++
++        CompiledPageActionDescriptor IPageLoader.Load(PageActionDescriptor actionDescriptor)
++            => LoadAsync(actionDescriptor).GetAwaiter().GetResult();
++    }
++}

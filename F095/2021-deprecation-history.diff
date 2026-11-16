@@ -1,0 +1,48 @@
+commit 4eca86fa1bcc7a38a8e396bc120d8a322753742b
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Mon Jan 25 11:03:46 2021 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Jan 25 11:03:46 2021 -0800
+
+    Get rid of 2 pass razor pages logic in the default case (#28444)
+    
+    - Today RazorPages uses a 2 pass model where initially pages are discovered but not "compiled" up front. Then a matcher policy is used to build the compiled page action descriptor with the type information. This requires running logic per request that determins if we need to compile the page. By default, runtime compilation is off and the compiled page information is available via a dictionary lookup. We can use the page loader at startup time to avoid doing lazy lookup of this information and a dynamic swap in the endpoint system. Instead we can build the endpoint for the compiled page descriptor directly.
+    
+    Co-authored-by: David Fowler <davidfowl@gmail.com>
+
+diff --git a/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+index f2e914ddf5..2c9589292e 100644
+--- a/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
++++ b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+@@ -1,7 +1,9 @@
+-﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
++using System;
+ using System.Threading.Tasks;
++using Microsoft.AspNetCore.Http;
+ 
+ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
+ {
+@@ -17,9 +19,19 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
+         /// </summary>
+         /// <param name="actionDescriptor">The <see cref="PageActionDescriptor"/>.</param>
+         /// <returns>A <see cref="Task"/> that on completion returns a <see cref="CompiledPageActionDescriptor"/>.</returns>
++        [Obsolete("This overload is obsolete and no longer called by the framework. Use the overload that includes an EndpointMetadataCollection.")]
+         public abstract Task<CompiledPageActionDescriptor> LoadAsync(PageActionDescriptor actionDescriptor);
+ 
++        /// <summary>
++        /// Produces a <see cref="CompiledPageActionDescriptor"/> given a <see cref="PageActionDescriptor"/>.
++        /// </summary>
++        /// <param name="actionDescriptor">The <see cref="PageActionDescriptor"/>.</param>
++        /// <param name="endpointMetadata">The <see cref="EndpointMetadataCollection"/>.</param>
++        /// <returns>A <see cref="Task"/> that on completion returns a <see cref="CompiledPageActionDescriptor"/>.</returns>
++        public virtual Task<CompiledPageActionDescriptor> LoadAsync(PageActionDescriptor actionDescriptor, EndpointMetadataCollection endpointMetadata)
++            => throw new NotSupportedException();
++
+         CompiledPageActionDescriptor IPageLoader.Load(PageActionDescriptor actionDescriptor)
+-            => LoadAsync(actionDescriptor).GetAwaiter().GetResult();
++            => LoadAsync(actionDescriptor, EndpointMetadataCollection.Empty).GetAwaiter().GetResult();
+     }
+ }

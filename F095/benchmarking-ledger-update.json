@@ -1,0 +1,26 @@
+{
+  "id": "F095",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs",
+    "line_start": 33,
+    "line_end": 33,
+    "severity": "medium",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "The synchronous IPageLoader bridge blocks on LoadAsync.",
+    "explanation": "GetAwaiter().GetResult() synchronously waits for a potentially incomplete page-loading task. If an implementation performs real asynchronous compilation or I/O, callers occupy a thread until completion; impact depends on the concrete loader and cache state.",
+    "snippet": "=> LoadAsync(actionDescriptor, EndpointMetadataCollection.Empty).GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "Investigating actual PageLoader/IPageLoader obsolete synchronous bridge, concrete producer and cached/pending callers independently at campaign baseline. No shipping edit or new measured comparison yet.",
+    "Actual real-DI/default typed compiled-catalog/cache/endpoint/producer contracts passed original and prototype;4 primed5000-call cache batches are0B in both. Owner-only276-file/104-asset closure and20 actual PDB documents verified. First immutable12-case AB comparison completed; no large grounded win, remaining two allowed comparisons to follow."
+  ],
+  "branch": "autoperf/F095-sync-page-loader",
+  "pr_url": null,
+  "updated_at": "2026-11-16T07:24:20.0818749+00:00"
+}

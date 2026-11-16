@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.LoaderBenchmark-20261115-232522</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>   Profile</th><th>    Mean</th><th>    Error</th><th>   StdDev</th><th>  Median</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>LegacyBridge</td><td>CachedOriginal</td><td>4.912 ns</td><td>0.0956 ns</td><td>0.0500 ns</td><td>4.899 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ModernWait</td><td>CachedOriginal</td><td>5.596 ns</td><td>0.1602 ns</td><td>0.0838 ns</td><td>5.585 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ModernAsync</td><td>CachedOriginal</td><td>15.185 ns</td><td>0.1635 ns</td><td>0.0855 ns</td><td>15.180 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>LegacyBridge</td><td>CompiledSelf</td><td>9.120 ns</td><td>0.1425 ns</td><td>0.0746 ns</td><td>9.100 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ModernWait</td><td>CompiledSelf</td><td>9.630 ns</td><td>0.4028 ns</td><td>0.2107 ns</td><td>9.565 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ModernAsync</td><td>CompiledSelf</td><td>19.190 ns</td><td>0.2296 ns</td><td>0.1201 ns</td><td>19.185 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>LegacyBridge</td><td>FreshPrecompiled</td><td>72,097.378 ns</td><td>1,072.4231 ns</td><td>560.8980 ns</td><td>72,237.249 ns</td><td>0.7184</td><td>-</td><td>-</td><td>40,643 B</td>
+</tr><tr><td>ModernWait</td><td>FreshPrecompiled</td><td>72,775.400 ns</td><td>2,184.7981 ns</td><td>1,142.6917 ns</td><td>72,811.519 ns</td><td>0.7267</td><td>-</td><td>-</td><td>40,643 B</td>
+</tr><tr><td>ModernAsync</td><td>FreshPrecompiled</td><td>76,259.666 ns</td><td>9,570.8728 ns</td><td>5,005.7515 ns</td><td>73,646.802 ns</td><td>0.7267</td><td>-</td><td>-</td><td>40,643 B</td>
+</tr><tr><td>LegacyBridge</td><td>GatedPrecompiled</td><td>355,108.721 ns</td><td>172,324.7652 ns</td><td>90,129.1843 ns</td><td>365,935.174 ns</td><td>-</td><td>-</td><td>-</td><td>41,418 B</td>
+</tr><tr><td>ModernWait</td><td>GatedPrecompiled</td><td>460,781.033 ns</td><td>602,579.2462 ns</td><td>315,160.5972 ns</td><td>308,460.590 ns</td><td>-</td><td>-</td><td>-</td><td>41,445 B</td>
+</tr><tr><td>ModernAsync</td><td>GatedPrecompiled</td><td>120,047.037 ns</td><td>3,835.2377 ns</td><td>2,005.9035 ns</td><td>119,951.238 ns</td><td>-</td><td>-</td><td>-</td><td>41,488 B</td>
+</tr></tbody></table>
+</body>
+</html>

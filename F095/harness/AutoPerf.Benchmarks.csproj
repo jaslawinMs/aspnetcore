@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="12.0.0-alpha.1.26562.105" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="12.0.0-alpha.1.26562.105" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.*.dll"
+               Exclude="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\*Test*.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.Mvc.RazorPages.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.Mvc.Razor.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.Mvc.Core.dll;$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.Http.Abstractions.dll" />
+    <Reference Include="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.Net.Http.Headers.dll" />
+    <Reference Include="$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.Extensions.WebEncoders.dll" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.RazorPages.Test\Release\net12.0\Microsoft.AspNetCore.Razor.dll')"
+           Text="Build/run the existing owning RazorPages.Test project in Release first; use actual in-tree shipping dependencies, not an installed ASP.NET Core shared framework." />
+  </Target>
+</Project>

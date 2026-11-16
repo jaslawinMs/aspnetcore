@@ -1,0 +1,19 @@
+diff --git a/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+index b68c6a61f6..e18580b2e0 100644
+--- a/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
++++ b/src/Mvc/Mvc.RazorPages/src/Infrastructure/PageLoader.cs
+@@ -30,5 +30,13 @@ public abstract class PageLoader : IPageLoader
+         => throw new NotSupportedException();
+ 
+     CompiledPageActionDescriptor IPageLoader.Load(PageActionDescriptor actionDescriptor)
+-        => LoadAsync(actionDescriptor, EndpointMetadataCollection.Empty).GetAwaiter().GetResult();
++    {
++        var task = LoadAsync(actionDescriptor, EndpointMetadataCollection.Empty);
++        if (task.IsCompletedSuccessfully)
++        {
++            return task.Result;
++        }
++
++        return task.GetAwaiter().GetResult();
++    }
+ }
