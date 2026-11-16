@@ -1,0 +1,125 @@
+commit 06c93669d617fec50bf411c0c53d672019adf9df
+Author:     Patrick Westerhoff <PatrickWesterhoff@gmail.com>
+AuthorDate: Fri Mar 23 02:09:05 2018 +0100
+Commit:     Patrick Westerhoff <PatrickWesterhoff@gmail.com>
+CommitDate: Fri Mar 23 02:09:05 2018 +0100
+
+    Allow overwriting parameters on challenge requests
+    
+    Add a way to overwrite query arguments that are passed as part of the
+    challenge request to the external authentication provider in OAuth-based
+    authentication providers, including OpenID Connect.
+    
+    This uses the new `AuthenticationProperties.Parameters` collection to
+    pass parameters to the authentication handler which will then look for
+    special items within that property bag, overwriting previously
+    configured values within the authentication options.
+    
+    This can be used for example to overwrite the OAuth scopes that are
+    requested from an authentication provider, or to explicitly trigger a
+    reauthentication by requiring a login prompt with OpenID Connect. By
+    being able to specify this on individual challenge requests (using
+    `HttpContext.ChallengeAsync`), this is independent from the global
+    scheme configuration.
+    
+    Custom ~ChallengeProperties types, e.g. `OAuthChallengeProperties` for
+    OAuth-based authentication providers, provide assistance in setting the
+    challenge request parameters but are not required to make the handlers
+    use the overwritten values.
+    
+    - Adjust authentication handlers to respect the custom parameters, and
+      add ~ChallengeProperties types.
+    - Introduce `OAuthHandler.FormatScope(IEnumerable<string>)` to format a
+      custom set of scopes. Subclasses requiring a different scope format
+      should override this method instead of the parameterless overload.
+      Overriding just `FormatScope()` will prevent handlers from supporting
+      overwriting the OAuth `scope` in a challenge request.
+    - Refactor GoogleHandler to support parameterization through both the
+      `Parameters` and the `Items` collection (former is preferred) to keep
+      compatibility with the old behavior.
+    - Add an OpenIdConnect sample to overwrite the prompt argument in a
+      challenge request.
+    - Add extensive tests.
+
+diff --git a/src/Microsoft.AspNetCore.Authentication.Google/GoogleHandler.cs b/src/Microsoft.AspNetCore.Authentication.Google/GoogleHandler.cs
+index 091896f7cf..88d48d4467 100644
+--- a/src/Microsoft.AspNetCore.Authentication.Google/GoogleHandler.cs
++++ b/src/Microsoft.AspNetCore.Authentication.Google/GoogleHandler.cs
+@@ -50,50 +50,59 @@ namespace Microsoft.AspNetCore.Authentication.Google
+         protected override string BuildChallengeUrl(AuthenticationProperties properties, string redirectUri)
+         {
+             // Google Identity Platform Manual:
+             // https://developers.google.com/identity/protocols/OAuth2WebServer
+ 
+             var queryStrings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+             queryStrings.Add("response_type", "code");
+             queryStrings.Add("client_id", Options.ClientId);
+             queryStrings.Add("redirect_uri", redirectUri);
+ 
+-            AddQueryString(queryStrings, properties, "scope", FormatScope());
+-            AddQueryString(queryStrings, properties, "access_type", Options.AccessType);
+-            AddQueryString(queryStrings, properties, "approval_prompt");
+-            AddQueryString(queryStrings, properties, "prompt");
+-            AddQueryString(queryStrings, properties, "login_hint");
+-            AddQueryString(queryStrings, properties, "include_granted_scopes");
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.ScopeKey, FormatScope, Options.Scope);
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.AccessTypeKey, Options.AccessType);
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.ApprovalPromptKey);
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.PromptParameterKey);
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.LoginHintKey);
++            AddQueryString(queryStrings, properties, GoogleChallengeProperties.IncludeGrantedScopesKey, v => v?.ToString().ToLower(), (bool?)null);
+ 
+             var state = Options.StateDataFormat.Protect(properties);
+             queryStrings.Add("state", state);
+ 
+             var authorizationEndpoint = QueryHelpers.AddQueryString(Options.AuthorizationEndpoint, queryStrings);
+             return authorizationEndpoint;
+         }
+ 
+-        private static void AddQueryString(
++        private void AddQueryString<T>(
+             IDictionary<string, string> queryStrings,
+             AuthenticationProperties properties,
+             string name,
+-            string defaultValue = null)
++            Func<T, string> formatter,
++            T defaultValue)
+         {
+-            string value;
+-            if (!properties.Items.TryGetValue(name, out value))
++            string value = null;
++            var parameterValue = properties.GetParameter<T>(name);
++            if (parameterValue != null)
+             {
+-                value = defaultValue;
++                value = formatter(parameterValue);
+             }
+-            else
++            else if (!properties.Items.TryGetValue(name, out value))
+             {
+-                // Remove the parameter from AuthenticationProperties so it won't be serialized to state parameter
+-                properties.Items.Remove(name);
++                value = formatter(defaultValue);
+             }
+ 
+-            if (value == null)
++            // Remove the parameter from AuthenticationProperties so it won't be serialized into the state
++            properties.Items.Remove(name);
++
++            if (value != null)
+             {
+-                return;
++                queryStrings[name] = value;
+             }
+-
+-            queryStrings[name] = value;
+         }
++
++        private void AddQueryString(
++            IDictionary<string, string> queryStrings,
++            AuthenticationProperties properties,
++            string name,
++            string defaultValue = null)
++            => AddQueryString(queryStrings, properties, name, x => x, defaultValue);
+     }
+ }
