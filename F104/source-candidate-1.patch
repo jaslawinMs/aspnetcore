@@ -1,0 +1,13 @@
+diff --git a/src/Framework/AspNetCoreAnalyzers/src/Analyzers/RouteHandlers/RouteHandlerAnalyzer.cs b/src/Framework/AspNetCoreAnalyzers/src/Analyzers/RouteHandlers/RouteHandlerAnalyzer.cs
+index 274bf3d4d4..c24b580923 100644
+--- a/src/Framework/AspNetCoreAnalyzers/src/Analyzers/RouteHandlers/RouteHandlerAnalyzer.cs
++++ b/src/Framework/AspNetCoreAnalyzers/src/Analyzers/RouteHandlers/RouteHandlerAnalyzer.cs
+@@ -50,7 +50,7 @@ public partial class RouteHandlerAnalyzer : DiagnosticAnalyzer
+                 // Pool and reuse lists for each block.
+                 if (!concurrentQueue.TryDequeue(out var mapOperations))
+                 {
+-                    mapOperations = new ConcurrentDictionary<MapOperation, byte>();
++                    mapOperations = new ConcurrentDictionary<MapOperation, byte>(concurrencyLevel: 1, capacity: 1);
+                 }
+ 
+                 context.RegisterOperationAction(c => DoOperationAnalysis(c, mapOperations), OperationKind.Invocation);
