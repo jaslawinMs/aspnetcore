@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 64/358 finalized**: 47 drafts, 8 no-gain, 5 rejected and 4 duplicates;
-294 findings remain unfinished.
+**Progress: 65/358 finalized**: 48 drafts, 8 no-gain, 5 rejected and 4 duplicates;
+293 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -66,6 +66,7 @@ well as the largest speedup.
 | F086 | [Draft jaslawinMs/aspnetcore#91](https://github.com/jaslawinMs/aspnetcore/pull/91); 15 warm profiles improve 50.76-60.18%, int Replace1/8 save 120B/960B; non-generic/Poco/array controls remain 8.75%/6.70%/2.11% slower and both genuine first-use type profiles add 81B per patch; one strategy, 1/3 budget closed after large warm gains, qualified weak-key cache draft, **not merge-ready** | [System.Text.Json JSON Patch list element metadata](F086/README.md) |
 | F087 | [Draft jaslawinMs/aspnetcore#93](https://github.com/jaslawinMs/aspnetcore/pull/93); implicit integer/valid improve 36.93%/26.90%, depth64-valid 40.15%, simple implicit cases save 128B; cold-time gain unverified, first-use heap/control costs and unmet attribute/interface-remapping probes retained; one strategy, 3/3 budget closed, qualified weak-key cache draft, **not merge-ready** | [MVC union validation interface targets](F087/README.md) |
 | F088 | [Draft jaslawinMs/aspnetcore#95](https://github.com/jaslawinMs/aspnetcore/pull/95); large full table improves 26.71% with 62.32% less allocation, prepared large 43.55% faster; small Center full has an 8.29% slower median and regresses in every pair, fallback/control costs retained; one strategy, 3/3 budget closed, qualified allocation/scaling draft, **not merge-ready** | [Rich-text table alignment classes](F088/README.md) |
+| F089 | [Draft jaslawinMs/aspnetcore#97](https://github.com/jaslawinMs/aspnetcore/pull/97); desktop actual no-import short/query owner improves 20-24% in both pairs, native custom calipers observe 1-14% reductions without an unchanged timing control; all allocations unchanged, substantial untouched diagnostic movement and native variability retained; one strategy, combined 3/3 budget closed, qualified timing draft, **not merge-ready** | [URI fragment delimiter search](F089/README.md) |
 | F090 | Draft proposal | [Literal validation-message Boolean strings](F090/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
