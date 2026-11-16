@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 77/358 finalized**: 52 drafts, 10 no-gain, 11 rejected and 4 duplicates;
-281 findings remain unfinished.
+**Progress: 78/358 finalized**: 53 drafts, 10 no-gain, 11 rejected and 4 duplicates;
+280 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -80,6 +80,7 @@ well as the largest speedup.
 | F100 | Rejected generic constructor CTS removal/reset/reuse; real converter-created reference/target47,24 observations per mode and16 owner tests; original pending deadlines fail3/3 vs3 awaited controls and public retained-token counterexample,not repaired;392B/400B/single or3200B/eight-constructor batch reflects different policies,not a gain; first-case30.84% CV/all resources retained,unchanged source,no performance PR,0 source comparisons/one original9-case sweep | [Public constructor timeout and original pending-deadline failure](F100/README.md) |
 | F101 | Rejected generic property-read CTS removal/reset/reuse; actual GetValue/typed731 and reference-property target47,25 observations per mode/16 existing controls; original pending deadlines fail3/3 vs3 awaited controls,public retained-token counterexample,unfixed;392B/400B/single or3200B/eight-read batch is policy pressure,not a gain;59.03% first-case CV/~7KB fresh-runtime phase variation/pre-execution parser failure retained,no input serialization,unchanged source,no PR,0 comparisons/one original9-case sweep | [Public property-read timeout and original pending-deadline failure](F101/README.md) |
 | F102 | Rejected generic property-write CTS deletion/reset/reuse; actual void setter/value123/null acknowledgment,25 observations per mode/16 existing controls; original deadlines fail3/3 vs3 awaited-void controls,public retained-token/real serializer-getter cancellation counterexamples,unfixed;async runtime captures serializer/transport errors;400B/single or3200B/eight-write batch is policy pressure,not gain;45.94% first-case CV/~192-197KB fresh phases retained,unchanged source,no PR,0 comparisons/one original9-case sweep | [Public property-write timeout and original pending-deadline failure](F102/README.md) |
+| F103 | [Draft jaslawinMs/aspnetcore#107](https://github.com/jaslawinMs/aspnetcore/pull/107); controlled empty-driver allocation6.27-14.72% lower in final pairs,process-wide calipers7.36-11.66% lower; populated allocation costs including1.58%/0.21% and substantial timing/control movement retained,no causal global speedup;30 original+30 final controls,three comparisons closed,qualified allocation-focused draft, **not merge-ready** | [StateHasChanged analyzer lazy component caches](F103/README.md) |
 | F106 | Draft proposal; workload trade-offs retained | [Per-call enum-name reverse lookup](F106/README.md) |
 | F108 | No-gain; array already reused, all fourteen affected cases slower in all three pairs and 64-65 extra B/op retained | [Kestrel cookie enumerable-join experiment](F108/README.md) |
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
