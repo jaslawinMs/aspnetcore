@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.UrlBenchmark-20261116-153422</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  LaunchCount=1  
+WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>    Method</th><th>          Case</th><th>    Mean</th><th>   Error</th><th>  StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ProcessAttribute</td><td>HtmlStringControl1K</td><td>23.295 ns</td><td>0.4711 ns</td><td>0.2464 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ProcessAttribute</td><td>NonCo(...)ntrol [21]</td><td>24.176 ns</td><td>0.2671 ns</td><td>0.1397 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ProcessAttribute</td><td>NullTagControl</td><td>7.663 ns</td><td>0.1657 ns</td><td>0.0867 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ProcessAttribute</td><td>PageBuffered1K</td><td>495.217 ns</td><td>35.0831 ns</td><td>18.3492 ns</td><td>0.0573</td><td>-</td><td>-</td><td>2,136 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Parallel1K</td><td>632,461.562 ns</td><td>19,955.8102 ns</td><td>10,437.2746 ns</td><td>43.7500</td><td>-</td><td>-</td><td>1,689,635 B</td>
+</tr><tr><td>ProcessAttribute</td><td>ParallelFast</td><td>533,749.544 ns</td><td>29,264.2501 ns</td><td>15,305.7687 ns</td><td>-</td><td>-</td><td>-</td><td>26 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Prepared1K</td><td>447.601 ns</td><td>31.6711 ns</td><td>16.5646 ns</td><td>0.0576</td><td>-</td><td>-</td><td>2,200 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Prepared256</td><td>202.495 ns</td><td>17.8972 ns</td><td>9.3606 ns</td><td>0.0173</td><td>-</td><td>-</td><td>664 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Prepared2K</td><td>798.878 ns</td><td>103.0478 ns</td><td>53.8960 ns</td><td>0.1109</td><td>-</td><td>-</td><td>4,248 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Prepared4K</td><td>1,450.733 ns</td><td>237.9327 ns</td><td>124.4434 ns</td><td>0.2205</td><td>-</td><td>-</td><td>8,344 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Prepared8K</td><td>5,722.138 ns</td><td>879.2351 ns</td><td>459.8570 ns</td><td>0.8810</td><td>-</td><td>-</td><td>33,064 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedEncoded1K</td><td>6,884.588 ns</td><td>188.7255 ns</td><td>98.7071 ns</td><td>0.4709</td><td>-</td><td>-</td><td>16,864 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedOver4K</td><td>3,012.658 ns</td><td>455.3738 ns</td><td>238.1693 ns</td><td>0.4439</td><td>-</td><td>-</td><td>16,688 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedShort</td><td>118.629 ns</td><td>2.1387 ns</td><td>1.1186 ns</td><td>0.0074</td><td>-</td><td>-</td><td>280 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedTwoAttrs</td><td>879.546 ns</td><td>87.6748 ns</td><td>45.8556 ns</td><td>0.1109</td><td>-</td><td>-</td><td>4,400 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedUrl1K</td><td>1,528.043 ns</td><td>395.0495 ns</td><td>206.6185 ns</td><td>0.2183</td><td>-</td><td>-</td><td>8,448 B</td>
+</tr><tr><td>ProcessAttribute</td><td>PreparedUrl64</td><td>288.147 ns</td><td>27.0141 ns</td><td>14.1289 ns</td><td>0.0196</td><td>-</td><td>-</td><td>768 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Runner1K</td><td>544.944 ns</td><td>72.1349 ns</td><td>37.7279 ns</td><td>0.0576</td><td>-</td><td>-</td><td>2,200 B</td>
+</tr><tr><td>ProcessAttribute</td><td>Runner8K</td><td>5,078.210 ns</td><td>747.0552 ns</td><td>390.7243 ns</td><td>0.8791</td><td>-</td><td>-</td><td>33,064 B</td>
+</tr><tr><td>ProcessAttribute</td><td>RunnerShort</td><td>189.517 ns</td><td>7.8148 ns</td><td>4.0873 ns</td><td>0.0058</td><td>-</td><td>-</td><td>280 B</td>
+</tr><tr><td>ProcessAttribute</td><td>RunnerTwoAttrs</td><td>981.629 ns</td><td>138.4036 ns</td><td>72.3878 ns</td><td>0.1173</td><td>-</td><td>-</td><td>4,400 B</td>
+</tr><tr><td>ProcessAttribute</td><td>RunnerUrl</td><td>357.428 ns</td><td>11.3899 ns</td><td>5.9571 ns</td><td>0.0177</td><td>-</td><td>-</td><td>768 B</td>
+</tr><tr><td>ProcessAttribute</td><td>StringControl1K</td><td>22.070 ns</td><td>0.6638 ns</td><td>0.3472 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ProcessAttribute</td><td>UnknownTagControl</td><td>13.137 ns</td><td>0.2305 ns</td><td>0.1205 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr></tbody></table>
+</body>
+</html>

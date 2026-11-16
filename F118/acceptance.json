@@ -1,0 +1,28 @@
+{
+  "candidate": "F118",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F118-url-resolution-writer",
+  "definedBeforeAnyShippingEditOrTiming": true,
+  "maximumMeasuredComparisons": 3,
+  "proposalBoundary": "Evaluate only the non-HtmlString IHtmlContent rendering seam in UrlResolutionTagHelper. Prefer an existing public ObjectPool/StringBuilder policy without new constructors,dependencies,assembly bridges or public API. Preserve per-call StringWriter culture/newline/disposal semantics,try/finally cleanup,complete output ownership and reentrancy;never share an actively borrowed builder.",
+  "requirements": [
+    "Capture fresh-default/baseline/working source identities for the actual helper,projects,HTML content,TagHelper runtime and URL producers;inspect relevant history and existing work. Do not equate scoped source identity to a complete current-default application run.",
+    "Run the existing exact UrlResolutionTagHelperTest rows before editing and after any candidate. Audit discovered definitions,expanded rows,TRX IDs,names,positive durations and zero skips rather than a green summary.",
+    "Exercise real in-tree public UrlResolutionTagHelper.Process and real TagHelperRunner/TagHelperExecutionContext with an ordered producer tag helper creating non-HtmlString attribute content. Use actual UrlHelperFactory/UrlHelper and real ViewContext/DefaultHttpContext;no URL-helper callback injection for normal paths.",
+    "Also exercise RazorPageBase.BeginAddHtmlAttributeValues/AddHtmlAttributeValue/EndAddHtmlAttributeValues as a nearest-opposite owning producer. Its normal buffered output is HtmlString and already bypasses the selected StringWriter seam;never sell custom-producer savings as ordinary generated-Razor page savings.",
+    "Keep raw/encoded content,non-tilde and ~/ URLs,short/256/1024/2048/oversized8192-character values,two attributes,string/HtmlString/null-tag/unknown-tag/non-content controls. Verify independent exact rendered attributes,types,styles,encoding,whitespace,resource-versioning and thrown errors where exercised.",
+    "Include per-call culture/newline observations,throw-after-partial-write followed by clean render,reentrant use with separately borrowed state and bounded fresh-process startup/retention observations. Do not silently drop ownership or exceptional cleanup boundaries.",
+    "Before editing/timing,fix absolute warmed allocation goals for prepared non-URL IHtmlContent lengths256,1024,2048 at <=1024,<=3072,<=5120 B/invocation. Five4096-operation calipers each must be expected-red on original and green on a selected candidate,without retuning inputs or goals.",
+    "Freeze the same standalone harness/fixtures/settings and complete execution images. Only tested Mvc.Razor DLL/PDB may differ. Capture loaded owner/harness/BDN/runtime/fixture identities and PIDs and verify scoped source/PDB documents without claiming PE/PDB binding or method coverage.",
+    "Include concurrent producer/fast-path controls with correctly attributed worker allocations. Pinned BDN0.13 uses process-wide precise allocation on this runtime;never label it main-thread-only. Keep startup/pool-retention/oversize discard and unchanged-control costs even when unfavorable.",
+    "Serialize CPU-heavy work,max2 build nodes,activate the locally pinned SDK in every fresh dotnet shell. Use only the settings-preserving emitted executor/Guid.Empty power and Normal priorities;no power/priority/affinity/unrelated-process changes on this shared VM.",
+    "At most3 actual before/after comparisons;reverse order in comparison2. Preserve all samples,controls,failed preparations and analysis failures. Never rerun successful profiles or modify frozen source to repair a checker.",
+    "Publish exact source,project,fixtures,commands,raw results and limitations. Only a compatible materially grounded proposal gets a separate fork-only template-based draft with immediate dispatch of its actual returned URL;otherwise publish honest no-gain/rejected/duplicate disposition."
+  ],
+  "excludedClaims": [
+    "No HTTP/full Razor page/production-frequency/application-wide or cold-latency speedup from prepared component measurements.",
+    "No claim that shared-machine point observations prove continuous isolation or unchanged external workloads.",
+    "No unbounded retention,undocumented writer/culture substitution,public API/default/dependency/TFM changes or shipping IVT/UnsafeAccessor.",
+    "No assumption that arbitrary user IHtmlContent grants post-disposal ownership of the helper's borrowed StringWriter/builder;report any unresolved stronger compatibility claim explicitly."
+  ]
+}

@@ -1,0 +1,1063 @@
+commit c283d05ce0e49941c7df3eeea6143ca58e2d0b3b
+Author: Javier Calvarro Nelson <jacalvar@microsoft.com>
+Date:   Sat Jun 15 22:58:52 2024 +0200
+
+    [Blazor] Consume fingerprinted assets in MVC and Blazor (#56045)
+    
+    * Adds support for using fingerprinted assets in Blazor and MVC.
+    * Fingerprinted assets are registered as additional endpoints to the system.
+    * Static Assets exposes the descriptors so that they can be consumed and used by Blazor and MVC/Razor pages.
+    * Helper methods `WithStaticAssets` map specific MapControllers/RazorPages/RazorComponents invocations to a given `MapStaticAsset` invocation and expose a `ResourceAssetCollection` as endpoint metadata that can be later on used by the system to change the way markup is rendered.
+    * There's built-in support in all MVC Tag helpers (URLTagHelper, ImageTagHelper, LinkTagHelper, ScriptTagHelper).
+    * There's support for JavaScript import maps in the ScriptTagHelper to render a JavaScript import map that maps JS modules to their fingerprinted URLs.
+    * `ComponentBase` exposes an `Assets` property that lets Blazor components consume the fingerprinted names of a given asset.
+    * When webassembly is in use, an additional couple of endpoints is registered exposing the mapping to webassembly as an additional JS Module that webassembly apps can use to consume the mapping from client code.
+    * Caching is disabled during development for all assets to avoid issues and can be re-enabled through a configuration property.
+    * Similarly, integrity is not exposed during development to avoid issues where users change a file on the fly while the app is running.
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index b20c3b5c63..98a5f90de6 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -4,7 +4,9 @@
+ using System.Buffers;
+ using System.Diagnostics.CodeAnalysis;
+ using System.Text.Encodings.Web;
++using Microsoft.AspNetCore.Components;
+ using Microsoft.AspNetCore.Html;
++using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Mvc.Rendering;
+ using Microsoft.AspNetCore.Mvc.Routing;
+ using Microsoft.AspNetCore.Mvc.ViewFeatures;
+@@ -221,6 +223,8 @@ public class UrlResolutionTagHelper : TagHelper
+             return false;
+         }
+ 
++        trimmedUrl = GetVersionedResourceUrl(trimmedUrl);
++
+         var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+         resolvedUrl = urlHelper.Content(trimmedUrl);
+ 
+@@ -244,6 +248,8 @@ public class UrlResolutionTagHelper : TagHelper
+             return false;
+         }
+ 
++        trimmedUrl = GetVersionedResourceUrl(trimmedUrl);
++
+         var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+         var appRelativeUrl = urlHelper.Content(trimmedUrl);
+         var postTildeSlashUrlValue = trimmedUrl.Substring(2);
+@@ -299,6 +305,41 @@ public class UrlResolutionTagHelper : TagHelper
+         return true;
+     }
+ 
++    private string GetVersionedResourceUrl(string value)
++    {
++        var assetCollection = GetAssetCollection();
++        if (assetCollection != null)
++        {
++            var (key, remainder) = ExtractKeyAndRest(value);
++
++            var src = assetCollection[key];
++            if (!string.Equals(src, key, StringComparison.Ordinal))
++            {
++                return $"~/{src}{value[remainder..]}";
++            }
++        }
++
++        return value;
++
++        static (string key, int rest) ExtractKeyAndRest(string value)
++        {
++            var lastNonWhitespaceChar = value.AsSpan().TrimEnd().LastIndexOfAnyExcept(ValidAttributeWhitespaceChars);
++            var keyEnd = lastNonWhitespaceChar > -1 ? lastNonWhitespaceChar + 1 : value.Length;
++            var key = value.AsSpan();
++            if (key.StartsWith("~/", StringComparison.Ordinal))
++            {
++                key = value.AsSpan()[2..keyEnd].Trim();
++            }
++
++            return (key.ToString(), keyEnd);
++        }
++    }
++
++    private ResourceAssetCollection? GetAssetCollection()
++    {
++        return ViewContext.HttpContext.GetEndpoint()?.Metadata.GetMetadata<ResourceAssetCollection>();
++    }
++
+     private sealed class EncodeFirstSegmentContent : IHtmlContent
+     {
+         private readonly string _firstSegment;
+
+commit 26869f2e3fc43e289a3068137563c8352abdcf6d
+Author: ladeak <ladeak@windowslive.com>
+Date:   Sat Apr 6 01:06:38 2024 +0200
+
+    Use SearchValues throughout dotnet/aspnetcore (part 3)  (#54878)
+    
+    * TagBuilder using SearchValues
+    
+    - Adding further tests and a new benchmark to compare before-after performance
+    - Updating the implementation of TagBuilder to use SearchValues instead manual operation
+    
+    * Update comment triggering a build
+    
+    * Using SearchValues in UrlResolutionTagHelper.
+    
+    * Review feedback + fixing outofrange exception for unresolveable urls
+    
+    * Using StartsWith instead of SequenceEqual
+    
+    ---------
+    
+    Co-authored-by: ladeak <ladeak87@windowslive.com>
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index 8910c58f13..b20c3b5c63 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -1,6 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using System.Buffers;
+ using System.Diagnostics.CodeAnalysis;
+ using System.Text.Encodings.Web;
+ using Microsoft.AspNetCore.Html;
+@@ -49,8 +50,8 @@ namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
+ public class UrlResolutionTagHelper : TagHelper
+ {
+     // Valid whitespace characters defined by the HTML5 spec.
+-    private static readonly char[] ValidAttributeWhitespaceChars =
+-        new[] { '\t', '\n', '\u000C', '\r', ' ' };
++    private static readonly SearchValues<char> ValidAttributeWhitespaceChars = SearchValues.Create("\t\n\u000C\r ");
++
+     private static readonly Dictionary<string, string[]> ElementAttributeLookups =
+         new(StringComparer.OrdinalIgnoreCase)
+         {
+@@ -215,14 +216,11 @@ public class UrlResolutionTagHelper : TagHelper
+     protected bool TryResolveUrl([StringSyntax(StringSyntaxAttribute.Uri, UriKind.Relative)] string url, out string? resolvedUrl)
+     {
+         resolvedUrl = null;
+-        var start = FindRelativeStart(url);
+-        if (start == -1)
++        if (!TryCreateTrimmedString(url, out var trimmedUrl))
+         {
+             return false;
+         }
+ 
+-        var trimmedUrl = CreateTrimmedString(url, start);
+-
+         var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+         resolvedUrl = urlHelper.Content(trimmedUrl);
+ 
+@@ -241,14 +239,11 @@ public class UrlResolutionTagHelper : TagHelper
+     protected bool TryResolveUrl([StringSyntax(StringSyntaxAttribute.Uri, UriKind.Relative)] string url, [NotNullWhen(true)] out IHtmlContent? resolvedUrl)
+     {
+         resolvedUrl = null;
+-        var start = FindRelativeStart(url);
+-        if (start == -1)
++        if (!TryCreateTrimmedString(url, out var trimmedUrl))
+         {
+             return false;
+         }
+ 
+-        var trimmedUrl = CreateTrimmedString(url, start);
+-
+         var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+         var appRelativeUrl = urlHelper.Content(trimmedUrl);
+         var postTildeSlashUrlValue = trimmedUrl.Substring(2);
+@@ -273,58 +268,35 @@ public class UrlResolutionTagHelper : TagHelper
+         return true;
+     }
+ 
+-    private static int FindRelativeStart(string url)
++    private static bool TryCreateTrimmedString(string input, [NotNullWhen(true)] out string? trimmed)
+     {
+-        if (url == null || url.Length < 2)
++        trimmed = null;
++        if (input == null)
+         {
+-            return -1;
++            return false;
+         }
+ 
+-        var maxTestLength = url.Length - 2;
+-
+-        var start = 0;
+-        for (; start < url.Length; start++)
++        var url = input.AsSpan();
++        var start = url.IndexOfAnyExcept(ValidAttributeWhitespaceChars);
++        if (start < 0)
+         {
+-            if (start > maxTestLength)
+-            {
+-                return -1;
+-            }
+-
+-            if (!IsCharWhitespace(url[start]))
+-            {
+-                break;
+-            }
+-        }
+-
+-        // Before doing more work, ensure that the URL we're looking at is app-relative.
+-        if (url[start] != '~' || url[start + 1] != '/')
+-        {
+-            return -1;
++            return false;
+         }
+ 
+-        return start;
+-    }
++        // Url without leading whitespace.
++        url = url.Slice(start);
+ 
+-    private static string CreateTrimmedString(string input, int start)
+-    {
+-        var end = input.Length - 1;
+-        for (; end >= start; end--)
++        // Before doing more work, ensure that the URL we're looking at is app-relative.
++        if (!url.StartsWith("~/"))
+         {
+-            if (!IsCharWhitespace(input[end]))
+-            {
+-                break;
+-            }
++            return false;
+         }
+ 
+-        var len = end - start + 1;
++        var remainingLength = url.LastIndexOfAnyExcept(ValidAttributeWhitespaceChars) + 1;
+ 
+         // Substring returns same string if start == 0 && len == Length
+-        return input.Substring(start, len);
+-    }
+-
+-    private static bool IsCharWhitespace(char ch)
+-    {
+-        return ValidAttributeWhitespaceChars.AsSpan().IndexOf(ch) != -1;
++        trimmed = input.Substring(start, remainingLength);
++        return true;
+     }
+ 
+     private sealed class EncodeFirstSegmentContent : IHtmlContent
+
+commit fa2fd21e2486c226d1524586760366ff662489f8
+Author: blouflashdb <45914736+blouflashdb@users.noreply.github.com>
+Date:   Mon Oct 17 14:57:05 2022 +0200
+
+    Add Uri StringSyntaxAttribute syntaxes (#44570)
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index 732a51a1e3..8910c58f13 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -212,7 +212,7 @@ public class UrlResolutionTagHelper : TagHelper
+     /// <param name="resolvedUrl">Absolute URL beginning with the application's virtual root. <c>null</c> if
+     /// <paramref name="url"/> could not be resolved.</param>
+     /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
+-    protected bool TryResolveUrl(string url, out string? resolvedUrl)
++    protected bool TryResolveUrl([StringSyntax(StringSyntaxAttribute.Uri, UriKind.Relative)] string url, out string? resolvedUrl)
+     {
+         resolvedUrl = null;
+         var start = FindRelativeStart(url);
+@@ -238,7 +238,7 @@ public class UrlResolutionTagHelper : TagHelper
+     /// not be resolved.
+     /// </param>
+     /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
+-    protected bool TryResolveUrl(string url, [NotNullWhen(true)] out IHtmlContent? resolvedUrl)
++    protected bool TryResolveUrl([StringSyntax(StringSyntaxAttribute.Uri, UriKind.Relative)] string url, [NotNullWhen(true)] out IHtmlContent? resolvedUrl)
+     {
+         resolvedUrl = null;
+         var start = FindRelativeStart(url);
+
+commit d9327eb223cf35d0e7fe6e9431ded3dac95f2e69
+Author: Martin Costello <martin@martincostello.com>
+Date:   Mon May 2 09:49:48 2022 +0100
+
+    [MVC] Minor TagHelper refactoring (#41454)
+    
+    * Use ArgumentNullException.ThrowIfNull
+       Use ArgumentNullException.ThrowIfNull() where appropriate.
+    * Seal classes
+       Seal internal and private classes where appropriate.
+    * Use target-typed new expression
+      Use target-typed new expression with field initializers.
+      Fix whitespace.
+    * Remove dictionary lookup
+       Remove dictionary lookups where the value is already present in a local variable.
+    * Use string.Join char overload
+       Use the char overload for string.Join().
+    * Set SkipEnabledCheck
+       Set SkipEnabledCheck to true for two log statements that are already guarded with an IsEnabled(LogLevel.Debug) check.
+    * Use for loop instead of foreach
+       Use for loop for field that is an array, rather than typing as an IEnumerable<T> and using foreach.
+    * Use is patterns
+       Use is pattern operator.
+    * Simplify IsWhiteSpace()
+       Use the same implementation as UrlResolutionTagHelper.
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index a0139c4c94..732a51a1e3 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -52,31 +52,31 @@ public class UrlResolutionTagHelper : TagHelper
+     private static readonly char[] ValidAttributeWhitespaceChars =
+         new[] { '\t', '\n', '\u000C', '\r', ' ' };
+     private static readonly Dictionary<string, string[]> ElementAttributeLookups =
+-        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
++        new(StringComparer.OrdinalIgnoreCase)
+         {
+-                { "a", new[] { "href" } },
+-                { "applet", new[] { "archive" } },
+-                { "area", new[] { "href" } },
+-                { "audio", new[] { "src" } },
+-                { "base", new[] { "href" } },
+-                { "blockquote", new[] { "cite" } },
+-                { "button", new[] { "formaction" } },
+-                { "del", new[] { "cite" } },
+-                { "embed", new[] { "src" } },
+-                { "form", new[] { "action" } },
+-                { "html", new[] { "manifest" } },
+-                { "iframe", new[] { "src" } },
+-                { "img", new[] { "src", "srcset" } },
+-                { "input", new[] { "src", "formaction" } },
+-                { "ins", new[] { "cite" } },
+-                { "link", new[] { "href" } },
+-                { "menuitem", new[] { "icon" } },
+-                { "object", new[] { "archive", "data" } },
+-                { "q", new[] { "cite" } },
+-                { "script", new[] { "src" } },
+-                { "source", new[] { "src", "srcset" } },
+-                { "track", new[] { "src" } },
+-                { "video", new[] { "poster", "src" } },
++            { "a", new[] { "href" } },
++            { "applet", new[] { "archive" } },
++            { "area", new[] { "href" } },
++            { "audio", new[] { "src" } },
++            { "base", new[] { "href" } },
++            { "blockquote", new[] { "cite" } },
++            { "button", new[] { "formaction" } },
++            { "del", new[] { "cite" } },
++            { "embed", new[] { "src" } },
++            { "form", new[] { "action" } },
++            { "html", new[] { "manifest" } },
++            { "iframe", new[] { "src" } },
++            { "img", new[] { "src", "srcset" } },
++            { "input", new[] { "src", "formaction" } },
++            { "ins", new[] { "cite" } },
++            { "link", new[] { "href" } },
++            { "menuitem", new[] { "icon" } },
++            { "object", new[] { "archive", "data" } },
++            { "q", new[] { "cite" } },
++            { "script", new[] { "src" } },
++            { "source", new[] { "src", "srcset" } },
++            { "track", new[] { "src" } },
++            { "video", new[] { "poster", "src" } },
+         };
+ 
+     /// <summary>
+@@ -113,15 +113,8 @@ public class UrlResolutionTagHelper : TagHelper
+     /// <inheritdoc />
+     public override void Process(TagHelperContext context, TagHelperOutput output)
+     {
+-        if (context == null)
+-        {
+-            throw new ArgumentNullException(nameof(context));
+-        }
+-
+-        if (output == null)
+-        {
+-            throw new ArgumentNullException(nameof(output));
+-        }
++        ArgumentNullException.ThrowIfNull(context);
++        ArgumentNullException.ThrowIfNull(output);
+ 
+         if (output.TagName == null)
+         {
+@@ -149,15 +142,8 @@ public class UrlResolutionTagHelper : TagHelper
+     /// <param name="output">The <see cref="TagHelperOutput"/>.</param>
+     protected void ProcessUrlAttribute(string attributeName, TagHelperOutput output)
+     {
+-        if (attributeName == null)
+-        {
+-            throw new ArgumentNullException(nameof(attributeName));
+-        }
+-
+-        if (output == null)
+-        {
+-            throw new ArgumentNullException(nameof(output));
+-        }
++        ArgumentNullException.ThrowIfNull(attributeName);
++        ArgumentNullException.ThrowIfNull(output);
+ 
+         var attributes = output.Attributes;
+         // Read interface .Count once rather than per iteration
+@@ -170,8 +156,7 @@ public class UrlResolutionTagHelper : TagHelper
+                 continue;
+             }
+ 
+-            var stringValue = attribute.Value as string;
+-            if (stringValue != null)
++            if (attribute.Value is string stringValue)
+             {
+                 if (TryResolveUrl(stringValue, resolvedUrl: out string? resolvedUrl))
+                 {
+@@ -183,8 +168,7 @@ public class UrlResolutionTagHelper : TagHelper
+             }
+             else
+             {
+-                var htmlContent = attribute.Value as IHtmlContent;
+-                if (htmlContent != null)
++                if (attribute.Value is IHtmlContent htmlContent)
+                 {
+                     var htmlString = htmlContent as HtmlString;
+                     if (htmlString != null)
+@@ -343,7 +327,7 @@ public class UrlResolutionTagHelper : TagHelper
+         return ValidAttributeWhitespaceChars.AsSpan().IndexOf(ch) != -1;
+     }
+ 
+-    private class EncodeFirstSegmentContent : IHtmlContent
++    private sealed class EncodeFirstSegmentContent : IHtmlContent
+     {
+         private readonly string _firstSegment;
+         private readonly int _firstSegmentLength;
+
+commit c85baf8db0c72ae8e68643029d514b2e737c9fae
+Author: Shreyas Jejurkar <shreyasjejurkar123@live.com>
+Date:   Sun Jan 2 20:09:22 2022 +0530
+
+    chore : Remove unwanted `using` statement (#39176)
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index 2b959501ed..a0139c4c94 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -1,10 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+-using System;
+-using System.Collections.Generic;
+ using System.Diagnostics.CodeAnalysis;
+-using System.IO;
+ using System.Text.Encodings.Web;
+ using Microsoft.AspNetCore.Html;
+ using Microsoft.AspNetCore.Mvc.Rendering;
+
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author: Pranav K <prkrishn@hotmail.com>
+Date:   Fri Nov 5 17:52:08 2021 -0700
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+index 76d5fc865d..2b959501ed 100644
+--- a/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs
+@@ -12,51 +12,51 @@ using Microsoft.AspNetCore.Mvc.Routing;
+ using Microsoft.AspNetCore.Mvc.ViewFeatures;
+ using Microsoft.AspNetCore.Razor.TagHelpers;
+ 
+-namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers
++namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
++
++/// <summary>
++/// <see cref="ITagHelper"/> implementation targeting elements containing attributes with URL expected values.
++/// </summary>
++/// <remarks>Resolves URLs starting with '~/' (relative to the application's 'webroot' setting) that are not
++/// targeted by other <see cref="ITagHelper"/>s. Runs prior to other <see cref="ITagHelper"/>s to ensure
++/// application-relative URLs are resolved.</remarks>
++[HtmlTargetElement("*", Attributes = "[itemid^='~/']")]
++[HtmlTargetElement("a", Attributes = "[href^='~/']")]
++[HtmlTargetElement("applet", Attributes = "[archive^='~/']")]
++[HtmlTargetElement("area", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("audio", Attributes = "[src^='~/']")]
++[HtmlTargetElement("base", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("blockquote", Attributes = "[cite^='~/']")]
++[HtmlTargetElement("button", Attributes = "[formaction^='~/']")]
++[HtmlTargetElement("del", Attributes = "[cite^='~/']")]
++[HtmlTargetElement("embed", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("form", Attributes = "[action^='~/']")]
++[HtmlTargetElement("html", Attributes = "[manifest^='~/']")]
++[HtmlTargetElement("iframe", Attributes = "[src^='~/']")]
++[HtmlTargetElement("img", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("img", Attributes = "[srcset^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("input", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("input", Attributes = "[formaction^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("ins", Attributes = "[cite^='~/']")]
++[HtmlTargetElement("link", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("menuitem", Attributes = "[icon^='~/']")]
++[HtmlTargetElement("object", Attributes = "[archive^='~/']")]
++[HtmlTargetElement("object", Attributes = "[data^='~/']")]
++[HtmlTargetElement("q", Attributes = "[cite^='~/']")]
++[HtmlTargetElement("script", Attributes = "[src^='~/']")]
++[HtmlTargetElement("source", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("source", Attributes = "[srcset^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("track", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
++[HtmlTargetElement("video", Attributes = "[src^='~/']")]
++[HtmlTargetElement("video", Attributes = "[poster^='~/']")]
++public class UrlResolutionTagHelper : TagHelper
+ {
+-    /// <summary>
+-    /// <see cref="ITagHelper"/> implementation targeting elements containing attributes with URL expected values.
+-    /// </summary>
+-    /// <remarks>Resolves URLs starting with '~/' (relative to the application's 'webroot' setting) that are not
+-    /// targeted by other <see cref="ITagHelper"/>s. Runs prior to other <see cref="ITagHelper"/>s to ensure
+-    /// application-relative URLs are resolved.</remarks>
+-    [HtmlTargetElement("*", Attributes = "[itemid^='~/']")]
+-    [HtmlTargetElement("a", Attributes = "[href^='~/']")]
+-    [HtmlTargetElement("applet", Attributes = "[archive^='~/']")]
+-    [HtmlTargetElement("area", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("audio", Attributes = "[src^='~/']")]
+-    [HtmlTargetElement("base", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("blockquote", Attributes = "[cite^='~/']")]
+-    [HtmlTargetElement("button", Attributes = "[formaction^='~/']")]
+-    [HtmlTargetElement("del", Attributes = "[cite^='~/']")]
+-    [HtmlTargetElement("embed", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("form", Attributes = "[action^='~/']")]
+-    [HtmlTargetElement("html", Attributes = "[manifest^='~/']")]
+-    [HtmlTargetElement("iframe", Attributes = "[src^='~/']")]
+-    [HtmlTargetElement("img", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("img", Attributes = "[srcset^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("input", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("input", Attributes = "[formaction^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("ins", Attributes = "[cite^='~/']")]
+-    [HtmlTargetElement("link", Attributes = "[href^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("menuitem", Attributes = "[icon^='~/']")]
+-    [HtmlTargetElement("object", Attributes = "[archive^='~/']")]
+-    [HtmlTargetElement("object", Attributes = "[data^='~/']")]
+-    [HtmlTargetElement("q", Attributes = "[cite^='~/']")]
+-    [HtmlTargetElement("script", Attributes = "[src^='~/']")]
+-    [HtmlTargetElement("source", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("source", Attributes = "[srcset^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("track", Attributes = "[src^='~/']", TagStructure = TagStructure.WithoutEndTag)]
+-    [HtmlTargetElement("video", Attributes = "[src^='~/']")]
+-    [HtmlTargetElement("video", Attributes = "[poster^='~/']")]
+-    public class UrlResolutionTagHelper : TagHelper
+-    {
+-        // Valid whitespace characters defined by the HTML5 spec.
+-        private static readonly char[] ValidAttributeWhitespaceChars =
+-            new[] { '\t', '\n', '\u000C', '\r', ' ' };
+-        private static readonly Dictionary<string, string[]> ElementAttributeLookups =
+-            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+-            {
++    // Valid whitespace characters defined by the HTML5 spec.
++    private static readonly char[] ValidAttributeWhitespaceChars =
++        new[] { '\t', '\n', '\u000C', '\r', ' ' };
++    private static readonly Dictionary<string, string[]> ElementAttributeLookups =
++        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
++        {
+                 { "a", new[] { "href" } },
+                 { "applet", new[] { "archive" } },
+                 { "area", new[] { "href" } },
+@@ -80,290 +80,289 @@ namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers
+                 { "source", new[] { "src", "srcset" } },
+                 { "track", new[] { "src" } },
+                 { "video", new[] { "poster", "src" } },
+-            };
+-
+-        /// <summary>
+-        /// Creates a new <see cref="UrlResolutionTagHelper"/>.
+-        /// </summary>
+-        /// <param name="urlHelperFactory">The <see cref="IUrlHelperFactory"/>.</param>
+-        /// <param name="htmlEncoder">The <see cref="HtmlEncoder"/>.</param>
+-        public UrlResolutionTagHelper(IUrlHelperFactory urlHelperFactory, HtmlEncoder htmlEncoder)
+-        {
+-            UrlHelperFactory = urlHelperFactory;
+-            HtmlEncoder = htmlEncoder;
+-        }
++        };
+ 
+-        /// <inheritdoc />
+-        public override int Order => -1000 - 999;
++    /// <summary>
++    /// Creates a new <see cref="UrlResolutionTagHelper"/>.
++    /// </summary>
++    /// <param name="urlHelperFactory">The <see cref="IUrlHelperFactory"/>.</param>
++    /// <param name="htmlEncoder">The <see cref="HtmlEncoder"/>.</param>
++    public UrlResolutionTagHelper(IUrlHelperFactory urlHelperFactory, HtmlEncoder htmlEncoder)
++    {
++        UrlHelperFactory = urlHelperFactory;
++        HtmlEncoder = htmlEncoder;
++    }
+ 
+-        /// <summary>
+-        /// The <see cref="IUrlHelperFactory"/>.
+-        /// </summary>
+-        protected IUrlHelperFactory UrlHelperFactory { get; }
++    /// <inheritdoc />
++    public override int Order => -1000 - 999;
+ 
+-        /// <summary>
+-        /// The <see cref="HtmlEncoder"/>.
+-        /// </summary>
+-        protected HtmlEncoder HtmlEncoder { get; }
++    /// <summary>
++    /// The <see cref="IUrlHelperFactory"/>.
++    /// </summary>
++    protected IUrlHelperFactory UrlHelperFactory { get; }
+ 
+-        /// <summary>
+-        /// The <see cref="ViewContext"/>.
+-        /// </summary>
+-        [HtmlAttributeNotBound]
+-        [ViewContext]
+-        public ViewContext ViewContext { get; set; } = default!;
++    /// <summary>
++    /// The <see cref="HtmlEncoder"/>.
++    /// </summary>
++    protected HtmlEncoder HtmlEncoder { get; }
+ 
+-        /// <inheritdoc />
+-        public override void Process(TagHelperContext context, TagHelperOutput output)
++    /// <summary>
++    /// The <see cref="ViewContext"/>.
++    /// </summary>
++    [HtmlAttributeNotBound]
++    [ViewContext]
++    public ViewContext ViewContext { get; set; } = default!;
++
++    /// <inheritdoc />
++    public override void Process(TagHelperContext context, TagHelperOutput output)
++    {
++        if (context == null)
+         {
+-            if (context == null)
+-            {
+-                throw new ArgumentNullException(nameof(context));
+-            }
++            throw new ArgumentNullException(nameof(context));
++        }
+ 
+-            if (output == null)
+-            {
+-                throw new ArgumentNullException(nameof(output));
+-            }
++        if (output == null)
++        {
++            throw new ArgumentNullException(nameof(output));
++        }
+ 
+-            if (output.TagName == null)
+-            {
+-                return;
+-            }
++        if (output.TagName == null)
++        {
++            return;
++        }
+ 
+-            if (ElementAttributeLookups.TryGetValue(output.TagName, out var attributeNames))
++        if (ElementAttributeLookups.TryGetValue(output.TagName, out var attributeNames))
++        {
++            for (var i = 0; i < attributeNames.Length; i++)
+             {
+-                for (var i = 0; i < attributeNames.Length; i++)
+-                {
+-                    ProcessUrlAttribute(attributeNames[i], output);
+-                }
++                ProcessUrlAttribute(attributeNames[i], output);
+             }
++        }
++
++        // itemid can be present on any HTML element.
++        ProcessUrlAttribute("itemid", output);
++    }
+ 
+-            // itemid can be present on any HTML element.
+-            ProcessUrlAttribute("itemid", output);
++    /// <summary>
++    /// Resolves and updates URL values starting with '~/' (relative to the application's 'webroot' setting) for
++    /// <paramref name="output"/>'s <see cref="TagHelperOutput.Attributes"/> whose
++    /// <see cref="TagHelperAttribute.Name"/> is <paramref name="attributeName"/>.
++    /// </summary>
++    /// <param name="attributeName">The attribute name used to lookup values to resolve.</param>
++    /// <param name="output">The <see cref="TagHelperOutput"/>.</param>
++    protected void ProcessUrlAttribute(string attributeName, TagHelperOutput output)
++    {
++        if (attributeName == null)
++        {
++            throw new ArgumentNullException(nameof(attributeName));
+         }
+ 
+-        /// <summary>
+-        /// Resolves and updates URL values starting with '~/' (relative to the application's 'webroot' setting) for
+-        /// <paramref name="output"/>'s <see cref="TagHelperOutput.Attributes"/> whose
+-        /// <see cref="TagHelperAttribute.Name"/> is <paramref name="attributeName"/>.
+-        /// </summary>
+-        /// <param name="attributeName">The attribute name used to lookup values to resolve.</param>
+-        /// <param name="output">The <see cref="TagHelperOutput"/>.</param>
+-        protected void ProcessUrlAttribute(string attributeName, TagHelperOutput output)
++        if (output == null)
+         {
+-            if (attributeName == null)
+-            {
+-                throw new ArgumentNullException(nameof(attributeName));
+-            }
++            throw new ArgumentNullException(nameof(output));
++        }
+ 
+-            if (output == null)
++        var attributes = output.Attributes;
++        // Read interface .Count once rather than per iteration
++        var attributesCount = attributes.Count;
++        for (var i = 0; i < attributesCount; i++)
++        {
++            var attribute = attributes[i];
++            if (!string.Equals(attribute.Name, attributeName, StringComparison.OrdinalIgnoreCase))
+             {
+-                throw new ArgumentNullException(nameof(output));
++                continue;
+             }
+ 
+-            var attributes = output.Attributes;
+-            // Read interface .Count once rather than per iteration
+-            var attributesCount = attributes.Count;
+-            for (var i = 0; i < attributesCount; i++)
++            var stringValue = attribute.Value as string;
++            if (stringValue != null)
+             {
+-                var attribute = attributes[i];
+-                if (!string.Equals(attribute.Name, attributeName, StringComparison.OrdinalIgnoreCase))
++                if (TryResolveUrl(stringValue, resolvedUrl: out string? resolvedUrl))
+                 {
+-                    continue;
++                    attributes[i] = new TagHelperAttribute(
++                        attribute.Name,
++                        resolvedUrl,
++                        attribute.ValueStyle);
+                 }
+-
+-                var stringValue = attribute.Value as string;
+-                if (stringValue != null)
++            }
++            else
++            {
++                var htmlContent = attribute.Value as IHtmlContent;
++                if (htmlContent != null)
+                 {
+-                    if (TryResolveUrl(stringValue, resolvedUrl: out string? resolvedUrl))
++                    var htmlString = htmlContent as HtmlString;
++                    if (htmlString != null)
++                    {
++                        // No need for a StringWriter in this case.
++                        stringValue = htmlString.ToString();
++                    }
++                    else
++                    {
++                        using (var writer = new StringWriter())
++                        {
++                            htmlContent.WriteTo(writer, HtmlEncoder);
++                            stringValue = writer.ToString();
++                        }
++                    }
++
++                    if (TryResolveUrl(stringValue, resolvedUrl: out IHtmlContent? resolvedUrl))
+                     {
+                         attributes[i] = new TagHelperAttribute(
+                             attribute.Name,
+                             resolvedUrl,
+                             attribute.ValueStyle);
+                     }
+-                }
+-                else
+-                {
+-                    var htmlContent = attribute.Value as IHtmlContent;
+-                    if (htmlContent != null)
++                    else if (htmlString == null)
+                     {
+-                        var htmlString = htmlContent as HtmlString;
+-                        if (htmlString != null)
+-                        {
+-                            // No need for a StringWriter in this case.
+-                            stringValue = htmlString.ToString();
+-                        }
+-                        else
+-                        {
+-                            using (var writer = new StringWriter())
+-                            {
+-                                htmlContent.WriteTo(writer, HtmlEncoder);
+-                                stringValue = writer.ToString();
+-                            }
+-                        }
+-
+-                        if (TryResolveUrl(stringValue, resolvedUrl: out IHtmlContent? resolvedUrl))
+-                        {
+-                            attributes[i] = new TagHelperAttribute(
+-                                attribute.Name,
+-                                resolvedUrl,
+-                                attribute.ValueStyle);
+-                        }
+-                        else if (htmlString == null)
+-                        {
+-                            // Not a ~/ URL. Just avoid re-encoding the attribute value later.
+-                            attributes[i] = new TagHelperAttribute(
+-                                attribute.Name,
+-                                new HtmlString(stringValue),
+-                                attribute.ValueStyle);
+-                        }
++                        // Not a ~/ URL. Just avoid re-encoding the attribute value later.
++                        attributes[i] = new TagHelperAttribute(
++                            attribute.Name,
++                            new HtmlString(stringValue),
++                            attribute.ValueStyle);
+                     }
+                 }
+             }
+         }
++    }
+ 
+-        /// <summary>
+-        /// Tries to resolve the given <paramref name="url"/> value relative to the application's 'webroot' setting.
+-        /// </summary>
+-        /// <param name="url">The URL to resolve.</param>
+-        /// <param name="resolvedUrl">Absolute URL beginning with the application's virtual root. <c>null</c> if
+-        /// <paramref name="url"/> could not be resolved.</param>
+-        /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
+-        protected bool TryResolveUrl(string url, out string? resolvedUrl)
++    /// <summary>
++    /// Tries to resolve the given <paramref name="url"/> value relative to the application's 'webroot' setting.
++    /// </summary>
++    /// <param name="url">The URL to resolve.</param>
++    /// <param name="resolvedUrl">Absolute URL beginning with the application's virtual root. <c>null</c> if
++    /// <paramref name="url"/> could not be resolved.</param>
++    /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
++    protected bool TryResolveUrl(string url, out string? resolvedUrl)
++    {
++        resolvedUrl = null;
++        var start = FindRelativeStart(url);
++        if (start == -1)
+         {
+-            resolvedUrl = null;
+-            var start = FindRelativeStart(url);
+-            if (start == -1)
+-            {
+-                return false;
+-            }
++            return false;
++        }
+ 
+-            var trimmedUrl = CreateTrimmedString(url, start);
++        var trimmedUrl = CreateTrimmedString(url, start);
+ 
+-            var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+-            resolvedUrl = urlHelper.Content(trimmedUrl);
++        var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
++        resolvedUrl = urlHelper.Content(trimmedUrl);
+ 
+-            return true;
+-        }
++        return true;
++    }
+ 
+-        /// <summary>
+-        /// Tries to resolve the given <paramref name="url"/> value relative to the application's 'webroot' setting.
+-        /// </summary>
+-        /// <param name="url">The URL to resolve.</param>
+-        /// <param name="resolvedUrl">
+-        /// Absolute URL beginning with the application's virtual root. <c>null</c> if <paramref name="url"/> could
+-        /// not be resolved.
+-        /// </param>
+-        /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
+-        protected bool TryResolveUrl(string url, [NotNullWhen(true)] out IHtmlContent? resolvedUrl)
++    /// <summary>
++    /// Tries to resolve the given <paramref name="url"/> value relative to the application's 'webroot' setting.
++    /// </summary>
++    /// <param name="url">The URL to resolve.</param>
++    /// <param name="resolvedUrl">
++    /// Absolute URL beginning with the application's virtual root. <c>null</c> if <paramref name="url"/> could
++    /// not be resolved.
++    /// </param>
++    /// <returns><c>true</c> if the <paramref name="url"/> could be resolved; <c>false</c> otherwise.</returns>
++    protected bool TryResolveUrl(string url, [NotNullWhen(true)] out IHtmlContent? resolvedUrl)
++    {
++        resolvedUrl = null;
++        var start = FindRelativeStart(url);
++        if (start == -1)
+         {
+-            resolvedUrl = null;
+-            var start = FindRelativeStart(url);
+-            if (start == -1)
+-            {
+-                return false;
+-            }
++            return false;
++        }
+ 
+-            var trimmedUrl = CreateTrimmedString(url, start);
++        var trimmedUrl = CreateTrimmedString(url, start);
+ 
+-            var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
+-            var appRelativeUrl = urlHelper.Content(trimmedUrl);
+-            var postTildeSlashUrlValue = trimmedUrl.Substring(2);
++        var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
++        var appRelativeUrl = urlHelper.Content(trimmedUrl);
++        var postTildeSlashUrlValue = trimmedUrl.Substring(2);
+ 
+-            if (!appRelativeUrl.EndsWith(postTildeSlashUrlValue, StringComparison.Ordinal))
+-            {
+-                throw new InvalidOperationException(
+-                    Resources.FormatCouldNotResolveApplicationRelativeUrl_TagHelper(
+-                        url,
+-                        nameof(IUrlHelper),
+-                        nameof(IUrlHelper.Content),
+-                        "removeTagHelper",
+-                        typeof(UrlResolutionTagHelper).FullName,
+-                        typeof(UrlResolutionTagHelper).Assembly.GetName().Name));
+-            }
++        if (!appRelativeUrl.EndsWith(postTildeSlashUrlValue, StringComparison.Ordinal))
++        {
++            throw new InvalidOperationException(
++                Resources.FormatCouldNotResolveApplicationRelativeUrl_TagHelper(
++                    url,
++                    nameof(IUrlHelper),
++                    nameof(IUrlHelper.Content),
++                    "removeTagHelper",
++                    typeof(UrlResolutionTagHelper).FullName,
++                    typeof(UrlResolutionTagHelper).Assembly.GetName().Name));
++        }
+ 
+-            resolvedUrl = new EncodeFirstSegmentContent(
+-                appRelativeUrl,
+-                appRelativeUrl.Length - postTildeSlashUrlValue.Length,
+-                postTildeSlashUrlValue);
++        resolvedUrl = new EncodeFirstSegmentContent(
++            appRelativeUrl,
++            appRelativeUrl.Length - postTildeSlashUrlValue.Length,
++            postTildeSlashUrlValue);
+ 
+-            return true;
+-        }
++        return true;
++    }
+ 
+-        private static int FindRelativeStart(string url)
++    private static int FindRelativeStart(string url)
++    {
++        if (url == null || url.Length < 2)
+         {
+-            if (url == null || url.Length < 2)
+-            {
+-                return -1;
+-            }
++            return -1;
++        }
+ 
+-            var maxTestLength = url.Length - 2;
++        var maxTestLength = url.Length - 2;
+ 
+-            var start = 0;
+-            for (; start < url.Length; start++)
++        var start = 0;
++        for (; start < url.Length; start++)
++        {
++            if (start > maxTestLength)
+             {
+-                if (start > maxTestLength)
+-                {
+-                    return -1;
+-                }
+-
+-                if (!IsCharWhitespace(url[start]))
+-                {
+-                    break;
+-                }
++                return -1;
+             }
+ 
+-            // Before doing more work, ensure that the URL we're looking at is app-relative.
+-            if (url[start] != '~' || url[start + 1] != '/')
++            if (!IsCharWhitespace(url[start]))
+             {
+-                return -1;
++                break;
+             }
++        }
+ 
+-            return start;
++        // Before doing more work, ensure that the URL we're looking at is app-relative.
++        if (url[start] != '~' || url[start + 1] != '/')
++        {
++            return -1;
+         }
+ 
+-        private static string CreateTrimmedString(string input, int start)
++        return start;
++    }
++
++    private static string CreateTrimmedString(string input, int start)
++    {
++        var end = input.Length - 1;
++        for (; end >= start; end--)
+         {
+-            var end = input.Length - 1;
+-            for (; end >= start; end--)
++            if (!IsCharWhitespace(input[end]))
+             {
+-                if (!IsCharWhitespace(input[end]))
+-                {
+-                    break;
+-                }
++                break;
+             }
++        }
+ 
+-            var len = end - start + 1;
++        var len = end - start + 1;
+ 
+-            // Substring returns same string if start == 0 && len == Length
+-            return input.Substring(start, len);
+-        }
++        // Substring returns same string if start == 0 && len == Length
++        return input.Substring(start, len);
++    }
+ 
+-        private static bool IsCharWhitespace(char ch)
++    private static bool IsCharWhitespace(char ch)
++    {
++        return ValidAttributeWhitespaceChars.AsSpan().IndexOf(ch) != -1;
++    }
++
++    private class EncodeFirstSegmentContent : IHtmlContent
++    {
++        private readonly string _firstSegment;
++        private readonly int _firstSegmentLength;
++        private readonly string _secondSegment;
++
++        public EncodeFirstSegmentContent(string firstSegment, int firstSegmentLength, string secondSegment)
+         {
+-            return ValidAttributeWhitespaceChars.AsSpan().IndexOf(ch) != -1;
++            _firstSegment = firstSegment;
++            _firstSegmentLength = firstSegmentLength;
++            _secondSegment = secondSegment;
+         }
+ 
+-        private class EncodeFirstSegmentContent : IHtmlContent
++        public void WriteTo(TextWriter writer, HtmlEncoder encoder)
+         {
+-            private readonly string _firstSegment;
+-            private readonly int _firstSegmentLength;
+-            private readonly string _secondSegment;
+-
+-            public EncodeFirstSegmentContent(string firstSegment, int firstSegmentLength, string secondSegment)
+-            {
+-                _firstSegment = firstSegment;
+-                _firstSegmentLength = firstSegmentLength;
+-                _secondSegment = secondSegment;
+-            }
+-
+-            public void WriteTo(TextWriter writer, HtmlEncoder encoder)
+-            {
+-                encoder.Encode(writer, _firstSegment, 0, _firstSegmentLength);
+-                writer.Write(_secondSegment);
+-            }
++            encoder.Encode(writer, _firstSegment, 0, _firstSegmentLength);
++            writer.Write(_secondSegment);
+         }
+     }
+ }

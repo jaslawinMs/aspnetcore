@@ -1,0 +1,30 @@
+{
+  "id": "F118",
+  "finding": {
+    "card_id": "stringwriter-created-without-reused-builder",
+    "file": "src/Mvc/Mvc.Razor/src/TagHelpers/UrlResolutionTagHelper.cs",
+    "line_start": 184,
+    "line_end": 188,
+    "project": "Microsoft.AspNetCore.Mvc.Razor",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Non-HtmlString URL attributes are rendered through a fresh StringWriter and discarded builder.",
+    "explanation": "ProcessUrlAttribute can run for multiple attributes during Razor rendering. For general IHtmlContent values it creates a parameterless StringWriter, writes the complete value, materializes a string, and discards the writer's internal StringBuilder. The allocation cost depends on render frequency and attribute size, so the match is likely rather than confirmed.",
+    "snippet": "using (var writer = new StringWriter())\n{\n    htmlContent.WriteTo(writer, HtmlEncoder);\n    stringValue = writer.ToString();\n}",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "Starting independent evaluation after F116 persistent publication86/358. Fresh default3cd798fe4a76075f68624e8f4a8567aab359ae46 captured;verify actual IHtmlContent/URL producer,writer ownership/culture/history and existing tests before any source edit or timing;at most3 comparisons,shared VM,no power/priority/affinity changes.",
+    "Frozen real-Process/ordered-runner/general-IHtmlContent evaluation in progress;ordinary RazorPageBase HtmlString producer is unchanged control,not a full-page gain.38 owning rows per variant,24 contracts,15/15 immutable allocation goals original-red/candidate-green,48 PDB documents,284-file/118-asset images differ only tested Mvc.Razor DLL/PDB. One bounded builder-pool source shape;maximum3 comparisons,all costs/oversize/concurrency/control variation retained. No PR or finalized disposition yet."
+  ],
+  "branch": "autoperf/F118-url-resolution-writer",
+  "pr_url": null,
+  "updated_at": "2026-11-16T23:39:11.1482488+00:00"
+}
