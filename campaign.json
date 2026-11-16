@@ -2818,11 +2818,14 @@
         "snippet": "using var cancellationTokenSource = timeout == Timeout.InfiniteTimeSpan ? null : new CancellationTokenSource(timeout);",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "rejected",
+      "notes": [
+        "Starting independent managed JS-object timeout lifecycle investigation from campaign baseline after finalized F095. Finite deadlines/cancellation/disposal must remain; no candidate or performance claim yet.",
+        "Rejected generic CTS removal/reuse, zero source A/B comparisons; one original20-case sweep/160 actual results/60 warmups/20 hash-PID setups. Finite versus infinity adds approximately400B per actual managed request but changes independent deadlines. Real BCL TryReset/rearm cancels a token retained from an earlier successful public consumer; no safe generic source candidate. Initial and frozen real owner/converter/runtime/protocol checks both reproduce all9 constructor/get/set deadline failures,6 invoke/void positive rows and5 frozen real default/infinity pairs. The original managed deadline gap remains unfixed for a separate correctness follow-up, not a speedup. All13 current-default source blobs/12 frozen plus4 initial source-PDB proofs/62 actual copied execution files/20 runtime assets/18 actual existing test rows verified. Maximum retainedCV48.93%, all samples retained. No shipping changes/performance PR/browser opening. 126 immutable files/123 exact authoritative copies remotely verified: https://github.com/jaslawinMs/aspnetcore/blob/0ace4108e8f6ae2ab2e90d7e88efe989a30a03e3/F096/README.md"
+      ],
+      "branch": "autoperf/F096-js-object-reference-timeouts",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-16T00:34:46.7244061-08:00"
     },
     {
       "id": "F097",
