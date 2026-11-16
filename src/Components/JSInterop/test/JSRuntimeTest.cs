@@ -83,6 +83,122 @@ public class JSRuntimeTest
     }
 
     [Fact]
+    public async Task InvokeAsync_CancellationExceptionPreservesExplicitCallerToken()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        using var cts = new CancellationTokenSource();
+        runtime.DefaultTimeout = TimeSpan.Zero;
+        var task = runtime.InvokeAsync<int>("explicit token", cts.Token, []);
+
+        Assert.False(task.IsCompleted);
+        Assert.Equal(2, runtime.BeginInvokeCalls.Count);
+        cts.Cancel();
+        var exception = await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
+
+        Assert.Equal(cts.Token, exception.CancellationToken);
+        Assert.True(task.IsCanceled);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ZeroDefaultTimeoutDoesNotDispatchAfterCompletedCall()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        runtime.DefaultTimeout = TimeSpan.Zero;
+
+        var task = runtime.InvokeAsync<int>("zero", []);
+
+        Assert.True(task.IsCanceled);
+        await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
+        Assert.Single(runtime.BeginInvokeCalls);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_CanceledDefaultTokenIsNotReused()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
+        var first = runtime.InvokeAsync<int>("first timeout", []);
+        var firstException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await first);
+        runtime.DefaultTimeout = TimeSpan.FromSeconds(10);
+        var completed = runtime.InvokeAsync<int>("completed", []);
+        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
+        Assert.Equal(731, await completed);
+        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
+        var second = runtime.InvokeAsync<int>("second timeout", []);
+        var secondException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await second);
+
+        Assert.True(firstException.CancellationToken.IsCancellationRequested);
+        Assert.True(secondException.CancellationToken.IsCancellationRequested);
+        Assert.NotEqual(firstException.CancellationToken, secondException.CancellationToken);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ExplicitNoneOverridesDefaultAfterCompletedCall()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
+        var defaultTask = runtime.InvokeAsync<int>("default", []);
+        var overrideTask = runtime.InvokeAsync<int>("override", CancellationToken.None, []);
+        var overrideHandle = runtime.BeginInvokeCalls[^1].AsyncHandle;
+
+        await Assert.ThrowsAsync<TaskCanceledException>(async () => await defaultTask);
+        Assert.False(overrideTask.IsCompleted);
+        CompleteCall(runtime, overrideHandle);
+
+        Assert.Equal(731, await overrideTask);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_OverlappingDefaultCallsHaveIndependentCancellationTokens()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(100);
+        var first = runtime.InvokeAsync<int>("first", []);
+        var second = runtime.InvokeAsync<int>("second", []);
+        var third = runtime.InvokeAsync<int>("third", []);
+        var firstException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await first);
+        var secondException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await second);
+        var thirdException = await Assert.ThrowsAsync<TaskCanceledException>(async () => await third);
+
+        Assert.NotEqual(firstException.CancellationToken, secondException.CancellationToken);
+        Assert.NotEqual(firstException.CancellationToken, thirdException.CancellationToken);
+        Assert.NotEqual(secondException.CancellationToken, thirdException.CancellationToken);
+        Assert.True(firstException.CancellationToken.IsCancellationRequested);
+        Assert.True(secondException.CancellationToken.IsCancellationRequested);
+        Assert.True(thirdException.CancellationToken.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_DisposeDoesNotCancelPendingDefaultCall()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        var task = runtime.InvokeAsync<int>("pending", []);
+        var handle = runtime.BeginInvokeCalls[^1].AsyncHandle;
+
+        runtime.Dispose();
+
+        Assert.False(task.IsCompleted);
+        CompleteCall(runtime, handle);
+        Assert.Equal(731, await task);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_InvalidDefaultTimeoutAfterCompletedCallPreservesValidation()
+    {
+        using var runtime = await CreateRuntimeWithCompletedDefaultCallAsync();
+        runtime.DefaultTimeout = TimeSpan.FromMilliseconds(-2);
+        var task = runtime.InvokeAsync<int>("invalid", []);
+        var exception = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await task);
+
+        Assert.Equal("delay", exception.ParamName);
+        Assert.Single(runtime.BeginInvokeCalls);
+        runtime.DefaultTimeout = TimeSpan.FromSeconds(10);
+        var completed = runtime.InvokeAsync<int>("completed", []);
+        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
+        Assert.Equal(731, await completed);
+    }
+
+    [Fact]
     public void PendingAsyncCall_CompletionAfterCancellationDoesNotThrow()
     {
         using var cts = new CancellationTokenSource();
@@ -438,6 +554,22 @@ public class JSRuntimeTest
 
         // Assert
         Assert.Equal("The current JavaScript runtime does not support reading data streams.", exception.Message);
+    }
+
+    private static async Task<TestJSRuntime> CreateRuntimeWithCompletedDefaultCallAsync()
+    {
+        var runtime = new TestJSRuntime { DefaultTimeout = TimeSpan.FromSeconds(10) };
+        var completed = runtime.InvokeAsync<int>("warm", []);
+        CompleteCall(runtime, runtime.BeginInvokeCalls[^1].AsyncHandle);
+        Assert.Equal(731, await completed);
+
+        return runtime;
+    }
+
+    private static void CompleteCall(TestJSRuntime runtime, long taskId)
+    {
+        var reader = new Utf8JsonReader("731"u8);
+        runtime.EndInvokeJS(taskId, succeeded: true, ref reader);
     }
 
     private class JSError
