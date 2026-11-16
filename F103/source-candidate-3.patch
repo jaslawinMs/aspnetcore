@@ -1,0 +1,80 @@
+diff --git a/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs b/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
+index 06dafdc4d3..da3b5e9d78 100644
+--- a/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
++++ b/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
+@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
+ using System.Collections.Generic;
+ using System.Collections.Immutable;
+ using System.Linq;
++using System.Threading;
+ using Microsoft.CodeAnalysis;
+ using Microsoft.CodeAnalysis.CSharp.Syntax;
+ using Microsoft.CodeAnalysis.Diagnostics;
+@@ -50,8 +51,11 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+             }
+ 
+             var eventCallbackFactoryType = context.Compilation.GetTypeByMetadataName(EventCallbackFactoryTypeName);
+-            var eventHandlerMethods = new ConcurrentDictionary<IMethodSymbol, byte>(SymbolEqualityComparer.Default);
+-            var redundantCallLocationsByMethod = new ConcurrentDictionary<IMethodSymbol, ImmutableArray<Location>>(SymbolEqualityComparer.Default);
++            ConcurrentDictionary<IMethodSymbol, byte>? eventHandlerMethods = null;
++            ConcurrentDictionary<IMethodSymbol, ImmutableArray<Location>>? redundantCallLocationsByMethod = null;
++            var eventHandlerMethodsInitialized = false;
++            var redundantCallLocationsInitialized = false;
++            object? cacheInitializationLock = null;
+ 
+             // collect event handler methods
+             context.RegisterOperationAction(operationContext =>
+@@ -72,7 +76,7 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                     var method = TryGetMethodFromOperation(argument.Value);
+                     if (method is not null)
+                     {
+-                        eventHandlerMethods.TryAdd(method, 0);
++                        LazyInitializer.EnsureInitialized(ref eventHandlerMethods, ref eventHandlerMethodsInitialized, ref cacheInitializationLock, static () => new ConcurrentDictionary<IMethodSymbol, byte>(SymbolEqualityComparer.Default)).TryAdd(method, 0);
+                     }
+                 }
+             }, OperationKind.Invocation);
+@@ -98,7 +102,7 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                     {
+                         var expressionBodyCallLocations = new Dictionary<int, Location>();
+                         AddCallLocation(expressionBodyCallLocations, expressionBodyInvocation);
+-                        redundantCallLocationsByMethod.TryAdd(methodSymbol, expressionBodyCallLocations.Values.ToImmutableArray());
++                        LazyInitializer.EnsureInitialized(ref redundantCallLocationsByMethod, ref redundantCallLocationsInitialized, ref cacheInitializationLock, static () => new ConcurrentDictionary<IMethodSymbol, ImmutableArray<Location>>(SymbolEqualityComparer.Default)).TryAdd(methodSymbol, expressionBodyCallLocations.Values.ToImmutableArray());
+                     }
+ 
+                     return;
+@@ -158,11 +162,16 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                     return;
+                 }
+ 
+-                redundantCallLocationsByMethod.TryAdd(methodSymbol, callLocations.Values.ToImmutableArray());
++                LazyInitializer.EnsureInitialized(ref redundantCallLocationsByMethod, ref redundantCallLocationsInitialized, ref cacheInitializationLock, static () => new ConcurrentDictionary<IMethodSymbol, ImmutableArray<Location>>(SymbolEqualityComparer.Default)).TryAdd(methodSymbol, callLocations.Values.ToImmutableArray());
+             }, Microsoft.CodeAnalysis.CSharp.SyntaxKind.MethodDeclaration);
+ 
+             context.RegisterSymbolEndAction(endContext =>
+             {
++                if (redundantCallLocationsByMethod is null)
++                {
++                    return;
++                }
++
+                 foreach (var methodAndLocations in redundantCallLocationsByMethod)
+                 {
+                     var method = methodAndLocations.Key;
+@@ -186,7 +195,7 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+     }
+ 
+     // Targets of this analyzer are lifecycle methods (OnInitialized, OnParametersSet) and event handlers
+-    private static bool IsTargetMethod(IMethodSymbol method, ConcurrentDictionary<IMethodSymbol, byte> eventHandlerMethods)
++    private static bool IsTargetMethod(IMethodSymbol method, ConcurrentDictionary<IMethodSymbol, byte>? eventHandlerMethods)
+     {
+         if (method.MethodKind != MethodKind.Ordinary)
+         {
+@@ -198,7 +207,7 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+             return true;
+         }
+ 
+-        return eventHandlerMethods.ContainsKey(method);
++        return eventHandlerMethods is not null && eventHandlerMethods.ContainsKey(method);
+     }
+ 
+     private static bool IsTargetLifecycleMethod(IMethodSymbol method)

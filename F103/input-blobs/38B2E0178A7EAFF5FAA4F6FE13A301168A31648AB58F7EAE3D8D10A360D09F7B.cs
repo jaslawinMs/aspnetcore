@@ -1,0 +1,18 @@
+using System;
+using Microsoft.AspNetCore.Components;
+namespace AutoPerfInput
+{
+public partial class Component0028 : ComponentBase
+{
+    private EventCallback Callback0000 => EventCallback.Factory.Create(this, new Action(Handler0000));
+    private void Handler0000()
+    {
+        StateHasChanged();
+    }
+    private EventCallback Callback0001 => EventCallback.Factory.Create(this, new Action(Handler0001));
+    private void Handler0001()
+    {
+        StateHasChanged();
+    }
+}
+}

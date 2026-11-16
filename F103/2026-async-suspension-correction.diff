@@ -1,0 +1,147 @@
+commit 9cf09cfcb2ba03704490c934dec75e12c09a8e46
+Author:     Muhammad Azeem <61787698+AzeemullahRg@users.noreply.github.com>
+AuthorDate: Wed Sep 9 16:18:09 2026 +0500
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Sep 9 13:18:09 2026 +0200
+
+    Fix BL0012 false positive on await foreach and await using (#68720)
+    
+    * Fix BL0012 false positive on await foreach and await using
+    
+    StateHasChangedAnalyzer located the first and last await by collecting
+    AwaitExpressionSyntax nodes. `await foreach`, `await using (...) { }` and
+    `await using var x = ...;` carry their await as a keyword token on the statement, so a
+    method whose only awaits take one of those forms looked await-free and every
+    StateHasChanged in it was reported as redundant.
+    
+    Track the region the method can suspend in instead, taking the statement span for
+    `await foreach` and for the block form of `await using`, and the enclosing block for a
+    using declaration, whose disposal runs when that block exits. Calls outside that region
+    are still reported, so behaviour for ordinary awaits is unchanged.
+    
+    Found while validating #68484.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_018irsMDStKQdmB1k7fkUmqM
+    
+    * Treat await using disposal as the suspension point
+    
+    The block form took the whole statement span as the suspension region, so a
+    StateHasChanged in the body looked like it sat between awaits. Acquisition is
+    synchronous and only the DisposeAsync suspends, so the body still runs before
+    the first suspension and the call is redundant. The using declaration form had
+    the same defect, with disposal happening when the enclosing block exits.
+    
+    Both now use the disposal point. await foreach keeps the whole-statement span:
+    MoveNextAsync is awaited before each iteration, so its body is genuinely inside
+    the suspension region.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_012eF853sQZryRDVkKMgZb4Q
+    
+    ---------
+    
+    Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+diff --git a/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs b/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
+index 2764b2e329..06dafdc4d3 100644
+--- a/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
++++ b/src/Components/Analyzers/src/StateHasChangedAnalyzer.cs
+@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis;
+ using Microsoft.CodeAnalysis.CSharp.Syntax;
+ using Microsoft.CodeAnalysis.Diagnostics;
+ using Microsoft.CodeAnalysis.Operations;
++using Microsoft.CodeAnalysis.Text;
+ 
+ #nullable enable
+ 
+@@ -103,7 +104,24 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                     return;
+                 }
+ 
+-                var awaitExpressions = body.DescendantNodes(static node => !IsNestedFunctionLike(node)).OfType<AwaitExpressionSyntax>().OrderBy(n => n.SpanStart).ToList();
++                var suspensionStart = int.MaxValue;
++                var suspensionEnd = int.MinValue;
++                foreach (var node in body.DescendantNodes(static node => !IsNestedFunctionLike(node)))
++                {
++                    if (TryGetSuspensionSpan(node, out var suspension))
++                    {
++                        if (suspension.Start < suspensionStart)
++                        {
++                            suspensionStart = suspension.Start;
++                        }
++
++                        if (suspension.End > suspensionEnd)
++                        {
++                            suspensionEnd = suspension.End;
++                        }
++                    }
++                }
++
+                 var stateCalls = body.DescendantNodes(static node => !IsNestedFunctionLike(node)).OfType<InvocationExpressionSyntax>()
+                     .Where(invocation => IsStateHasChangedCall(syntaxContext.SemanticModel, invocation))
+                     .OrderBy(invocation => invocation.SpanStart)
+@@ -115,9 +133,9 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                 }
+ 
+                 var callLocations = new Dictionary<int, Location>();
+-                if (awaitExpressions.Count == 0)
++                if (suspensionStart > suspensionEnd)
+                 {
+-                    // no await expressions, all calls are potentially redundant
++                    // no awaits, all calls are potentially redundant
+                     foreach (var stateCall in stateCalls)
+                     {
+                         AddCallLocation(callLocations, stateCall);
+@@ -125,11 +143,9 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+                 }
+                 else
+                 {
+-                    var firstAwaitStart = awaitExpressions[0].SpanStart;
+-                    var lastAwaitStart = awaitExpressions[awaitExpressions.Count - 1].SpanStart;
+                     foreach (var stateCall in stateCalls)
+                     {
+-                        if (stateCall.SpanStart < firstAwaitStart || stateCall.SpanStart > lastAwaitStart)
++                        if (stateCall.SpanStart < suspensionStart || stateCall.SpanStart > suspensionEnd)
+                         {
+                             // any calls before the first await or after the last one are redundant, because ComponentBase calls StateHasChanged afterwards.
+                             AddCallLocation(callLocations, stateCall);
+@@ -215,6 +231,38 @@ public sealed class StateHasChangedAnalyzer : DiagnosticAnalyzer
+         return node is LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax;
+     }
+ 
++    private static bool TryGetSuspensionSpan(SyntaxNode node, out TextSpan span)
++    {
++        switch (node)
++        {
++            case AwaitExpressionSyntax awaitExpression:
++                span = awaitExpression.Span;
++                return true;
++
++            case CommonForEachStatementSyntax forEachStatement when IsAwaitKeyword(forEachStatement.AwaitKeyword):
++                span = forEachStatement.Span;
++                return true;
++
++            case UsingStatementSyntax usingStatement when IsAwaitKeyword(usingStatement.AwaitKeyword):
++                span = TextSpan.FromBounds(usingStatement.Span.End, usingStatement.Span.End);
++                return true;
++
++            case LocalDeclarationStatementSyntax declaration when IsAwaitKeyword(declaration.AwaitKeyword):
++                var disposalPoint = declaration.Parent is BlockSyntax enclosingBlock ? enclosingBlock.Span.End : declaration.Span.End;
++                span = TextSpan.FromBounds(disposalPoint, disposalPoint);
++                return true;
++
++            default:
++                span = default;
++                return false;
++        }
++    }
++
++    private static bool IsAwaitKeyword(SyntaxToken token)
++    {
++        return token.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.AwaitKeyword);
++    }
++
+     private static IMethodSymbol? TryGetMethodFromOperation(IOperation operation)
+     {
+         switch (operation)
