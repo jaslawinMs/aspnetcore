@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.StoredValueBenchmark-20261116-115435</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>      Method</th><th>          Case</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>SerializeOrPersist</td><td>DataScalarControl</td><td>632.74 ns</td><td>110.925 ns</td><td>58.016 ns</td><td>0.0236</td><td>-</td><td>-</td><td>1,032 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>DataString16KControl</td><td>13,615.34 ns</td><td>4,052.150 ns</td><td>2,119.353 ns</td><td>3.2961</td><td>0.1268</td><td>-</td><td>115,842 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionArray256</td><td>2,654.75 ns</td><td>123.695 ns</td><td>64.695 ns</td><td>0.0571</td><td>-</td><td>-</td><td>2,264 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionDictionary256</td><td>15,547.50 ns</td><td>2,207.312 ns</td><td>1,154.467 ns</td><td>0.6868</td><td>-</td><td>-</td><td>29,057 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionEscaped16K</td><td>134,928.86 ns</td><td>7,296.521 ns</td><td>3,816.222 ns</td><td>3.9063</td><td>-</td><td>-</td><td>144,569 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionNested</td><td>2,958.17 ns</td><td>264.607 ns</td><td>138.395 ns</td><td>0.0539</td><td>-</td><td>-</td><td>2,024 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionNull</td><td>75.10 ns</td><td>4.824 ns</td><td>2.523 ns</td><td>0.0016</td><td>-</td><td>-</td><td>88 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionScalar</td><td>288.35 ns</td><td>22.881 ns</td><td>11.967 ns</td><td>0.0085</td><td>-</td><td>-</td><td>384 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionString128K</td><td>161,119.35 ns</td><td>27,556.956 ns</td><td>14,412.821 ns</td><td>3.2895</td><td>3.2895</td><td>3.2895</td><td>262,536 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionString16K</td><td>8,144.09 ns</td><td>3,526.941 ns</td><td>1,844.659 ns</td><td>0.8748</td><td>-</td><td>-</td><td>33,153 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>SessionUnicode16K</td><td>192,861.22 ns</td><td>26,551.287 ns</td><td>13,886.836 ns</td><td>1.8939</td><td>1.8939</td><td>1.8939</td><td>197,004 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueAbove4K</td><td>1,183.78 ns</td><td>234.731 ns</td><td>122.769 ns</td><td>0.1108</td><td>-</td><td>-</td><td>4,296 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueArray256</td><td>2,321.31 ns</td><td>46.306 ns</td><td>24.219 ns</td><td>0.0231</td><td>-</td><td>-</td><td>1,200 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueAt4K</td><td>1,153.70 ns</td><td>175.080 ns</td><td>91.570 ns</td><td>0.1080</td><td>-</td><td>-</td><td>4,288 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueBelow4K</td><td>1,306.65 ns</td><td>279.542 ns</td><td>146.206 ns</td><td>0.1119</td><td>-</td><td>-</td><td>4,288 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueDictionary256</td><td>11,754.56 ns</td><td>1,611.164 ns</td><td>842.670 ns</td><td>0.3558</td><td>-</td><td>-</td><td>14,769 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueEmptyString</td><td>180.75 ns</td><td>16.444 ns</td><td>8.600 ns</td><td>0.0054</td><td>-</td><td>-</td><td>232 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueEnum</td><td>231.42 ns</td><td>43.471 ns</td><td>22.736 ns</td><td>0.0082</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueEscaped16K</td><td>122,142.97 ns</td><td>2,095.252 ns</td><td>1,095.857 ns</td><td>1.5244</td><td>-</td><td>-</td><td>72,331 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueNested</td><td>2,451.46 ns</td><td>50.825 ns</td><td>26.582 ns</td><td>0.0242</td><td>-</td><td>-</td><td>1,384 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueNull</td><td>85.78 ns</td><td>12.615 ns</td><td>6.598 ns</td><td>0.0051</td><td>-</td><td>-</td><td>200 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueNullableEnums</td><td>654.54 ns</td><td>14.938 ns</td><td>7.813 ns</td><td>0.0065</td><td>-</td><td>-</td><td>440 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueScalar</td><td>172.74 ns</td><td>8.241 ns</td><td>4.310 ns</td><td>0.0054</td><td>-</td><td>-</td><td>232 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueString128K</td><td>79,689.94 ns</td><td>9,589.611 ns</td><td>5,015.552 ns</td><td>1.5625</td><td>1.5625</td><td>1.5625</td><td>131,305 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueString16K</td><td>3,902.67 ns</td><td>413.499 ns</td><td>216.268 ns</td><td>0.4269</td><td>-</td><td>-</td><td>16,616 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueString1K</td><td>534.31 ns</td><td>85.104 ns</td><td>44.511 ns</td><td>0.0316</td><td>-</td><td>-</td><td>1,256 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueStringSmall</td><td>194.94 ns</td><td>19.712 ns</td><td>10.310 ns</td><td>0.0060</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>SerializeOrPersist</td><td>ValueUnicode16K</td><td>134,647.97 ns</td><td>13,548.741 ns</td><td>7,086.253 ns</td><td>1.2500</td><td>1.2500</td><td>1.2500</td><td>98,546 B</td>
+</tr></tbody></table>
+</body>
+</html>

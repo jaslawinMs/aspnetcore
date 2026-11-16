@@ -1,0 +1,164 @@
+diff --git a/src/Components/Endpoints/src/Microsoft.AspNetCore.Components.Endpoints.csproj b/src/Components/Endpoints/src/Microsoft.AspNetCore.Components.Endpoints.csproj
+index 4491c7c4f6..6ddcff135e 100644
+--- a/src/Components/Endpoints/src/Microsoft.AspNetCore.Components.Endpoints.csproj
++++ b/src/Components/Endpoints/src/Microsoft.AspNetCore.Components.Endpoints.csproj
+@@ -38,6 +38,7 @@
+     <Compile Include="$(SharedSourceRoot)Buffers\RefPooledArrayBufferWriter.cs" Link="Shared\Buffers\%(Filename)%(Extension)" />
+     <Compile Include="$(SharedSourceRoot)LinkerFlags.cs" LinkBase="Shared" />
+     <Compile Include="$(SharedSourceRoot)MiddlewareInvokedKeys.cs" LinkBase="Shared" />
++    <Compile Include="$(SharedSourceRoot)PooledArrayBufferWriter.cs" LinkBase="Shared" />
+     <Compile Include="$(SharedSourceRoot)ChunkingCookieManager\**\*.cs" LinkBase="Internal" />
+     <Compile Include="$(SharedSourceRoot)Components\ComponentsActivityLinkStore.cs" LinkBase="Shared" />
+     <Compile Include="$(ComponentsSharedSourceRoot)src\HotReloadManager.cs" LinkBase="HotReload" />
+diff --git a/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs b/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
+index fee9293b35..2a2ae760b5 100644
+--- a/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
++++ b/src/Components/Endpoints/src/Serialization/JsonStoredDataSerializer.cs
+@@ -1,6 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using System.Buffers;
+ using System.Diagnostics.CodeAnalysis;
+ using System.Text.Json;
+ using Microsoft.AspNetCore.Internal;
+@@ -211,13 +212,13 @@ internal sealed class JsonStoredDataSerializer : IStoredDataSerializer
+ 
+     public byte[] SerializeValue(object value, Type type)
+     {
+-        using var buffer = new MemoryStream();
++        using var buffer = new PooledArrayBufferWriter<byte>();
+         using var writer = new Utf8JsonWriter(buffer);
+ 
+         WriteEntry(writer, value, type);
+         writer.Flush();
+ 
+-        return buffer.ToArray();
++        return buffer.WrittenSpan.ToArray();
+     }
+ 
+     public object? DeserializeValue(ReadOnlySpan<byte> utf8Json, [DynamicallyAccessedMembers(LinkerFlags.JsonSerialized)] Type targetType)
+diff --git a/src/Components/Endpoints/test/TempData/JsonStoredDataSerializerTest.cs b/src/Components/Endpoints/test/TempData/JsonStoredDataSerializerTest.cs
+index 0039a77b1f..82ee6095be 100644
+--- a/src/Components/Endpoints/test/TempData/JsonStoredDataSerializerTest.cs
++++ b/src/Components/Endpoints/test/TempData/JsonStoredDataSerializerTest.cs
+@@ -3,7 +3,16 @@
+ 
+ using System;
+ using System.Collections;
++using System.Text;
+ using System.Text.Json;
++using Microsoft.AspNetCore.Components.Rendering;
++using Microsoft.AspNetCore.Components.Test.Helpers;
++using Microsoft.AspNetCore.Components.Web;
++using Microsoft.AspNetCore.Http;
++using Microsoft.AspNetCore.Http.Features;
++using Microsoft.Extensions.DependencyInjection;
++using Microsoft.Extensions.Logging.Abstractions;
++using Moq;
+ 
+ namespace Microsoft.AspNetCore.Components.Endpoints;
+ 
+@@ -555,6 +564,90 @@ public class JsonStoredDataSerializerTest
+         Assert.Equal(TestEnum.Value2, array[2]);
+     }
+ 
++    [Fact]
++    public void SerializeValue_PreservesOwnedBytesAcrossSubsequentCalls()
++    {
++        var serializer = CreateSerializer();
++        var bytes = serializer.SerializeValue("retained", typeof(string));
++        var expected = Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":\"retained\"}");
++
++        serializer.SerializeValue(new string('x', 100_000), typeof(string));
++        var next = serializer.SerializeValue("retained", typeof(string));
++
++        Assert.Equal(expected, bytes);
++        Assert.Equal(expected, next);
++        Assert.NotSame(bytes, next);
++    }
++
++    [Theory]
++    [InlineData(16)]
++    [InlineData(4096)]
++    [InlineData(131072)]
++    public void SerializeValue_PreservesLargeEscapedOutputAndDeclaredType(int length)
++    {
++        var serializer = CreateSerializer();
++        var value = new string('x', length) + "\"<&\\\n\u00e9\u4e2d\U0001F30D";
++        var expected = Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":"
++            + JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerDefaults.Web)) + "}");
++
++        var bytes = serializer.SerializeValue(value, typeof(string));
++        var deserialized = Assert.IsType<string>(serializer.DeserializeValue(bytes, typeof(string)));
++
++        Assert.Equal(expected, bytes);
++        Assert.Equal(value, deserialized);
++    }
++
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task SerializeValue_PreservesFailureBeforeSessionReplacementAndRecovers(bool unsupportedType)
++    {
++        var serializer = CreateSerializer();
++        var supplier = new SessionCascadingValueSupplier(serializer, NullLogger<SessionCascadingValueSupplier>.Instance);
++        var session = new Mock<ISession>();
++        byte[] previous = [1, 3, 5];
++        var stored = previous;
++        session.Setup(value => value.Set("stored-value", It.IsAny<byte[]>()))
++            .Callback<string, byte[]>((key, bytes) => stored = bytes);
++        var feature = new Mock<ISessionFeature>();
++        feature.SetupGet(value => value.Session).Returns(session.Object);
++        using var services = new ServiceCollection().AddLogging().BuildServiceProvider();
++        var context = new DefaultHttpContext { RequestServices = services };
++        context.Features.Set(feature.Object);
++        supplier.SetRequestContext(context);
++        object nested = "leaf";
++        for (var index = 0; index < 600; index++)
++        {
++            nested = new object[] { nested };
++        }
++        var component = new SessionValueComponent { Value = unsupportedType ? new IntPtr(42) : nested };
++        using var renderer = new TestRenderer();
++        var componentState = new ComponentState(renderer, 0, component, null);
++        var attribute = new SupplyParameterFromSessionAttribute { Name = "stored-value" };
++        var parameter = new CascadingParameterInfo(attribute, nameof(SessionValueComponent.Value), typeof(object));
++        using var subscription = supplier.CreateSubscription(componentState, attribute, parameter);
++
++        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => supplier.PersistAllValues());
++
++        if (unsupportedType)
++        {
++            Assert.Equal("Cannot serialize type 'System.IntPtr'.", exception.Message);
++        }
++        else
++        {
++            Assert.Contains("depth", exception.Message, StringComparison.OrdinalIgnoreCase);
++        }
++        Assert.Same(previous, stored);
++        session.Verify(value => value.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Never);
++
++        component.Value = "recovered";
++        await supplier.PersistAllValues();
++
++        Assert.Equal(Encoding.UTF8.GetBytes("{\"type\":\"System.String\",\"value\":\"recovered\"}"), stored);
++        Assert.Equal("recovered", serializer.DeserializeValue(stored, typeof(string)));
++        session.Verify(value => value.Set("stored-value", It.IsAny<byte[]>()), Times.Once);
++    }
++
+     [Fact]
+     public void ReserializingDeserializedData_IsByteIdentical()
+     {
+@@ -582,6 +675,11 @@ public class JsonStoredDataSerializerTest
+         public int DummyInt { get; set; }
+     }
+ 
++    private sealed class SessionValueComponent : ComponentBase
++    {
++        public object Value { get; set; }
++    }
++
+     private enum TestEnum
+     {
+         Value1,

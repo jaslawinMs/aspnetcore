@@ -1,0 +1,30 @@
+{
+  "candidate": "F112",
+  "officialDocumentsRead": [
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.io.memorystream.toarray?view=net-10.0",
+      "establishedContract": "ToArray returns a new byte array containing a copy of the stream contents,omitting unused capacity.",
+      "notEstablished": "No claim that this documentation identifies the exact loaded .NET12-alpha implementation's resize factors or counts."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.text.json.utf8jsonwriter.-ctor?view=net-10.0",
+      "establishedContract": "Utf8JsonWriter accepts IBufferWriter<byte> as its output destination;default writer options write minimized validated JSON.",
+      "notEstablished": "Not evidence of exact .NET12-alpha pool retention or stream-writer internal copy attribution."
+    }
+  ],
+  "repositoryHistory": {
+    "serializerIntroduction": "2daa22c6508224fcc2f6d0d8fa576d0148545c46",
+    "serializerOriginatingPullRequest": "dotnet/aspnetcore#65483",
+    "observedNullSessionBehaviorChange": "dotnet/aspnetcore#67641",
+    "boundedCurrentIssueSearchIsNotAbsenceProof": true
+  },
+  "poolingPriorArt": {
+    "source": "src\\Shared\\PooledArrayBufferWriter.cs",
+    "unchangedHelper": true,
+    "sourceObserved": "Existing helper implements IBufferWriter<T>,rents from ArrayPool<T>.Shared,grows contiguously,copies/clears committed spans during growth,and clears/returns rentals on Dispose.",
+    "selectionContext": "F111 separately evaluated BCL ArrayBufferWriter then this existing shared helper. F112 starts from independent unchanged baseline and measures the pooled single-value seam separately;F111 bulk source change is not inherited.",
+    "boundedMemoryClaimed": false,
+    "coldMissesRetainedHeapConcurrencyTrimPolicyMeasured": false,
+    "finalIndependentResultAndSessionCopiesRemain": true
+  }
+}

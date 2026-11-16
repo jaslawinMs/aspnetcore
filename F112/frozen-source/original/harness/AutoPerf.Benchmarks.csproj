@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <TestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Components.Endpoints.Tests\Release\net12.0</TestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Middleware\Session\src\Microsoft.AspNetCore.Session.csproj" />
+    <Reference Include="$(TestBin)\Microsoft.*.dll"
+      Exclude="$(TestBin)\*Test*.dll;$(TestBin)\*Generator*.dll;$(TestBin)\Microsoft.AspNetCore.Components.Endpoints.dll;$(TestBin)\Microsoft.AspNetCore.Session.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(TestBin)\Microsoft.AspNetCore.Components.Endpoints.dll')"
+      Text="Build the actual Endpoints owning tests Release first;do not substitute installed ASP.NET assemblies." />
+  </Target>
+</Project>

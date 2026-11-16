@@ -1,0 +1,48 @@
+@page "/autoperf-f112"
+@using System.Security.Cryptography
+@using System.Text
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>AutoPerf F112 session values</PageTitle>
+
+<p id="f112-status">@Status</p>
+<p id="f112-length">@(Payload?.Length ?? 0)</p>
+<p id="f112-hash">@(Payload is null ? "missing" : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Payload))))</p>
+<p id="f112-integers">@(Integers is null ? "missing" : string.Join(",", Integers))</p>
+<a id="f112-write" href="/autoperf-f112?action=write" data-enhance-nav="false">Write values</a>
+<a id="f112-read" href="/autoperf-f112?action=read" data-enhance-nav="false">Read retained values</a>
+<a id="f112-clear" href="/autoperf-f112?action=clear" data-enhance-nav="false">Clear values</a>
+
+@code
+{
+    [SupplyParameterFromSession(Name = "autoperf-f112-payload")]
+    public string? Payload { get; set; }
+
+    [SupplyParameterFromSession(Name = "autoperf-f112-integers")]
+    public int[]? Integers { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Action { get; set; }
+
+    private string Status { get; set; } = "ready";
+
+    protected override void OnParametersSet()
+    {
+        switch (Action)
+        {
+            case "write":
+                Payload = new string('A', 16384) + string.Concat(Enumerable.Repeat("<&\\\"\n \u00e9\u4e2d\U0001f30d", 64));
+                Integers = [7, 11, 19];
+                Status = "stored";
+                break;
+            case "read":
+                Status = Payload is null ? "missing" : "read";
+                break;
+            case "clear":
+                Payload = null;
+                Integers = null;
+                Status = "cleared";
+                break;
+        }
+    }
+}
