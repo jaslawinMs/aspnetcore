@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Buffers.Text;
 using System.Text;
 
 using Microsoft.AspNetCore.DataProtection;
@@ -107,6 +108,13 @@ public class DataProtectorTokenProvider<TUser> : IUserTwoFactorTokenProvider<TUs
     /// </returns>
     public virtual async Task<bool> ValidateAsync(string purpose, string token, UserManager<TUser> manager, TUser user)
     {
+        // Keep whitespace-containing tokens on the existing decoder path.
+        if (token.AsSpan().IndexOfAny(" \t\r\n") < 0 && !Base64.IsValid(token))
+        {
+            Logger.UnhandledException();
+            return false;
+        }
+
         try
         {
             var unprotectedData = Protector.Unprotect(Convert.FromBase64String(token));
