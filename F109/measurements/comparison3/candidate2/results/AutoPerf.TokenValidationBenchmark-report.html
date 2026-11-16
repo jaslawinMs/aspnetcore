@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TokenValidationBenchmark-20261116-094245</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>          Case</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>VerifyToken</td><td>Empty</td><td>2,469.99 ns</td><td>365.173 ns</td><td>190.993 ns</td><td>-</td><td>-</td><td>-</td><td>296 B</td>
+</tr><tr><td>VerifyToken</td><td>Expired</td><td>3,499.66 ns</td><td>82.073 ns</td><td>42.926 ns</td><td>-</td><td>-</td><td>-</td><td>624 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadEnabled</td><td>83.52 ns</td><td>2.188 ns</td><td>1.144 ns</td><td>0.0008</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadLarge</td><td>640.69 ns</td><td>15.463 ns</td><td>8.088 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadSmall</td><td>38.61 ns</td><td>0.696 ns</td><td>0.364 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidLengthLarge</td><td>1,075.71 ns</td><td>36.902 ns</td><td>19.300 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidLengthSmall</td><td>45.53 ns</td><td>0.795 ns</td><td>0.416 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidMiddleSmall</td><td>43.08 ns</td><td>3.661 ns</td><td>1.915 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidNonAsciiSmall</td><td>38.63 ns</td><td>1.096 ns</td><td>0.573 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>Inval(...)abled [21]</td><td>84.58 ns</td><td>1.474 ns</td><td>0.771 ns</td><td>-</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidPaddingSmall</td><td>39.32 ns</td><td>1.374 ns</td><td>0.718 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailEnabled</td><td>92.47 ns</td><td>1.546 ns</td><td>0.809 ns</td><td>-</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailLarge</td><td>1,067.18 ns</td><td>28.413 ns</td><td>14.861 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailSmall</td><td>54.17 ns</td><td>0.757 ns</td><td>0.396 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>InvalidUnusedPadBits</td><td>51.77 ns</td><td>0.927 ns</td><td>0.485 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>VerifyToken</td><td>NonEm(...)Store [25]</td><td>3,739.10 ns</td><td>45.803 ns</td><td>23.956 ns</td><td>-</td><td>-</td><td>-</td><td>1,064 B</td>
+</tr><tr><td>VerifyToken</td><td>NullO(...)ation [21]</td><td>1,929.19 ns</td><td>34.312 ns</td><td>17.946 ns</td><td>-</td><td>-</td><td>-</td><td>304 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedInvalidUtf8</td><td>7,469.25 ns</td><td>200.896 ns</td><td>105.072 ns</td><td>-</td><td>-</td><td>-</td><td>1,656 B</td>
+</tr><tr><td>VerifyToken</td><td>Prote(...)refix [30]</td><td>6,464.27 ns</td><td>164.419 ns</td><td>85.994 ns</td><td>-</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedTrailing</td><td>3,813.07 ns</td><td>96.698 ns</td><td>50.575 ns</td><td>-</td><td>-</td><td>-</td><td>1,064 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedTruncated</td><td>6,514.76 ns</td><td>93.789 ns</td><td>49.054 ns</td><td>-</td><td>-</td><td>-</td><td>888 B</td>
+</tr><tr><td>VerifyToken</td><td>UnprotectFailure</td><td>7,095.28 ns</td><td>105.576 ns</td><td>55.218 ns</td><td>-</td><td>-</td><td>-</td><td>808 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidEnabled</td><td>3,855.83 ns</td><td>158.615 ns</td><td>82.959 ns</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidLarge</td><td>26,145.20 ns</td><td>1,605.431 ns</td><td>839.672 ns</td><td>1.5182</td><td>-</td><td>-</td><td>57,674 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidLargeWhitespace</td><td>40,184.21 ns</td><td>3,722.803 ns</td><td>1,947.098 ns</td><td>1.5625</td><td>-</td><td>-</td><td>57,675 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidNoStamp</td><td>3,677.65 ns</td><td>101.650 ns</td><td>53.165 ns</td><td>-</td><td>-</td><td>-</td><td>880 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidPadded</td><td>3,891.28 ns</td><td>69.396 ns</td><td>36.295 ns</td><td>-</td><td>-</td><td>-</td><td>1,232 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidSmall</td><td>3,852.73 ns</td><td>128.834 ns</td><td>67.383 ns</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidWhitespace</td><td>4,263.01 ns</td><td>82.495 ns</td><td>43.147 ns</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>WhitespaceOnly</td><td>2,299.33 ns</td><td>19.078 ns</td><td>9.978 ns</td><td>-</td><td>-</td><td>-</td><td>296 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongPurpose</td><td>3,660.51 ns</td><td>55.897 ns</td><td>29.235 ns</td><td>-</td><td>-</td><td>-</td><td>896 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongStamp</td><td>3,854.94 ns</td><td>173.056 ns</td><td>90.511 ns</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongUser</td><td>3,605.87 ns</td><td>61.535 ns</td><td>32.184 ns</td><td>-</td><td>-</td><td>-</td><td>848 B</td>
+</tr></tbody></table>
+</body>
+</html>

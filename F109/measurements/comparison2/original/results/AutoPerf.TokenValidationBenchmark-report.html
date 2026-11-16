@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TokenValidationBenchmark-20261116-093816</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  Toolchain=InProcessEmitToolchain  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>          Case</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>VerifyToken</td><td>Empty</td><td>1.877 &mu;s</td><td>0.2573 &mu;s</td><td>0.1346 &mu;s</td><td>-</td><td>-</td><td>-</td><td>192 B</td>
+</tr><tr><td>VerifyToken</td><td>Expired</td><td>3.454 &mu;s</td><td>0.0823 &mu;s</td><td>0.0431 &mu;s</td><td>-</td><td>-</td><td>-</td><td>624 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadEnabled</td><td>2.230 &mu;s</td><td>0.0306 &mu;s</td><td>0.0160 &mu;s</td><td>-</td><td>-</td><td>-</td><td>328 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadLarge</td><td>2.165 &mu;s</td><td>0.0451 &mu;s</td><td>0.0236 &mu;s</td><td>-</td><td>-</td><td>-</td><td>296 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidHeadSmall</td><td>2.153 &mu;s</td><td>0.0439 &mu;s</td><td>0.0230 &mu;s</td><td>-</td><td>-</td><td>-</td><td>296 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidLengthLarge</td><td>4.922 &mu;s</td><td>0.5936 &mu;s</td><td>0.3105 &mu;s</td><td>0.2299</td><td>-</td><td>-</td><td>8,680 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidLengthSmall</td><td>2.201 &mu;s</td><td>0.0436 &mu;s</td><td>0.0228 &mu;s</td><td>-</td><td>-</td><td>-</td><td>504 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidMiddleSmall</td><td>2.186 &mu;s</td><td>0.0184 &mu;s</td><td>0.0096 &mu;s</td><td>-</td><td>-</td><td>-</td><td>416 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidNonAsciiSmall</td><td>2.157 &mu;s</td><td>0.0732 &mu;s</td><td>0.0383 &mu;s</td><td>-</td><td>-</td><td>-</td><td>296 B</td>
+</tr><tr><td>VerifyToken</td><td>Inval(...)abled [21]</td><td>2.258 &mu;s</td><td>0.0223 &mu;s</td><td>0.0116 &mu;s</td><td>-</td><td>-</td><td>-</td><td>360 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidPaddingSmall</td><td>2.156 &mu;s</td><td>0.0321 &mu;s</td><td>0.0168 &mu;s</td><td>-</td><td>-</td><td>-</td><td>328 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailEnabled</td><td>2.295 &mu;s</td><td>0.0317 &mu;s</td><td>0.0166 &mu;s</td><td>-</td><td>-</td><td>-</td><td>536 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailLarge</td><td>4.849 &mu;s</td><td>0.3292 &mu;s</td><td>0.1722 &mu;s</td><td>0.2301</td><td>-</td><td>-</td><td>8,680 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidTailSmall</td><td>2.211 &mu;s</td><td>0.0341 &mu;s</td><td>0.0178 &mu;s</td><td>-</td><td>-</td><td>-</td><td>504 B</td>
+</tr><tr><td>VerifyToken</td><td>InvalidUnusedPadBits</td><td>2.225 &mu;s</td><td>0.0464 &mu;s</td><td>0.0243 &mu;s</td><td>-</td><td>-</td><td>-</td><td>520 B</td>
+</tr><tr><td>VerifyToken</td><td>NonEm(...)Store [25]</td><td>3.744 &mu;s</td><td>0.0684 &mu;s</td><td>0.0358 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,064 B</td>
+</tr><tr><td>VerifyToken</td><td>NullO(...)ation [21]</td><td>1.985 &mu;s</td><td>0.0260 &mu;s</td><td>0.0136 &mu;s</td><td>-</td><td>-</td><td>-</td><td>304 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedInvalidUtf8</td><td>7.463 &mu;s</td><td>0.1356 &mu;s</td><td>0.0709 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,656 B</td>
+</tr><tr><td>VerifyToken</td><td>Prote(...)refix [30]</td><td>6.468 &mu;s</td><td>0.1231 &mu;s</td><td>0.0644 &mu;s</td><td>-</td><td>-</td><td>-</td><td>928 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedTrailing</td><td>3.742 &mu;s</td><td>0.0757 &mu;s</td><td>0.0396 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,064 B</td>
+</tr><tr><td>VerifyToken</td><td>ProtectedTruncated</td><td>6.525 &mu;s</td><td>0.1694 &mu;s</td><td>0.0886 &mu;s</td><td>-</td><td>-</td><td>-</td><td>888 B</td>
+</tr><tr><td>VerifyToken</td><td>UnprotectFailure</td><td>6.467 &mu;s</td><td>0.1162 &mu;s</td><td>0.0608 &mu;s</td><td>-</td><td>-</td><td>-</td><td>808 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidEnabled</td><td>3.811 &mu;s</td><td>0.0744 &mu;s</td><td>0.0389 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidLarge</td><td>25.209 &mu;s</td><td>2.6064 &mu;s</td><td>1.3632 &mu;s</td><td>1.5244</td><td>-</td><td>-</td><td>57,674 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidLargeWhitespace</td><td>39.555 &mu;s</td><td>0.6373 &mu;s</td><td>0.3333 &mu;s</td><td>1.5723</td><td>-</td><td>-</td><td>57,675 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidNoStamp</td><td>3.653 &mu;s</td><td>0.0552 &mu;s</td><td>0.0289 &mu;s</td><td>-</td><td>-</td><td>-</td><td>880 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidPadded</td><td>3.833 &mu;s</td><td>0.0805 &mu;s</td><td>0.0421 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,232 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidSmall</td><td>3.805 &mu;s</td><td>0.0752 &mu;s</td><td>0.0393 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>ValidWhitespace</td><td>4.188 &mu;s</td><td>0.0598 &mu;s</td><td>0.0313 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>WhitespaceOnly</td><td>1.746 &mu;s</td><td>0.0452 &mu;s</td><td>0.0237 &mu;s</td><td>-</td><td>-</td><td>-</td><td>192 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongPurpose</td><td>3.620 &mu;s</td><td>0.0875 &mu;s</td><td>0.0457 &mu;s</td><td>-</td><td>-</td><td>-</td><td>896 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongStamp</td><td>3.790 &mu;s</td><td>0.0450 &mu;s</td><td>0.0236 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,208 B</td>
+</tr><tr><td>VerifyToken</td><td>WrongUser</td><td>3.582 &mu;s</td><td>0.0619 &mu;s</td><td>0.0324 &mu;s</td><td>-</td><td>-</td><td>-</td><td>848 B</td>
+</tr></tbody></table>
+</body>
+</html>
