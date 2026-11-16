@@ -1,0 +1,72 @@
+[
+  {
+    "name": "prior-port-cache",
+    "entryPoint": "gh",
+    "arguments": [
+      "pr",
+      "view",
+      "69558",
+      "--repo",
+      "dotnet/aspnetcore",
+      "--json",
+      "title,body,files,commits,mergedAt,author,url"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "port-cache-review-comments",
+    "entryPoint": "gh",
+    "arguments": [
+      "api",
+      "-X",
+      "GET",
+      "repos/dotnet/aspnetcore/pulls/69558/comments",
+      "-f",
+      "per_page=100"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "port-cache-issue-comments",
+    "entryPoint": "gh",
+    "arguments": [
+      "api",
+      "-X",
+      "GET",
+      "repos/dotnet/aspnetcore/issues/69558/comments",
+      "-f",
+      "per_page=100"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "getboxedport-related",
+    "entryPoint": "gh",
+    "arguments": [
+      "api",
+      "-X",
+      "GET",
+      "search/issues",
+      "-f",
+      "q=repo:dotnet/aspnetcore is:pr GetBoxedPort",
+      "-f",
+      "per_page=30"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "endpoint-port-boxing-related",
+    "entryPoint": "gh",
+    "arguments": [
+      "api",
+      "-X",
+      "GET",
+      "search/issues",
+      "-f",
+      "q=repo:dotnet/aspnetcore is:pr \"server.port\" boxing",
+      "-f",
+      "per_page=30"
+    ],
+    "exitCode": 0
+  }
+]

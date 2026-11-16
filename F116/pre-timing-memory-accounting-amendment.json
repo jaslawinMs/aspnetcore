@@ -1,0 +1,15 @@
+{
+  "candidate": "F116",
+  "shippingChangesBeforeAmendment": false,
+  "actualTimingProfilesBeforeAmendment": 0,
+  "sourceComparisonsBeforeAmendment": 0,
+  "originalPreparation1Passed": "24 contracts,31 actual owning rows,25 expected-red allocation samples,3 four-port fresh cold observations",
+  "initialAnnotationError": "Initial harness boundary/cleanup annotation described BDN parallel memory as main-thread-only.",
+  "actualPinnedSource": "investigation\\bdn-memory-accounting\\GcStats.cs",
+  "verifiedImplementation": "BDN0.13.0 uses an available GC.GetTotalAllocatedBytes(bool) delegate with precise:true on .NET Core3+;this actual .NET12 runtime supplies it. Therefore BDN memory is process-wide and includes worker and other process allocations.",
+  "correction": "Change only harness evidence annotations and add an actual available-delegate/runtime identity guard before timing. Preserve first frozen image,source,contracts,raw characterization and initial readiness receipt. Rebuild the harness without restoring unchanged dependencies;recharacterize with a byte-exact copy of the original frozen fixtures before any source edit or timing.",
+  "functionalWorkloadsChanged": false,
+  "resourceGoalsRetuned": false,
+  "owningTestRerunNeeded": false,
+  "perWorkerCalipers": "Still independently attribute each actual worker producer loop. They are not a claim that BDN omits worker allocations."
+}

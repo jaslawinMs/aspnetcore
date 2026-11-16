@@ -1,0 +1,13 @@
+diff --git a/src/Servers/Kestrel/test/InMemory.FunctionalTests/KestrelMetricsTests.cs b/src/Servers/Kestrel/test/InMemory.FunctionalTests/KestrelMetricsTests.cs
+index 2347024ef2..821a7e3e1b 100644
+--- a/src/Servers/Kestrel/test/InMemory.FunctionalTests/KestrelMetricsTests.cs
++++ b/src/Servers/Kestrel/test/InMemory.FunctionalTests/KestrelMetricsTests.cs
+@@ -835,6 +835,8 @@ public class KestrelMetricsTests : TestApplicationErrorLoggerLoggedTest
+             await shutdownTask;
+         }
+ 
++        await connectionDuration.WaitForMeasurementsAsync(minCount: 1).DefaultTimeout();
++
+         Assert.Collection(connectionDuration.GetMeasurementSnapshot(), m => AssertDuration(m, "127.0.0.1", localPort: 0, "tcp", "ipv4", KestrelMetrics.Http2, error: KestrelMetrics.GetErrorType(ConnectionEndReason.AppShutdownTimeout)));
+     }
+ 

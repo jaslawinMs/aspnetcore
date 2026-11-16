@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <TestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.SignalR.Tests\Release\net12.0</TestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Servers\Kestrel\Core\src\Microsoft.AspNetCore.Server.Kestrel.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\SignalR\server\Core\src\Microsoft.AspNetCore.SignalR.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\SignalR\common\Http.Connections\src\Microsoft.AspNetCore.Http.Connections.csproj" />
+    <Reference Include="$(TestBin)\Microsoft.*.dll"
+      Exclude="$(TestBin)\*Test*.dll;$(TestBin)\*Generator*.dll;$(TestBin)\Microsoft.AspNetCore.Server.Kestrel.Core.dll;$(TestBin)\Microsoft.AspNetCore.SignalR.Core.dll;$(TestBin)\Microsoft.AspNetCore.Http.Connections.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedDependencies" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(TestBin)\Microsoft.AspNetCore.SignalR.Core.dll')"
+      Text="Run the actual scoped SignalR owning tests in Release first;do not substitute an installed framework owner." />
+  </Target>
+</Project>

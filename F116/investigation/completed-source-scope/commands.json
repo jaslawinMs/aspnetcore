@@ -1,0 +1,108 @@
+{
+  "commands": [
+    {
+      "name": "still-tracked-clean",
+      "entryPoint": "git",
+      "arguments": [
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "still-baseline",
+      "entryPoint": "git",
+      "arguments": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "actual-default-owner-differences",
+      "entryPoint": "git",
+      "arguments": [
+        "diff",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "0d5708d05bb47d5ae84cecd1b12dff7b1d90c84b",
+        "--",
+        "src/Shared/ConnectionEndpointTags.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Infrastructure/KestrelMetrics.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Infrastructure/ConnectionMetricsContext.cs",
+        "src/Servers/Kestrel/Core/src/Microsoft.AspNetCore.Server.Kestrel.Core.csproj",
+        "src/SignalR/server/Core/src/Microsoft.AspNetCore.SignalR.Core.csproj",
+        "src/SignalR/common/Http.Connections/src/Microsoft.AspNetCore.Http.Connections.csproj",
+        "src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs",
+        "src/Servers/Kestrel/perf/Microbenchmarks/KestrelMetricsBenchmark.cs",
+        "src/SignalR/perf/Microbenchmarks/DefaultHubDispatcherTelemetryBenchmark.cs",
+        "src/Servers/Kestrel/test/InMemory.FunctionalTests/KestrelMetricsTests.cs",
+        "src/Servers/Kestrel/test/InMemory.FunctionalTests/InMemory.FunctionalTests.csproj",
+        "src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Microsoft.AspNetCore.SignalR.Tests.csproj",
+        "src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Activity.cs",
+        "src/Servers/Connections.Abstractions/src/DefaultConnectionContext.cs",
+        "src/Servers/Connections.Abstractions/src/BaseConnectionContext.cs",
+        "src/Servers/Connections.Abstractions/src/MultiplexedConnectionContext.cs",
+        "src/Servers/Connections.Abstractions/src/NamedPipeEndPoint.cs",
+        "src/Shared/Metrics/TestMeterFactory.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Http2/Http2Connection.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Http2/Http2StreamOfT.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs",
+        "src/Servers/Kestrel/Core/src/Internal/Http3/Http3StreamOfT.cs"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "helper-history",
+      "entryPoint": "git",
+      "arguments": [
+        "log",
+        "-12",
+        "--format=%H %ad %s",
+        "--date=iso-strict",
+        "0d5708d05bb47d5ae84cecd1b12dff7b1d90c84b",
+        "--",
+        "src/Shared/ConnectionEndpointTags.cs"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "first-port-change",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "--format=fuller",
+        "05cf391d127a8267a4cc3a65eb76e3c3f8ef68d2",
+        "--",
+        "src/Shared/ConnectionEndpointTags.cs"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "shared-source-links",
+      "entryPoint": "git",
+      "arguments": [
+        "grep",
+        "-n",
+        "ConnectionEndpointTags.cs",
+        "0d5708d05bb47d5ae84cecd1b12dff7b1d90c84b",
+        "--",
+        "src"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "shared-call-sites",
+      "entryPoint": "git",
+      "arguments": [
+        "grep",
+        "-n",
+        "ConnectionEndpointTags.AddConnectionEndpointTags",
+        "0d5708d05bb47d5ae84cecd1b12dff7b1d90c84b",
+        "--",
+        "src"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

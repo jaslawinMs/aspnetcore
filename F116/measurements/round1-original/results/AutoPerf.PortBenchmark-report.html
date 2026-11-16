@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.PortBenchmark-20261116-142803</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  LaunchCount=1  
+WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>   Case</th><th>    Mean</th><th>   Error</th><th>  StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>ReadOrEmit</td><td>GetFirst</td><td>7.507 ns</td><td>1.2334 ns</td><td>0.6451 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrEmit</td><td>GetMix2</td><td>20.613 ns</td><td>0.3305 ns</td><td>0.1729 ns</td><td>0.0005</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>GetMix4</td><td>43.370 ns</td><td>4.7726 ns</td><td>2.4962 ns</td><td>0.0018</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>ReadOrEmit</td><td>GetSecond</td><td>12.375 ns</td><td>0.2372 ns</td><td>0.1241 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>GetThird</td><td>12.576 ns</td><td>1.5627 ns</td><td>0.8173 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ListFirst</td><td>45.542 ns</td><td>0.5399 ns</td><td>0.2824 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrEmit</td><td>ListMix2</td><td>98.454 ns</td><td>1.7498 ns</td><td>0.9152 ns</td><td>-</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ListSecond</td><td>52.255 ns</td><td>0.5529 ns</td><td>0.2892 ns</td><td>0.0005</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ListThird</td><td>53.069 ns</td><td>5.6826 ns</td><td>2.9721 ns</td><td>0.0005</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ParallelFirst</td><td>566,135.703 ns</td><td>30,207.8501 ns</td><td>15,799.2897 ns</td><td>-</td><td>-</td><td>-</td><td>33 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ParallelMiss</td><td>594,490.980 ns</td><td>56,102.3289 ns</td><td>29,342.6028 ns</td><td>-</td><td>-</td><td>-</td><td>147,486 B</td>
+</tr><tr><td>ReadOrEmit</td><td>ParallelMix2</td><td>572,765.980 ns</td><td>28,711.9810 ns</td><td>15,016.9213 ns</td><td>-</td><td>-</td><td>-</td><td>73,758 B</td>
+</tr><tr><td>ReadOrEmit</td><td>QueueFirst</td><td>89.337 ns</td><td>0.8680 ns</td><td>0.4540 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrEmit</td><td>QueueMany</td><td>423.385 ns</td><td>6.7527 ns</td><td>3.5318 ns</td><td>-</td><td>-</td><td>-</td><td>144 B</td>
+</tr><tr><td>ReadOrEmit</td><td>QueueMix2</td><td>199.312 ns</td><td>4.7438 ns</td><td>2.4811 ns</td><td>-</td><td>-</td><td>-</td><td>48 B</td>
+</tr><tr><td>ReadOrEmit</td><td>QueueOff</td><td>6.252 ns</td><td>0.1314 ns</td><td>0.0687 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrEmit</td><td>QueueSecond</td><td>105.222 ns</td><td>2.4692 ns</td><td>1.2914 ns</td><td>0.0011</td><td>-</td><td>-</td><td>48 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsFallback</td><td>57.764 ns</td><td>1.2845 ns</td><td>0.6718 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsFirst</td><td>53.654 ns</td><td>4.1153 ns</td><td>2.1524 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsIPv6</td><td>67.538 ns</td><td>4.9646 ns</td><td>2.5966 ns</td><td>-</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsMix2</td><td>113.645 ns</td><td>6.2988 ns</td><td>3.2944 ns</td><td>-</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsOverride</td><td>62.076 ns</td><td>4.0800 ns</td><td>2.1339 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsSecond</td><td>58.526 ns</td><td>1.4154 ns</td><td>0.7403 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>ReadOrEmit</td><td>TagsThird</td><td>58.866 ns</td><td>0.6434 ns</td><td>0.3365 ns</td><td>0.0006</td><td>-</td><td>-</td><td>24 B</td>
+</tr></tbody></table>
+</body>
+</html>

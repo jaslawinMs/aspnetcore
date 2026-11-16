@@ -1,0 +1,55 @@
+diff --git a/src/Shared/ConnectionEndpointTags.cs b/src/Shared/ConnectionEndpointTags.cs
+index 63c7398771..6d7be24905 100644
+--- a/src/Shared/ConnectionEndpointTags.cs
++++ b/src/Shared/ConnectionEndpointTags.cs
+@@ -4,6 +4,7 @@
+ using System.Diagnostics;
+ using System.Net;
+ using System.Net.Sockets;
++using System.Threading;
+ using Microsoft.AspNetCore.Connections;
+ using Microsoft.AspNetCore.Connections.Features;
+ using Microsoft.AspNetCore.Http.Features;
+@@ -14,10 +15,11 @@ namespace Microsoft.AspNetCore.Shared;
+ 
+ internal static class ConnectionEndpointTags
+ {
+-    // The local port is almost always one of the few ports the server listens on, so reuse the first boxed value.
+-    // It is never replaced, so the field is only read after startup and isn't contended between cores. A race at
++    // The local port is almost always one of the few ports the server listens on, so reuse the first two boxed values.
++    // They are never replaced, so the fields are only read after startup and aren't contended between cores. A race at
+     // startup only results in an extra allocation.
+     private static object? s_boxedPort;
++    private static object? s_secondaryBoxedPort;
+ 
+     /// <summary>
+     /// Adds connection endpoint tags to a collection of tags, such as a <see cref="TagList"/>, using <see cref="IConnectionEndPointFeature"/>.
+@@ -101,12 +103,27 @@ internal static class ConnectionEndpointTags
+     {
+         var cached = s_boxedPort;
+         if (cached is not null)
++        {
++            return (int)cached == port ? cached : GetSecondaryBoxedPort(port);
++        }
++
++        object boxed = port;
++        // Keep the first port stable while the secondary slot is initialized.
++        Interlocked.CompareExchange(ref s_boxedPort, boxed, null);
++
++        return boxed;
++    }
++
++    private static object GetSecondaryBoxedPort(int port)
++    {
++        var cached = s_secondaryBoxedPort;
++        if (cached is not null)
+         {
+             return (int)cached == port ? cached : port;
+         }
+ 
+         object boxed = port;
+-        s_boxedPort = boxed;
++        Interlocked.CompareExchange(ref s_secondaryBoxedPort, boxed, null);
+ 
+         return boxed;
+     }
