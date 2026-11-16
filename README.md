@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 83/358 finalized**: 56 drafts, 11 no-gain, 12 rejected and 4 duplicates;
-275 findings remain unfinished.
+**Progress: 84/358 finalized**: 57 drafts, 11 no-gain, 12 rejected and 4 duplicates;
+274 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -19,6 +19,13 @@ as speculative optimization PRs. Incompatible replacements are marked
 `rejected` even when individual benchmarks improve. Correctness, actual owning-component behavior,
 small-workload controls, allocations, and measurement limitations matter as
 well as the largest speedup.
+
+**Execution-policy clarification:** Earlier stock BDN 0.13.0 executors attempt to raise their own
+process/thread priorities. The success of those attempts and actual historical settings were
+not captured, so earlier blanket "no power/priority/affinity changes" notes are not verified
+normal-priority timing evidence. F113 independently uses a settings-preserving emitted
+executor with before/setup/after observations; earlier measurements are not rerun or
+relabeled. See the [execution policy and historical clarification](F113/README.md#shared-machine-execution-policy-and-historical-clarification).
 
 ## Evaluations
 
@@ -89,6 +96,7 @@ well as the largest speedup.
 | F110 | Draft proposal; heap trade-offs and non-steady indexer control disclosed | [Caller-provided select-value membership](F110/README.md) |
 | F111 | [Draft jaslawinMs/aspnetcore#111](https://github.com/jaslawinMs/aspnetcore/pull/111); seven warmed large-payload targets41.57-74.88% lower time/68.56-85.70% fewer allocated B/op in both selected pairs; unchanged-control costs up20.30%/CV19.694%,cold misses/retained pool heap unmeasured; original7resource red/selected7green,12selected tests,3/3 comparisons closed,conditional pooled component draft, **not merge-ready** | [Pooled stored-data serialization buffers](F111/README.md) |
 | F112 | [Draft jaslawinMs/aspnetcore#113](https://github.com/jaslawinMs/aspnetcore/pull/113); seven warmed single-value/session targets39.64-76.80% lower time/68.57-85.71% fewer allocated B/op; unchanged bulk-control drift up11.88%/maxCV23.59%,cold misses/retained pool heap unmeasured; original7resource red/selected7green,18selected tests,1/3 comparisons closed after six large gains,conditional pooled component draft, **not merge-ready** | [Pooled session-value serialization buffers](F112/README.md) |
+| F113 | [Draft jaslawinMs/aspnetcore#115](https://github.com/jaslawinMs/aspnetcore/pull/115); prepared public16K/128K evict-plus-miss targets8.60-34.61% lower time/14.29-14.37% fewer allocated B/op,large direct encoder50.06-50.82% fewer bytes; unchanged Disabled16K control50.26% slower/maxCV68.36%,aggregate-array/OOM exception equivalence unverified; original7resource red/selected7green,19selected tests,3/3 comparisons closed,settings-preserving independently owned component draft, **not merge-ready** | [Exact owned distributed-cache entry buffers](F113/README.md) |
 | F117 | Draft proposal; full-link non-wins, fallback trade-offs and unstable control retained | [Maximum route constraint fast paths](F117/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/26) |
 | F107 | Draft proposal; empty concrete convention changes, nonempty/control regressions retained | [Empty form-file query results](F107/README.md), [draft](https://github.com/jaslawinMs/aspnetcore/pull/29), [convention proposal](https://github.com/jaslawinMs/aspnetcore/issues/28) |
 | F127 | Draft proposal | [Rewrite equality-only string comparisons](F127/README.md) |
