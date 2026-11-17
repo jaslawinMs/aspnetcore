@@ -1,0 +1,39 @@
+{
+  "candidate": "F015",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F015-managed-encryption-capacity",
+  "finding": "Only the non-NET ManagedAuthenticatedEncryptor.Encrypt branch uses a default-capacity MemoryStream and ToArray; net12 already writes directly into a correctly sized destination.",
+  "scope": "Independent legacy encryption capacity evaluation. Preserve existing algorithms, payload/offset/AAD/roundtrip/exception/lifetime contracts and the modern NET branch exactly. Do not mix in F016 decryption changes. Historical finding tfm_sensitive=false is not authoritative: actual library targets net462/netstandard2.0/net12.0 and only the first two compile this path.",
+  "prerequisites": [
+    "Fresh current-default/source triples, actual owner/factory history, exact-symbol PR search and applicable source/build/API documentation before implementation.",
+    "Capture real target evaluation: library net462/netstandard2.0/net12.0; owning tests net12.0/net472. Installed Framework4.8.10008 can execute the net472 tests against the actual net462 product target. Do not rename projects or override repository detection.",
+    "Build each actual original product target and focused owning tests, with actual report rows and conditional branches accounted for. A loaded net12 product DLL cannot prove legacy behavior.",
+    "Independent net12/C#13/BDN0.13 project must load actual netstandard2.0 product bytes and assert TargetFrameworkAttribute plus the actual managed runtime type. Native public ManagedAuthenticatedEncryptorFactory must create the backend from a real managed descriptor/Secret.Random; Moq may supply only public IKey descriptor metadata during untimed setup, following the owning factory test. No copied private implementation, new shipping IVT/UnsafeAccessor, private invocation, mocked algorithm or substituted entropy.",
+    "Untimed setup/cleanup runs actual public Encrypt/Decrypt with real randomness; assert output lengths, plaintext/AAD ArraySegment offsets, input preservation, roundtrips and declared outcomes across actual sizes/digests. Preserve existing deterministic owning payload-vector tests.",
+    "Define focused preservation coverage before the owner change; original/candidate tests may both be green because this is a performance change, not a bug-fix red/green claim. The actual paired benchmark/allocation evidence must distinguish the proposed capacity."
+  ],
+  "candidate_family": "Small checked exact ciphertext/output-size computation using existing block/header/MAC lengths, then pass that capacity to the existing MemoryStream at the same seam. Preserve explanatory locals, branch structure, CryptoStream writes, ToArray and cleanup; no unrelated formatting or extraction.",
+  "decision_gates": [
+    "All three product targets build; owning net12/net472 tests reach actual assertions and exact Theory payloads are validated, including any prerequisite blocks explicitly documented.",
+    "Actual legacy netstandard product executes on pinned net12 runtime in the benchmark. This is not a Framework4.8 timing, modern-NET-path speedup, whole-application or production-frequency claim. Native net462 execution is separately covered by net472 owning tests.",
+    "Same compiled benchmark/toolchain/settings/nonowner dependency images between compared roles; actual original/candidate DLL/PDB/source/conditional target witnesses and every raw failed/adverse output retained.",
+    "At most3 actual comparison attempts, including failed/partial timing. A substantial faithful benefit around50% may justify one attempt; otherwise no more than3. No original-only diagnostic is authorized by this plan.",
+    "No public API/default/package/runtime/TFM changes or new framework visibility. No NuGet.config/global.json/package manifest changes in the repository.",
+    "Publish a performance draft only for grounded relevant benefits without material unqualified regressions. Otherwise retain honest no-gain/rejection. Inspect the actual PR template and immediately open each actual new draft.",
+    "Very large inputs near process/array limits and other runtime/platform distributions remain unverified unless actually exercised; do not allocate multi-gigabyte inputs on the shared machine or infer broad gains."
+  ],
+  "proposed_benchmark_shapes": [
+    "Aes256Sha256_P0", "Aes256Sha256_P15", "Aes256Sha256_P16", "Aes256Sha256_P17",
+    "Aes256Sha256_P191", "Aes256Sha256_P192", "Aes256Sha256_P193", "Aes256Sha256_P1024",
+    "Aes256Sha256_P65536", "Aes256Sha256_P1048576",
+    "Aes256Sha512_P0", "Aes256Sha512_P16", "Aes256Sha512_P1024", "Aes256Sha512_P1048576"
+  ],
+  "focused_preservation_cases": [
+    [0, 80], [15, 80], [16, 96], [17, 96],
+    [191, 256], [192, 272], [193, 272], [65536, 65616]
+  ],
+  "timing_boundary": "Actual IAuthenticatedEncryptor.Encrypt on warm public-factory-created managed backend from the actual netstandard2.0 image, real default entropy and symmetric/MAC work, returned byte[] consumed. No timed factory/descriptor/Secret/Mock/input construction, serialization/key-management/storage/network, decryption or retained growing output collection. Roundtrip/input/output validation outside timing.",
+  "maximum_paired_comparisons": 3,
+  "maximum_original_only_diagnostic_profiles": 0,
+  "host": "Shared Windows VM, serialized CPU-heavy work, maximum2 build nodes, no deliberate OS power/priority/affinity or unrelated-process changes."
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.EncryptionBenchmarks-20261117-023140</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300, VM=Hyper-V
+Intel Xeon Platinum 8473C, 1 CPU, 16 logical and 8 physical cores
+  [Host] : .NET Framework 4.8 (4.8.10008.0), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F015  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  RunStrategy=Throughput  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>         Shape</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Encrypt</td><td>Aes256Sha256_P0</td><td>102.9 &mu;s</td><td>1.31 &mu;s</td><td>0.58 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P15</td><td>104.8 &mu;s</td><td>4.37 &mu;s</td><td>2.29 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P16</td><td>104.0 &mu;s</td><td>1.70 &mu;s</td><td>0.75 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P17</td><td>104.0 &mu;s</td><td>1.38 &mu;s</td><td>0.72 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P191</td><td>104.1 &mu;s</td><td>2.52 &mu;s</td><td>1.12 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P192</td><td>104.4 &mu;s</td><td>1.27 &mu;s</td><td>0.56 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P193</td><td>104.5 &mu;s</td><td>3.15 &mu;s</td><td>1.65 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P1024</td><td>106.1 &mu;s</td><td>1.52 &mu;s</td><td>0.67 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha256_P65536</td><td>229.0 &mu;s</td><td>5.56 &mu;s</td><td>2.91 &mu;s</td><td>29.5455</td><td>9.0909</td><td>-</td><td>195 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes25(...)48576 [21]</td><td>2,608.3 &mu;s</td><td>133.32 &mu;s</td><td>69.73 &mu;s</td><td>450.0000</td><td>450.0000</td><td>450.0000</td><td>3,078 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha512_P0</td><td>108.7 &mu;s</td><td>2.76 &mu;s</td><td>1.22 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha512_P16</td><td>118.3 &mu;s</td><td>9.15 &mu;s</td><td>4.06 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes256Sha512_P1024</td><td>133.9 &mu;s</td><td>15.91 &mu;s</td><td>8.32 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Encrypt</td><td>Aes25(...)48576 [21]</td><td>4,127.9 &mu;s</td><td>178.35 &mu;s</td><td>63.60 &mu;s</td><td>434.7826</td><td>434.7826</td><td>434.7826</td><td>3,077 KB</td>
+</tr></tbody></table>
+</body>
+</html>

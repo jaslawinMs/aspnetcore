@@ -1,0 +1,21 @@
+{
+  "candidate": "F015",
+  "selected": "Checked exact initial output MemoryStream capacity at the existing non-NET Encrypt seam only.",
+  "sourceCandidateShapes": 1,
+  "originalPrerequisites": {
+    "actualProductTargetsBuilt": ["net462", "netstandard2.0", "net12.0"],
+    "owningTestRows": { "net12.0": 39, "net472": 23 },
+    "everyNewTheoryRowValidated": true,
+    "legacyNativeTimedWrapperPreflights": 14,
+    "legacyNativeRoundtripRecords": 42,
+    "legacyNativeArgumentContracts": 3,
+    "actualLoadedProductFramework": ".NETStandard,Version=v2.0",
+    "actualOriginalProductSha256": "2B06429D7FDB0ED6E98C91A597A2995701DDFE4B13362BE609F312ECC5F851A5",
+    "frozenContext": "contexts\\original\\context-manifest.json"
+  },
+  "changedOwnerLines": "Add checked PKCS7 ciphertext-size and complete-output-size locals, then replace the one default MemoryStream constructor with named capacity. Existing keyModifierLength/ivLength locals, all writes, ToArray, cleanup and exception structure remain.",
+  "compatibilityBoundary": "No public signature/default/algorithm/TFM changes. Modern NET branch and separate F016 Decrypt code untouched. ExceptionExtensions.RequiresHomogenization wraps non-CryptographicException values in the existing outer handler; near-int/array/process limits are not physically exercised and no exact inner-exception/allocation-timing equivalence is claimed there.",
+  "testNature": "Eight data-bearing padding/old-stream-threshold/nonzero-offset/large-input preservation cases added to the existing owning class before original execution; they are already green without the candidate. Existing known-answer vectors and actual factory tests retained. This is not a bug-fix red/green claim.",
+  "measurementBoundary": "Same frozen harness/dependencies and settings; replace only actual netstandard2.0 owner DLL/PDB. Real public managed factory/descriptor/Secret.Random and actual owner Encrypt with default per-operation entropy. IKey mock is only an untimed descriptor carrier, not key management or backend substitution.",
+  "measurementStatus": "No comparison or profile executed."
+}
