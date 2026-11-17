@@ -27,11 +27,17 @@ normal-priority timing evidence. F113 independently uses a settings-preserving e
 executor with before/setup/after observations; earlier measurements are not rerun or
 relabeled. See the [execution policy and historical clarification](F113/README.md#shared-machine-execution-policy-and-historical-clarification).
 
+**Harness-identity clarification:** F004 used separately built, byte-different harness DLL/PDBs
+despite identical harness source. Its conservative no-gain disposition is unchanged, but
+its three paired observations must not be interpreted as exact-harness owner isolation.
+The [additive identity observation](F004-harness-identity-clarification.json) records the
+actual differences; the immutable F004 capsule is unchanged and no benchmark was rerun.
+
 ## Evaluations
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
-| F004 | No-gain/mixed trade-off;larger controlled inputs allocate less but timing/control costs do not establish net win;all3 pairs retained,source restored,no PR | [Compiler iterator-symbol membership](F004/README.md) |
+| F004 | No-gain/mixed trade-off;lower-allocation observations do not establish net win;byte-different harnesses limit causal isolation;all3 pairs retained,source restored,no PR | [Compiler iterator-symbol membership](F004/README.md) and [identity addendum](F004-harness-identity-clarification.json) |
 | F002 | Rejected/design-blocked;actual native FIN removal passes at hybrid boundary,no compatible measured optimization;one original-only4-case profile,0 comparisons,no source edit/PR | [WebTransport stream removal](F002/README.md) |
 | F001 | Rejected/design-blocked;no compatible local optimization or live QUIC blocking schedule established;one original-only3-case diagnostic,0 comparisons,no source edit/PR | [WebTransport shutdown ownership](F001/README.md) |
 | F003 | [Draft jaslawinMs/aspnetcore#39](https://github.com/jaslawinMs/aspnetcore/pull/39); modest gains, no structural heap saving, custom variance and all control/non-win outcomes retained | [Guarded protobuf ListValue construction](F003/README.md) |
