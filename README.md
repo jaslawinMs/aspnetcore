@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 111/358 finalized**: 68 drafts, 16 no-gain, 21 rejected and 6 duplicates;
-247 findings remain unfinished.
+**Progress: 112/358 finalized**: 68 drafts, 17 no-gain, 21 rejected and 6 duplicates;
+246 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F032 | No-gain; [tracking jaslawinMs/aspnetcore#144](https://github.com/jaslawinMs/aspnetcore/issues/144); prepared Flush regresses about 1%, ordinary gains reverse, all controls/failures retained; 3 consumed slots (2 complete pairs + 1 setup-only failure), identical measured harness, original source/product restored, no PR | [HTTP.sys synchronous Flush start task](F032/README.md) |
 | F031 | No-gain; [tracking jaslawinMs/aspnetcore#143](https://github.com/jaslawinMs/aspnetcore/issues/143); favorable long Display observations, target reversals, control movement and allocation drift retained; identical measured harness, 3 closed pairs, original source/product restored, no PR | [Completed-success template task guard](F031/README.md) |
 | F030 | Rejected: nonblocking replacement breaks synchronous writer completion; [tracking jaslawinMs/aspnetcore#142](https://github.com/jaslawinMs/aspnetcore/issues/142). Real parent/partial Razor producers characterized; one original-only diagnostic, zero source comparisons, no source edit or PR | [Synchronous RenderPartial completion](F030/README.md) |
 | F029 | Rejected: nonblocking replacement breaks synchronous completion; [tracking jaslawinMs/aspnetcore#141](https://github.com/jaslawinMs/aspnetcore/issues/141). Real Razor producer characterized; one original-only diagnostic, zero source comparisons, no source edit or PR | [Synchronous Partial completion](F029/README.md) |
