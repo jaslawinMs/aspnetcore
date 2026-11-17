@@ -1,0 +1,81 @@
+commit cf0040c17ca3f506240b60ca4fc9219684a73302
+Author: dotnet-maestro[bot] <42748379+dotnet-maestro[bot]@users.noreply.github.com>
+Date:   Wed Jul 8 15:31:24 2026 -0700
+
+    [main] Source code updates from dotnet/dotnet (#67642)
+    
+    * Backflow from https://github.com/dotnet/dotnet / 80e087c build 321713
+    
+    Diff: https://github.com/dotnet/dotnet/compare/d2b36583a7243f813a402f9f8379ab01f5068e93..80e087c8b2cc246015c7fdb081da6417895ff68c
+    
+    From: https://github.com/dotnet/dotnet/commit/d2b36583a7243f813a402f9f8379ab01f5068e93
+    To: https://github.com/dotnet/dotnet/commit/80e087c8b2cc246015c7fdb081da6417895ff68c
+    
+    [[ commit created by automation ]]
+    
+    * Update dependencies from build 321713
+    Updated Dependencies:
+    Microsoft.NET.Runtime.WebAssembly.Sdk, Microsoft.NETCore.BrowserDebugHost.Transport, Microsoft.NET.Runtime.MonoAOTCompiler.Task, dotnet-ef, Microsoft.Bcl.AsyncInterfaces, Microsoft.Bcl.TimeProvider, Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Design, Microsoft.EntityFrameworkCore.InMemory, Microsoft.EntityFrameworkCore.Relational, Microsoft.EntityFrameworkCore.Sqlite, Microsoft.EntityFrameworkCore.SqlServer, Microsoft.EntityFrameworkCore.Tools, Microsoft.Extensions.Caching.Abstractions, Microsoft.Extensions.Caching.Memory, Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Configuration.Binder, Microsoft.Extensions.Configuration.CommandLine, Microsoft.Extensions.Configuration.EnvironmentVariables, Microsoft.Extensions.Configuration.FileExtensions, Microsoft.Extensions.Configuration.Ini, Microsoft.Extensions.Configuration.Json, Microsoft.Extensions.Configuration.UserSecrets, Microsoft.Extensions.Configuration.Xml, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.DependencyModel, Microsoft.Extensions.Diagnostics, Microsoft.Extensions.Diagnostics.Abstractions, Microsoft.Extensions.FileProviders.Abstractions, Microsoft.Extensions.FileProviders.Composite, Microsoft.Extensions.FileProviders.Physical, Microsoft.Extensions.FileSystemGlobbing, Microsoft.Extensions.HostFactoryResolver.Sources, Microsoft.Extensions.Hosting, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Http, Microsoft.Extensions.Logging, Microsoft.Extensions.Logging.Abstractions, Microsoft.Extensions.Logging.Configuration, Microsoft.Extensions.Logging.Console, Microsoft.Extensions.Logging.Debug, Microsoft.Extensions.Logging.EventLog, Microsoft.Extensions.Logging.EventSource, Microsoft.Extensions.Logging.TraceSource, Microsoft.Extensions.Options, Microsoft.Extensions.Options.ConfigurationExtensions, Microsoft.Extensions.Options.DataAnnotations, Microsoft.Extensions.Primitives, Microsoft.Internal.Runtime.AspNetCore.Transport, Microsoft.NETCore.App.Ref, Microsoft.NETCore.Platforms, System.Collections.Immutable, System.Composition, System.Configuration.ConfigurationManager, System.Diagnostics.DiagnosticSource, System.Diagnostics.EventLog, System.Diagnostics.PerformanceCounter, System.DirectoryServices.Protocols, System.Formats.Asn1, System.Formats.Cbor, System.IO.Hashing, System.IO.Pipelines, System.Memory.Data, System.Net.Http.Json, System.Net.Http.WinHttpHandler, System.Net.ServerSentEvents, System.Numerics.Tensors, System.Reflection.Metadata, System.Resources.Extensions, System.Runtime.Caching, System.Security.Cryptography.Pkcs, System.Security.Cryptography.Xml, System.Security.Permissions, System.ServiceProcess.ServiceController, System.Text.Encodings.Web, System.Text.Json, System.Threading.AccessControl, System.Threading.Channels, System.Threading.RateLimiting (Version 11.0.0-preview.6.26322.110 -> 11.0.0-preview.7.26357.101)
+    Microsoft.DotNet.Arcade.Sdk, Microsoft.DotNet.Build.Tasks.Archives, Microsoft.DotNet.Build.Tasks.Installers, Microsoft.DotNet.Build.Tasks.Templating, Microsoft.DotNet.Helix.Sdk, Microsoft.DotNet.RemoteExecutor, Microsoft.DotNet.SharedFramework.Sdk (Version 11.0.0-beta.26322.110 -> 11.0.0-beta.26357.101)
+    Microsoft.Web.Xdt (Version 3.3.0-preview.6.26322.110 -> 3.3.0-preview.7.26357.101)
+    NuGet.Frameworks, NuGet.Packaging, NuGet.Versioning (Version 7.9.0-rc.32310 -> 7.9.0-rc.35801)
+    [[ commit created by automation ]]
+    
+    * Suppress NuGet audit warnings in project file
+    
+    Added NoWarn property to suppress NuGet audit warnings.
+    
+    * Add NU1903 warning suppression to InteropClient.csproj
+    
+    * Give source-build (Managed) leg a clang toolchain for NativeAOT tools
+    
+    The backflowed source-build gating change makes dotnet-dev-certs / user-jwts /
+    user-secrets / aspnetcoretools publish NativeAOT in CoreCLR source-only builds,
+    which requires clang. The Managed source-build leg ran in the build-amd64
+    prereqs image (no clang), failing with "No compatible version of clang was
+    found". Run it in the azurelinux cross-amd64 prereq image (clang + sysroot) and
+    pass ROOTFS_DIR + /p:CrossBuild=true, mirroring the ARM/ARM64/musl AOT legs.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Disable NuGet audit warnings for test project
+    
+    Added comment to disable NuGet audit warnings.
+    
+    ---------
+    
+    Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+    Co-authored-by: William Godbe <wigodbe@microsoft.com>
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    Co-authored-by: Korolev Dmitry <dmkorolev@microsoft.com>
+
+diff --git a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+index 7a06038115..91f8dc7028 100644
+--- a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
++++ b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+@@ -108,7 +108,12 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         else
+         {
+             // Expression statements, blocks, switch, cases etc. that have children.
++            // During source-build, we use newer version of Microsoft.CodeAnalysis which obsoletes Children and provide an alternative.
++            // However, for normal builds, we use MS.CA 3.3.1 which doesn't obsolete Children and doesn't have an alternative.
++            // We suppress the warning for source-builds for now.
++#pragma warning disable CS0618
+             foreach (var childOperation in operation.Children)
++#pragma warning restore CS0618
+             {
+                 AnalyzeOperationsTree(childOperation, availableTypes, analyzerState);
+             }
+@@ -243,7 +248,12 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+             || currentOperation is IConversionOperation 
+             || currentOperation is IInvocationOperation)
+         {
++            // During source-build, we use newer version of Microsoft.CodeAnalysis which obsoletes Children and provide an alternative.
++            // However, for normal builds, we use MS.CA 3.3.1 which doesn't obsolete Children and doesn't have an alternative.
++            // We suppress the warning for source-builds for now.
++#pragma warning disable CS0618
+             foreach (var child in currentOperation.Children)
++#pragma warning restore CS0618
+             {
+                 var result = FindFirstDelegateChild(child);
+                 if (result is not null)
