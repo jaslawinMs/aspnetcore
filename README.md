@@ -33,6 +33,12 @@ its three paired observations must not be interpreted as exact-harness owner iso
 The [additive identity observation](F004-harness-identity-clarification.json) records the
 actual differences; the immutable F004 capsule is unchanged and no benchmark was rerun.
 
+**F032 file-count clarification:** Its measured 186-file consumer has two changed HTTP.sys
+owner files and 184 unchanged files **including** the harness DLL/PDB, leaving 182 other
+unchanged files. Some archived prose incorrectly says "184 other files" in addition to
+the harness pair. The [additive count clarification](F032-consumer-count-clarification.json)
+does not change the immutable capsule, measurements, no-gain outcome, or campaign progress.
+
 ## Evaluations
 
 | Candidate | Disposition | Evaluation |
