@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.EnumerationBenchmarks-20261117-151701</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F035  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>           Method</th><th>Count</th><th>    Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>PreparedConcrete</td><td>0</td><td>0.7310 ns</td><td>0.0178 ns</td><td>0.0093 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>0</td><td>10.4880 ns</td><td>1.3461 ns</td><td>0.7040 ns</td><td>0.0010</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>0</td><td>0.7123 ns</td><td>0.0489 ns</td><td>0.0256 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>0</td><td>6.1457 ns</td><td>0.0967 ns</td><td>0.0506 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>0</td><td>206.1421 ns</td><td>53.6406 ns</td><td>28.0550 ns</td><td>0.0154</td><td>-</td><td>-</td><td>656 B</td>
+</tr><tr><td>PreparedConcrete</td><td>1</td><td>2.6865 ns</td><td>0.1003 ns</td><td>0.0525 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>1</td><td>15.6840 ns</td><td>0.2967 ns</td><td>0.1552 ns</td><td>0.0011</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>1</td><td>3.0286 ns</td><td>0.1852 ns</td><td>0.0968 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>1</td><td>16.8361 ns</td><td>0.3282 ns</td><td>0.1717 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>1</td><td>581.2736 ns</td><td>71.4855 ns</td><td>37.3883 ns</td><td>0.0336</td><td>-</td><td>-</td><td>1,456 B</td>
+</tr><tr><td>PreparedConcrete</td><td>8</td><td>17.5424 ns</td><td>0.5674 ns</td><td>0.2967 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>8</td><td>66.2823 ns</td><td>8.5704 ns</td><td>4.4825 ns</td><td>0.0007</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>8</td><td>18.0638 ns</td><td>0.4373 ns</td><td>0.2287 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>8</td><td>33.3857 ns</td><td>0.9664 ns</td><td>0.5055 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>8</td><td>1,860.6984 ns</td><td>245.3082 ns</td><td>128.3009 ns</td><td>0.0720</td><td>-</td><td>-</td><td>2,792 B</td>
+</tr><tr><td>PreparedConcrete</td><td>64</td><td>120.6356 ns</td><td>2.4284 ns</td><td>1.2701 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>64</td><td>444.3532 ns</td><td>6.8750 ns</td><td>3.5958 ns</td><td>-</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>64</td><td>133.7251 ns</td><td>3.3708 ns</td><td>1.7630 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>64</td><td>140.2374 ns</td><td>8.1608 ns</td><td>4.2682 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>64</td><td>10,178.1137 ns</td><td>139.5614 ns</td><td>72.9933 ns</td><td>0.3008</td><td>-</td><td>-</td><td>13,393 B</td>
+</tr></tbody></table>
+</body>
+</html>

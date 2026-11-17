@@ -1,0 +1,30 @@
+{
+  "id": "F035",
+  "finding": {
+    "card_id": "custom-collection-interface-foreach-enumerator",
+    "file": "src/Mvc/Mvc.Abstractions/src/ModelBinding/ValueProviderResult.cs",
+    "line_start": 132,
+    "line_end": 135,
+    "project": "Microsoft.AspNetCore.Mvc.Abstractions",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Concrete ValueProviderResult enumeration is forced through an interface enumerator.",
+    "explanation": "ValueProviderResult is a custom readonly struct used on model-binding request paths, but its public GetEnumerator returns IEnumerator<string>. Casting the StringValues struct to IEnumerable<string> boxes it, and the interface-shaped return prevents concrete foreach callers from using a value-type enumerator directly.",
+    "snippet": "public IEnumerator<string> GetEnumerator()\n{\n    return ((IEnumerable<string>)Values).GetEnumerator();\n}",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "Independent baseline37 branch excludes F033 guard. Current defaultf2484a6b,12owner/API/test/query-producer/collection-consumer files match baseline,45snapshots/history/docs and bounded existing-work searches retained. Reject replacing shipped IEnumerator<string> GetEnumerator return with a struct:existing binary consumers bind the exact signature;Values.GetEnumerator already supplies opt-in concrete enumeration. Investigate only same-signature body change and actual pinned StringValues/JIT behavior;34owning rows and real cursor/query/binder contracts required before any shipping edit or timing.",
+    "Both34-row owning suites passed0skipped;61concrete cursor/query/real binding/lifecycle observations match exactly;20actual benchmark lifecycles per variant. Measured304-file images share exact harness DLL/PDB;only tested MVC.Abstractions DLL/PDB differ (302unchanged including2harness,300other). Pre-edit20profile plan sealed;ordinary one-value real collection binding primary,Values/empty-bypass controls. Original compiler metadata uses runtime Async IL,direct real consumer call confirmed. Begin at most3alternating comparison slots;remaining IEnumerator box not claimed removed and JIT may already eliminate input box."
+  ],
+  "branch": "autoperf/F035-value-provider-enumeration",
+  "pr_url": null,
+  "updated_at": "2026-11-17T23:16:04.0525374+00:00"
+}

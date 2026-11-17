@@ -1,0 +1,27 @@
+{
+  "id": "F035",
+  "finding": {
+    "card_id": "custom-collection-interface-foreach-enumerator",
+    "file": "src/Mvc/Mvc.Abstractions/src/ModelBinding/ValueProviderResult.cs",
+    "line_start": 132,
+    "line_end": 135,
+    "project": "Microsoft.AspNetCore.Mvc.Abstractions",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Concrete ValueProviderResult enumeration is forced through an interface enumerator.",
+    "explanation": "ValueProviderResult is a custom readonly struct used on model-binding request paths, but its public GetEnumerator returns IEnumerator<string>. Casting the StringValues struct to IEnumerable<string> boxes it, and the interface-shaped return prevents concrete foreach callers from using a value-type enumerator directly.",
+    "snippet": "public IEnumerator<string> GetEnumerator()\n{\n    return ((IEnumerable<string>)Values).GetEnumerator();\n}",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}

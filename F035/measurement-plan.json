@@ -1,0 +1,207 @@
+{
+  "candidate": "F035",
+  "actualSealedBeforeShippingEditAndAnyTiming": true,
+  "actualCreated": "2026-11-17T23:12:03.945Z",
+  "maximumActualSourceComparisons": 3,
+  "actualShippingChangedFilesAtPlan": 0,
+  "actualNativeTimingAtPlan": false,
+  "primary": {
+    "method": "CollectionBinding",
+    "count": 1,
+    "why": "Ordinary nonempty one-value query collection binding through actual public factory/provider/CollectionModelBinder/SimpleTypeModelBinder;this reaches the shipped GetEnumerator inside the real runtime-async consumer."
+  },
+  "profiles": [
+    {
+      "method": "PreparedConcrete",
+      "count": 0,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedConcrete",
+      "count": 1,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedConcrete",
+      "count": 8,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedConcrete",
+      "count": 64,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": true
+    },
+    {
+      "method": "PreparedPreboxedGeneric",
+      "count": 0,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedPreboxedGeneric",
+      "count": 1,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedPreboxedGeneric",
+      "count": 8,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "PreparedPreboxedGeneric",
+      "count": 64,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": true
+    },
+    {
+      "method": "UnchangedValuesControl",
+      "count": 0,
+      "actualUnchangedSourceControl": true,
+      "actualDoesNotReachTarget": true,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "UnchangedValuesControl",
+      "count": 1,
+      "actualUnchangedSourceControl": true,
+      "actualDoesNotReachTarget": true,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "UnchangedValuesControl",
+      "count": 8,
+      "actualUnchangedSourceControl": true,
+      "actualDoesNotReachTarget": true,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "UnchangedValuesControl",
+      "count": 64,
+      "actualUnchangedSourceControl": true,
+      "actualDoesNotReachTarget": true,
+      "actualScaledSyntheticCardinality": true
+    },
+    {
+      "method": "QueryProducer",
+      "count": 0,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "QueryProducer",
+      "count": 1,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "QueryProducer",
+      "count": 8,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "QueryProducer",
+      "count": 64,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": true
+    },
+    {
+      "method": "CollectionBinding",
+      "count": 0,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": true,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "CollectionBinding",
+      "count": 1,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "CollectionBinding",
+      "count": 8,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": false
+    },
+    {
+      "method": "CollectionBinding",
+      "count": 64,
+      "actualUnchangedSourceControl": false,
+      "actualDoesNotReachTarget": false,
+      "actualScaledSyntheticCardinality": true
+    }
+  ],
+  "boundaries": {
+    "PreparedConcrete": "Prepared real query ValueProviderResult;concrete foreach with complete score and interface-returning GetEnumerator. Result/query/factory created outside timing.",
+    "PreparedPreboxedGeneric": "Same result boxed as IEnumerable<string> once outside timing;enumerator creation and complete data consumption inside.",
+    "UnchangedValuesControl": "Prepared result.Values concrete StringValues enumeration;does not call changed MVC GetEnumerator.",
+    "QueryProducer": "Actual already-parsed QueryStringValueProvider.GetValue plus complete ValueProviderResult enumeration. Query parsing/factory/prefix creation excluded.",
+    "CollectionBinding": "Actual query provider and CollectionModelBinder<string>/SimpleTypeModelBinder with fresh action/model-state/binding contexts;complete score,count/error checks. Metadata/binders/query parsed in setup. Missing/zero input bypasses target;nonempty enters the actual consumer."
+  },
+  "intendedOnlyShippingSeam": {
+    "file": "src/Mvc/Mvc.Abstractions/src/ModelBinding/ValueProviderResult.cs",
+    "before": "return ((IEnumerable<string>)Values).GetEnumerator();",
+    "candidate": "return (IEnumerator<string>)Values.GetEnumerator();",
+    "actualShippedSignatureUnchanged": "public IEnumerator<string> GetEnumerator()",
+    "remainingInterfaceEnumeratorBoxNotClaimedRemoved": true,
+    "nominalInputBoxMayAlreadyBeEliminatedByJit": true
+  },
+  "expectedSourceStrategyVariants": 1,
+  "actualOriginalConsumerFiles": 304,
+  "actualOriginalHarnessSha256": "7074578EC1C7C583B43D505C9B5935CDA8F9D491D2C908F8AFEB86498675B4EC",
+  "actualOriginalHarnessPdbSha256": "2EC8711F66444C6BA67FD73F822FDAF076E35DFD92737EFB8B9F1272300E7AB9",
+  "expectedCandidateMeasuredHarness": "Copy authoritative original whole consumer;replace only actually tested MVC.Abstractions DLL/PDB. No separately compiled measured harness.",
+  "executorSourceSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+  "settings": {
+    "strategy": "Throughput",
+    "warmupIterations": 3,
+    "resultIterations": 8,
+    "iterationTimeMilliseconds": 100,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "powerPlan": "Guid.Empty",
+    "settingsPreservingEmitter": true
+  },
+  "pairedOrder": [
+    [
+      "original",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "original"
+    ],
+    [
+      "original",
+      "candidate"
+    ]
+  ],
+  "stopping": "Only clear >=50% declared-primary improvement can stop early;otherwise at most3 actual comparison attempts,including failed/partial timing. Retain all target/empty/unchanged/control/allocation results. No meaningful net gain => restore original source/product,no PR.",
+  "environmentalLimit": "Shared non-isolated Windows x64 VM,pinned preview SDK/net12 runtime/server GC,serialized heavy commands,max2buildworkers. No application frequency,hosted HTTP/network,production throughput or newer-default SDK integration claim.",
+  "actualRetainedPreTimingFailures": {
+    "standaloneCompilation": "preparation-original retained actual1error/2warnings:wrong binding-context return assumption and nullable enumerated model-state entries. Corrected baseline build0warnings/0errors.",
+    "untimedMetadataCharacterization": "characterize-original/preparation-original-002 assumed compiler-generated async state machine. Actual frozen Core metadata uses runtime Async implementation and no such nested state machine. Failed negative exit and image retained;corrected actual-body inspection verifies the real GetEnumerator call.",
+    "actualComparisonSlotsConsumed": 0
+  }
+}

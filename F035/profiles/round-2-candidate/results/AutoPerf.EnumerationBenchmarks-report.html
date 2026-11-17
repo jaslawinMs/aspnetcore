@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.EnumerationBenchmarks-20261117-151906</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F035  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>           Method</th><th>Count</th><th>    Mean</th><th>  Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>PreparedConcrete</td><td>0</td><td>0.7458 ns</td><td>0.0474 ns</td><td>0.0248 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>0</td><td>10.8919 ns</td><td>2.0173 ns</td><td>1.0551 ns</td><td>0.0011</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>0</td><td>0.7708 ns</td><td>0.0358 ns</td><td>0.0187 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>0</td><td>6.1853 ns</td><td>0.0907 ns</td><td>0.0474 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>0</td><td>191.3862 ns</td><td>16.7627 ns</td><td>8.7672 ns</td><td>0.0169</td><td>-</td><td>-</td><td>656 B</td>
+</tr><tr><td>PreparedConcrete</td><td>1</td><td>2.6732 ns</td><td>0.1415 ns</td><td>0.0740 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>1</td><td>15.8455 ns</td><td>1.0846 ns</td><td>0.5673 ns</td><td>0.0011</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>1</td><td>3.0363 ns</td><td>0.1650 ns</td><td>0.0863 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>1</td><td>16.8624 ns</td><td>0.2593 ns</td><td>0.1356 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>1</td><td>564.3241 ns</td><td>58.0089 ns</td><td>30.3398 ns</td><td>0.0337</td><td>-</td><td>-</td><td>1,456 B</td>
+</tr><tr><td>PreparedConcrete</td><td>8</td><td>17.5156 ns</td><td>0.7368 ns</td><td>0.3854 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>8</td><td>61.1628 ns</td><td>0.5064 ns</td><td>0.2649 ns</td><td>0.0006</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>8</td><td>17.6676 ns</td><td>1.3612 ns</td><td>0.7119 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>8</td><td>32.9676 ns</td><td>0.8574 ns</td><td>0.4484 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>8</td><td>1,716.4157 ns</td><td>43.1342 ns</td><td>22.5600 ns</td><td>0.0679</td><td>-</td><td>-</td><td>2,792 B</td>
+</tr><tr><td>PreparedConcrete</td><td>64</td><td>119.9234 ns</td><td>1.2075 ns</td><td>0.6315 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>PreparedPreboxedGeneric</td><td>64</td><td>424.6979 ns</td><td>7.2256 ns</td><td>3.7791 ns</td><td>-</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedValuesControl</td><td>64</td><td>131.4283 ns</td><td>3.9940 ns</td><td>2.0889 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>QueryProducer</td><td>64</td><td>145.9967 ns</td><td>6.0949 ns</td><td>3.1878 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>CollectionBinding</td><td>64</td><td>10,226.4113 ns</td><td>1,156.5588 ns</td><td>604.9026 ns</td><td>0.3011</td><td>-</td><td>-</td><td>13,393 B</td>
+</tr></tbody></table>
+</body>
+</html>

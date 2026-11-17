@@ -1,0 +1,22 @@
+{
+  "candidate": "F035",
+  "verdict": "Recommend not adding",
+  "proposalUnderReview": "Replace the shipped GetEnumerator return with StringValues.Enumerator to enable value-type concrete foreach.",
+  "currentSignature": "public System.Collections.Generic.IEnumerator<string> Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.GetEnumerator()",
+  "shippedBaseline": "src/Mvc/Mvc.Abstractions/src/PublicAPI.Shipped.txt:687",
+  "scenarioModel": "MVC server-rendered applications/server APIs bind incoming query/form values,usually empty/single/few values. Framework binders and custom app/library foreach consumers run in process independently of scale-out. This is not a browser/SignalR mechanism and no new client behavior is claimed.",
+  "commonality": "Happy-path model binding;direct app enumeration is an existing end-developer/library capability,not evidence that a replacement public API is needed.",
+  "targetAudience": "Existing framework/library and end-application consumers.",
+  "typePlacementAssessment": "The existing readonly result remains beside IValueProvider in the MVC.Abstractions dependency sink;no new type,dependency,namespace,interface/default or extensibility shape is justified.",
+  "why": "Already-compiled callers request the exact IEnumerator<string>-returning method signature and would throw MissingMethodException if replaced. C# cannot overload solely by return type. Preserve the existing member;Values.GetEnumerator() already gives opt-in concrete StringValues enumeration without new framework surface.",
+  "compatibility": "Kept public IEnumerator<string> ValueProviderResult.GetEnumerator() unchanged because already-compiled MVC/custom consumers bind that exact return signature and would throw MissingMethodException if it changed. Evaluate only a same-signature body change,not the incompatible struct-return replacement.",
+  "recommendedRefAssemblyDiff": "namespace Microsoft.AspNetCore.Mvc.ModelBinding;\n public readonly struct ValueProviderResult\n {\n     public System.Collections.Generic.IEnumerator<string> GetEnumerator();\n }\n// No API added,removed or changed.",
+  "changes": [
+    "Do not replace the shipped return type.",
+    "Do not add a redundant enumeration API.",
+    "If actual behavior and measurements support it,remove only an avoidable internal StringValues interface conversion while preserving the original return contract."
+  ],
+  "potentialCompatibleImplementationNotYetCompiledOrMeasured": "return (IEnumerator<string>)Values.GetEnumerator();",
+  "actualPublicApiOrBaselineEdit": false,
+  "actualApiApprovalClaimed": false
+}
