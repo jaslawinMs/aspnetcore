@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 98/358 finalized**: 62 drafts, 14 no-gain, 18 rejected and 4 duplicates;
-260 findings remain unfinished.
+**Progress: 99/358 finalized**: 62 drafts, 14 no-gain, 19 rejected and 4 duplicates;
+259 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F014 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#127](https://github.com/jaslawinMs/aspnetcore/issues/127); original-only diagnostics, no source fix or gain | [SignalR user-target membership](F014/README.md) |
 | F013 | Measured no-gain,2 variants/3 comparisons; [tracking jaslawinMs/aspnetcore#126](https://github.com/jaslawinMs/aspnetcore/issues/126); no shipping change | [SignalR targeted membership](F013/README.md) |
 | F012 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#125](https://github.com/jaslawinMs/aspnetcore/issues/125); original-only diagnostics, no source fix or gain | [SignalR broadcast exclusions](F012/README.md) |
 | F011 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#124](https://github.com/jaslawinMs/aspnetcore/issues/124); original-only diagnostics, no source fix or gain | [SignalR group exclusions](F011/README.md) |
