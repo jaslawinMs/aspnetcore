@@ -1,0 +1,474 @@
+diff --git a/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs b/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs
+index c4c5488e958e..5cc17d57e2ec 100644
+--- a/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs
++++ b/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs
+@@ -324,7 +324,7 @@ public IWebHostBuilder Configure(Action<IApplicationBuilder> configure)
+             {
+                 services.Configure<GenericWebHostServiceOptions>(options =>
+                 {
+-                    options.ConfigureApplication = app => configure(app);
++                    options.ConfigureApplication = configure;
+                 });
+             }
+         });
+diff --git a/src/Hosting/Hosting/src/Internal/ApplicationLifetime.cs b/src/Hosting/Hosting/src/Internal/ApplicationLifetime.cs
+index 9f9481e60a15..eae4db2e04dd 100644
+--- a/src/Hosting/Hosting/src/Internal/ApplicationLifetime.cs
++++ b/src/Hosting/Hosting/src/Internal/ApplicationLifetime.cs
+@@ -58,7 +58,7 @@ public void StopApplication()
+         {
+             try
+             {
+-                ExecuteHandlers(_stoppingSource);
++                _stoppingSource.Cancel();
+             }
+             catch (Exception ex)
+             {
+@@ -76,7 +76,7 @@ public void NotifyStarted()
+     {
+         try
+         {
+-            ExecuteHandlers(_startedSource);
++            _startedSource.Cancel();
+         }
+         catch (Exception ex)
+         {
+@@ -93,7 +93,7 @@ public void NotifyStopped()
+     {
+         try
+         {
+-            ExecuteHandlers(_stoppedSource);
++            _stoppedSource.Cancel();
+         }
+         catch (Exception ex)
+         {
+@@ -102,16 +102,4 @@ public void NotifyStopped()
+                                      ex);
+         }
+     }
+-
+-    private static void ExecuteHandlers(CancellationTokenSource cancel)
+-    {
+-        // Noop if this is already cancelled
+-        if (cancel.IsCancellationRequested)
+-        {
+-            return;
+-        }
+-
+-        // Run the cancellation token callbacks
+-        cancel.Cancel(throwOnFirstException: false);
+-    }
+ }
+diff --git a/src/Hosting/Hosting/src/Internal/HostedServiceExecutor.cs b/src/Hosting/Hosting/src/Internal/HostedServiceExecutor.cs
+index 9e76c737c380..7997f55b8d3c 100644
+--- a/src/Hosting/Hosting/src/Internal/HostedServiceExecutor.cs
++++ b/src/Hosting/Hosting/src/Internal/HostedServiceExecutor.cs
+@@ -2,32 +2,27 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.Extensions.Hosting;
+-using Microsoft.Extensions.Logging;
+ 
+ namespace Microsoft.AspNetCore.Hosting;
+ 
+ internal sealed class HostedServiceExecutor
+ {
+     private readonly IEnumerable<IHostedService> _services;
+-    private readonly ILogger<HostedServiceExecutor> _logger;
+ 
+-    public HostedServiceExecutor(ILogger<HostedServiceExecutor> logger, IEnumerable<IHostedService> services)
++    public HostedServiceExecutor(IEnumerable<IHostedService> services)
+     {
+-        _logger = logger;
+         _services = services;
+     }
+ 
+-    public Task StartAsync(CancellationToken token)
++    public async Task StartAsync(CancellationToken token)
+     {
+-        return ExecuteAsync(service => service.StartAsync(token));
+-    }
+-
+-    public Task StopAsync(CancellationToken token)
+-    {
+-        return ExecuteAsync(service => service.StopAsync(token), throwOnFirstFailure: false);
++        foreach (var service in _services)
++        {
++            await service.StartAsync(token);
++        }
+     }
+ 
+-    private async Task ExecuteAsync(Func<IHostedService, Task> callback, bool throwOnFirstFailure = true)
++    public async Task StopAsync(CancellationToken token)
+     {
+         List<Exception>? exceptions = null;
+ 
+@@ -35,20 +30,11 @@ private async Task ExecuteAsync(Func<IHostedService, Task> callback, bool throwO
+         {
+             try
+             {
+-                await callback(service);
++                await service.StopAsync(token);
+             }
+             catch (Exception ex)
+             {
+-                if (throwOnFirstFailure)
+-                {
+-                    throw;
+-                }
+-
+-                if (exceptions == null)
+-                {
+-                    exceptions = new List<Exception>();
+-                }
+-
++                exceptions ??= [];
+                 exceptions.Add(ex);
+             }
+         }
+diff --git a/src/Hosting/Hosting/src/Internal/WebHost.cs b/src/Hosting/Hosting/src/Internal/WebHost.cs
+index 08fa768a7f82..404ba7107c90 100644
+--- a/src/Hosting/Hosting/src/Internal/WebHost.cs
++++ b/src/Hosting/Hosting/src/Internal/WebHost.cs
+@@ -286,16 +286,9 @@ public async Task StopAsync(CancellationToken cancellationToken = default)
+ 
+         Log.Shutdown(_logger);
+ 
+-        using var timeoutCTS = new CancellationTokenSource(Options.ShutdownTimeout);
+-        var timeoutToken = timeoutCTS.Token;
+-        if (!cancellationToken.CanBeCanceled)
+-        {
+-            cancellationToken = timeoutToken;
+-        }
+-        else
+-        {
+-            cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutToken).Token;
+-        }
++        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
++        cts.CancelAfter(Options.ShutdownTimeout);
++        cancellationToken = cts.Token;
+ 
+         // Fire IApplicationLifetime.Stopping
+         _applicationLifetime?.StopApplication();
+@@ -340,17 +333,17 @@ public async ValueTask DisposeAsync()
+         await DisposeServiceProviderAsync(_hostingServiceProvider).ConfigureAwait(false);
+     }
+ 
+-    private static async ValueTask DisposeServiceProviderAsync(IServiceProvider? serviceProvider)
++    private static ValueTask DisposeServiceProviderAsync(IServiceProvider? serviceProvider)
+     {
+         switch (serviceProvider)
+         {
+             case IAsyncDisposable asyncDisposable:
+-                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+-                break;
++                return asyncDisposable.DisposeAsync();
+             case IDisposable disposable:
+                 disposable.Dispose();
+                 break;
+         }
++        return default;
+     }
+ 
+     private static partial class Log
+diff --git a/src/Hosting/Hosting/src/Startup/ConventionBasedStartup.cs b/src/Hosting/Hosting/src/Startup/ConventionBasedStartup.cs
+index dd325f578399..d5253e20f274 100644
+--- a/src/Hosting/Hosting/src/Startup/ConventionBasedStartup.cs
++++ b/src/Hosting/Hosting/src/Startup/ConventionBasedStartup.cs
+@@ -23,13 +23,9 @@ public void Configure(IApplicationBuilder app)
+         {
+             _methods.ConfigureDelegate(app);
+         }
+-        catch (Exception ex)
++        catch (TargetInvocationException ex)
+         {
+-            if (ex is TargetInvocationException)
+-            {
+-                ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+-            }
+-
++            ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+             throw;
+         }
+     }
+@@ -40,13 +36,9 @@ public IServiceProvider ConfigureServices(IServiceCollection services)
+         {
+             return _methods.ConfigureServicesDelegate(services);
+         }
+-        catch (Exception ex)
++        catch (TargetInvocationException ex)
+         {
+-            if (ex is TargetInvocationException)
+-            {
+-                ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+-            }
+-
++            ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+             throw;
+         }
+     }
+diff --git a/src/Hosting/Hosting/src/WebHostBuilderExtensions.cs b/src/Hosting/Hosting/src/WebHostBuilderExtensions.cs
+index af693bc07cea..e3082db8dc91 100644
+--- a/src/Hosting/Hosting/src/WebHostBuilderExtensions.cs
++++ b/src/Hosting/Hosting/src/WebHostBuilderExtensions.cs
+@@ -46,7 +46,7 @@ public static IWebHostBuilder Configure(this IWebHostBuilder hostBuilder, Action
+         {
+             services.AddSingleton<IStartup>(sp =>
+             {
+-                return new DelegateStartup(sp.GetRequiredService<IServiceProviderFactory<IServiceCollection>>(), (app => configureApp(app)));
++                return new DelegateStartup(sp.GetRequiredService<IServiceProviderFactory<IServiceCollection>>(), configureApp);
+             });
+         });
+     }
+diff --git a/src/Hosting/Hosting/src/WebHostExtensions.cs b/src/Hosting/Hosting/src/WebHostExtensions.cs
+index f5f3bfb051eb..1d4d115f904d 100644
+--- a/src/Hosting/Hosting/src/WebHostExtensions.cs
++++ b/src/Hosting/Hosting/src/WebHostExtensions.cs
+@@ -159,14 +159,8 @@ private static async Task WaitForTokenShutdownAsync(this IWebHost host, Cancella
+         },
+         applicationLifetime);
+ 
+-        var waitForStop = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+-        applicationLifetime.ApplicationStopping.Register(obj =>
+-        {
+-            var tcs = (TaskCompletionSource)obj!;
+-            tcs.TrySetResult();
+-        }, waitForStop);
+-
+-        await waitForStop.Task;
++        await Task.Delay(Timeout.Infinite, applicationLifetime.ApplicationStopping)
++            .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
+ 
+         // WebHost will use its default ShutdownTimeout if none is specified.
+ #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods. StopAsync should not be canceled by the token to RunAsync.
+diff --git a/src/Http/Http/src/Timeouts/RequestTimeoutsMiddleware.cs b/src/Http/Http/src/Timeouts/RequestTimeoutsMiddleware.cs
+index d32014b9e82a..e3b46a017b33 100644
+--- a/src/Http/Http/src/Timeouts/RequestTimeoutsMiddleware.cs
++++ b/src/Http/Http/src/Timeouts/RequestTimeoutsMiddleware.cs
+@@ -107,10 +107,9 @@ async Task SetTimeoutAsync()
+                 await _next(context);
+             }
+             catch (OperationCanceledException operationCanceledException)
++            when (linkedCts.IsCancellationRequested && !originalToken.IsCancellationRequested)
+             {
+-                if (context.Response.HasStarted ||
+-                    !linkedCts.Token.IsCancellationRequested ||
+-                    originalToken.IsCancellationRequested)
++                if (context.Response.HasStarted)
+                 {
+                     // We can't produce a response, or it wasn't our timeout that caused this.
+                     throw;
+diff --git a/src/Middleware/Session/src/DistributedSession.cs b/src/Middleware/Session/src/DistributedSession.cs
+index 0573fd1db773..f4fa63d9d9fb 100644
+--- a/src/Middleware/Session/src/DistributedSession.cs
++++ b/src/Middleware/Session/src/DistributedSession.cs
+@@ -218,9 +218,9 @@ public async Task LoadAsync(CancellationToken cancellationToken = default)
+         // This will throw if called directly and a failure occurs. The user is expected to handle the failures.
+         if (!_loaded)
+         {
+-            using (var timeout = new CancellationTokenSource(_ioTimeout))
++            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+             {
+-                var cts = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
++                cts.CancelAfter(_ioTimeout);
+                 try
+                 {
+                     cts.Token.ThrowIfCancellationRequested();
+@@ -234,14 +234,10 @@ public async Task LoadAsync(CancellationToken cancellationToken = default)
+                         _logger.AccessingExpiredSession(_sessionKey);
+                     }
+                 }
+-                catch (OperationCanceledException oex)
++                catch (OperationCanceledException oex) when (!cancellationToken.IsCancellationRequested && cts.IsCancellationRequested)
+                 {
+-                    if (timeout.Token.IsCancellationRequested)
+-                    {
+-                        _logger.SessionLoadingTimeout();
+-                        throw new OperationCanceledException("Timed out loading the session.", oex, timeout.Token);
+-                    }
+-                    throw;
++                    _logger.SessionLoadingTimeout();
++                    throw new OperationCanceledException("Timed out loading the session.", oex, cts.Token);
+                 }
+             }
+             _isAvailable = true;
+@@ -252,9 +248,9 @@ public async Task LoadAsync(CancellationToken cancellationToken = default)
+     /// <inheritdoc />
+     public async Task CommitAsync(CancellationToken cancellationToken = default)
+     {
+-        using (var timeout = new CancellationTokenSource(_ioTimeout))
++        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+         {
+-            var cts = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
++            cts.CancelAfter(_ioTimeout);
+             if (_isModified)
+             {
+                 if (_logger.IsEnabled(LogLevel.Information))
+@@ -293,14 +289,10 @@ await _cache.SetAsync(
+                     _isModified = false;
+                     _logger.SessionStored(_sessionKey, Id, _store.Count);
+                 }
+-                catch (OperationCanceledException oex)
++                catch (OperationCanceledException oex) when (!cancellationToken.IsCancellationRequested && cts.IsCancellationRequested)
+                 {
+-                    if (timeout.Token.IsCancellationRequested)
+-                    {
+-                        _logger.SessionCommitTimeout();
+-                        throw new OperationCanceledException("Timed out committing the session.", oex, timeout.Token);
+-                    }
+-                    throw;
++                    _logger.SessionCommitTimeout();
++                    throw new OperationCanceledException("Timed out committing the session.", oex, cts.Token);
+                 }
+             }
+             else
+@@ -309,14 +301,10 @@ await _cache.SetAsync(
+                 {
+                     await _cache.RefreshAsync(_sessionKey, cts.Token);
+                 }
+-                catch (OperationCanceledException oex)
++                catch (OperationCanceledException oex) when (!cancellationToken.IsCancellationRequested && cts.IsCancellationRequested)
+                 {
+-                    if (timeout.Token.IsCancellationRequested)
+-                    {
+-                        _logger.SessionRefreshTimeout();
+-                        throw new OperationCanceledException("Timed out refreshing the session.", oex, timeout.Token);
+-                    }
+-                    throw;
++                    _logger.SessionRefreshTimeout();
++                    throw new OperationCanceledException("Timed out refreshing the session.", oex, cts.Token);
+                 }
+             }
+         }
+diff --git a/src/Middleware/Spa/SpaProxy/src/SpaProxyLaunchManager.cs b/src/Middleware/Spa/SpaProxy/src/SpaProxyLaunchManager.cs
+index 677b306e8db3..68b990197bf5 100644
+--- a/src/Middleware/Spa/SpaProxy/src/SpaProxyLaunchManager.cs
++++ b/src/Middleware/Spa/SpaProxy/src/SpaProxyLaunchManager.cs
+@@ -74,8 +74,8 @@ public async Task<bool> IsSpaProxyRunning(CancellationToken cancellationToken)
+     {
+         var httpClient = CreateHttpClient();
+ 
+-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+-        using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
++        using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
++        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
+         try
+         {
+             var response = await httpClient.GetAsync(_options.ServerUrl, cancellationTokenSource.Token);
+@@ -105,8 +105,8 @@ private static HttpClient CreateHttpClient()
+ 
+     private async Task<bool> ProbeSpaDevelopmentServerUrl(HttpClient httpClient, CancellationToken cancellationToken)
+     {
+-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+-        using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
++        using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
++        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
+         try
+         {
+             var response = await httpClient.GetAsync(_options.ServerUrl, cancellationTokenSource.Token);
+diff --git a/src/Servers/Kestrel/Core/src/Internal/AddressBinder.cs b/src/Servers/Kestrel/Core/src/Internal/AddressBinder.cs
+index 13ed5f68c08f..2a40aad37b91 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/AddressBinder.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/AddressBinder.cs
+@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+ internal sealed class AddressBinder
+ {
+     // note this doesn't copy the ListenOptions[], only call this with an array that isn't mutated elsewhere
+-    public static async Task BindAsync(ListenOptions[] listenOptions, AddressBindContext context, Func<ListenOptions, ListenOptions> useHttps, CancellationToken cancellationToken)
++    public static Task BindAsync(ListenOptions[] listenOptions, AddressBindContext context, Func<ListenOptions, ListenOptions> useHttps, CancellationToken cancellationToken)
+     {
+         var strategy = CreateStrategy(
+             listenOptions,
+@@ -29,7 +29,7 @@ public static async Task BindAsync(ListenOptions[] listenOptions, AddressBindCon
+         context.ServerOptions.OptionsInUse.Clear();
+         context.Addresses.Clear();
+ 
+-        await strategy.BindAsync(context, cancellationToken).ConfigureAwait(false);
++        return strategy.BindAsync(context, cancellationToken);
+     }
+ 
+     private static IStrategy CreateStrategy(ListenOptions[] listenOptions, string[] addresses, bool preferAddresses, Func<ListenOptions, ListenOptions> useHttps)
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Http/Http1Connection.cs b/src/Servers/Kestrel/Core/src/Internal/Http/Http1Connection.cs
+index 40836876d522..48c9e0595fae 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Http/Http1Connection.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Http/Http1Connection.cs
+@@ -699,12 +699,9 @@ protected override bool TryParseRequest(ReadResult result, out bool endConnectio
+         {
+             isConsumed = ParseRequest(ref reader);
+         }
+-        catch (InvalidOperationException)
++        catch (InvalidOperationException) when (_requestProcessingStatus == RequestProcessingStatus.ParsingHeaders)
+         {
+-            if (_requestProcessingStatus == RequestProcessingStatus.ParsingHeaders)
+-            {
+-                KestrelBadHttpRequestException.Throw(RequestRejectionReason.MalformedRequestInvalidHeaders);
+-            }
++            KestrelBadHttpRequestException.Throw(RequestRejectionReason.MalformedRequestInvalidHeaders);
+             throw;
+         }
+ #pragma warning disable CS0618 // Type or member is obsolete
+diff --git a/src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs b/src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs
+index b8af73a906dd..cefdd3d65282 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs
+@@ -354,8 +354,8 @@ private async Task RebindAsync()
+                 }
+ 
+                 // 5 is the default value for WebHost's "shutdownTimeoutSeconds", so use that.
+-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+-                using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(_stopCts.Token, timeoutCts.Token);
++                using var cts = CancellationTokenSource.CreateLinkedTokenSource(_stopCts.Token);
++                cts.CancelAfter(TimeSpan.FromSeconds(5));
+ 
+                 // TODO: It would be nice to start binding to new endpoints immediately and reconfigured endpoints as soon
+                 // as the unbinding finished for the given endpoint rather than wait for all transports to unbind first.
+@@ -364,7 +364,7 @@ private async Task RebindAsync()
+                 {
+                     configsToStop.Add(lo.EndpointConfig!);
+                 }
+-                await _transportManager.StopEndpointsAsync(configsToStop, combinedCts.Token).ConfigureAwait(false);
++                await _transportManager.StopEndpointsAsync(configsToStop, cts.Token).ConfigureAwait(false);
+ 
+                 foreach (var listenOption in endpointsToStop)
+                 {
+diff --git a/src/Servers/Kestrel/Core/src/Middleware/HttpsConnectionMiddleware.cs b/src/Servers/Kestrel/Core/src/Middleware/HttpsConnectionMiddleware.cs
+index 6ce2c82d1150..f986ee41c383 100644
+--- a/src/Servers/Kestrel/Core/src/Middleware/HttpsConnectionMiddleware.cs
++++ b/src/Servers/Kestrel/Core/src/Middleware/HttpsConnectionMiddleware.cs
+@@ -259,15 +259,10 @@ private X509Certificate2 LocateCertificateWithPrivateKey(X509Certificate2 certif
+                 store.Open(OpenFlags.ReadOnly);
+                 return store;
+             }
+-            catch (Exception exception)
++            catch (Exception exception) when (exception is CryptographicException || exception is SecurityException)
+             {
+-                if (exception is CryptographicException || exception is SecurityException)
+-                {
+-                    _logger.FailedToOpenStore(storeLocation, exception);
+-                    return null;
+-                }
+-
+-                throw;
++                _logger.FailedToOpenStore(storeLocation, exception);
++                return null;
+             }
+         }
+ 
+diff --git a/src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs b/src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs
+index ff02fd3421d5..5e85e81821fb 100644
+--- a/src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs
++++ b/src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs
+@@ -182,11 +182,13 @@ public override void Abort(ConnectionAbortedException abortReason)
+                 _abortReason?.Throw();
+             }
+         }
++#if DEBUG
+         catch (Exception ex)
+         {
+             Debug.Fail($"Unexpected exception in {nameof(QuicConnectionContext)}.{nameof(AcceptAsync)}: {ex}");
+             throw;
+         }
++#endif
+ 
+         // Return null for graceful closure or cancellation.
+         return null;

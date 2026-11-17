@@ -1,0 +1,27 @@
+{
+  "id": "F024",
+  "finding": {
+    "card_id": "cancellationtokensource-timeout-timer-hot-path",
+    "file": "src/Middleware/Session/src/DistributedSession.cs",
+    "line_start": 246,
+    "line_end": 248,
+    "project": "Microsoft.AspNetCore.Session",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "high",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Session commit creates and schedules a linked timeout source for each asynchronous commit or refresh.",
+    "explanation": "CommitAsync runs at the session request boundary and allocates a linked CancellationTokenSource plus a CancelAfter timer before either storing or refreshing the session. Disposal is correct, but high-throughput session traffic can still pay per-operation timer scheduling and registration costs; workload evidence is needed to quantify impact.",
+    "snippet": "using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))\n{\n    cts.CancelAfter(_ioTimeout);",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
