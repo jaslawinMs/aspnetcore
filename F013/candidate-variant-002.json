@@ -1,0 +1,22 @@
+{
+  "candidate": "F013",
+  "variant": "native-specialization-002",
+  "priorComparison": 1,
+  "priorVariant": "native-specialization-001",
+  "observedFirstVariantChangesPercent": {
+    "C32List64Miss": 28.84,
+    "C32Array64Miss": 12.56,
+    "C128List256Miss": 7.65,
+    "C128Array256Miss": 9.61,
+    "C32List64Sparse": 26.75,
+    "C32Array64Sparse": 11.09,
+    "C32DupList64": 14.47
+  },
+  "selection": "Discard exact-List/direct-Array.IndexOf specialization as a win. Try only a string[] predicate using AsSpan().Contains; all Lists, including derived/custom ICollection implementations, retain the original fallback. <=16 path and input ownership unchanged.",
+  "scope": "A per-predicate span views the same fixed-length string array; live element writes remain visible after real JSON argument getter. No span retained across serialization/write callbacks, no requested-ID snapshot/index, no target-sized storage.",
+  "algorithmicLinearCostEliminated": false,
+  "originalVariantResultsMustRemainPublished": true,
+  "firstComparisonCountsTowardSameThreeAttemptBudget": true,
+  "additionalTimingAssumedAuthorizedBeyondThree": false,
+  "gainClaimedBeforeMeasurement": false
+}

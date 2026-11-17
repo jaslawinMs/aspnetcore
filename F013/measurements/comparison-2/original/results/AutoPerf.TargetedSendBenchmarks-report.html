@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TargetedSendBenchmarks-20261117-005233</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F013  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  RunStrategy=Throughput  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>      Shape</th><th>   Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Send</td><td>NoConnections512</td><td>95.900 ns</td><td>5.6431 ns</td><td>2.9514 ns</td><td>0.0010</td><td>-</td><td>-</td><td>64 B</td>
+</tr><tr><td>Send</td><td>EmptyTargets</td><td>9.060 ns</td><td>0.0749 ns</td><td>0.0392 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Send</td><td>Small4List2</td><td>347.227 ns</td><td>4.4404 ns</td><td>1.5835 ns</td><td>0.0035</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>Threshold16List</td><td>1,757.476 ns</td><td>10.6227 ns</td><td>5.5559 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>Threshold17List</td><td>2,886.784 ns</td><td>85.1066 ns</td><td>37.7879 ns</td><td>-</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>Send</td><td>C32List64Miss</td><td>3,436.533 ns</td><td>49.8378 ns</td><td>26.0661 ns</td><td>-</td><td>-</td><td>-</td><td>64 B</td>
+</tr><tr><td>Send</td><td>C32Array64Miss</td><td>3,196.055 ns</td><td>33.2925 ns</td><td>17.4126 ns</td><td>-</td><td>-</td><td>-</td><td>64 B</td>
+</tr><tr><td>Send</td><td>C32ReadOnly64Miss</td><td>3,979.138 ns</td><td>16.4413 ns</td><td>7.3001 ns</td><td>-</td><td>-</td><td>-</td><td>64 B</td>
+</tr><tr><td>Send</td><td>C128List256Miss</td><td>41,261.368 ns</td><td>784.1466 ns</td><td>410.1238 ns</td><td>-</td><td>-</td><td>-</td><td>66 B</td>
+</tr><tr><td>Send</td><td>C128Array256Miss</td><td>38,849.417 ns</td><td>233.8837 ns</td><td>103.8458 ns</td><td>-</td><td>-</td><td>-</td><td>66 B</td>
+</tr><tr><td>Send</td><td>C32List64Sparse</td><td>3,994.939 ns</td><td>25.4036 ns</td><td>13.2866 ns</td><td>-</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>Send</td><td>C32Array64Sparse</td><td>3,729.454 ns</td><td>103.7306 ns</td><td>54.2531 ns</td><td>-</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>Send</td><td>C32List64All</td><td>4,266.501 ns</td><td>71.5946 ns</td><td>37.4454 ns</td><td>-</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>Send</td><td>C32DupList64</td><td>4,620.247 ns</td><td>88.5410 ns</td><td>46.3086 ns</td><td>-</td><td>-</td><td>-</td><td>312 B</td>
+</tr></tbody></table>
+</body>
+</html>

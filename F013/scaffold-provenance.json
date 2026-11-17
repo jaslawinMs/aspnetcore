@@ -1,0 +1,187 @@
+{
+  "candidate": "F013",
+  "files": [
+    {
+      "template": "F012/harness/AutoPerf.Benchmarks.csproj",
+      "templateSha256": "9DC92D4CB7CBF822B4CF6334199B036D3A6E52D279FABC852A7304844B65D98D",
+      "destination": "harness/AutoPerf.Benchmarks.csproj",
+      "resultSha256": "9DC92D4CB7CBF822B4CF6334199B036D3A6E52D279FABC852A7304844B65D98D",
+      "changes": []
+    },
+    {
+      "template": "F012/harness/SettingsPreservingEmitToolchain.cs",
+      "templateSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+      "destination": "harness/SettingsPreservingEmitToolchain.cs",
+      "resultSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+      "changes": []
+    },
+    {
+      "template": "F012/harness/Program.cs",
+      "templateSha256": "58289893639AD2011D95EA91BDDF94F591E70A6F77C1177859B3C32F2DFA7D03",
+      "destination": "harness/Program.cs",
+      "resultSha256": "E657822E9E398819C2BC9AC0434A65D0E18A115194618DA057C321BD41FCF8EA",
+      "changes": [
+        {
+          "before": "Original-owner characterization or original-only diagnostic; no indexed shipping candidate or before/after improvement.",
+          "after": "Actual targeted-send characterization or one member of a separately budgeted comparison; no gain assumption.",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "public broadcast sends",
+          "after": "public targeted sends",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "SettingsPreserving-F013-original-only",
+          "after": "SettingsPreserving-F013",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "Every expected original-only diagnostic report must succeed.",
+          "after": "Every expected actual targeted-send profile report must succeed.",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "context, candidateProfiles = 0, pairedComparisons = 0",
+          "after": "context, singleActualOwnerProfile = true, comparisonAccountingRecordedExternallyBeforeLaunch = true",
+          "actualOccurrences": 1
+        }
+      ]
+    },
+    {
+      "template": "F012/harness/BroadcastSendFixture.cs",
+      "templateSha256": "E914E90DA354D2A0F5938031DE7D1131CC9537BF04703210E8B14EAA2E0DC175",
+      "destination": "harness/TargetedSendFixture.cs",
+      "resultSha256": "57831122123FD9EE2A700504EF59FF319227C12D758A6EB0EB7AAD4940F193D6",
+      "changes": [
+        {
+          "before": "return Manager.SendAllExceptAsync(\"Probe\", _arguments, _targets, cancellationToken);",
+          "after": "return Manager.SendConnectionsAsync(_targets, \"Probe\", _arguments, cancellationToken);",
+          "actualOccurrences": 1
+        }
+      ]
+    },
+    {
+      "template": "F012/harness/ContractProbes.cs",
+      "templateSha256": "85E8191BFEA25F0F8C2EC8F4FB17A4D90D5BEABD3034CB0AB2E787308CCC97CC",
+      "destination": "harness/ContractProbes.cs",
+      "resultSha256": "A86D1CECEB77D801923F7BF8FC06739E4D423F6228F2A03A8166DA3EC34E5859",
+      "changes": [
+        {
+          "before": "(Connections: 1, Excluded: 1), (Connections: 8, Excluded: 16), (Connections: 32, Excluded: 64)",
+          "after": "(Connections: 1, Targets: 17), (Connections: 8, Targets: 32), (Connections: 32, Targets: 64)",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "E{dimensions.Excluded}",
+          "after": "T{dimensions.Targets}",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "dimensions.Connections, dimensions.Excluded",
+          "after": "dimensions.Connections, dimensions.Targets",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "await RunCase(\"SnapshotInputControlCustomDispatch\", () => CustomCollectionContainsDispatch(snapshotControl: true));",
+          "after": "await RunCase(\"SnapshotInputControlCustomDispatch\", () => CustomCollectionContainsDispatch(snapshotControl: true));\n        await RunCase(\"DerivedListRetainsCustomContainsDispatch\", DerivedListRetainsCustomContainsDispatch);",
+          "actualOccurrences": 1
+        },
+        {
+          "replacedSection": "private static async Task<object> LargeTargetScopeCaseAndDuplicates()",
+          "throughBefore": "private static async Task<object> EmptyConnectionStoreOnlyReadsTargetCount()"
+        },
+        {
+          "before": "targets.Reads == 0 && payload.Reads == 0",
+          "after": "targets.CountReads == 1 && targets.Reads == 0 && payload.Reads == 0",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "inputReads = targets.Reads, argumentGetterReads = payload.Reads",
+          "after": "targetCountReads = targets.CountReads, inputReadsBeyondCount = targets.Reads, argumentGetterReads = payload.Reads",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "new TargetedSendFixture([\"c0000\", \"c0001\"], [\"c0000\", \"c0001\"],",
+          "after": "new TargetedSendFixture([\"c0000\", \"c0001\"], LargeTargets(),",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "new TargetedSendFixture(ids, [], ids, [payload])",
+          "after": "new TargetedSendFixture(ids, LargeTargets(ids), ids, [payload])",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "var initial = Enumerable.Range(0, 16).Select(index => $\"missing-{index:D4}\").ToArray();",
+          "after": "var initial = LargeTargets(ids);\n        var removed = ids.Select(id => \"removed-\" + id).ToArray();",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "var payload = new ObservedPayload(backing, ids);",
+          "after": "var payload = new ObservedPayload(backing, removed);",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "var originalCount = original.Count;",
+          "after": "var originalCount = original.Count;\n        Evidence.Require(originalCount == 17, \"The mutation probe must exercise the actual >16 path.\");",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "IReadOnlyList<string> input = snapshotControl ? new HashSet<string>(original, StringComparer.Ordinal).ToArray() : original;",
+          "after": "IReadOnlyList<string> input = snapshotControl ? new HashSet<string>(original, StringComparer.Ordinal).ToArray() : original;\n        Evidence.Require(input.Count == 17, \"A copied-input control must not cross the existing16-target boundary.\");",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "ids.Select((id, index) => original[index] == id)",
+          "after": "removed.Select((id, index) => original[index] == id)",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "new DispatchList([\"connection\"])",
+          "after": "new DispatchList(LargeTargets(\"connection\"))",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "snapshotControl ? [\"CONNECTION\", \"other\"] : [\"other\"]",
+          "after": "snapshotControl ? [] : [\"CONNECTION\"]",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "targets.CountReads == 0 && targets.IndexerReads == 0",
+          "after": "targets.CountReads == 1 && targets.IndexerReads == 0",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "new TargetedSendFixture(ids, targets, ids, [\"World\"])",
+          "after": "new TargetedSendFixture(ids, targets, [], [\"World\"])",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "var send = manager.SendAllExceptAsync(\"Probe\", [\"World\"], [], cancellation.Token);",
+          "after": "var send = manager.SendConnectionsAsync(LargeTargets(\"pipe-0\", \"pipe-1\"), \"Probe\", [\"World\"], cancellation.Token);",
+          "actualOccurrences": 1
+        },
+        {
+          "before": "    private sealed class ObservedPayload",
+          "after": "    private static string[] LargeTargets(params string[] ids)\n    {\n        return ids.Concat(Enumerable.Range(0, 17 - ids.Length).Select(index => $\"missing-{index:D4}\")).ToArray();\n    }\n\n    private sealed class ObservedPayload",
+          "actualOccurrences": 1
+        },
+        {
+          "replacedSection": "private sealed class UnreadableList",
+          "throughBefore": "private sealed class DispatchList"
+        },
+        {
+          "before": "    private static async Task<object> RepeatedMissEnumeration",
+          "after": "    private static async Task<object> DerivedListRetainsCustomContainsDispatch()\n    {\n        var targets = new DerivedDispatchList();\n        targets.AddRange(LargeTargets(\"connection\"));\n        await using var fixture = new TargetedSendFixture([\"CONNECTION\", \"other\"], targets, [\"CONNECTION\"], [\"World\"]);\n        await fixture.Send();\n        fixture.Validate();\n        Evidence.Require(targets.Count == 17 && targets.ContainsCalls == 2, \"Derived List ICollection.Contains dispatch was bypassed.\");\n\n        return new { targetCount = targets.Count, targets.ContainsCalls, customComparison = \"OrdinalIgnoreCase\", actual = fixture.Observe() };\n    }\n\n    private sealed class DerivedDispatchList : List<string>, ICollection<string>\n    {\n        public int ContainsCalls { get; private set; }\n        bool ICollection<string>.Contains(string value)\n        {\n            ContainsCalls++;\n\n            return this.Contains(value, StringComparer.OrdinalIgnoreCase);\n        }\n    }\n\n    private static async Task<object> RepeatedMissEnumeration",
+          "actualOccurrences": 1
+        }
+      ]
+    },
+    {
+      "destination": "harness/TargetedSendBenchmarks.cs",
+      "resultSha256": "1EC7A41F65671B7992CB70267A00B2C6B66505D24EC527BA62C64BC1DEB25EC1",
+      "origin": "New independent14-shape targeted-send workload; actual inputs/recipients asserted outside timing."
+    }
+  ],
+  "qualification": "Hash-checked runnable harness adaptation; every targeted-send observation must execute anew. No prior exclusion behavior/timing reused as targeted-send proof."
+}
