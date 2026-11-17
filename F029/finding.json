@@ -1,0 +1,27 @@
+{
+  "id": "F029",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Mvc/Mvc.ViewFeatures/src/Rendering/HtmlHelperPartialExtensions.cs",
+    "line_start": 168,
+    "line_end": 169,
+    "project": "Microsoft.AspNetCore.Mvc.ViewFeatures",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "The synchronous Partial helper blocks on asynchronous partial-view rendering.",
+    "explanation": "The reusable synchronous Partial API calls PartialAsync and immediately waits with GetAwaiter().GetResult() on the request/view-rendering path. Partial rendering can perform genuine asynchronous work, so concurrent uses occupy request threads while that work completes. The async PartialAsync overload already provides the nonblocking path; changing or removing the public synchronous API would require compatibility review.",
+    "snippet": "var result = htmlHelper.PartialAsync(partialViewName, model, viewData);\nreturn result.GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}

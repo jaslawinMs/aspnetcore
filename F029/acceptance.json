@@ -1,0 +1,21 @@
+{
+  "candidate": "F029",
+  "definedBeforeProductEditsOrTiming": true,
+  "scope": "Investigate the shipped synchronous Partial contract independently. A compatible change must still return completed IHtmlContent and synchronously propagate the original rendering result/failure. Do not remove the wait by changing API,returning incomplete content,fire-and-forget,Task.Run or inventing a synchronous IView path.",
+  "requirements": [
+    "Verify original owning Partial extension rows on the actual source owner;preserve per-row results and unwrapped errors.",
+    "Exercise actual HtmlHelper.Partial -> HtmlHelper.PartialAsync -> RenderPartialCoreAsync -> real RazorView.RenderAsync -> controlled CSharp RazorPage.ExecuteAsync,not a mocked IHtmlHelper returning a task.",
+    "Use a real pending page-owned task gate and observe both source reachability and material completion boundary:the synchronous calling thread waits until producer release,complete output or exact failure appears only afterward.",
+    "Contrast the existing async API on the same real producer without describing a caller migration as a framework optimization or source before/after.",
+    "Preserve real request-scoped view-buffer ownership and source/API baselines;no new IVT or UnsafeAccessor.",
+    "Completed tasks already use TaskAwaiter.GetResult;do not assume an unconditional wait or overhead that has not been measured. Exact runtime source availability is recorded separately.",
+    "At most3actual source comparisons. If the only nonblocking replacement changes the shipped contract,record rejected/design-blocked with runnable original-only diagnostics and no manufactured fix or optimization draft.",
+    "Any original-only diagnostic profile must be explicitly predeclared,run once,keep every row,not be counted as a source comparison or improvement.",
+    "Activate the pinned SDK;serialize heavy work,max2buildworkers;never alter priority,affinity or power on this shared machine."
+  ],
+  "noClaims": [
+    "No full HTTP request,cshtml discovery/compilation,production frequency,throughput,starvation or application-speedup proof from a controlled render gate."
+  ],
+  "maximumActualComparisons": 3,
+  "actualComparisonsStarted": 0
+}

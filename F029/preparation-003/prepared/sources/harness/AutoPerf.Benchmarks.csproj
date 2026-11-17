@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <LangVersion>13.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <Optimize>true</Optimize>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <BuildProjectReferences>false</BuildProjectReferences>
+    <BuildInParallel>false</BuildInParallel>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <AspNetCoreRoot>$(AUTOPERF_ASPNETCORE_ROOT)</AspNetCoreRoot>
+    <TestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.Mvc.ViewFeatures.Test\Release\net12.0</TestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="12.0.0-alpha.1.26562.105" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="12.0.0-alpha.1.26562.105" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="12.0.0-alpha.1.26562.105" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Html.Abstractions\src\Microsoft.AspNetCore.Html.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Http\Routing.Abstractions\src\Microsoft.AspNetCore.Routing.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Abstractions\src\Microsoft.AspNetCore.Mvc.Abstractions.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Mvc\Mvc.ViewFeatures\src\Microsoft.AspNetCore.Mvc.ViewFeatures.csproj" />
+    <Reference Include="$(TestBin)\Microsoft.*.dll"
+      Exclude="$(TestBin)\*Test*.dll;$(TestBin)\*Generator*.dll;$(TestBin)\Microsoft.AspNetCore.Html.Abstractions.dll;$(TestBin)\Microsoft.AspNetCore.Http.Abstractions.dll;$(TestBin)\Microsoft.AspNetCore.Http.Features.dll;$(TestBin)\Microsoft.AspNetCore.Http.dll;$(TestBin)\Microsoft.AspNetCore.Routing.Abstractions.dll;$(TestBin)\Microsoft.AspNetCore.Mvc.Abstractions.dll;$(TestBin)\Microsoft.AspNetCore.Mvc.Core.dll;$(TestBin)\Microsoft.AspNetCore.Mvc.Razor.dll;$(TestBin)\Microsoft.AspNetCore.Mvc.ViewFeatures.dll"
+      Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateSourceRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(AspNetCoreRoot)' == ''" Text="Set AUTOPERF_ASPNETCORE_ROOT to the independently validated source checkout with prebuilt Release MVC projects." />
+    <Error Condition="!Exists('$(TestBin)\Microsoft.AspNetCore.Mvc.ViewFeatures.dll')" Text="Build the actual MVC ViewFeatures owning tests Release first;do not substitute installed ASP.NET assemblies." />
+  </Target>
+</Project>
