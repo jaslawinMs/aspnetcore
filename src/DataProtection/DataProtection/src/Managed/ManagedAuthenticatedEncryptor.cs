@@ -376,7 +376,9 @@ internal sealed unsafe class ManagedAuthenticatedEncryptor : IAuthenticatedEncry
                         operationSubkey: encryptionSubkey,
                         validationSubkey: validationSubkey);
 
-                    var outputStream = new MemoryStream();
+                    var cipherTextLength = checked((plaintext.Count / ivLength + 1) * ivLength);
+                    var outputSize = checked(keyModifierLength + ivLength + cipherTextLength + _validationAlgorithmDigestLengthInBytes);
+                    var outputStream = new MemoryStream(capacity: outputSize);
 
                     // Step 2: Copy the key modifier and the IV to the output stream since they'll act as a header.
                     outputStream.Write(keyModifier, 0, keyModifier.Length);
