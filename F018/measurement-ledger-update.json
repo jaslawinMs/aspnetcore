@@ -1,0 +1,30 @@
+{
+  "id": "F018",
+  "finding": {
+    "card_id": "stream-materialized-before-stream-consumer",
+    "file": "src/Security/Authentication/Google/src/GoogleHandler.cs",
+    "line_start": 56,
+    "line_end": 56,
+    "project": "Microsoft.AspNetCore.Authentication.Google",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Google user-information JSON is materialized as a string before stream-capable parsing.",
+    "explanation": "The authentication handler reads the complete HTTP response body into a string and immediately passes that throwaway string to JsonDocument.Parse. This runs while creating an authentication ticket, and the net12.0 project can parse the response content stream directly while preserving response cancellation and document lifetime.",
+    "snippet": "using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Context.RequestAborted)))",
+    "suppressed": false
+  },
+  "status": "benchmarking",
+  "notes": [
+    "Fresh default491476/18source triples verified;onlyVersionsprops differs;bounded owner/history/PR search inspected. Acceptance defined before edits. Preparing original real-Google-handler+HttpClient/HttpContent benchmark and18-row actual callback/encoding/claims/lifetime preservation test;max3comparisons,all controls retained,no production-frequency claim.",
+    "Both actual68/68Google owning suites and all18encoding callback rows pass;scopedformat0of2;enabledAPICompat/packedownerpass. Original/candidate native24wrappers+48profile+12real-producer cancellation contracts pass;identical124-file images differonlyGoogleDLL/PDB. All failed/unexecuted preparation attempts retained separately;max3actualpaired comparisons,onecandidate,clear-gain earlystop only after raw audit."
+  ],
+  "branch": "autoperf/F018-google-userinfo-utf8",
+  "pr_url": null,
+  "updated_at": "2026-11-17T12:17:50.4504402+00:00"
+}
