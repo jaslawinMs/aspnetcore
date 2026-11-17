@@ -1,0 +1,36 @@
+{
+  "candidate": "F008",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F008-request-localization-culture-membership",
+  "finding": "Repeated supported-culture FirstOrDefault matching on the actual middleware request path.",
+  "scope": "Investigate a precomputed culture-name index, not public API changes. Validate original owner behavior before deciding whether an independent compatible candidate exists.",
+  "prerequisites": [
+    "Capture fresh default source, baseline/working/current selected source equivalence, history, documentation, actual related PR source diffs.",
+    "Run the existing owning Localization unit-test project with exact TRX identities/outcomes, including each theory row.",
+    "Use actual QueryString and AcceptLanguage providers, actual RequestLocalizationMiddleware.Invoke, and observe actual downstream request feature/thread cultures/response header.",
+    "Establish sequential after-construction list addition/removal, same-count element and options-property replacement, read-only-wrapper backing mutation, first duplicate selection and read-only wrapping.",
+    "Demonstrate actual repeated Name reads at the owner using an instrumented CultureInfo subclass with real provider-produced misses; do not time the instrumented getter.",
+    "Keep startup snapshot interpretation separate from any compiled candidate. No candidate has yet been implemented or timed."
+  ],
+  "decision_gates": [
+    "A reusable index must not hide caller-owned IList or CultureInfo changes, replace configured first-match order, or change read-only wrapping.",
+    "David Fowler upstream PR70155 replaces the exact FirstOrDefault/collection-enumerator allocation seam but retains linear matching; do not claim it removes the original asymptotic cost.",
+    "Do not duplicate that safe allocation cleanup as an independent proposal. If a cached-index proposal is contract-incompatible, publish rejected/design-blocked rather than invented no-gain or an O(1)-fix claim.",
+    "An original-only diagnostic profile may quantify the actual current warm full-owner request boundary. It is not a before/after comparison, an upstream-PR replication, or evidence that no compatible design could ever help."
+  ],
+  "maximum_paired_comparisons": 3,
+  "maximum_original_only_diagnostic_profiles": 1,
+  "proposed_diagnostic_shapes": [
+    "QueryOneMutable",
+    "QueryOneReadOnly",
+    "Query16LastArray",
+    "Query16LastReadOnlyWrapper",
+    "Query64Last",
+    "Query64Miss",
+    "Header3List64",
+    "Query64Parent"
+  ],
+  "timing_boundary": "Repeated warm same-context actual Middleware.Invoke plus a minimal downstream reference/call-count observer;real cached Query/header provider inputs. Not a new HTTP request,network,query parsing throughput,production mix or whole-current-default SDK integration.",
+  "host": "Shared Windows VM;max2 build nodes;serialize heavy tests/builds/profiles;no power/priority/affinity or unrelated-process modifications.",
+  "no_shipping_api_default_dependency_tfm_visibility_or_permanent_test_change_authorized_by_this_acceptance": true
+}

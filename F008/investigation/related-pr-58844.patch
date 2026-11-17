@@ -1,0 +1,34 @@
+diff --git a/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs b/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
+index a013faecae83..e8768d3c197a 100644
+--- a/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
++++ b/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
+@@ -154,16 +154,9 @@ private static void SetCurrentThreadCulture(RequestCulture requestCulture)
+         bool fallbackToParentCultures,
+         int currentDepth)
+     {
+-        // If the cultureName is an empty string there
+-        // is no chance we can resolve the culture info.
+-        if (cultureName.Equals(string.Empty))
+-        {
+-            return null;
+-        }
+-
+         var culture = GetCultureInfo(cultureName, supportedCultures);
+ 
+-        if (culture == null && fallbackToParentCultures && currentDepth < MaxCultureFallbackDepth)
++        if (culture == null && fallbackToParentCultures && currentDepth < MaxCultureFallbackDepth && cultureName != CultureInfo.InvariantCulture.Name)
+         {
+             try
+             {
+diff --git a/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs b/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
+index 11811b7a22e2..b5ecff1d9723 100644
+--- a/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
++++ b/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
+@@ -25,6 +25,7 @@ public class RequestLocalizationMiddlewareTest
+     [InlineData("zh-Hans-CN", "zh-Hans")]
+     [InlineData("zh-Hant-TW", "zh-Hant")]
+     [InlineData("zh-TW", "zh-Hant")]
++    [InlineData("zh-Hans-CN", "")]
+     public async Task RequestLocalizationMiddleware_ShouldFallBackToParentCultures_RegradlessOfHyphenSeparatorCheck(string requestedCulture, string parentCulture)
+     {
+         using var host = new HostBuilder()

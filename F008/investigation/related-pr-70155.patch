@@ -1,0 +1,471 @@
+diff --git a/AspNetCore.slnx b/AspNetCore.slnx
+index 1b679cf56de4..9e0e8c91933b 100644
+--- a/AspNetCore.slnx
++++ b/AspNetCore.slnx
+@@ -607,6 +607,7 @@
+     <Project Path="src/Middleware/MiddlewareAnalysis/samples/MiddlewareAnalysisSample/MiddlewareAnalysisSample.csproj" />
+   </Folder>
+   <Folder Name="/src/Middleware/perf/">
++    <Project Path="src/Middleware/perf/Localization.Microbenchmarks/Microsoft.AspNetCore.Localization.Microbenchmarks.csproj" />
+     <Project Path="src/Middleware/perf/Microbenchmarks/Microsoft.AspNetCore.WebSockets.Microbenchmarks.csproj" />
+     <Project Path="src/Middleware/perf/ResponseCaching.Microbenchmarks/Microsoft.AspNetCore.ResponseCaching.Microbenchmarks.csproj" />
+   </Folder>
+diff --git a/src/Middleware/Localization/src/AcceptLanguageHeaderRequestCultureProvider.cs b/src/Middleware/Localization/src/AcceptLanguageHeaderRequestCultureProvider.cs
+index 6995c7445b9d..80587cc203fc 100644
+--- a/src/Middleware/Localization/src/AcceptLanguageHeaderRequestCultureProvider.cs
++++ b/src/Middleware/Localization/src/AcceptLanguageHeaderRequestCultureProvider.cs
+@@ -3,6 +3,7 @@
+ 
+ using System.Linq;
+ using Microsoft.AspNetCore.Http;
++using Microsoft.Extensions.Primitives;
+ using Microsoft.Net.Http.Headers;
+ 
+ namespace Microsoft.AspNetCore.Localization;
+@@ -19,6 +20,8 @@ public class AcceptLanguageHeaderRequestCultureProvider : RequestCultureProvider
+     /// </summary>
+     public int MaximumAcceptLanguageHeaderValuesToTry { get; set; } = 3;
+ 
++    private const int MaxValuesToSortInPlace = 16;
++
+     /// <inheritdoc />
+     public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
+     {
+@@ -31,17 +34,27 @@ public class AcceptLanguageHeaderRequestCultureProvider : RequestCultureProvider
+             return NullProviderCultureResult;
+         }
+ 
+-        var languages = acceptLanguageHeader.AsEnumerable();
++        var count = acceptLanguageHeader.Count;
+ 
+         if (MaximumAcceptLanguageHeaderValuesToTry > 0)
+         {
+             // We take only the first configured number of languages from the header and then order those that we
+             // attempt to parse as a CultureInfo to mitigate potentially spinning CPU on lots of parse attempts.
+-            languages = languages.Take(MaximumAcceptLanguageHeaderValuesToTry);
++            count = Math.Min(count, MaximumAcceptLanguageHeaderValuesToTry);
+         }
+ 
+-        var orderedLanguages = languages.OrderByDescending(h => h, StringWithQualityHeaderValueComparer.QualityComparer)
+-            .Select(x => x.Value).ToList();
++        List<StringSegment> orderedLanguages;
++
++        if (count <= MaxValuesToSortInPlace)
++        {
++            orderedLanguages = SortByQuality(acceptLanguageHeader, count);
++        }
++        else
++        {
++            orderedLanguages = acceptLanguageHeader.Take(count)
++                .OrderByDescending(h => h, StringWithQualityHeaderValueComparer.QualityComparer)
++                .Select(x => x.Value).ToList();
++        }
+ 
+         if (orderedLanguages.Count > 0)
+         {
+@@ -50,4 +63,37 @@ public class AcceptLanguageHeaderRequestCultureProvider : RequestCultureProvider
+ 
+         return NullProviderCultureResult;
+     }
++
++    // Equivalent to a stable OrderByDescending for small inputs: each value's position is the number of values
++    // that sort before it (higher quality, or equal quality and earlier in the header).
++    private static List<StringSegment> SortByQuality(IList<StringWithQualityHeaderValue> values, int count)
++    {
++        var comparer = StringWithQualityHeaderValueComparer.QualityComparer;
++        var result = new List<StringSegment>(count);
++        for (var i = 0; i < count; i++)
++        {
++            result.Add(default);
++        }
++
++        for (var i = 0; i < count; i++)
++        {
++            var value = values[i];
++            var position = 0;
++            for (var k = 0; k < count; k++)
++            {
++                if (k != i)
++                {
++                    var comparison = comparer.Compare(values[k], value);
++                    if (comparison > 0 || (comparison == 0 && k < i))
++                    {
++                        position++;
++                    }
++                }
++            }
++
++            result[position] = value.Value;
++        }
++
++        return result;
++    }
+ }
+diff --git a/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs b/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
+index 79eaf7fb031c..27a4878f8e22 100644
+--- a/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
++++ b/src/Middleware/Localization/src/RequestLocalizationMiddleware.cs
+@@ -2,7 +2,6 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Globalization;
+-using System.Linq;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.Extensions.Logging;
+@@ -131,18 +130,64 @@ private static void SetCurrentThreadCulture(RequestCulture requestCulture)
+         IList<CultureInfo> supportedCultures,
+         bool fallbackToParentCultures)
+     {
+-        foreach (var cultureName in cultureNames)
++        if (cultureNames is List<StringSegment> list)
+         {
+-            // Allow empty string values as they map to InvariantCulture, whereas null culture values will throw in
+-            // the CultureInfo ctor
+-            if (cultureName != null)
++            for (var i = 0; i < list.Count; i++)
+             {
+-                var cultureInfo = GetCultureInfo(cultureName, supportedCultures, fallbackToParentCultures, currentDepth: 0);
++                var cultureInfo = GetCultureInfo(list[i], supportedCultures, fallbackToParentCultures);
+                 if (cultureInfo != null)
+                 {
+                     return cultureInfo;
+                 }
+             }
++
++            return null;
++        }
++
++        if (cultureNames is StringSegment[] array)
++        {
++            return GetCultureInfo(new ReadOnlySpan<StringSegment>(array), supportedCultures, fallbackToParentCultures);
++        }
++
++        foreach (var cultureName in cultureNames)
++        {
++            var cultureInfo = GetCultureInfo(cultureName, supportedCultures, fallbackToParentCultures);
++            if (cultureInfo is not null)
++            {
++                return cultureInfo;
++            }
++        }
++
++        return null;
++    }
++
++    private static CultureInfo? GetCultureInfo(
++        ReadOnlySpan<StringSegment> cultureNames,
++        IList<CultureInfo> supportedCultures,
++        bool fallbackToParentCultures)
++    {
++        foreach (var cultureName in cultureNames)
++        {
++            var cultureInfo = GetCultureInfo(cultureName, supportedCultures, fallbackToParentCultures);
++            if (cultureInfo is not null)
++            {
++                return cultureInfo;
++            }
++        }
++
++        return null;
++    }
++
++    private static CultureInfo? GetCultureInfo(
++        StringSegment cultureName,
++        IList<CultureInfo> supportedCultures,
++        bool fallbackToParentCultures)
++    {
++        // Allow empty string values as they map to InvariantCulture, whereas null culture values will throw in
++        // the CultureInfo ctor
++        if (cultureName != null)
++        {
++            return GetCultureInfo(cultureName, supportedCultures, fallbackToParentCultures, currentDepth: 0);
+         }
+ 
+         return null;
+@@ -188,8 +233,7 @@ private static void SetCurrentThreadCulture(RequestCulture requestCulture)
+             return null;
+         }
+ 
+-        var culture = supportedCultures.FirstOrDefault(
+-            supportedCulture => StringSegment.Equals(supportedCulture.Name, name, StringComparison.OrdinalIgnoreCase));
++        var culture = FindSupportedCulture(name, supportedCultures);
+ 
+         if (culture == null)
+         {
+@@ -198,4 +242,49 @@ private static void SetCurrentThreadCulture(RequestCulture requestCulture)
+ 
+         return CultureInfo.ReadOnly(culture);
+     }
++
++    private static CultureInfo? FindSupportedCulture(StringSegment name, IList<CultureInfo> supportedCultures)
++    {
++        if (supportedCultures is List<CultureInfo> list)
++        {
++            for (var i = 0; i < list.Count; i++)
++            {
++                var supportedCulture = list[i];
++                if (StringSegment.Equals(supportedCulture.Name, name, StringComparison.OrdinalIgnoreCase))
++                {
++                    return supportedCulture;
++                }
++            }
++
++            return null;
++        }
++
++        if (supportedCultures is CultureInfo[] array)
++        {
++            return FindSupportedCulture(name, new ReadOnlySpan<CultureInfo>(array));
++        }
++
++        foreach (var supportedCulture in supportedCultures)
++        {
++            if (StringSegment.Equals(supportedCulture.Name, name, StringComparison.OrdinalIgnoreCase))
++            {
++                return supportedCulture;
++            }
++        }
++
++        return null;
++    }
++
++    private static CultureInfo? FindSupportedCulture(StringSegment name, ReadOnlySpan<CultureInfo> supportedCultures)
++    {
++        foreach (var supportedCulture in supportedCultures)
++        {
++            if (StringSegment.Equals(supportedCulture.Name, name, StringComparison.OrdinalIgnoreCase))
++            {
++                return supportedCulture;
++            }
++        }
++
++        return null;
++    }
+ }
+diff --git a/src/Middleware/Localization/test/UnitTests/AcceptLanguageHeaderRequestCultureProviderTest.cs b/src/Middleware/Localization/test/UnitTests/AcceptLanguageHeaderRequestCultureProviderTest.cs
+index 057be5a2a822..98cd2770f3bf 100644
+--- a/src/Middleware/Localization/test/UnitTests/AcceptLanguageHeaderRequestCultureProviderTest.cs
++++ b/src/Middleware/Localization/test/UnitTests/AcceptLanguageHeaderRequestCultureProviderTest.cs
+@@ -4,6 +4,7 @@
+ using System.Globalization;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.Hosting;
++using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Localization;
+ using Microsoft.AspNetCore.TestHost;
+ using Microsoft.Extensions.Hosting;
+@@ -179,4 +180,31 @@ public async Task OmitDefaultRequestCultureShouldNotThrowNullReferenceException_
+             Assert.Equal(3, count);
+         }
+     }
++
++    [Theory]
++    [InlineData("en-US", 3, "en-US")]
++    [InlineData("fr;q=0.5,en-US,de;q=0.8", 3, "en-US,de,fr")]
++    [InlineData("fr;q=0.5,en-US;q=0.5,de;q=0.5", 3, "fr,en-US,de")]
++    [InlineData("fr;q=0.1,en-US;q=0.2,de;q=0.3,es;q=1.0", 3, "de,en-US,fr")]
++    [InlineData("fr;q=0.1,en-US;q=0.2,de;q=0.3,es;q=1.0", 0, "es,de,en-US,fr")]
++    [InlineData("*,fr;q=0.5,en", 3, "en,*,fr")]
++    [InlineData("a;q=0.1,b;q=0.2,c;q=0.3,d;q=0.4,e;q=0.5,f;q=0.6,g;q=0.7,h;q=0.8,i;q=0.9,j,k;q=0.9,l;q=0.8,m;q=0.7,n;q=0.6,o;q=0.5,p;q=0.4,q;q=0.3,r;q=0.2", 0,
++        "j,i,k,h,l,g,m,f,n,e,o,d,p,c,q,b,r,a")]
++    [InlineData("a;q=0.1,b;q=0.2,c;q=0.3,d;q=0.4,e;q=0.5,f;q=0.6,g;q=0.7,h;q=0.8,i;q=0.9,j,k;q=0.9,l;q=0.8,m;q=0.7,n;q=0.6,o;q=0.5,p;q=0.4,q;q=0.3,r;q=0.2", 16,
++        "j,i,k,h,l,g,m,f,n,e,o,d,p,c,b,a")]
++    public async Task DetermineProviderCultureResult_OrdersLanguagesByQuality(string acceptLanguage, int maximumValuesToTry, string expected)
++    {
++        var provider = new AcceptLanguageHeaderRequestCultureProvider
++        {
++            MaximumAcceptLanguageHeaderValuesToTry = maximumValuesToTry
++        };
++        var httpContext = new DefaultHttpContext();
++        httpContext.Request.Headers.AcceptLanguage = acceptLanguage;
++
++        var result = await provider.DetermineProviderCultureResult(httpContext);
++
++        Assert.NotNull(result);
++        Assert.Equal(expected.Split(','), result.Cultures.Select(c => c.Value));
++        Assert.Equal(expected.Split(','), result.UICultures.Select(c => c.Value));
++    }
+ }
+diff --git a/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs b/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
+index e14bb907c406..2c9b2b548e60 100644
+--- a/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
++++ b/src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs
+@@ -2,12 +2,17 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.AspNetCore.Builder;
++using System.Collections.ObjectModel;
++using System.Globalization;
+ using Microsoft.AspNetCore.Hosting;
++using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Localization;
+ using Microsoft.AspNetCore.TestHost;
+ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.Hosting;
+ using Microsoft.Extensions.Logging;
++using Microsoft.Extensions.Logging.Abstractions;
++using Microsoft.Extensions.Primitives;
+ using Microsoft.Net.Http.Headers;
+ 
+ namespace Microsoft.Extensions.Localization;
+@@ -116,4 +121,56 @@ public async Task RequestLocalizationMiddleware_ShouldFallBackToParentCultures_R
+             response.EnsureSuccessStatusCode();
+         }
+     }
++
++    public static TheoryData<string, string> CollectionKinds => new()
++    {
++        { "List", "List" },
++        { "Array", "Array" },
++        { "ReadOnlyCollection", "ReadOnlyCollection" },
++        { "List", "ReadOnlyCollection" },
++        { "ReadOnlyCollection", "Array" },
++    };
++
++    [Theory]
++    [MemberData(nameof(CollectionKinds))]
++    public async Task RequestLocalizationMiddleware_MatchesCultures_ForDifferentCollectionTypes(string cultureNamesKind, string supportedCulturesKind)
++    {
++        StringSegment[] cultureNames = ["xx-XX", "FR-fr", "en-US"];
++        CultureInfo[] supportedCultures = [new CultureInfo("en-US"), new CultureInfo("fr-FR")];
++
++        var options = new RequestLocalizationOptions
++        {
++            DefaultRequestCulture = new RequestCulture("en-US"),
++            SupportedCultures = Wrap(supportedCultures, supportedCulturesKind),
++            SupportedUICultures = Wrap(supportedCultures, supportedCulturesKind),
++        };
++        options.RequestCultureProviders.Clear();
++        options.RequestCultureProviders.Add(new CustomRequestCultureProvider(_ =>
++            Task.FromResult(new ProviderCultureResult(Wrap(cultureNames, cultureNamesKind)))));
++
++        IRequestCultureFeature feature = null;
++        var middleware = new RequestLocalizationMiddleware(
++            context =>
++            {
++                feature = context.Features.Get<IRequestCultureFeature>();
++                return Task.CompletedTask;
++            },
++            Microsoft.Extensions.Options.Options.Create(options),
++            NullLoggerFactory.Instance);
++
++        await middleware.Invoke(new DefaultHttpContext());
++
++        Assert.NotNull(feature);
++        Assert.Equal("fr-FR", feature.RequestCulture.Culture.Name);
++        Assert.Equal("fr-FR", feature.RequestCulture.UICulture.Name);
++        Assert.True(feature.RequestCulture.Culture.IsReadOnly);
++
++        static IList<T> Wrap<T>(T[] values, string kind) => kind switch
++        {
++            "List" => new List<T>(values),
++            "Array" => (T[])values.Clone(),
++            "ReadOnlyCollection" => new ReadOnlyCollection<T>(values),
++            _ => throw new ArgumentOutOfRangeException(nameof(kind)),
++        };
++    }
+ }
+diff --git a/src/Middleware/Middleware.slnf b/src/Middleware/Middleware.slnf
+index 5aaeea5dbec3..3ab34d60211c 100644
+--- a/src/Middleware/Middleware.slnf
++++ b/src/Middleware/Middleware.slnf
+@@ -124,6 +124,7 @@
+       "src\\Middleware\\WebSockets\\test\\ConformanceTests\\AutobahnTestApp\\AutobahnTestApp.csproj",
+       "src\\Middleware\\WebSockets\\test\\ConformanceTests\\Microsoft.AspNetCore.WebSockets.ConformanceTests.csproj",
+       "src\\Middleware\\WebSockets\\test\\UnitTests\\Microsoft.AspNetCore.WebSockets.Tests.csproj",
++      "src\\Middleware\\perf\\Localization.Microbenchmarks\\Microsoft.AspNetCore.Localization.Microbenchmarks.csproj",
+       "src\\Middleware\\perf\\Microbenchmarks\\Microsoft.AspNetCore.WebSockets.Microbenchmarks.csproj",
+       "src\\Middleware\\perf\\ResponseCaching.Microbenchmarks\\Microsoft.AspNetCore.ResponseCaching.Microbenchmarks.csproj",
+       "src\\Mvc\\Mvc.Abstractions\\src\\Microsoft.AspNetCore.Mvc.Abstractions.csproj",
+diff --git a/src/Middleware/perf/Localization.Microbenchmarks/AssemblyInfo.cs b/src/Middleware/perf/Localization.Microbenchmarks/AssemblyInfo.cs
+new file mode 100644
+index 000000000000..09f49228e9e6
+--- /dev/null
++++ b/src/Middleware/perf/Localization.Microbenchmarks/AssemblyInfo.cs
+@@ -0,0 +1,4 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++[assembly: BenchmarkDotNet.Attributes.AspNetCoreBenchmark]
+diff --git a/src/Middleware/perf/Localization.Microbenchmarks/Microsoft.AspNetCore.Localization.Microbenchmarks.csproj b/src/Middleware/perf/Localization.Microbenchmarks/Microsoft.AspNetCore.Localization.Microbenchmarks.csproj
+new file mode 100644
+index 000000000000..434c1751aa7a
+--- /dev/null
++++ b/src/Middleware/perf/Localization.Microbenchmarks/Microsoft.AspNetCore.Localization.Microbenchmarks.csproj
+@@ -0,0 +1,19 @@
++<Project Sdk="Microsoft.NET.Sdk">
++
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
++  </PropertyGroup>
++
++  <ItemGroup>
++    <PackageReference Include="BenchmarkDotNet" />
++
++    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
++    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
++    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
++    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
++    <ProjectReference Include="$(RepoRoot)src\Middleware\Localization\src\Microsoft.AspNetCore.Localization.csproj" />
++
++    <Compile Include="$(SharedSourceRoot)BenchmarkRunner\*.cs" />
++  </ItemGroup>
++</Project>
+diff --git a/src/Middleware/perf/Localization.Microbenchmarks/RequestLocalizationMiddlewareBenchmark.cs b/src/Middleware/perf/Localization.Microbenchmarks/RequestLocalizationMiddlewareBenchmark.cs
+new file mode 100644
+index 000000000000..eb6dfdb778c9
+--- /dev/null
++++ b/src/Middleware/perf/Localization.Microbenchmarks/RequestLocalizationMiddlewareBenchmark.cs
+@@ -0,0 +1,50 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Builder;
++using Microsoft.AspNetCore.Http;
++using Microsoft.Extensions.Logging.Abstractions;
++using Microsoft.Extensions.Options;
++
++namespace Microsoft.AspNetCore.Localization.Microbenchmarks;
++
++[MemoryDiagnoser]
++public class RequestLocalizationMiddlewareBenchmark
++{
++    private RequestLocalizationMiddleware _middleware = default!;
++    private HttpContext _acceptLanguageContext = default!;
++    private HttpContext _queryStringContext = default!;
++    private HttpContext _noCultureContext = default!;
++
++    [GlobalSetup]
++    public void Setup()
++    {
++        var options = new RequestLocalizationOptions()
++            .SetDefaultCulture("en-US")
++            .AddSupportedCultures("en-US", "fr-FR", "de-DE", "es-ES")
++            .AddSupportedUICultures("en-US", "fr-FR", "de-DE", "es-ES");
++
++        _middleware = new RequestLocalizationMiddleware(
++            _ => Task.CompletedTask,
++            Options.Create(options),
++            NullLoggerFactory.Instance);
++
++        _acceptLanguageContext = new DefaultHttpContext();
++        _acceptLanguageContext.Request.Headers.AcceptLanguage = "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7";
++
++        _queryStringContext = new DefaultHttpContext();
++        _queryStringContext.Request.QueryString = new QueryString("?culture=de-DE&ui-culture=de-DE");
++
++        _noCultureContext = new DefaultHttpContext();
++    }
++
++    [Benchmark]
++    public Task AcceptLanguageHeader() => _middleware.Invoke(_acceptLanguageContext);
++
++    [Benchmark]
++    public Task QueryString() => _middleware.Invoke(_queryStringContext);
++
++    [Benchmark]
++    public Task NoCulture() => _middleware.Invoke(_noCultureContext);
++}
