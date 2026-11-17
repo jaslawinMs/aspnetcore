@@ -1,0 +1,23 @@
+{
+  "candidate": "F030",
+  "definedBeforeProductEditsOrTiming": true,
+  "exactShippedEntryPoint": "void HtmlHelperPartialExtensions.RenderPartial(IHtmlHelper htmlHelper,string partialViewName,object model,ViewDataDictionary viewData)",
+  "requirements": [
+    "Independently exercise RenderPartial,not Partial or a reused F029 observation. No duplicate classification merely because both synchronous APIs wait.",
+    "Preserve the shipped void signature,complete writes to ViewContext.Writer before normal return,original unwrapped errors/cancellation and view disposal.",
+    "Use actual public HtmlHelper.RenderPartial from a CSharp parent RazorPage executing under real RazorView;the actual partial RazorView executes its own page-owned pending producer.",
+    "Resolve the real request-scoped MVC buffer service through public DI. Let real parent RazorView provide its buffered page writer;do not access internal buffer classes or add IVT/UnsafeAccessor.",
+    "Before release,observe actual partial producer entry,incomplete real partial task,no finished synchronous public invocation,no parent-after marker,and waiting calling thread. Prove the outer render call has not returned a task to the harness,so a harness-side GetResult cannot be the observed wait.",
+    "Async control uses existing RenderPartialAsync on the same real parent/partial producer. It must return incomplete real tasks without reaching the parent-after marker;caller migration is not a new framework optimization.",
+    "After success verify ordered parent-before/partial/parent-after output,real child ViewData/model isolation,one GetView/render/disposal and an undisposed caller-owned root writer. After failures preserve exact exception identity or cancellation token at both parent public-call and external boundaries,without reaching the parent-after marker.",
+    "Run fresh existing owning tests and inspect every actual theory outcome. Existing RenderPartialMethods_CallHtmlHelperWithExpectedArguments uses async MemberData;do not falsely count it as synchronous-success coverage.",
+    "No shipping/API/root package/global.json/NuGet.config changes for an incompatible replacement. At most3 actual source comparisons;no manufactured fix or optimization draft.",
+    "If contract-blocked,predeclare one original-only four-case completed diagnostic with all results retained,zero comparison/gain/API-ranking claims and no pending gates in timing.",
+    "Activate the pinned SDK,serialize heavy work,max2 build workers;do not alter priority,affinity,power or unrelated processes on this shared machine."
+  ],
+  "noClaims": [
+    "No HTTP,cshtml discovery/compilation,production frequency,throughput,starvation or application-speedup proof."
+  ],
+  "maximumActualComparisons": 3,
+  "actualComparisonsStarted": 0
+}
