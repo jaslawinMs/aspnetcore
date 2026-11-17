@@ -1,0 +1,44 @@
+{
+  "candidate": "F010",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F010-claims-allowed-values-membership",
+  "finding": "Per-matching-claim explicit-Ordinal Enumerable.Contains repeatedly scans retained allowed values.",
+  "scope": "Performance-only existing public builder/service/claim-matching pipeline. No assessment or recommendation outside performance and contract equivalence.",
+  "provisional_independent_candidate": "At the existing private value-membership seam, use an already caller-owned exact BCL HashSet<string> only when its comparer is the known Ordinal or default string comparer;otherwise preserve the exact existing explicit-Ordinal LINQ operation. No eager conversion,index cache or new fields.",
+  "not_duplicate_of": {
+    "upstream": "dotnet/aspnetcore#70221",
+    "author": "davidfowl",
+    "distinction": "Existing merged work specializes principal/identity/claim enumeration and explicitly leaves value Contains unchanged. Reuse its real IAuthorizationService/RequireClaim benchmark boundary,not its numbers or already-merged optimization."
+  },
+  "before_implementation": [
+    "Capture fresh current-default/baseline/working source equivalence,actual history/related full diff and scoped build guidance.",
+    "Build original owning assembly explicitly for net462,netstandard2.0,net12.0 with repository environment/max2 nodes;run entire existing net12 unit project and inspect all actual rows/skips,including relevant theory payloads.",
+    "Build one runnable original net12/C#13/BDN0.13 harness that invokes actual AddAuthorizationCore/AuthorizationPolicyBuilder.RequireClaim/IAuthorizationService.AuthorizeAsync,not a copied matcher or injected resolved callback.",
+    "Exercise deferred/mutable ownership and current constructor empty-list flag behavior,exact Ordinal value semantics,case-insensitive claim type,custom comparers and derived HashSet IEnumerable behavior before selecting a fast path.",
+    "Run untimed owning contract smoke checks against actual net462 output on installed Windows .NET Framework4.8.1 and actual netstandard2.0 output on a supported net12 consumer;test project itself is net12-only."
+  ],
+  "candidate_acceptance": [
+    "Only exact HashSet<string>,not derived/custom enumerable dispatch,is eligible for direct set lookup.",
+    "Only reference-known StringComparer.Ordinal or EqualityComparer<string>.Default is eligible;OrdinalIgnoreCase/culture/custom comparers must retain explicit-Ordinal fallback.",
+    "Public AllowedValues object identity,constructor Any/empty flag,deferred enumeration,mutable set changes,first matching claim,ToString and success/failure requirement identity remain unchanged.",
+    "All original/candidate scoped owning tests and all three TFM contract checks pass,with actual physical owner identities recorded.",
+    "Paired net12 images use one identical compiled harness and every nonowner byte identical;only actual tested owner DLL/PDB differ. Actual timed Setup/task wrappers preflight before spending a measured attempt.",
+    "At most3 comparison attempts including failed/partial attempts. A clear compatible >=50percent target gain may stop at1;otherwise use no more than3. Retain unfavorable controls/allocation/raw8/outlier/settings evidence;no extra leaf profiles.",
+    "Justify a fork-only draft only for compatible independently measured improvement;explicitly qualify that application-supplied existing HashSet inputs are not the normal params-array default or a production-frequency claim."
+  ],
+  "fallback_controls": [
+    "Null/no allowed values and empty allowed values",
+    "Params-array/list/readonly/deferred allowed values",
+    "Small exact HashSet and early/late/missing values",
+    "OrdinalIgnoreCase/custom comparer sets and reimplemented derived enumerators",
+    "Multiple identities,unrelated claim types,derived principal/identity accessors"
+  ],
+  "maximum_paired_comparisons": 3,
+  "legacy_runtime_observed_before_any_build": {
+    "release": 534296,
+    "version": "4.8.10008",
+    "installed": true
+  },
+  "host_policy": "Shared Windows VM,serialize heavy builds/tests/profiles,max2 build nodes,no deliberate power/priority/affinity/unrelated-process modifications.",
+  "public_api_default_dependency_tfm_visibility_or_permanent_test_change_selected": false
+}

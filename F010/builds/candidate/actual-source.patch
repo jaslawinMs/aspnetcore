@@ -1,0 +1,95 @@
+diff --git a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+index 205f2d6db4..9bac2fe84a 100644
+--- a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
++++ b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+@@ -120,7 +120,21 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
+ 
+     private static bool IsMatch(Claim claim, ClaimsAuthorizationRequirement requirement)
+         => string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
+-            && (requirement._emptyAllowedValues || requirement.AllowedValues!.Contains(claim.Value, StringComparer.Ordinal));
++            && (requirement._emptyAllowedValues || ContainsAllowedValue(requirement.AllowedValues!, claim.Value));
++
++    private static bool ContainsAllowedValue(IEnumerable<string> allowedValues, string value)
++    {
++        // Derived sets can reimplement enumeration, and other comparers may not use ordinal equality.
++        if (allowedValues is HashSet<string> allowedSet &&
++            allowedSet.GetType() == typeof(HashSet<string>) &&
++            (ReferenceEquals(allowedSet.Comparer, StringComparer.Ordinal) ||
++                ReferenceEquals(allowedSet.Comparer, EqualityComparer<string>.Default)))
++        {
++            return allowedSet.Contains(value);
++        }
++
++        return allowedValues.Contains(value, StringComparer.Ordinal);
++    }
+ 
+     /// <summary>
+     /// Returns a string representation of the requirement.
+diff --git a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+index c483446290..0e5c3279ca 100644
+--- a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
++++ b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+@@ -403,6 +403,63 @@ public class DefaultAuthorizationServiceTests
+         Assert.True(allowed.Succeeded);
+     }
+ 
++    [Theory]
++    [InlineData("CanViewPage", true)]
++    [InlineData("canviewpage", false)]
++    public async Task Authorize_RequireClaim_UsesOrdinalHashSetValueComparison(string claimValue, bool expected)
++    {
++        var allowedValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "CanViewPage" };
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", allowedValues)));
++        var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("Permission", claimValue) }));
++
++        var containsUsingSetComparer = allowedValues.Contains(claimValue);
++        Assert.True(containsUsingSetComparer);
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        Assert.Equal(expected, allowed.Succeeded);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public async Task Authorize_RequireClaim_UsesLiveAllowedSet(bool useOrdinalComparer)
++    {
++        IEqualityComparer<string> comparer = useOrdinalComparer ? StringComparer.Ordinal : EqualityComparer<string>.Default;
++        var allowedValues = new HashSet<string>(comparer) { "Other" };
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", allowedValues)));
++        var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("Permission", "CanViewPage") }));
++
++        Assert.False((await authorizationService.AuthorizeAsync(user, "Basic")).Succeeded);
++        allowedValues.Add("CanViewPage");
++        Assert.True((await authorizationService.AuthorizeAsync(user, "Basic")).Succeeded);
++        allowedValues.Remove("CanViewPage");
++        Assert.False((await authorizationService.AuthorizeAsync(user, "Basic")).Succeeded);
++        allowedValues.Clear();
++        Assert.False((await authorizationService.AuthorizeAsync(user, "Basic")).Succeeded);
++    }
++
++    [Fact]
++    public async Task Authorize_RequireClaim_UsesOverriddenAllowedValuesEnumeration()
++    {
++        var allowedValues = new ClaimsOverridingAllowedValues();
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", allowedValues)));
++        var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("Permission", "CanViewPage") }));
++
++        var containsUsingSetStorage = allowedValues.Contains("CanViewPage");
++        Assert.True(containsUsingSetStorage);
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        Assert.False(allowed.Succeeded);
++    }
++
++    private sealed class ClaimsOverridingAllowedValues() : HashSet<string>(new[] { "CanViewPage" }, StringComparer.Ordinal), IEnumerable<string>
++    {
++        IEnumerator<string> IEnumerable<string>.GetEnumerator() => Enumerable.Repeat("Other", 1).GetEnumerator();
++    }
++
+     private sealed class ClaimsOverridingPrincipal : ClaimsPrincipal
+     {
+         private readonly IEnumerable<Claim> _claims;

@@ -1,0 +1,276 @@
+diff --git a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+index cfaa42a940d7..205f2d6db449 100644
+--- a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
++++ b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+@@ -4,6 +4,7 @@
+ using System;
+ using System.Collections.Generic;
+ using System.Linq;
++using System.Security.Claims;
+ using System.Threading.Tasks;
+ using Microsoft.AspNetCore.Shared;
+ 
+@@ -50,32 +51,39 @@ public ClaimsAuthorizationRequirement(string claimType, IEnumerable<string>? all
+     /// <param name="requirement">The requirement to evaluate.</param>
+     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ClaimsAuthorizationRequirement requirement)
+     {
+-        if (context.User != null)
++        var user = context.User;
++        if (user != null)
+         {
+             var found = false;
+-            if (requirement._emptyAllowedValues)
++            if (user.GetType() == typeof(ClaimsPrincipal))
+             {
+-                foreach (var claim in context.User.Claims)
++                // ClaimsPrincipal.Claims flattens the claims of every identity through an iterator. When it isn't overridden,
++                // enumerate the identities' claims directly to avoid allocating the iterator and its nested enumerators.
++                var identities = user.Identities;
++                if (identities is IList<ClaimsIdentity> identityList)
+                 {
+-                    if (string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase))
++                    for (var i = 0; i < identityList.Count && !found; i++)
+                     {
+-                        found = true;
+-                        break;
++                        found = HasMatchingClaim(identityList[i].Claims, requirement);
+                     }
+                 }
+-            }
+-            else
+-            {
+-                foreach (var claim in context.User.Claims)
++                else
+                 {
+-                    if (string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
+-                        && requirement.AllowedValues!.Contains(claim.Value, StringComparer.Ordinal))
++                    foreach (var identity in identities)
+                     {
+-                        found = true;
+-                        break;
++                        if (HasMatchingClaim(identity.Claims, requirement))
++                        {
++                            found = true;
++                            break;
++                        }
+                     }
+                 }
+             }
++            else
++            {
++                found = HasMatchingClaim(user.Claims, requirement);
++            }
++
+             if (found)
+             {
+                 context.Succeed(requirement);
+@@ -84,6 +92,36 @@ protected override Task HandleRequirementAsync(AuthorizationHandlerContext conte
+         return Task.CompletedTask;
+     }
+ 
++    private static bool HasMatchingClaim(IEnumerable<Claim> claims, ClaimsAuthorizationRequirement requirement)
++    {
++        if (claims is IList<Claim> claimList)
++        {
++            for (var i = 0; i < claimList.Count; i++)
++            {
++                if (IsMatch(claimList[i], requirement))
++                {
++                    return true;
++                }
++            }
++        }
++        else
++        {
++            foreach (var claim in claims)
++            {
++                if (IsMatch(claim, requirement))
++                {
++                    return true;
++                }
++            }
++        }
++
++        return false;
++    }
++
++    private static bool IsMatch(Claim claim, ClaimsAuthorizationRequirement requirement)
++        => string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
++            && (requirement._emptyAllowedValues || requirement.AllowedValues!.Contains(claim.Value, StringComparer.Ordinal));
++
+     /// <summary>
+     /// Returns a string representation of the requirement.
+     /// </summary>
+diff --git a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+index 4c5ffd3b90c1..63c83ca791b7 100644
+--- a/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
++++ b/src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs
+@@ -329,6 +329,113 @@ public async Task Authorize_ShouldAllowWithNoAuthType()
+         Assert.True(allowed.Succeeded);
+     }
+ 
++    [Theory]
++    [InlineData("Permission", "CanViewPage", true)]
++    [InlineData("permission", "CanViewPage", true)]
++    [InlineData("Permission", "canviewpage", false)]
++    [InlineData("Other", "CanViewPage", false)]
++    public async Task Authorize_RequireClaim_SearchesAllIdentities(string claimType, string claimValue, bool expected)
++    {
++        // Arrange
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", "CanViewPage")));
++        var user = new ClaimsPrincipal();
++        user.AddIdentity(new ClaimsIdentity(new[] { new Claim("Name", "Bob") }, "First"));
++        user.AddIdentity(new ClaimsIdentity());
++        user.AddIdentity(new ClaimsIdentity(new[] { new Claim("Name", "Alice"), new Claim(claimType, claimValue) }, "Third"));
++
++        // Act
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        // Assert
++        Assert.Equal(expected, allowed.Succeeded);
++    }
++
++    [Theory]
++    [InlineData("permission", true)]
++    [InlineData("Other", false)]
++    public async Task Authorize_RequireClaimWithNoValues_SearchesAllIdentities(string claimType, bool expected)
++    {
++        // Arrange
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission")));
++        var user = new ClaimsPrincipal();
++        user.AddIdentity(new ClaimsIdentity(new[] { new Claim("Name", "Bob") }, "First"));
++        user.AddIdentity(new ClaimsIdentity(new[] { new Claim(claimType, "anything") }, "Second"));
++
++        // Act
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        // Assert
++        Assert.Equal(expected, allowed.Succeeded);
++    }
++
++    [Fact]
++    public async Task Authorize_RequireClaim_UsesOverriddenPrincipalClaims()
++    {
++        // Arrange
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", "CanViewPage")));
++        var user = new ClaimsOverridingPrincipal(
++            new ClaimsIdentity(new[] { new Claim("Permission", "CanViewPage") }, "Basic"),
++            new[] { new Claim("Name", "Bob") });
++
++        // Act
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        // Assert
++        Assert.False(allowed.Succeeded);
++        Assert.True(user.ClaimsAccessed);
++    }
++
++    [Fact]
++    public async Task Authorize_RequireClaim_UsesOverriddenIdentityClaims()
++    {
++        // Arrange
++        var authorizationService = BuildAuthorizationService(services =>
++            services.AddAuthorizationBuilder().AddPolicy("Basic", policy => policy.RequireClaim("Permission", "CanViewPage")));
++        var user = new ClaimsPrincipal(new ClaimsOverridingIdentity(new[] { new Claim("Permission", "CanViewPage") }));
++
++        // Act
++        var allowed = await authorizationService.AuthorizeAsync(user, "Basic");
++
++        // Assert
++        Assert.True(allowed.Succeeded);
++    }
++
++    private sealed class ClaimsOverridingPrincipal : ClaimsPrincipal
++    {
++        private readonly IEnumerable<Claim> _claims;
++
++        public ClaimsOverridingPrincipal(ClaimsIdentity identity, IEnumerable<Claim> claims) : base(identity)
++        {
++            _claims = claims;
++        }
++
++        public bool ClaimsAccessed { get; private set; }
++
++        public override IEnumerable<Claim> Claims
++        {
++            get
++            {
++                ClaimsAccessed = true;
++                return _claims;
++            }
++        }
++    }
++
++    private sealed class ClaimsOverridingIdentity : ClaimsIdentity
++    {
++        private readonly IEnumerable<Claim> _claims;
++
++        public ClaimsOverridingIdentity(IEnumerable<Claim> claims) : base("Custom")
++        {
++            _claims = claims;
++        }
++
++        public override IEnumerable<Claim> Claims => _claims;
++    }
++
+     [Fact]
+     public async Task Authorize_ThrowsWithUnknownPolicy()
+     {
+diff --git a/src/Security/perf/Microbenchmarks/ClaimsAuthorizationRequirementBenchmark.cs b/src/Security/perf/Microbenchmarks/ClaimsAuthorizationRequirementBenchmark.cs
+new file mode 100644
+index 000000000000..7f4a6e065fa8
+--- /dev/null
++++ b/src/Security/perf/Microbenchmarks/ClaimsAuthorizationRequirementBenchmark.cs
+@@ -0,0 +1,49 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Security.Claims;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.Extensions.DependencyInjection;
++
++namespace Microsoft.AspNetCore.Security;
++
++[MemoryDiagnoser]
++public class ClaimsAuthorizationRequirementBenchmark
++{
++    private IAuthorizationService _authorizationService;
++    private ClaimsPrincipal _user;
++    private AuthorizationPolicy _requireClaimWithValues;
++    private AuthorizationPolicy _requireClaim;
++
++    [GlobalSetup]
++    public void Setup()
++    {
++        var services = new ServiceCollection();
++        services.AddLogging();
++        services.AddAuthorizationCore();
++        _authorizationService = services.BuildServiceProvider().GetRequiredService<IAuthorizationService>();
++
++        var claims = new List<Claim> { new(ClaimTypes.Name, "bob"), new(ClaimTypes.NameIdentifier, "123") };
++        for (var i = 0; i < 10; i++)
++        {
++            claims.Add(new Claim("custom" + i, "v" + i));
++        }
++        claims.Add(new Claim(ClaimTypes.Role, "User"));
++        claims.Add(new Claim(ClaimTypes.Role, "Admin"));
++        claims.Add(new Claim("permission", "read"));
++        claims.Add(new Claim("permission", "write"));
++        _user = new ClaimsPrincipal(new ClaimsIdentity(claims, "Cookies"));
++
++        _requireClaimWithValues = new AuthorizationPolicyBuilder().RequireClaim("permission", "admin", "write").Build();
++        _requireClaim = new AuthorizationPolicyBuilder().RequireClaim("permission").Build();
++    }
++
++    [Benchmark]
++    public Task<AuthorizationResult> RequireClaimWithValues()
++        => _authorizationService.AuthorizeAsync(_user, resource: null, _requireClaimWithValues);
++
++    [Benchmark]
++    public Task<AuthorizationResult> RequireClaim()
++        => _authorizationService.AuthorizeAsync(_user, resource: null, _requireClaim);
++}

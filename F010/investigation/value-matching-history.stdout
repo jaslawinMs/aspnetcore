@@ -1,0 +1,72 @@
+commit 4db440dbe61d390aaa215a609ab59c28989fc595
+Author: Kahbazi <A.Kahbazi@gmail.com>
+Date:   Fri Aug 19 03:37:31 2022 +0430
+
+    Perf-up the AuthZ! (#43268)
+
+diff --git a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+index 8426a1db36..28483292c5 100644
+--- a/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
++++ b/src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs
+@@ -15,6 +15,8 @@ namespace Microsoft.AspNetCore.Authorization.Infrastructure;
+ /// </summary>
+ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthorizationRequirement>, IAuthorizationRequirement
+ {
++    private readonly bool _emptyAllowedValues;
++
+     /// <summary>
+     /// Creates a new instance of <see cref="ClaimsAuthorizationRequirement"/>.
+     /// </summary>
+@@ -29,6 +31,7 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
+ 
+         ClaimType = claimType;
+         AllowedValues = allowedValues;
++        _emptyAllowedValues = AllowedValues == null || !AllowedValues.Any();
+     }
+ 
+     /// <summary>
+@@ -52,14 +55,28 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
+         if (context.User != null)
+         {
+             var found = false;
+-            if (requirement.AllowedValues == null || !requirement.AllowedValues.Any())
++            if (requirement._emptyAllowedValues)
+             {
+-                found = context.User.Claims.Any(c => string.Equals(c.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase));
++                foreach (var claim in context.User.Claims)
++                {
++                    if (string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase))
++                    {
++                        found = true;
++                        break;
++                    }
++                }
+             }
+             else
+             {
+-                found = context.User.Claims.Any(c => string.Equals(c.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
+-                                                    && requirement.AllowedValues.Contains(c.Value, StringComparer.Ordinal));
++                foreach (var claim in context.User.Claims)
++                {
++                    if (string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
++                        && requirement.AllowedValues!.Contains(claim.Value, StringComparer.Ordinal))
++                    {
++                        found = true;
++                        break;
++                    }
++                }
+             }
+             if (found)
+             {
+@@ -72,9 +89,9 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
+     /// <inheritdoc />
+     public override string ToString()
+     {
+-        var value = (AllowedValues == null || !AllowedValues.Any())
++        var value = (_emptyAllowedValues)
+             ? string.Empty
+-            : $" and Claim.Value is one of the following values: ({string.Join("|", AllowedValues)})";
++            : $" and Claim.Value is one of the following values: ({string.Join("|", AllowedValues!)})";
+ 
+         return $"{nameof(ClaimsAuthorizationRequirement)}:Claim.Type={ClaimType}{value}";
+     }
