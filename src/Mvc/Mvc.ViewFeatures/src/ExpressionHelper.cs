@@ -7,12 +7,16 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 internal static class ExpressionHelper
 {
+    private static readonly ConditionalWeakTable<MethodInfo, MethodInfo> _indexerCache = new();
+
     public static string GetUncachedExpressionText(LambdaExpression expression)
         => GetExpressionText(expression, expressionTextCache: null);
 
@@ -239,6 +243,11 @@ internal static class ExpressionHelper
             return false;
         }
 
+        if (!MetadataUpdater.IsSupported && _indexerCache.TryGetValue(methodExpression.Method, out _))
+        {
+            return true;
+        }
+
         // Check whether GetDefaultMembers() (if present in CoreCLR) would return a member of this type. Compiler
         // names the indexer property, if any, in a generated [DefaultMember] attribute for the containing type.
         var declaringType = methodExpression.Method.DeclaringType;
@@ -255,6 +264,12 @@ internal static class ExpressionHelper
             if ((string.Equals(defaultMember.MemberName, property.Name, StringComparison.Ordinal) &&
                 property.GetMethod == methodExpression.Method))
             {
+                // Custom reflection types can expose changing metadata even without Hot Reload.
+                if (!MetadataUpdater.IsSupported && declaringType.GetType() == typeof(object).GetType())
+                {
+                    _indexerCache.AddOrUpdate(methodExpression.Method, methodExpression.Method);
+                }
+
                 return true;
             }
         }
