@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 91/358 finalized**: 60 drafts, 12 no-gain, 15 rejected and 4 duplicates;
-267 findings remain unfinished.
+**Progress: 92/358 finalized**: 60 drafts, 13 no-gain, 15 rejected and 4 duplicates;
+266 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F006 | No-gain/trade-off;repeatable miss-heavy2-3% win retained,potential/promotion regressions and control reversals prevent general net-benefit claim;3 identical-harness pairs,source/owner restored,no PR | [All for-variable symbol membership](F006/README.md) |
 | F005 | [Draft jaslawinMs/aspnetcore#119](https://github.com/jaslawinMs/aspnetcore/pull/119);qualified allocation/scaling,2 controlled+1 exploratory comparison;single-target heap reversals/all costs retained,no general speedup claim | [Potential iterator-symbol membership](F005/README.md) |
 | F004 | No-gain/mixed trade-off;lower-allocation observations do not establish net win;byte-different harnesses limit causal isolation;all3 pairs retained,source restored,no PR | [Compiler iterator-symbol membership](F004/README.md) and [identity addendum](F004-harness-identity-clarification.json) |
 | F002 | Rejected/design-blocked;actual native FIN removal passes at hybrid boundary,no compatible measured optimization;one original-only4-case profile,0 comparisons,no source edit/PR | [WebTransport stream removal](F002/README.md) |
