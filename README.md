@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 96/358 finalized**: 62 drafts, 13 no-gain, 17 rejected and 4 duplicates;
-262 findings remain unfinished.
+**Progress: 97/358 finalized**: 62 drafts, 13 no-gain, 18 rejected and 4 duplicates;
+261 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F012 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#125](https://github.com/jaslawinMs/aspnetcore/issues/125); original-only diagnostics, no source fix or gain | [SignalR broadcast exclusions](F012/README.md) |
 | F011 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#124](https://github.com/jaslawinMs/aspnetcore/issues/124); original-only diagnostics, no source fix or gain | [SignalR group exclusions](F011/README.md) |
 | F010 | [Draft jaslawinMs/aspnetcore#123](https://github.com/jaslawinMs/aspnetcore/pull/123);qualified large-existing-set CPU tradeoff,small/default regressions and unchanged allocations,3closed pairs;not default-app/merge-ready | [Claim allowed-value membership](F010/README.md) |
 | F008 | Rejected/design-blocked startup index;real mutable options,original-only diagnostics,upstream allocation-cleanup overlap;linear cost remains | [Localization supported cultures](F008/README.md) |
