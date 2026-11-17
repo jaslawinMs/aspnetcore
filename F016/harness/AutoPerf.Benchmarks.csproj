@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net12.0;net472</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion Condition="'$(TargetFramework)' == 'net12.0'">12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward Condition="'$(TargetFramework)' == 'net12.0'">Disable</RollForward>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <LegacyProductFramework>netstandard2.0</LegacyProductFramework>
+    <LegacyProductFramework Condition="'$(TargetFramework)' == 'net472'">net462</LegacyProductFramework>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\DataProtection\DataProtection\src\Microsoft.AspNetCore.DataProtection.csproj"
+                      SetTargetFramework="TargetFramework=$(LegacyProductFramework)"
+                      SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+</Project>

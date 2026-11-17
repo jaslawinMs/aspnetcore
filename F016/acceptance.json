@@ -1,0 +1,63 @@
+{
+  "candidate": "F016",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F016-managed-decryption-capacity",
+  "scope": "Only the legacy non-NET ManagedAuthenticatedEncryptor.Decrypt MemoryStream capacity seam. F015 Encrypt is deliberately absent from this independent branch; modern NET implementation, APIs, algorithms, existing reads/writes/ToArray/cleanup and other source remain unchanged.",
+  "finding_qualification": "Historical tfm_sensitive:false is incorrect for the conditional source. The protected-payload layout gives a padded-ciphertext upper bound, not the exact unpadded plaintext length. Actual CryptoStream write/padding behavior can make growth depend on plaintext alignment and size; aligned and partial-block controls are mandatory. Do not claim every original call grows or preallocation always reduces allocation.",
+  "prerequisites": [
+    "Capture fresh actual upstream-default, baseline and working source triples plus owner/factory history, exact-symbol PR search and applicable documentation before shipping changes.",
+    "Verify actual product net462/netstandard2.0/net12.0 and actual owning test net472/net12.0 target evaluation; use real installed Framework rather than infer legacy behavior from the modern product.",
+    "Define focused preservation Theory before changing owner; build/test actual original and candidate owners and inspect every new parameterized row. Original and candidate may both pass because this is an allocation/performance optimization, not a bug-fix red/green claim.",
+    "Use actual public managed configuration/descriptor, Secret.Random and factory. Strict Moq may supply only public IKey Descriptor metadata outside timing. No copied backend, private member invocation, new shipping IVT/UnsafeAccessor, or replacement algorithm/entropy.",
+    "Actual public Encrypt creates the fixed payload outside timing with real default entropy. Timed Decrypt itself has no per-operation randomness claim. Nonzero ciphertext/AAD/plaintext offsets, actual output bytes/lengths and whole input preservation are checked outside timing.",
+    "Warm real IAuthenticatedEncryptor.Decrypt returns its actual byte array for BDN consumption. Payload production, factory/key/input construction, validation and serialization/key-ring/storage/network are not timed."
+  ],
+  "candidate_family": "Pass capacity: macOffset - ciphertextOffset to the existing MemoryStream after the existing payload processing and transform creation, using the same proven nonnegative bounded byte count already passed to CryptoStream.Write. It is an upper bound because padding is removed during decryption. Preserve surrounding locals/branches and the entire Encrypt path.",
+  "decision_gates": [
+    "Both roles build all3 product TFMs, actual owning tests pass both targets and each new Theory payload is observed; enabled package validation runs before publication.",
+    "Actual primary benchmark host net472/x64 executes real net462 product on installed Windows Framework corelib4.8.10008; actual CLR/corelib/GC/image/source identities and native setup/cleanup must be observed before timing. Optional net12 host executes actual netstandard2.0, never labels modern-NET-path throughput.",
+    "Same compiled Framework benchmark executable/PDB/config/nonowner dependencies across compared roles; only actual owner DLL/PDB differ. Selected PE/PDB/source witnesses and every raw failed/adverse result retained.",
+    "At most3 actual comparison attempts, including failed/partial timing. No original-only diagnostic profile. One unchanged capacity candidate unless a documented repair is needed within the same maximum budget; no hidden fourth run.",
+    "Material faithful allocation/time benefit may justify a qualified draft only with all aligned/empty/small/partial-block controls reported. Otherwise publish honest no-gain/rejection. No universal/default-app/production-frequency or isolated-stream-byte claim.",
+    "Fork-only branch, issue, draft and evidence. Use actual repository PR template; immediately hand each newly created justified draft URL to the browser. Advance official counts only after remote source/evidence/receipt verification.",
+    "No public API/default/package/runtime/TFM changes, repository dependency-manifest changes, global.json/NuGet.config changes, new framework visibility or unrelated cleanup.",
+    "Shared Windows VM, serialized CPU-heavy work/max2MSBuild nodes, no deliberate OS power/priority/affinity changes or unrelated-process termination. Multi-gigabyte/int/process/array limits and other runtime distributions remain unverified unless actually exercised."
+  ],
+  "proposed_benchmark_shapes": [
+    "Aes256Sha256_P0",
+    "Aes256Sha256_P15",
+    "Aes256Sha256_P16",
+    "Aes256Sha256_P17",
+    "Aes256Sha256_P191",
+    "Aes256Sha256_P192",
+    "Aes256Sha256_P193",
+    "Aes256Sha256_P255",
+    "Aes256Sha256_P256",
+    "Aes256Sha256_P257",
+    "Aes256Sha256_P1024",
+    "Aes256Sha256_P1025",
+    "Aes256Sha256_P65536",
+    "Aes256Sha256_P65537",
+    "Aes256Sha256_P1048576",
+    "Aes256Sha256_P1048577",
+    "Aes256Sha512_P0",
+    "Aes256Sha512_P1024",
+    "Aes256Sha512_P1025",
+    "Aes256Sha512_P1048576",
+    "Aes256Sha512_P1048577"
+  ],
+  "focused_preservation_cases": [
+    [0, 80],
+    [15, 80],
+    [16, 96],
+    [17, 96],
+    [255, 320],
+    [256, 336],
+    [257, 336],
+    [65536, 65616],
+    [65537, 65616]
+  ],
+  "maximum_paired_comparisons": 3,
+  "maximum_original_only_diagnostic_profiles": 0,
+  "timing_boundary": "Actual real public-factory-created legacy managed Decrypt of an actual real Encrypt-produced fixed payload, repeated warm backend/payload reuse. Returned plaintext consumed; all setup/encryption/validation outside timing. No per-call RNG, modern-path, whole-application or production-frequency claim."
+}

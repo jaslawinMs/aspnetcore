@@ -1,0 +1,60 @@
+diff --git a/src/DataProtection/DataProtection/src/Managed/ManagedAuthenticatedEncryptor.cs b/src/DataProtection/DataProtection/src/Managed/ManagedAuthenticatedEncryptor.cs
+index a046976619..3edc796864 100644
+--- a/src/DataProtection/DataProtection/src/Managed/ManagedAuthenticatedEncryptor.cs
++++ b/src/DataProtection/DataProtection/src/Managed/ManagedAuthenticatedEncryptor.cs
+@@ -591,7 +591,7 @@ internal sealed unsafe class ManagedAuthenticatedEncryptor : IAuthenticatedEncry
+                     using (var symmetricAlgorithm = CreateSymmetricAlgorithm())
+                     using (var cryptoTransform = symmetricAlgorithm.CreateDecryptor(decryptionSubkey, iv))
+                     {
+-                        var outputStream = new MemoryStream();
++                        var outputStream = new MemoryStream(capacity: macOffset - ciphertextOffset);
+                         using (var cryptoStream = new CryptoStream(outputStream, cryptoTransform, CryptoStreamMode.Write))
+                         {
+                             cryptoStream.Write(protectedPayload.Array, ciphertextOffset, macOffset - ciphertextOffset);
+diff --git a/src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Managed/ManagedAuthenticatedEncryptorTests.cs b/src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Managed/ManagedAuthenticatedEncryptorTests.cs
+index ee91333805..9c111d0041 100644
+--- a/src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Managed/ManagedAuthenticatedEncryptorTests.cs
++++ b/src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Managed/ManagedAuthenticatedEncryptorTests.cs
+@@ -89,6 +89,42 @@ public class ManagedAuthenticatedEncryptorTests
+ #endif
+     }
+ 
++    [Theory]
++    [InlineData(0, 80)]
++    [InlineData(15, 80)]
++    [InlineData(16, 96)]
++    [InlineData(17, 96)]
++    [InlineData(255, 320)]
++    [InlineData(256, 336)]
++    [InlineData(257, 336)]
++    [InlineData(65536, 65616)]
++    [InlineData(65537, 65616)]
++    public void Decrypt_BlockAndStreamBoundaries_PreservesPayloadAndInputs(int plaintextLength, int expectedPayloadLength)
++    {
++        using var encryptor = new ManagedAuthenticatedEncryptor(new Secret(new byte[64]),
++            symmetricAlgorithmFactory: Aes.Create,
++            symmetricAlgorithmKeySizeInBytes: 32,
++            validationAlgorithmFactory: () => new HMACSHA256());
++        var plaintextBuffer = Enumerable.Range(0, plaintextLength + 4).Select(i => (byte)i).ToArray();
++        var aadBuffer = new byte[] { 9, 8, 7, 6, 5, 4 };
++        var originalPlaintext = plaintextBuffer.ToArray();
++        var originalAad = aadBuffer.ToArray();
++        var plaintext = new ArraySegment<byte>(plaintextBuffer, 2, plaintextLength);
++        var aad = new ArraySegment<byte>(aadBuffer, 1, 4);
++        var ciphertext = encryptor.Encrypt(plaintext, aad);
++        var ciphertextBuffer = new byte[ciphertext.Length + 7];
++        ciphertext.CopyTo(ciphertextBuffer, 3);
++        var originalCiphertext = ciphertextBuffer.ToArray();
++
++        var decrypted = encryptor.Decrypt(new ArraySegment<byte>(ciphertextBuffer, 3, ciphertext.Length), aad);
++
++        Assert.Equal(expectedPayloadLength, ciphertext.Length);
++        Assert.Equal(originalPlaintext.AsSpan(2, plaintextLength).ToArray(), decrypted);
++        Assert.Equal(originalCiphertext, ciphertextBuffer);
++        Assert.Equal(originalPlaintext, plaintextBuffer);
++        Assert.Equal(originalAad, aadBuffer);
++    }
++
+     [Fact]
+     public void Encrypt_Decrypt_RoundTrips()
+     {

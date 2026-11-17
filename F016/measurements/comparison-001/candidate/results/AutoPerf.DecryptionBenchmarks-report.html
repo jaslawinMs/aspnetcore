@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.DecryptionBenchmarks-20261117-032322</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300, VM=Hyper-V
+Intel Xeon Platinum 8473C, 1 CPU, 16 logical and 8 physical cores
+  [Host] : .NET Framework 4.8 (4.8.10008.0), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F016  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  RunStrategy=Throughput  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>         Shape</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Decrypt</td><td>Aes256Sha256_P0</td><td>103.6 &mu;s</td><td>1.80 &mu;s</td><td>0.80 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P15</td><td>103.1 &mu;s</td><td>0.86 &mu;s</td><td>0.38 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P16</td><td>103.9 &mu;s</td><td>1.67 &mu;s</td><td>0.87 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P17</td><td>103.4 &mu;s</td><td>0.48 &mu;s</td><td>0.21 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P191</td><td>103.2 &mu;s</td><td>0.14 &mu;s</td><td>0.05 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P192</td><td>103.4 &mu;s</td><td>0.26 &mu;s</td><td>0.12 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P193</td><td>104.5 &mu;s</td><td>1.52 &mu;s</td><td>0.68 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P255</td><td>104.8 &mu;s</td><td>1.65 &mu;s</td><td>0.86 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P256</td><td>104.2 &mu;s</td><td>2.58 &mu;s</td><td>1.35 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P257</td><td>104.7 &mu;s</td><td>2.19 &mu;s</td><td>1.15 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P1024</td><td>104.7 &mu;s</td><td>1.50 &mu;s</td><td>0.67 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P1025</td><td>105.6 &mu;s</td><td>1.99 &mu;s</td><td>0.88 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P65536</td><td>181.3 &mu;s</td><td>6.62 &mu;s</td><td>3.46 &mu;s</td><td>30.5755</td><td>8.9928</td><td>-</td><td>195 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha256_P65537</td><td>181.1 &mu;s</td><td>8.02 &mu;s</td><td>4.19 &mu;s</td><td>30.1954</td><td>8.8810</td><td>-</td><td>195 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes25(...)48576 [21]</td><td>1,724.2 &mu;s</td><td>135.91 &mu;s</td><td>71.08 &mu;s</td><td>416.6667</td><td>416.6667</td><td>416.6667</td><td>3,079 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes25(...)48577 [21]</td><td>1,427.2 &mu;s</td><td>21.32 &mu;s</td><td>11.15 &mu;s</td><td>471.4286</td><td>471.4286</td><td>471.4286</td><td>3,081 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha512_P0</td><td>109.5 &mu;s</td><td>2.90 &mu;s</td><td>1.52 &mu;s</td><td>-</td><td>-</td><td>-</td><td>3 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha512_P1024</td><td>112.6 &mu;s</td><td>2.21 &mu;s</td><td>1.16 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes256Sha512_P1025</td><td>112.4 &mu;s</td><td>2.23 &mu;s</td><td>1.17 &mu;s</td><td>-</td><td>-</td><td>-</td><td>6 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes25(...)48576 [21]</td><td>3,293.7 &mu;s</td><td>176.72 &mu;s</td><td>92.43 &mu;s</td><td>393.9394</td><td>393.9394</td><td>393.9394</td><td>3,079 KB</td>
+</tr><tr><td>Decrypt</td><td>Aes25(...)48577 [21]</td><td>3,119.7 &mu;s</td><td>39.04 &mu;s</td><td>17.33 &mu;s</td><td>419.3548</td><td>419.3548</td><td>419.3548</td><td>3,080 KB</td>
+</tr></tbody></table>
+</body>
+</html>
