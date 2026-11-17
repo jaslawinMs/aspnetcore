@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 106/358 finalized**: 66 drafts, 15 no-gain, 19 rejected and 6 duplicates;
-252 findings remain unfinished.
+**Progress: 107/358 finalized**: 67 drafts, 15 no-gain, 19 rejected and 6 duplicates;
+251 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F024 | [Draft jaslawinMs/aspnetcore#138](https://github.com/jaslawinMs/aspnetcore/pull/138); explicit infinite-commit profiles save 160/96/32 B/op, finite controls 64/0/-64, matched difference 96; adverse default results retained, 3 closed pairs; not application-speedup/merge-ready | [Infinite session-commit timeout](F024/README.md) |
 | F023 | [Draft jaslawinMs/aspnetcore#136](https://github.com/jaslawinMs/aspnetcore/pull/136); 96 fewer B/op for explicit infinite-timeout loads, unchanged default/loaded allocations, control drift and adverse timings retained, 3 closed pairs; not application-speedup/merge-ready | [Infinite session-load timeout](F023/README.md) |
 | F022 | [Draft jaslawinMs/aspnetcore#134](https://github.com/jaslawinMs/aspnetcore/pull/134); 561-569 fewer B/op on both public primary profiles, modest/noisy timing, cold/control costs and initial label correction retained, 3 closed pairs; not application-speedup/merge-ready | [Weak MVC indexer metadata cache](F022/README.md) |
 | F020 | Duplicate of F086/[jaslawinMs/aspnetcore#91](https://github.com/jaslawinMs/aspnetcore/pull/91);same list metadata helper,canonical evidence reused,0 new comparisons/confidence or redundant draft | [JSON Patch list metadata semantic alias](F020/README.md) |
