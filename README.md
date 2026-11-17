@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 94/358 finalized**: 61 drafts, 13 no-gain, 16 rejected and 4 duplicates;
-264 findings remain unfinished.
+**Progress: 95/358 finalized**: 62 drafts, 13 no-gain, 16 rejected and 4 duplicates;
+263 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F010 | [Draft jaslawinMs/aspnetcore#123](https://github.com/jaslawinMs/aspnetcore/pull/123);qualified large-existing-set CPU tradeoff,small/default regressions and unchanged allocations,3closed pairs;not default-app/merge-ready | [Claim allowed-value membership](F010/README.md) |
 | F008 | Rejected/design-blocked startup index;real mutable options,original-only diagnostics,upstream allocation-cleanup overlap;linear cost remains | [Localization supported cultures](F008/README.md) |
 | F007 | [Draft jaslawinMs/aspnetcore#121](https://github.com/jaslawinMs/aspnetcore/pull/121);qualified large-parser CPU/allocation trade-off,2 completed pairs+failed slot1;no default-app/rendering gain claim | [Root-operation duplicate IDs](F007/README.md) |
 | F006 | No-gain/trade-off;repeatable miss-heavy2-3% win retained,potential/promotion regressions and control reversals prevent general net-benefit claim;3 identical-harness pairs,source/owner restored,no PR | [All for-variable symbol membership](F006/README.md) |
