@@ -245,7 +245,10 @@ public class DistributedSession : ISession
     {
         using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
         {
-            cts.CancelAfter(_ioTimeout);
+            if (_ioTimeout != Timeout.InfiniteTimeSpan)
+            {
+                cts.CancelAfter(_ioTimeout);
+            }
             if (_isModified)
             {
                 if (_logger.IsEnabled(LogLevel.Information))
