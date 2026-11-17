@@ -2049,6 +2049,218 @@ public class SignInManagerTest
         Assert.Equal("Blah blah", externalLoginInfo.ProviderDisplayName);
     }
 
+    [Theory]
+    [InlineData("provider", "Display", "Display")]
+    [InlineData("provider", null, "provider")]
+    [InlineData("provider", "", "provider")]
+    [InlineData("provider", " ", " ")]
+    [InlineData("Provider", "Display", "Provider")]
+    [InlineData("unknown", "Display", "unknown")]
+    public async Task GetExternalLoginInfoAsyncUsesDefaultProviderDisplayName(string provider, string displayName, string expectedDisplayName)
+    {
+        var (context, authentication) = SetupExternalLoginContext(provider);
+        var schemes = CreateExternalSchemeProvider(displayName);
+        var manager = SetupSignInManager(MockHelpers.MockUserManager<PocoUser>().Object, context, schemeProvider: schemes);
+
+        var result = await manager.GetExternalLoginInfoAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedDisplayName, result.ProviderDisplayName);
+        Assert.Equal(provider, result.LoginProvider);
+        Assert.Equal("key", result.ProviderKey);
+        Assert.Same(authentication.Principal, result.Principal);
+        Assert.Same(authentication.Properties, result.AuthenticationProperties);
+        var token = Assert.Single(result.AuthenticationTokens);
+        Assert.Equal("sample", token.Name);
+        Assert.Equal("synthetic-value", token.Value);
+    }
+
+    [Fact]
+    public async Task GetExternalLoginInfoAsyncObservesDefaultProviderChanges()
+    {
+        var (context, _) = SetupExternalLoginContext("provider");
+        var schemes = CreateExternalSchemeProvider("before");
+        var manager = SetupSignInManager(MockHelpers.MockUserManager<PocoUser>().Object, context, schemeProvider: schemes);
+
+        Assert.Equal("before", (await manager.GetExternalLoginInfoAsync()).ProviderDisplayName);
+        schemes.RemoveScheme("provider");
+        Assert.Equal("provider", (await manager.GetExternalLoginInfoAsync()).ProviderDisplayName);
+        Assert.True(schemes.TryAddScheme(new AuthenticationScheme("provider", "after", typeof(CookieAuthenticationHandler))));
+        Assert.Equal("after", (await manager.GetExternalLoginInfoAsync()).ProviderDisplayName);
+    }
+
+    [Theory]
+    [InlineData("empty", "provider")]
+    [InlineData("custom", "custom")]
+    [InlineData("duplicate", "first")]
+    [InlineData("null", "provider")]
+    [InlineData("empty-display", "")]
+    public async Task GetExternalLoginInfoAsyncPreservesManagerSchemeOverride(string scenario, string expectedDisplayName)
+    {
+        var (context, _) = SetupExternalLoginContext("provider");
+        var userManager = MockHelpers.MockUserManager<PocoUser>().Object;
+        var manager = new Mock<SignInManager<PocoUser>>(userManager,
+            new HttpContextAccessor { HttpContext = context },
+            Mock.Of<IUserClaimsPrincipalFactory<PocoUser>>(), Options.Create(new IdentityOptions()),
+            NullLogger<SignInManager<PocoUser>>.Instance, CreateExternalSchemeProvider("registered"),
+            new DefaultUserConfirmation<PocoUser>())
+        {
+            CallBase = true
+        };
+        AuthenticationScheme[] schemes = scenario switch
+        {
+            "empty" => [],
+            "custom" => [new("provider", "custom", typeof(CookieAuthenticationHandler))],
+            "duplicate" => [
+                new("provider", "first", typeof(CookieAuthenticationHandler)),
+                new("provider", "second", typeof(CookieAuthenticationHandler))],
+            "null" => [
+                new("provider", null, typeof(CookieAuthenticationHandler)),
+                new("provider", "second", typeof(CookieAuthenticationHandler))],
+            "empty-display" => [
+                new("provider", "", typeof(CookieAuthenticationHandler)),
+                new("provider", "second", typeof(CookieAuthenticationHandler))],
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario))
+        };
+        manager.Setup(instance => instance.GetExternalAuthenticationSchemesAsync()).ReturnsAsync(schemes);
+
+        var result = await manager.Object.GetExternalLoginInfoAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedDisplayName, result.ProviderDisplayName);
+        manager.Verify(instance => instance.GetExternalAuthenticationSchemesAsync(), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetExternalLoginInfoAsyncPreservesDerivedProviderEnumeration(bool includeExternal)
+    {
+        var (context, _) = SetupExternalLoginContext("provider");
+        var schemes = new Mock<AuthenticationSchemeProvider>(Options.Create(new AuthenticationOptions()))
+        {
+            CallBase = true
+        };
+        schemes.Object.AddScheme(new AuthenticationScheme("provider", "registered", typeof(CookieAuthenticationHandler)));
+        AuthenticationScheme[] external = includeExternal
+            ? [new("provider", "custom", typeof(CookieAuthenticationHandler))]
+            : [];
+        schemes.Setup(instance => instance.GetAllSchemesAsync()).ReturnsAsync(external);
+        schemes.Setup(instance => instance.GetSchemeAsync(It.IsAny<string>()))
+            .Throws(new InvalidOperationException("The derived provider enumeration must remain authoritative."));
+        var manager = SetupSignInManager(MockHelpers.MockUserManager<PocoUser>().Object, context, schemeProvider: schemes.Object);
+
+        var result = await manager.GetExternalLoginInfoAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal(includeExternal ? "custom" : "provider", result.ProviderDisplayName);
+        schemes.Verify(instance => instance.GetAllSchemesAsync(), Times.Once);
+        schemes.Verify(instance => instance.GetSchemeAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetExternalLoginInfoAsyncWaitsForCustomSchemeEnumeration()
+    {
+        var (context, _) = SetupExternalLoginContext("provider");
+        var completion = new TaskCompletionSource<IEnumerable<AuthenticationScheme>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var schemes = new Mock<IAuthenticationSchemeProvider>(MockBehavior.Strict);
+        schemes.Setup(instance => instance.GetAllSchemesAsync()).Returns(completion.Task);
+        var manager = SetupSignInManager(MockHelpers.MockUserManager<PocoUser>().Object, context, schemeProvider: schemes.Object);
+
+        var pending = manager.GetExternalLoginInfoAsync();
+
+        schemes.Verify(instance => instance.GetAllSchemesAsync(), Times.Once);
+        Assert.False(pending.IsCompleted);
+        completion.SetResult([new("provider", "completed", typeof(CookieAuthenticationHandler))]);
+        var result = await pending.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.NotNull(result);
+        Assert.Equal("completed", result.ProviderDisplayName);
+        schemes.Verify(instance => instance.GetSchemeAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetExternalLoginInfoAsyncPreservesCustomEnumerationFailure()
+    {
+        var (context, _) = SetupExternalLoginContext("provider");
+        var failure = new InvalidOperationException("Scheme enumeration failed.");
+        var schemes = new Mock<IAuthenticationSchemeProvider>(MockBehavior.Strict);
+        schemes.Setup(instance => instance.GetAllSchemesAsync())
+            .Returns(Task.FromException<IEnumerable<AuthenticationScheme>>(failure));
+        var manager = SetupSignInManager(MockHelpers.MockUserManager<PocoUser>().Object, context, schemeProvider: schemes.Object);
+
+        var result = await Assert.ThrowsAsync<InvalidOperationException>(() => manager.GetExternalLoginInfoAsync());
+
+        Assert.Same(failure, result);
+        schemes.Verify(instance => instance.GetSchemeAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetExternalLoginInfoAsyncDefaultTypesAvoidEnumerationAllocations()
+    {
+        var userManager = MockHelpers.MockUserManager<PocoUser>().Object;
+        var schemes = CreateExternalSchemeProvider("Display");
+        var (defaultContext, _) = SetupExternalLoginContext("provider");
+        var (derivedContext, _) = SetupExternalLoginContext("provider");
+        var manager = SetupSignInManager(userManager, defaultContext, schemeProvider: schemes);
+        var derived = new NoOverridesSignInManager<PocoUser>(userManager,
+            new HttpContextAccessor { HttpContext = derivedContext }, manager.ClaimsFactory,
+            Options.Create(manager.Options), schemes);
+        manager.Context = defaultContext;
+        derived.Context = derivedContext;
+
+        await MeasureExternalLoginInfoAllocations(manager);
+        await MeasureExternalLoginInfoAllocations(derived);
+        var defaultAllocation = await MeasureExternalLoginInfoAllocations(manager);
+        var derivedAllocation = await MeasureExternalLoginInfoAllocations(derived);
+
+        Assert.True(defaultAllocation < derivedAllocation,
+            $"Default type lookup allocation must be below derived fallback allocation. Default:{defaultAllocation};derived:{derivedAllocation}.");
+    }
+
+    private (DefaultHttpContext Context, AuthenticateResult Authentication) SetupExternalLoginContext(string provider)
+    {
+        var context = new DefaultHttpContext();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "key")]));
+        var properties = new AuthenticationProperties();
+        properties.Items["LoginProvider"] = provider;
+        properties.StoreTokens([new AuthenticationToken { Name = "sample", Value = "synthetic-value" }]);
+        var authentication = AuthenticateResult.Success(new AuthenticationTicket(principal, properties, IdentityConstants.ExternalScheme));
+        MockAuth(context).Setup(service => service.AuthenticateAsync(context, IdentityConstants.ExternalScheme))
+            .Returns(Task.FromResult(authentication));
+
+        return (context, authentication);
+    }
+
+    private static AuthenticationSchemeProvider CreateExternalSchemeProvider(string displayName)
+    {
+        var schemes = new AuthenticationSchemeProvider(Options.Create(new AuthenticationOptions()));
+        schemes.AddScheme(new AuthenticationScheme("provider", displayName, typeof(CookieAuthenticationHandler)));
+
+        return schemes;
+    }
+
+    private static async Task<long> MeasureExternalLoginInfoAllocations(SignInManager<PocoUser> manager)
+    {
+        var thread = Environment.CurrentManagedThreadId;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var index = 0; index < 64; index++)
+        {
+            var pending = manager.GetExternalLoginInfoAsync();
+            if (!pending.IsCompletedSuccessfully)
+            {
+                throw new InvalidOperationException("The prepared authentication and scheme producers must complete synchronously for this thread-local allocation check.");
+            }
+            var result = await pending;
+            Assert.NotNull(result);
+            Assert.Equal("Display", result.ProviderDisplayName);
+            Assert.Equal("key", result.ProviderKey);
+        }
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(thread, Environment.CurrentManagedThreadId);
+
+        return allocated;
+    }
+
     [Fact]
     public async Task GetExternalLoginInfoAsyncWithOidcSubClaim()
     {
@@ -2294,6 +2506,16 @@ public class SignInManagerTest
             IUserClaimsPrincipalFactory<TUser> claimsFactory,
             IOptions<IdentityOptions> optionsAccessor)
             : base(userManager, contextAccessor, claimsFactory, optionsAccessor, NullLogger<SignInManager<TUser>>.Instance, Mock.Of<IAuthenticationSchemeProvider>(), new DefaultUserConfirmation<TUser>())
+        {
+        }
+
+        public NoOverridesSignInManager(
+            UserManager<TUser> userManager,
+            IHttpContextAccessor contextAccessor,
+            IUserClaimsPrincipalFactory<TUser> claimsFactory,
+            IOptions<IdentityOptions> optionsAccessor,
+            IAuthenticationSchemeProvider schemes)
+            : base(userManager, contextAccessor, claimsFactory, optionsAccessor, NullLogger<SignInManager<TUser>>.Instance, schemes, new DefaultUserConfirmation<TUser>())
         {
         }
     }
