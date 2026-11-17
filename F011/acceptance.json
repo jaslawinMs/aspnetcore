@@ -1,0 +1,43 @@
+{
+  "candidate": "F011",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F011-signalr-group-exclusions",
+  "finding": "Repeated exclusion-list Contains in actual DefaultHubLifetimeManager.SendGroupExceptAsync.",
+  "scope": "Investigate a per-send exclusion index for group sends only. F012 broadcast exclusions, F013 targeted sends and F014 user membership remain independent.",
+  "prerequisites": [
+    "Use an independent source branch from the campaign baseline, not the preceding F010 source commit.",
+    "Capture selected baseline/working/fresh-default source triples, owner history, related Fowler PR69189 and applicable documentation.",
+    "Build the original owner and run the complete discovered DefaultHubLifetimeManagerTests class, including inherited specification cases. Parse every actual TRX identity, execution, outcome and theory row.",
+    "Exercise public OnConnectedAsync, AddToGroupAsync and SendGroupExceptAsync with actual HubConnectionContext, SerializedHubMessage and JsonHubProtocol. Observe actual transport frame bytes and recipients, not a copied filter.",
+    "Characterize missing groups, case sensitivity, duplicate exclusions, all-excluded laziness, original ICollection.Contains dispatch and sequential live collection changes produced by a real JSON-serialized argument property getter; do not inject the lifetime-manager filter or protocol callbacks.",
+    "Use actual bounded Pipes to characterize pending writes, completion after draining every recipient, and cancellation; no sleeps or injected lifetime-manager callbacks.",
+    "Establish repeated miss enumeration with an untimed instrumented input collection. Never time instrumentation."
+  ],
+  "decision_gates": [
+    "A candidate must preserve observable collection dispatch, live caller-owned input behavior, lazy serialization, actual delivery, pending-write completion and cancellation.",
+    "A snapshot counterfactual is not an implemented candidate or red/green optimization. Reject an incompatible proposal honestly; do not claim all other compatible designs are impossible.",
+    "Do not duplicate the separate small-target SendConnectionsAsync change in upstream PR69189 or reuse its measurements.",
+    "If no compatible candidate is selected, one original-only diagnostic profile may quantify the real synchronous group-send boundary. It is not a before/after comparison or an improvement claim.",
+    "Any compatible candidate needs the same compiled harness and otherwise identical captured consumer images across original/candidate roles, focused regression coverage, actual applicable API gates and at most three measured comparisons including failed or partial attempts."
+  ],
+  "maximum_paired_comparisons": 3,
+  "maximum_original_only_diagnostic_profiles": 1,
+  "proposed_diagnostic_shapes": [
+    "NoGroup512",
+    "OneEmpty",
+    "Small4List2",
+    "G32List64",
+    "G32Array64",
+    "G32ReadOnly64",
+    "G128List256",
+    "G128Array256",
+    "G32AllList",
+    "G32AllArray",
+    "G32HalfList",
+    "G32DupList64"
+  ],
+  "timing_boundary": "Repeated actual public group send over pre-registered/grouped real HubConnectionContexts, real per-send JSON serialization and synchronous bounded transport writers. No unbounded Pipe growth, network, handshake, connection creation or production-frequency claim. Async/backpressure/cancellation are separately characterized with actual Pipes, not timed.",
+  "host": "Shared Windows VM; serialize CPU-heavy builds/tests/profiles; maximum two build nodes; no deliberate power, priority, affinity or unrelated-process changes.",
+  "current_default_protocol_delta": "The original source-triple reader correctly stopped on JsonHubProtocol.cs. Preserve that failed reader and actual header-enumeration delta, then validate the relevant captured-default producer instead of claiming universal source equivalence.",
+  "no_shipping_api_default_dependency_tfm_visibility_change_selected": true
+}

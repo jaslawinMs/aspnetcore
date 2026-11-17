@@ -1,0 +1,18 @@
+<Project>
+  <Target Name="_F011UseCapturedDefaultJson"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'Microsoft.AspNetCore.SignalR.Protocols.Json' and '$(TargetFramework)' == 'net12.0'">
+    <Error Condition="!Exists('$(F011CapturedDefaultJsonSource)')" Text="The exact captured-default JSON source is required." />
+    <ItemGroup>
+      <_F011OriginalJsonCompile Include="@(Compile)" Condition="'%(Filename)%(Extension)' == 'JsonHubProtocol.cs'" />
+    </ItemGroup>
+    <Error Condition="'@(_F011OriginalJsonCompile->Count())' != '1'" Text="Exactly one original JsonHubProtocol Compile item is required." />
+    <ItemGroup>
+      <Compile Remove="@(_F011OriginalJsonCompile)" />
+      <Compile Include="$(F011CapturedDefaultJsonSource)" Link="Protocol\JsonHubProtocol.cs" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(F011OverlayEvidence)"
+                      Lines="@(_F011OriginalJsonCompile->'%(FullPath)');$(F011CapturedDefaultJsonSource)"
+                      Overwrite="true" Encoding="UTF-8" />
+  </Target>
+</Project>

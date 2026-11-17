@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.GroupSendBenchmarks-20261116-233830</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F011-original-only  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  RunStrategy=Throughput  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>  Shape</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Send</td><td>NoGroup512</td><td>5.743 ns</td><td>0.0578 ns</td><td>0.0302 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Send</td><td>OneEmpty</td><td>261.840 ns</td><td>13.8486 ns</td><td>7.2431 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>Small4List2</td><td>536.621 ns</td><td>15.0087 ns</td><td>6.6640 ns</td><td>0.0053</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>G32List64</td><td>4,584.769 ns</td><td>22.3560 ns</td><td>11.6926 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>G32Array64</td><td>6,882.311 ns</td><td>49.6445 ns</td><td>22.0425 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>G32ReadOnly64</td><td>4,971.806 ns</td><td>25.8609 ns</td><td>11.4824 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>G128List256</td><td>41,935.420 ns</td><td>308.9752 ns</td><td>137.1869 ns</td><td>-</td><td>-</td><td>-</td><td>250 B</td>
+</tr><tr><td>Send</td><td>G128Array256</td><td>80,110.515 ns</td><td>2,798.1176 ns</td><td>1,242.3816 ns</td><td>-</td><td>-</td><td>-</td><td>252 B</td>
+</tr><tr><td>Send</td><td>G32AllList</td><td>2,009.103 ns</td><td>12.6032 ns</td><td>5.5959 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Send</td><td>G32AllArray</td><td>3,092.422 ns</td><td>13.0049 ns</td><td>6.8018 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Send</td><td>G32HalfList</td><td>2,747.239 ns</td><td>37.2499 ns</td><td>16.5392 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr><tr><td>Send</td><td>G32DupList64</td><td>8,741.924 ns</td><td>128.0979 ns</td><td>45.6809 ns</td><td>-</td><td>-</td><td>-</td><td>248 B</td>
+</tr></tbody></table>
+</body>
+</html>
