@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.FlushBenchmarks-20261117-132657</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F032  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>        Method</th><th>       Profile</th><th>   Mean</th><th>  Error</th><th> StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>FlushAndConsumeAsync</td><td>Live.Async.Started</td><td>24.09 ns</td><td>0.420 ns</td><td>0.220 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>FlushAndConsumeAsync</td><td>Live.Sync.Started</td><td>20.37 ns</td><td>0.588 ns</td><td>0.307 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>FlushAndConsumeAsync</td><td>Reque(...)ady.1 [21]</td><td>341,351.46 ns</td><td>51,376.226 ns</td><td>26,870.760 ns</td><td>-</td><td>-</td><td>-</td><td>11,026 B</td>
+</tr><tr><td>FlushAndConsumeAsync</td><td>Request.Sync.None.1</td><td>290,628.59 ns</td><td>52,335.778 ns</td><td>27,372.624 ns</td><td>-</td><td>-</td><td>-</td><td>10,502 B</td>
+</tr><tr><td>FlushAndConsumeAsync</td><td>Request.Sync.Ready.1</td><td>255,068.80 ns</td><td>30,837.810 ns</td><td>16,128.771 ns</td><td>-</td><td>-</td><td>-</td><td>11,325 B</td>
+</tr><tr><td>FlushAndConsumeAsync</td><td>Reque(...)dy.64 [21]</td><td>257,210.63 ns</td><td>27,985.040 ns</td><td>14,636.717 ns</td><td>-</td><td>-</td><td>-</td><td>11,327 B</td>
+</tr></tbody></table>
+</body>
+</html>

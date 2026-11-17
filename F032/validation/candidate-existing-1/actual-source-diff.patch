@@ -1,0 +1,18 @@
+diff --git a/src/Servers/HttpSys/src/ResponseStream.cs b/src/Servers/HttpSys/src/ResponseStream.cs
+index a3ddf82892..a8e221a511 100644
+--- a/src/Servers/HttpSys/src/ResponseStream.cs
++++ b/src/Servers/HttpSys/src/ResponseStream.cs
+@@ -45,7 +45,12 @@ internal sealed class ResponseStream : Stream
+     }
+     public override void Flush()
+     {
+-        _onStart().GetAwaiter().GetResult();
++        var startTask = _onStart();
++        if (!startTask.IsCompletedSuccessfully)
++        {
++            startTask.GetAwaiter().GetResult();
++        }
++
+         _innerStream.Flush();
+     }
+ 

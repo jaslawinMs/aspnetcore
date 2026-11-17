@@ -1,0 +1,26 @@
+{
+  "candidate": "F032",
+  "definedBeforeProductEditsOrTiming": true,
+  "exactPublicContracts": [
+    "void System.IO.Stream.Flush()",
+    "Task System.IO.Stream.FlushAsync(CancellationToken cancellationToken)"
+  ],
+  "requirements": [
+    "Independently exercise an actual public UseHttpSys host and actual accepted loopback HTTP request. Observe real ResponseStream from RequestContext.InitializeFeatures and real OnResponseStart/NotifiyOnStartingAsync,not a hand-injected Func<Task> or mocked server callback.",
+    "Preserve synchronous Flush completion before caller continuation and native header delivery,callback LIFO/exact exceptions/cancellation,header visibility/locking and the default AllowSynchronousIO=false. Nonblocking return is not a compatible replacement.",
+    "Important observed source contract:RequestContext.OnResponseStart sets the public HasStarted flag before awaiting OnStarting. Do not equate that flag with wire header delivery or assert it stays false while the real callback is pending.",
+    "Before any shipping edit,execute actual existing owning functional tests and faithful pending OnStarting producer cases:success,failure,cancellation. Call actual Response.Body.Flush directly with no harness task wait;observe incomplete public call,actual server caller waiting and no client response headers before release;after release inspect exact caller error/token,callback order and real HTTP status,headers,payload/completion.",
+    "Also check already-completed callbacks,already-faulted/canceled callbacks,default synchronous-IO rejection and actual FlushAsync pending controls. Clearly distinguish gate cancellation from RequestAborted cancellation.",
+    "Evaluate only a compatible completed-success guard in ResponseStream.Flush,leaving Write and every existing async method unchanged. Keep actual onStart task and use GetAwaiter().GetResult() for every nonsuccessfully-completed task. No public API/default/baseline/new IVT/UnsafeAccessor changes.",
+    "Predeclare ordinary real full-request Flush1 with no callback and completed callback,a repeated Flush64 request,unchanged async full-request Flush1 control,and prepared-live-request synchronous/async repeated-Flush profiles. Actual accepted request stays alive until each prepared profile is torn down. Do not fabricate RequestContext/native pointers or time a disposed request.",
+    "The prepared-live profile is an already-started real response,no new network operation per flush and not a production throughput claim. Full-request profiles retain actual loopback/network/client/dispatch costs. Make setup and measured boundaries explicit.",
+    "Freeze one measured harness/dependency closure;candidate copies it and replaces only the actually tested HttpSys DLL/PDB. Check every consumer file,selected source-to-PDB witnesses and actual runtime-loaded owner path/hashes before/after.",
+    "At most3 actual source-comparison slots,including partial/failed timing. Alternate paired order original/candidate,candidate/original,original/candidate. All raw samples/outliers,adverse cases,default/async controls and allocation residuals remain. Stop early only for clear >=50% primary gain;otherwise maximum3.",
+    "Require material repeatable compatible target benefit not explained by unchanged controls. No convincing gain means restore original source/product and publish no-gain;do not invent a performance PR.",
+    "Use pinned activated SDK and byte-exact settings-preserving emitter,serialize heavy work,max2 build workers. This is a shared Windows host:do not change priority,affinity,power,URL ACL/firewall/OS settings or unrelated processes. Own only a unique ephemeral loopback listener and close every held request/client/host.",
+    "If actual native HTTP.sys hosting is unavailable,retain exact failure/prerequisite and name unverified producer/wire boundaries. Do not label injected callback tests or skipped conditional tests as real-server validation.",
+    "Preserve global.json,package.json,package-lock.json and NuGet.config. Publish raw commands/outcomes,source history/docs and any failed attempts;fork-only writes and no extra historical timing."
+  ],
+  "maximumActualComparisons": 3,
+  "actualComparisonsStarted": 0
+}

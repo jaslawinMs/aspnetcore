@@ -1,0 +1,27 @@
+{
+  "id": "F032",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Servers/HttpSys/src/ResponseStream.cs",
+    "line_start": 48,
+    "line_end": 48,
+    "project": "Microsoft.AspNetCore.Server.HttpSys",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Synchronous response flushing blocks on asynchronous response-start work.",
+    "explanation": "ResponseStream.Flush runs on a reusable HTTP response path and synchronously waits for the genuinely asynchronous _onStart callback with GetAwaiter().GetResult(). A pending start operation occupies the request thread until completion.",
+    "snippet": "_onStart().GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
