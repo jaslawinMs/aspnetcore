@@ -1,0 +1,27 @@
+{
+  "id": "F033",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Servers/HttpSys/src/ResponseStream.cs",
+    "line_start": 60,
+    "line_end": 60,
+    "project": "Microsoft.AspNetCore.Server.HttpSys",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Synchronous response writes block on asynchronous response-start work.",
+    "explanation": "ResponseStream.Write performs the same synchronous wait on the asynchronous _onStart callback before each first synchronous write. This is a reusable request/response path, so a pending start operation blocks a throughput-bearing thread.",
+    "snippet": "_onStart().GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}

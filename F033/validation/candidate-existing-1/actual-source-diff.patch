@@ -1,0 +1,18 @@
+diff --git a/src/Servers/HttpSys/src/ResponseStream.cs b/src/Servers/HttpSys/src/ResponseStream.cs
+index a3ddf82892..a19cd36b57 100644
+--- a/src/Servers/HttpSys/src/ResponseStream.cs
++++ b/src/Servers/HttpSys/src/ResponseStream.cs
+@@ -57,7 +57,12 @@ internal sealed class ResponseStream : Stream
+ 
+     public override void Write(byte[] buffer, int offset, int count)
+     {
+-        _onStart().GetAwaiter().GetResult();
++        var startTask = _onStart();
++        if (!startTask.IsCompletedSuccessfully)
++        {
++            startTask.GetAwaiter().GetResult();
++        }
++
+         _innerStream.Write(buffer, offset, count);
+     }
+ 

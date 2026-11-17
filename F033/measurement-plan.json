@@ -1,0 +1,76 @@
+{
+  "candidate": "F033",
+  "actualDeclaredBeforeProductEditAndNativeTiming": true,
+  "actualDeclaredAt": "2026-11-17T22:10:50.498Z",
+  "strategy": "Only synchronous ResponseStream.Write retains actual startTask and avoids GetAwaiter().GetResult only for IsCompletedSuccessfully. Every pending/faulted/canceled start remains awaited. Keep start-before-argument-validation-before-default-IO-rejection,Flush/all async methods/producer/native implementation/defaults/API unchanged.",
+  "primaryProfile": "Request.Sync.Ready.128",
+  "supportingSyncProfiles": [
+    "Request.Sync.None.128",
+    "Request.Sync.Ready.4096"
+  ],
+  "limitedPreparedSyncProfile": "Live.Sync.Started.Zero",
+  "unchangedAsyncControls": [
+    "Request.Async.Ready.128",
+    "Live.Async.Started.Zero"
+  ],
+  "profiles": [
+    "Request.Sync.None.128",
+    "Request.Sync.Ready.128",
+    "Request.Sync.Ready.4096",
+    "Request.Async.Ready.128",
+    "Live.Sync.Started.Zero",
+    "Live.Async.Started.Zero"
+  ],
+  "maximumActualSourceComparisons": 3,
+  "pairedOrder": [
+    [
+      "original",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "original"
+    ],
+    [
+      "original",
+      "candidate"
+    ]
+  ],
+  "originalPreparation": "preparation-original-002",
+  "originalCharacterization": "characterize-original-002",
+  "expectedCandidatePreparation": "preparation-candidate",
+  "expectedCandidateCharacterization": "characterize-candidate",
+  "actualOriginalHarnessSha256": "F3FA8A6EAB20C31D6BBEBC04F238DF58E6BAC0D7C55E93F26D5D11877CF751A6",
+  "actualOriginalHarnessPdbSha256": "CCF7F071DC7311A350732F99F65FAA66BFB64108CEDAB3B05F2C9AD5C904F6EC",
+  "actualOriginalClosureFiles": 186,
+  "expectedCandidateClosureDifference": [
+    "Microsoft.AspNetCore.Server.HttpSys.dll",
+    "Microsoft.AspNetCore.Server.HttpSys.pdb"
+  ],
+  "exactRecordedErrorTypesAndParameterNamesMustMatchAcrossVariants": true,
+  "characterization": "Six completed profiles plus22additional actual pending/default/error/ranged-data/argument/first-zero contracts and six actual void-setup/workload/cleanup lifecycles. Strict original-vs-candidate concrete argument error/parameter/header/order/wire comparison required,including native past-end ArgumentOutOfRangeException(count).",
+  "initialUntimedFailure": {
+    "label": "characterize-original",
+    "actualNativeExit": -532462766,
+    "actualTimedComparisonsConsumed": 0,
+    "actualFailure": "Harness assumed exact base ArgumentException/no parameter for past-end array;actual pinned native validation uses ArgumentOutOfRangeException(count). First three concrete argument cases passed;one owned listener gracefully disposed. No shipping source edit or timing.",
+    "correction": "Retain exact runtime observations before assertion;assert public ArgumentException contract for bounds,and require exact observed concrete type/parameter equality across actual owner variants. Corrected original and lifecycle characterization passed before this plan.",
+    "originalImage": "preparation-original",
+    "retainedUnchanged": true,
+    "failedRuntimeSourceLookup": "Reported CoreLib commit dfd6ac738610ea05f42e704be82b386e71052e12 unavailable publicly(404). Not compiler-provenance proof."
+  },
+  "earlyStop": "Only a clear compatible >=50% primary full-request gain not explained by unchanged controls may stop early. A prepared zero-byte microboundary gain alone is not full-request evidence. Otherwise use all3slots;partial/failed timing consumes its slot without reset.",
+  "measurement": {
+    "benchmarkDotNet": "0.13.0",
+    "executor": "byte-exact settings-preserving in-process emit",
+    "settingsExecutorSourceSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+    "warmups": 3,
+    "resultSamplesPerProfile": 8,
+    "iterationTimeMilliseconds": 100,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "powerPlan": "Guid.Empty"
+  },
+  "qualification": "Shared non-isolated Windows VM;serialize heavy work,max2MSBuild workers,never set priority/affinity/power/OS/URL-ACL/firewall settings. Full request includes client/fixture/native IO/complete byte validation and disposal. Prepared zero-length writes have initial128B+header send before timing,no new native send per measured operation. Not nonzero network throughput or production app speedup.",
+  "noGainRule": "Require repeatable meaningful compatible benefit after unchanged controls and variability. No demonstrated gain means restore byte-exact source/product,publish honest no-gain issue/evidence,not an artificial PR. Always retain adverse timings,allocation residuals,raw failures and exact native samples."
+}

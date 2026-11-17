@@ -1,0 +1,25 @@
+{
+  "candidate": "F033",
+  "definedBeforeProductEditsOrTiming": true,
+  "exactPublicContracts": [
+    "void System.IO.Stream.Write(byte[] buffer,int offset,int count)",
+    "ValueTask System.IO.Stream.WriteAsync(ReadOnlyMemory<byte> buffer,CancellationToken cancellationToken)"
+  ],
+  "requirements": [
+    "Independently exercise a real public UseHttpSys host and accepted loopback HTTP request,actual ResponseStream/OnResponseStart/OnStarting/native ResponseBody. No injected framework start delegate,fake RequestContext/native pointers or replaced stream.",
+    "Synchronous Write must await actual OnStarting completion before consuming its buffer/sending payload/returning. Preserve callback LIFO,exact errors/tokens,wire status/protocol/payload,header state and default AllowSynchronousIO=false. Nonblocking return is not compatible.",
+    "OnResponseStart publicly marks HasStarted before awaiting callbacks. While pending,observe true HasStarted,unlocked headers,incomplete callback/public invocation,actual synchronous server caller waiting and absent wire headers.",
+    "Before any shipping edit,run the exact native owning tests and real pending Write callback success/failure/cancellation plus async controls,already-faulted/canceled callbacks and default synchronous-IO rejection. Actual server Body.Write invocation contains no harness task wait.",
+    "Exercise nonzero ranged byte-array writes including sentinels,ordinary128B and4096B data,zero-length writes,and exact consumed bytes. Include real invalid null/negative-offset/negative-count/out-of-range buffer arguments,callback-before-argument validation,and pending callback error/cancellation precedence over invalid arguments. Do not equate public HasStarted with sent wire headers.",
+    "Only evaluate a compatible completed-success guard in ResponseStream.Write;keep actual start task and GetAwaiter().GetResult for every not-successfully-completed task. Leave Flush/all async methods/producer/defaults/API/baselines unchanged;no new IVT/UnsafeAccessor.",
+    "Predeclare Request.Sync.None.128,Request.Sync.Ready.128,Request.Sync.Ready.4096,Request.Async.Ready.128,Live.Sync.Started.Zero,Live.Async.Started.Zero. Full requests include real client/dispatch/registration/data/native IO/wire consumption. Prepared live uses one held actually started request,one zero-length write per operation and no new native send;not representative nonzero-write or application throughput.",
+    "Use proven synchronous void BDN lifecycle adapters outside measurement. Characterize every actual setup/workload/cleanup lifecycle before timing;awaiting is not assumed from method attributes. All owned requests/client/hosts must close with explicit disposal evidence.",
+    "Freeze one measured harness/dependency closure;copy for candidate and replace only actual tested HTTP.sys DLL/PDB. Verify all files,selected source/PDB witnesses and actual runtime-loaded owner path/hashes.",
+    "At most3actual source-comparison attempt slots,including partial/failed starts;alternate original/candidate,candidate/original,original/candidate. All6profiles,8result samples/outliers,adverse/async controls and allocation residuals retained. Early stop only for clear>=50%primary gain;otherwise maximum3.",
+    "Require repeatable meaningful compatible benefit not explained by unchanged controls. No convincing gain means restore original source/product and publish no-gain. F032 is adjacent evidence,not a duplicate classification or independent Write measurement.",
+    "Pinned activated SDK/runtime,settings-preserving byte-exact emitter,serialized heavy work,max2build workers,shared non-isolated Windows host. Never change priority/affinity/power/OS/URL-ACL/firewall settings or terminate unrelated processes;only unique owned ephemeral loopback listeners.",
+    "Preserve root global.json/package.json/package-lock.json/NuGet.config. Retain all history/docs/raw outcomes/failures. Fork-only publication;justified new draft PR opens immediately;no fake optimization PR or extra historical timing."
+  ],
+  "maximumActualComparisons": 3,
+  "actualComparisonsStarted": 0
+}
