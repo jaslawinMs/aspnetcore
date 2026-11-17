@@ -120,7 +120,21 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
 
     private static bool IsMatch(Claim claim, ClaimsAuthorizationRequirement requirement)
         => string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
-            && (requirement._emptyAllowedValues || requirement.AllowedValues!.Contains(claim.Value, StringComparer.Ordinal));
+            && (requirement._emptyAllowedValues || ContainsAllowedValue(requirement.AllowedValues!, claim.Value));
+
+    private static bool ContainsAllowedValue(IEnumerable<string> allowedValues, string value)
+    {
+        // Derived sets can reimplement enumeration, and other comparers may not use ordinal equality.
+        if (allowedValues is HashSet<string> allowedSet &&
+            allowedSet.GetType() == typeof(HashSet<string>) &&
+            (ReferenceEquals(allowedSet.Comparer, StringComparer.Ordinal) ||
+                ReferenceEquals(allowedSet.Comparer, EqualityComparer<string>.Default)))
+        {
+            return allowedSet.Contains(value);
+        }
+
+        return allowedValues.Contains(value, StringComparer.Ordinal);
+    }
 
     /// <summary>
     /// Returns a string representation of the requirement.
