@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 100/358 finalized**: 63 drafts, 14 no-gain, 19 rejected and 4 duplicates;
-258 findings remain unfinished.
+**Progress: 101/358 finalized**: 63 drafts, 15 no-gain, 19 rejected and 4 duplicates;
+257 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -36,8 +36,9 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 ## Evaluations
 
 | Candidate | Disposition | Evaluation |
-|---|---|---|| F015 | [Draft jaslawinMs/aspnetcore#129](https://github.com/jaslawinMs/aspnetcore/pull/129);legacy-only large-payload allocation gain,small/adverse timings retained,3closed pairs;no modern-path speedup | [Legacy managed encryption capacity](F015/README.md) |
-
+|---|---|---|
+| F016 | No-gain/mixed trade-off;[tracking jaslawinMs/aspnetcore#130](https://github.com/jaslawinMs/aspnetcore/issues/130);partial-block allocation gains and adverse latency retained,3closed pairs,no PR | [Legacy managed decryption capacity](F016/README.md) |
+| F015 | [Draft jaslawinMs/aspnetcore#129](https://github.com/jaslawinMs/aspnetcore/pull/129);legacy-only large-payload allocation gain,small/adverse timings retained,3closed pairs;no modern-path speedup | [Legacy managed encryption capacity](F015/README.md) |
 | F014 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#127](https://github.com/jaslawinMs/aspnetcore/issues/127); original-only diagnostics, no source fix or gain | [SignalR user-target membership](F014/README.md) |
 | F013 | Measured no-gain,2 variants/3 comparisons; [tracking jaslawinMs/aspnetcore#126](https://github.com/jaslawinMs/aspnetcore/issues/126); no shipping change | [SignalR targeted membership](F013/README.md) |
 | F012 | Rejected live-input snapshot; [tracking jaslawinMs/aspnetcore#125](https://github.com/jaslawinMs/aspnetcore/issues/125); original-only diagnostics, no source fix or gain | [SignalR broadcast exclusions](F012/README.md) |
