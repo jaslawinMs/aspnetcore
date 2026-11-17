@@ -1,0 +1,122 @@
+{
+  "candidate": "F001",
+  "commands": [
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Shared/runtime/Http3/Http3StreamType.cs"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Shared/runtime/Http3/Http3StreamType.cs"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/shared/test/TestServiceContext.cs"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/shared/test/TestServiceContext.cs"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:docs/WebTransport.md"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:docs/WebTransport.md"
+      ],
+      "actualExitCode": 0
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "diff",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f",
+        "--",
+        "src/Servers/Kestrel/Core/src/Internal/Http3/Http3Stream.cs"
+      ],
+      "actualExitCode": 0
+    }
+  ],
+  "additionalSources": [
+    {
+      "file": "src\\Shared\\runtime\\Http3\\Http3StreamType.cs",
+      "baselineSha256": "7D083C354D3C69EF409259618C7C6A2A9472F751D38EA352296CF92CBB47F8EC",
+      "defaultSha256": "7D083C354D3C69EF409259618C7C6A2A9472F751D38EA352296CF92CBB47F8EC",
+      "workingSha256": "E69075C2AC42A8FADB85F8BB253138E1A6925B5C3C1E01462BC2FFEFA393A9F9",
+      "baselineAndDefaultEquivalent": true,
+      "workingEqualsBaseline": true
+    },
+    {
+      "file": "src\\Servers\\Kestrel\\shared\\test\\TestServiceContext.cs",
+      "baselineSha256": "538EC12E4DBD191A67678C8F3CD988E3A64363B78AC5435FA426E5DBAB1C73DB",
+      "defaultSha256": "538EC12E4DBD191A67678C8F3CD988E3A64363B78AC5435FA426E5DBAB1C73DB",
+      "workingSha256": "4961B1850A1A830E4B24CC548FCD25EB5D27B11E95FA2A6139AD911723A12574",
+      "baselineAndDefaultEquivalent": true,
+      "workingEqualsBaseline": true
+    },
+    {
+      "file": "docs\\WebTransport.md",
+      "baselineSha256": "F04802F029F001264CB1198ACBDD6666113E08496072D060F8BAD06A12F9B4F5",
+      "defaultSha256": "F04802F029F001264CB1198ACBDD6666113E08496072D060F8BAD06A12F9B4F5",
+      "workingSha256": "1D2DF6E45171829D3200EB62F046EFE42C1559D3315C9531946210F4529A6FCB",
+      "baselineAndDefaultEquivalent": true,
+      "workingEqualsBaseline": true
+    }
+  ],
+  "selectedCleanupNeighborhoods": {
+    "baseline": [
+      {
+        "sourceLine": 782,
+        "source": "                await CompleteAndWaitForAbortAsync();\n\n                // Drain transports and dispose.\n                await _context.StreamContext.DisposeAsync();\n\n                // Tells the connection to remove the stream from its active collection.\n                _context.StreamLifetimeHandler.OnStreamCompleted(this);\n\n                // If we have a webtransport session on this stream, end it\n                _context.WebTransportSession?.OnClientConnectionClosed();\n\n                // TODO this is a hack for .NET 6 pooling.\n                //\n                // Pooling needs to happen after transports have been drained and stream\n                // has been completed and is no longer active. All of this logic can't\n                // be placed in ConnectionContext.DisposeAsync. Instead, QuicStreamContext\n                // has pooling happen in QuicStreamContext.Dispose.\n                //\n                // ConnectionContext only implements IDisposableAsync by default. Only"
+      },
+      {
+        "sourceLine": 821,
+        "source": "        if (InputRemaining.HasValue)\n        {\n            // https://tools.ietf.org/html/rfc7540#section-8.1.2.6\n            if (InputRemaining.Value != 0)\n            {\n                throw new Http3StreamErrorException(CoreStrings.Http3StreamErrorLessDataThanLength, Http3ErrorCode.ProtocolError);\n            }\n        }\n\n        _context.WebTransportSession?.OnClientConnectionClosed();\n\n        OnTrailersComplete();\n        return RequestBodyPipe.Writer.CompleteAsync();\n    }\n\n    private Task ProcessHttp3Stream<TContext>(IHttpApplication<TContext> application, Http3RawFrame incomingFrame, bool isContinuedFrame,\n        in ReadOnlySequence<byte> payload, bool isCompleted) where TContext : notnull\n    {\n        return incomingFrame.Type switch"
+      }
+    ],
+    "current": [
+      {
+        "sourceLine": 786,
+        "source": "                await CompleteAndWaitForAbortAsync();\n\n                // Drain transports and dispose.\n                await _context.StreamContext.DisposeAsync();\n\n                // Tells the connection to remove the stream from its active collection.\n                _context.StreamLifetimeHandler.OnStreamCompleted(this);\n\n                // If we have a webtransport session on this stream, end it\n                _context.WebTransportSession?.OnClientConnectionClosed();\n\n                // TODO this is a hack for .NET 6 pooling.\n                //\n                // Pooling needs to happen after transports have been drained and stream\n                // has been completed and is no longer active. All of this logic can't\n                // be placed in ConnectionContext.DisposeAsync. Instead, QuicStreamContext\n                // has pooling happen in QuicStreamContext.Dispose.\n                //\n                // ConnectionContext only implements IDisposableAsync by default. Only"
+      },
+      {
+        "sourceLine": 825,
+        "source": "        if (InputRemaining.HasValue)\n        {\n            // https://tools.ietf.org/html/rfc7540#section-8.1.2.6\n            if (InputRemaining.Value != 0)\n            {\n                throw new Http3StreamErrorException(CoreStrings.Http3StreamErrorLessDataThanLength, Http3ErrorCode.ProtocolError);\n            }\n        }\n\n        _context.WebTransportSession?.OnClientConnectionClosed();\n\n        OnTrailersComplete();\n        return RequestBodyPipe.Writer.CompleteAsync();\n    }\n\n    private Task ProcessHttp3Stream<TContext>(IHttpApplication<TContext> application, Http3RawFrame incomingFrame, bool isContinuedFrame,\n        in ReadOnlySequence<byte> payload, bool isCompleted) where TContext : notnull\n    {\n        return incomingFrame.Type switch"
+      }
+    ],
+    "exactlyEqual": true
+  },
+  "initialScopedSourceFiles": 18,
+  "initialDefaultEquivalent": 17,
+  "totalScopedAndContextSources": 21,
+  "totalDefaultEquivalent": 20,
+  "currentDefaultFullIntegrationExecuted": false,
+  "actualProducerDifference": "Current default Http3Stream additionally retains/resets an incoming frame and validates fragments in request paths. Both selected session-cleanup call neighborhoods are byte-equivalent after CRLF canonicalization.",
+  "preparationCorrection": "Original preparation1 successfully reached actual session construction but failed resolving the enum under an incorrect namespace. Actual frozen shared source declares System.Net.Http.Http3StreamType. Preparation2 fixes that name;removes a redundant missing System.IO.Pipelines reference because net12 provides it;observes real EOF producer completion and records rather than mandates leaf synchronous completion. No expected output,shipping source,existing test,comparison or resource goal changed.",
+  "originalBuildWarningsPreserved": "Build1 exit0 with two redundant missing-reference warnings;build2 exit0 with zero warnings. Both exact sources and actual preparation1 negative child exit are retained."
+}

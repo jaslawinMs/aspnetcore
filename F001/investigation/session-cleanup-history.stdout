@@ -1,0 +1,200 @@
+commit 03c314bbe77aa36fffe1c97e56edd8e548d3017c
+Author: Brennan <brecon@microsoft.com>
+Date:   Tue Oct 13 10:21:49 2026 -0700
+
+    Fix WebTransport session cleanup (#69708)
+
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs b/src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs
+index fa3d5594ac..35fef21cab 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs
+@@ -42,6 +42,18 @@ internal sealed class Http3Connection : IHttp3StreamLifetimeHandler, IRequestPro
+     private readonly IProtocolErrorCodeFeature _errorCodeFeature;
+     private readonly Dictionary<long, WebTransportSession>? _webtransportSessions;
+ 
++    // Internal for testing.
++    internal int WebTransportSessionCount
++    {
++        get
++        {
++            lock (_webtransportSessions!)
++            {
++                return _webtransportSessions.Count;
++            }
++        }
++    }
++
+     private long _highestOpenedRequestStreamId = DefaultHighestOpenedRequestStreamId;
+     private bool _aborted;
+     private int _gracefulCloseInitiator;
+@@ -171,15 +183,15 @@ internal sealed class Http3Connection : IHttp3StreamLifetimeHandler, IRequestPro
+ 
+         if (_webtransportSessions is not null)
+         {
+-            foreach (var session in _webtransportSessions)
++            foreach (var session in GetWebTransportSessions())
+             {
+                 if (ex.InnerException is not null)
+                 {
+-                    session.Value.Abort(new ConnectionAbortedException(ex.Message, ex.InnerException), errorCode);
++                    session.Abort(new ConnectionAbortedException(ex.Message, ex.InnerException), errorCode);
+                 }
+                 else
+                 {
+-                    session.Value.Abort(new ConnectionAbortedException(ex.Message), errorCode);
++                    session.Abort(new ConnectionAbortedException(ex.Message), errorCode);
+                 }
+             }
+         }
+@@ -535,7 +547,7 @@ internal sealed class Http3Connection : IHttp3StreamLifetimeHandler, IRequestPro
+ 
+                 if (_webtransportSessions is not null)
+                 {
+-                    foreach (var session in _webtransportSessions.Values)
++                    foreach (var session in GetWebTransportSessions())
+                     {
+                         session.OnClientConnectionClosed();
+                     }
+@@ -647,7 +659,7 @@ internal sealed class Http3Connection : IHttp3StreamLifetimeHandler, IRequestPro
+             if (!_webtransportSessions.TryGetValue(correspondingSession, out var session))
+             {
+                 stream.Abort(new ConnectionAbortedException(CoreStrings.ReceivedLooseWebTransportStream));
+-                throw new Http3StreamErrorException(CoreStrings.ReceivedLooseWebTransportStream, Http3ErrorCode.StreamCreationError);
++                return;
+             }
+ 
+             stream.Context.WebTransportSession = session;
+@@ -939,6 +951,28 @@ internal sealed class Http3Connection : IHttp3StreamLifetimeHandler, IRequestPro
+         return session;
+     }
+ 
++    internal void RemoveWebTransportSession(WebTransportSession session)
++    {
++        lock (_webtransportSessions!)
++        {
++            if (_webtransportSessions.TryGetValue(session.SessionId, out var existingSession) &&
++                ReferenceEquals(existingSession, session))
++            {
++                _webtransportSessions.Remove(session.SessionId);
++            }
++        }
++    }
++
++    private WebTransportSession[] GetWebTransportSessions()
++    {
++        lock (_webtransportSessions!)
++        {
++            var sessions = new WebTransportSession[_webtransportSessions.Count];
++            _webtransportSessions.Values.CopyTo(sessions, 0);
++            return sessions;
++        }
++    }
++
+     private static class GracefulCloseInitiator
+     {
+         public const int None = 0;
+diff --git a/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs b/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
+index 04d93e2dd5..ffff669043 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
+@@ -86,6 +86,7 @@ internal sealed class WebTransportSession : IWebTransportSession
+         }
+ 
+         _pendingStreams.Writer.Complete();
++        _connection.RemoveWebTransportSession(this);
+     }
+ 
+     internal void Abort(ConnectionAbortedException exception, Http3ErrorCode error)
+@@ -117,6 +118,7 @@ internal sealed class WebTransportSession : IWebTransportSession
+         }
+ 
+         _pendingStreams.Writer.Complete();
++        _connection.RemoveWebTransportSession(this);
+     }
+ 
+     public async ValueTask<ConnectionContext?> OpenUnidirectionalStreamAsync(CancellationToken cancellationToken)
+diff --git a/src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs b/src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs
+index 310939aa06..82af8d7b6d 100644
+--- a/src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs
++++ b/src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs
+@@ -1,8 +1,13 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
++using System.Net.Http;
++using System.Text;
++using Microsoft.AspNetCore.Connections;
+ using Microsoft.AspNetCore.Connections.Features;
+ using Microsoft.AspNetCore.Http.Features;
++using Microsoft.AspNetCore.InternalTesting;
++using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3;
+ using Microsoft.AspNetCore.Server.Kestrel.Core.WebTransport;
+ 
+ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Tests;
+@@ -61,6 +66,66 @@ public class WebTransportSessionTests : Http3TestBase
+         exitTcs.SetResult();
+     }
+ 
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public async Task WebTransportSession_Closed_RemovedFromConnection(bool abortSession)
++    {
++        Http3Api._serviceContext.ServerOptions.EnableWebTransportAndH3Datagrams = true;
++
++        var exitTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var session = await WebTransportTestUtilities.GenerateSession(Http3Api, exitTcs);
++
++        Assert.Equal(1, Http3Api.Connection.WebTransportSessionCount);
++
++        if (abortSession)
++        {
++            session.Abort(new(), System.Net.Http.Http3ErrorCode.InternalError);
++        }
++        else
++        {
++            session.OnClientConnectionClosed();
++        }
++
++        Assert.Equal(0, Http3Api.Connection.WebTransportSessionCount);
++
++        exitTcs.SetResult();
++    }
++
++    [Fact]
++    public async Task WebTransportSession_LateAssociatedStreamDoesNotAbortConnection()
++    {
++        Http3Api._serviceContext.ServerOptions.EnableWebTransportAndH3Datagrams = true;
++
++        var exitTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var session = await WebTransportTestUtilities.GenerateSession(Http3Api, exitTcs, _echoApplication);
++        var request = await Http3Api.CreateRequestStream(new[]
++        {
++            new KeyValuePair<string, string>(InternalHeaderNames.Method, "POST"),
++            new KeyValuePair<string, string>(InternalHeaderNames.Path, "/"),
++            new KeyValuePair<string, string>(InternalHeaderNames.Scheme, "http"),
++            new KeyValuePair<string, string>(InternalHeaderNames.Authority, "localhost:80"),
++        });
++
++        await request.OnStreamCreatedTask.DefaultTimeout();
++
++        session.OnClientConnectionClosed();
++
++        var lateStream = await WebTransportTestUtilities.CreateUnidirectionalStream(
++            Http3Api,
++            (long)Http3StreamType.WebTransportUnidirectional,
++            session.SessionId);
++
++        await Assert.ThrowsAsync<ConnectionAbortedException>(async () => await lateStream.ReceiveEndAsync());
++
++        await request.SendDataAsync("Hello world"u8.ToArray(), endStream: true);
++        await request.ExpectHeadersAsync();
++        var responseData = await request.ExpectDataAsync();
++        Assert.Equal("Hello world", Encoding.ASCII.GetString(responseData.Span));
++
++        exitTcs.SetResult();
++    }
++
+     [Theory]
+     [InlineData(0)]
+     [InlineData(1)]

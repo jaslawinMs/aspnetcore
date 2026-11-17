@@ -1,0 +1,32 @@
+{
+  "candidate": "F001",
+  "disposition": "rejected",
+  "specificDisposition": "design-blocked-unestablished-performance-gain",
+  "performancePrJustified": false,
+  "shippingSourceChanged": false,
+  "candidateSourceShapes": 0,
+  "sourceComparisons": 0,
+  "originalDiagnosticProfiles": 1,
+  "candidateProfiles": 0,
+  "noGainFromAComparativeExperimentClaimed": false,
+  "sourceWaitPresent": true,
+  "scanIncorrectlyNamesSessionDispose": true,
+  "actualOwnerMethod": "WebTransportSession.OnClientConnectionClosed",
+  "observedProducerBoundary": "Actual Kestrel HTTP/3 SETTINGS/CONNECT and actual associated-stream header parsing/acceptance over the established in-memory transport,using real System.IO.Pipelines and existing completion wrappers. Protocol EOF0/1/16,public abort and actual input/output leaf disposal are observed without delayed disposal injection.",
+  "observedResult": "Original cleanup closes actual stream directions and active pipe ends,completes a genuinely pending accept with null,empties the stream dictionary and removes the session. Two separate real input/output leaf disposals completed synchronously in this exercised boundary.",
+  "blockingPreconditionEstablished": false,
+  "liveQuicTransportExecuted": false,
+  "contendedCancellationRegistrationScheduleExercised": false,
+  "inMemoryStreamConnectionClosedTokensCanBeCanceled": false,
+  "rationale": "The source-level wait is real,but this investigation does not establish a transport-produced incomplete disposal or an equivalent local optimization. Replacing the wait with detached/async-void cleanup would change completion and exception ownership. A safe all-async shutdown requires establishing its owning lifecycle,not a speculative local performance edit. Therefore no changed-source benchmark or PR is justified.",
+  "explicitUnverifiedBoundaries": [
+    "This is not proof that all transport/callback schedules complete synchronously,that the wait is always harmless,or that no future async lifecycle redesign could improve shutdown.",
+    "The in-memory transport leaves associated-stream ConnectionClosed uncancellable. It does not exercise live QUIC stream-token registration contention,thread-pool starvation,lock contention,production load or a whole application.",
+    "Original-only one-invocation monitoring timings and process-wide allocation can include owner/channel/worker activity. They are retained diagnostic observations,not a before/after improvement or a universal pure-cleanup cost.",
+    "20 of21 frozen baseline/default context files match;current Http3Stream frame reuse and request-path validation differ outside two exactly equal selected cleanup call neighborhoods. No full current-default integration execution is claimed."
+  ],
+  "allPreparationFailuresRetained": true,
+  "sourceComparisonBudgetUsed": 0,
+  "maximumSourceComparisons": 3,
+  "unusedSourceComparisons": 3
+}

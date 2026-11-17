@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <TestImage>$(MSBuildThisFileDirectory)..\tests\original\image</TestImage>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <Reference Include="$(TestImage)\Microsoft.*.dll" Exclude="$(TestImage)\*Test*.dll;$(TestImage)\*Generator*.dll" Private="true" />
+    <Reference Include="$(TestImage)\System.IO.Pipelines.dll" Private="true" />
+  </ItemGroup>
+  <Target Name="ValidateTestedOwner" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(TestImage)\Microsoft.AspNetCore.Server.Kestrel.Core.dll')" Text="Execute and freeze the original scoped owning tests first." />
+  </Target>
+</Project>

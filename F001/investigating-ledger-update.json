@@ -1,0 +1,29 @@
+{
+  "id": "F001",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs",
+    "line_start": 82,
+    "line_end": 82,
+    "project": "Microsoft.AspNetCore.Server.Kestrel.Core",
+    "target_frameworks": [
+      "$(DefaultNetCoreTargetFramework)"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "WebTransport session disposal blocks on each stream’s asynchronous disposal while holding the stream lock.",
+    "explanation": "The synchronous session Dispose path calls DisposeAsync().AsTask().GetAwaiter().GetResult() for every open stream while holding _openStreams. WebTransportStream disposal awaits registration and pipe completion, so this can block a shared server thread and prolong lock ownership for every stream in the session.",
+    "snippet": "stream.Value.DisposeAsync().AsTask().GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Fresh default/history captured before shipping edits or timing. Evaluating actual OnClientConnectionClosed stream cleanup,not a session Dispose method;await syntax alone does not establish incomplete cleanup or production blocking."
+  ],
+  "branch": "autoperf/F001-webtransport-session-disposal",
+  "pr_url": null,
+  "updated_at": "2026-11-17T00:06:36.2703980+00:00"
+}

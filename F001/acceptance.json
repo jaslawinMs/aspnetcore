@@ -1,0 +1,27 @@
+{
+  "candidate": "F001",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F001-webtransport-session-disposal",
+  "definedBeforeAnyShippingEditOrTiming": true,
+  "maximumMeasuredComparisons": 3,
+  "proposalBoundary": "Evaluate only WebTransportSession.OnClientConnectionClosed synchronously joining each WebTransportStream.DisposeAsync while holding _openStreams. The retained scan calls this a session Dispose path, but the actual session has no Dispose method. Preserve current cleanup, exception, registration, pending-reader, stream-state and session-removal observables. Do not equate an async method declaration with an incomplete asynchronous operation.",
+  "requirements": [
+    "Capture a fresh default commit and compare actual baseline, default and working sources for the session, stream, HTTP/3 producers, QUIC transport/pipe completion wrappers, interfaces, projects and relevant tests. Read original introduction and later session-cleanup history and existing PR work.",
+    "Create an independent baseline branch. Preserve all unrelated untracked work and never edit global.json, dependency manifests, TFMs, public APIs or assembly visibility to make a local optimization possible.",
+    "Run exact existing WebTransport session, stream and handshake test rows before editing. Audit actual discovery/results/entries, individual theory rows, positive durations and zero skips rather than only a passing summary.",
+    "Establish a smallest faithful owning-producer reproduction through the actual HTTP/3 WebTransport handshake and associated-stream construction. Observe stream direction/pipe completion, pending accept completion and session removal at the actual cleanup boundary. Distinguish the in-memory protocol/real-pipe boundary from a live QUIC transport.",
+    "Determine which awaited disposal operations really complete synchronously under the actual producer and which remain incomplete. Never manufacture a blocking win by replacing disposal, injecting delayed callbacks, adding sleeps, timing artificial work, or assuming a mock transport proves live QUIC reachability.",
+    "Preserve the current cleanup-completed-before-return and error-observation behavior. A Task.Run, async-void callback, discarded ValueTask or detached cleanup is not an equivalent optimization. If safe asynchronous ownership requires a wider lifecycle redesign, record that limitation rather than publishing a speculative performance fix.",
+    "If a contract-compatible candidate is established, freeze an identical standalone BenchmarkDotNet harness, producers, fixtures and settings before candidate measurements. Cover zero, one and several real associated streams, pending accept, already-closed/repeated close and nearest-opposite abort behavior where faithfully reachable.",
+    "Only claim a runtime benefit at the boundary that produces its preconditions. If the exercised cleanup already completes synchronously or incomplete cleanup cannot be faithfully reached, retain that evidence and explicitly limit the conclusion;do not claim a production blocking improvement.",
+    "At most3 actual before/after comparisons,reverse order in comparison2,stop after one clear large win or publish honest no-gain/rejected/design-blocked disposition. Preserve all successful and failed preparation evidence;never rerun successful profiles to improve results.",
+    "Serialize CPU-heavy work,max2 build nodes,activate the locally pinned SDK before every fresh dotnet shell. Use only a settings-preserving emitted executor/Guid.Empty power and Normal priorities on this shared VM. Do not alter power,priority,affinity or unrelated processes.",
+    "Publish exact source,commands,raw outcomes and limitations durably. A justified compatible proposal alone gets a separate template-based fork-only draft,immediately dispatching its actual returned URL to the browser. Do not create a PR or invent benchmark gains for an unestablished optimization."
+  ],
+  "excludedClaims": [
+    "No assertion that all WebTransport disposal always completes synchronously or that the source-level wait is harmless in every transport/callback schedule.",
+    "No live QUIC,production load,thread-pool starvation,lock-contention or application-wide improvement claim from a protocol in-memory test or a synthetic incomplete task.",
+    "No cleanup-completion semantic change,fire-and-forget workaround,new public API or untracked background operation disguised as a performance optimization.",
+    "No claim that shared-machine point observations prove continuous isolation or unchanged external workloads."
+  ]
+}
