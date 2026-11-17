@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 113/358 finalized**: 69 drafts, 17 no-gain, 21 rejected and 6 duplicates;
-245 findings remain unfinished.
+**Progress: 114/358 finalized**: 69 drafts, 18 no-gain, 21 rejected and 6 duplicates;
+244 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -43,6 +43,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F035 | No-gain; [tracking jaslawinMs/aspnetcore#147](https://github.com/jaslawinMs/aspnetcore/issues/147); one-value binding primary-2.89/+1.85/-18.07%less time and1456B/opunchanged, prepared8/64regress, small favorable query/adverse controls retained; 3closed pairs/960samples, identical measured harness, original source/product restored, no PR | [MVC ValueProviderResult enumeration](F035/README.md) |
 | F033 | [Draft jaslawinMs/aspnetcore#146](https://github.com/jaslawinMs/aspnetcore/pull/146); qualified no-callback8.23/11.47/19.10%less time, declared callback primary+3.75/-4.99/+0.54%, prepared-zero1.07-2.84%; 3closed pairs, identical measured harness, all adverse controls/allocations retained; not general/default/application or merge-ready gain | [HTTP.sys synchronous Write start task](F033/README.md) |
 | F032 | No-gain; [tracking jaslawinMs/aspnetcore#144](https://github.com/jaslawinMs/aspnetcore/issues/144); prepared Flush regresses about 1%, ordinary gains reverse, all controls/failures retained; 3 consumed slots (2 complete pairs + 1 setup-only failure), identical measured harness, original source/product restored, no PR | [HTTP.sys synchronous Flush start task](F032/README.md) |
 | F031 | No-gain; [tracking jaslawinMs/aspnetcore#143](https://github.com/jaslawinMs/aspnetcore/issues/143); favorable long Display observations, target reversals, control movement and allocation drift retained; identical measured harness, 3 closed pairs, original source/product restored, no PR | [Completed-success template task guard](F031/README.md) |

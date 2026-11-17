@@ -1,0 +1,283 @@
+{
+  "candidate": "F035",
+  "disposition": "no-gain",
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/147",
+  "actualTrackingIssueNumber": 147,
+  "actualTrackingIssueBody": "## Outcome\r\n\r\n**No-gain; original source/product restored.** No optimization commit or performance PR.\r\nThe compatible internal cast in ValueProviderResult.GetEnumerator does not establish a\r\nworthwhile real collection-binding gain.\r\n\r\nDeclared one-value collection-binding primary: **2.89% slower / 1.85% faster / 18.07%\r\nslower**, with 1456 B/op unchanged. Prepared 8/64-value cases regress in all three pairs.\r\nSmall favorable query-producer/scaling cases, adverse unchanged controls and one-byte\r\nallocation residual remain visible. No native JIT-causation or structural-allocation claim.\r\n\r\nThree complete alternating pairs permanently close the three-slot budget:\r\nsix timed native members x20profiles x8results = **120rows/960samples**.\r\n\r\n## Immutable evidence\r\n\r\n- [Full result, boundaries and reproduction](https://github.com/jaslawinMs/aspnetcore/blob/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/README.md)\r\n- [Every target/control comparison](https://github.com/jaslawinMs/aspnetcore/blob/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/comparison-results.md)\r\n- [Audited disposition and limitations](https://github.com/jaslawinMs/aspnetcore/blob/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/decision.json)\r\n- [Exact commands with actual exit codes](https://github.com/jaslawinMs/aspnetcore/blob/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/validation-commands.md)\r\n- [Runnable benchmark project/source](https://github.com/jaslawinMs/aspnetcore/tree/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/harness)\r\n- [Preserved initial preparation failure](https://github.com/jaslawinMs/aspnetcore/tree/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/preparation-original)\r\n- [Preserved untimed metadata failure](https://github.com/jaslawinMs/aspnetcore/tree/5eba94a62b4454bcd484cd4ea399cb1ba15be79b/F035/profiles/characterize-original)\r\n- [Unchanged independent source branch](https://github.com/jaslawinMs/aspnetcore/tree/autoperf/F035-value-provider-enumeration)\r\n\r\n## Owning behavior and validation\r\n\r\nActual public request-query parsing/factory/provider feeds ValueProviderResult and the real\r\nCollectionModelBinder/SimpleTypeModelBinder, with fresh contexts and complete model/error/\r\nscore consumption. Query parsing/factory/binder construction are outside timing. Count0\r\nbinding intentionally bypasses the changed method. No hosted HTTP/network or application\r\nfrequency/throughput claim.\r\n\r\nBoth original and candidate pass34/34existing owning rows, zero skipped, including both\r\nBoolean rows in each selected Core theory. Original/candidate/independently rebuilt\r\nrelocated source each pass61exact concrete observations, **including**20actual benchmark\r\nlifecycles: cursor Current/Reset/Dispose/order/null/culture/mutation, real query/string\r\nbinding and invalid integer model-state behavior. Not61additional E2E cases.\r\n\r\n**Compatibility:** Kept `IEnumerator<string> ValueProviderResult.GetEnumerator()` unchanged\r\nbecause already-compiled consumers bind to that exact return signature and would throw\r\n`MissingMethodException` if it changed. Rejected the proposed concrete-return replacement;\r\ntested only a same-signature internal cast, then withdrew it. Existing Values.GetEnumerator\r\nis already concrete. No API baseline, IVT or UnsafeAccessor change.\r\n\r\nMeasured304-file images share the exact harness DLL/PDB. Only the tested MVC.Abstractions\r\nDLL/PDB differ:302unchanged total includes2harness files,leaving300other unchanged files.\r\nBoth owner-only forced rebuilds match earlier tested source/DLL/PDB. All6relocated source/\r\nproject files are byte-exact; rebuilt path-dependent harness PE/PDB need not match.\r\n\r\nInitial standalone compilation fails with2warnings/1error; corrected standalone builds\r\nhave0warnings/0errors. First untimed metadata inspection fails an assumed generated async\r\nstate machine; actual compiled consumer uses runtime Async IL. Failed native exit retained;\r\nits runtime PID was not captured. Two later non-timing probes fail initially and are corrected.\r\nThe publication authoring checker also initially fails a hash-table-expression parse;\r\nit is corrected before the successful check and packaging,with its own retained receipt.\r\n\r\nAll960Workload.Result samples match stdout/JSON; mean/sample variance/SD/SE independently\r\nrecomputed. All240before/after settings observations match. Maximum CV15.09%.\r\nPrimary allocations unchanged; Count64 round2reports13392->13393B/op,not a saving.\r\n\r\nLive audit rehashes1216frozen consumer files/834loaded-assembly binding observations/\r\n1318unique files. Nine recorded successful native PIDs checked; failed untimed metadata\r\nPID unknown. One hundred selected PE/PDB/source associations across ten invocations,not\r\ncomplete compiler provenance or method coverage. Portable audit checks copied text,not\r\nomitted native binaries.\r\n\r\nShared non-isolated Windows VM; no priority/affinity/power/OS-policy changes. Pinned net12\r\npreview toolchain, not full latest-default integration or a general performance guarantee.\r\nNo unjustified performance PR; F036 remains a separate unfinished item.\r\n",
+  "actualSourceBranch": "autoperf/F035-value-provider-enumeration",
+  "actualSourceCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualSourceTrackedUnchanged": true,
+  "actualRemoteSourceRef": {
+    "ref": "refs/heads/autoperf/F035-value-provider-enumeration",
+    "node_id": "REF_kwDOVtqThdoAM3JlZnMvaGVhZHMvYXV0b3BlcmYvRjAzNS12YWx1ZS1wcm92aWRlci1lbnVtZXJhdGlvbg",
+    "url": "https://api.github.com/repos/jaslawinMs/aspnetcore/git/refs/heads/autoperf/F035-value-provider-enumeration",
+    "object": {
+      "sha": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "type": "commit",
+      "url": "https://api.github.com/repos/jaslawinMs/aspnetcore/git/commits/37e809ead5824bc753a1c3d56f11615bdb1296c5"
+    }
+  },
+  "actualImmutableEvidenceCommit": "5eba94a62b4454bcd484cd4ea399cb1ba15be79b",
+  "actualImmutableEvidenceFiles": 1391,
+  "actualVerifiedRemoteImmutableBlobs": 1391,
+  "actualAllImmutableRemoteBlobsVerifiedBeforeIssue": true,
+  "actualPerformancePrCreated": false,
+  "actualPerformancePrUrl": null,
+  "actualBrowserLaunchRequested": false,
+  "actualSourceComparisons": 3,
+  "actualCompletedSourceComparisonPairs": 3,
+  "actualFailedTimedSourceComparisons": 0,
+  "maximumSourceComparisons": 3,
+  "actualStrategyVariants": 1,
+  "actualTimedNativeProfiles": 6,
+  "actualResultRows": 120,
+  "actualRetainedRawResults": 960,
+  "actualNativeStdoutSamplesMatchedToJson": 960,
+  "actualMeasurementBudgetPermanentlyClosed": true,
+  "actualOriginalOwningRows": 34,
+  "actualCandidateOwningRows": 34,
+  "actualOwningSkipped": 0,
+  "actualSuccessfulCharacterizations": 3,
+  "actualConcreteObservationsPerImage": 61,
+  "actualBenchmarkLifecycleProfilesIncludedPerImage": 20,
+  "actualAllConcreteObservationsMatch": true,
+  "actualIndependentRelocatedSourceProjectFiles": 6,
+  "actualRuntimeAsyncRealCollectionBinderCallConfirmed": true,
+  "actualIdenticalMeasuredHarnessDllAndPdb": true,
+  "actualChangedOwnerFiles": [
+    "Microsoft.AspNetCore.Mvc.Abstractions.dll",
+    "Microsoft.AspNetCore.Mvc.Abstractions.pdb"
+  ],
+  "actualMeasuredConsumerFilesEach": 304,
+  "actualUnchangedMeasuredConsumerFilesIncludingHarness": 302,
+  "actualHarnessFilesIncludedInUnchanged302": 2,
+  "actualOtherUnchangedMeasuredConsumerFiles": 300,
+  "actualPassingAuthoritativeBuildWarnings": 0,
+  "actualPassingAuthoritativeBuildErrors": 0,
+  "actualFailedInitialStandaloneBuildsRetained": 1,
+  "actualInitialStandaloneWarnings": 2,
+  "actualInitialStandaloneErrors": 1,
+  "actualFailedUntimedCharacterizationsRetained": 1,
+  "actualFailedUntimedMetadataNativeExit": -532462766,
+  "actualFailedUntimedMetadataRuntimePidCaptured": false,
+  "actualOwnerForcedRebuildsByteMatched": 2,
+  "actualNewTestExecutionForOwnerRestoration": false,
+  "actualHistoricalMeasuredSourcesAndImagesUnmodified": true,
+  "actualFilesPhysicallyRehashed": 1318,
+  "actualConsumerFileChecksPhysicallyRehashed": 1216,
+  "actualLoadedAssemblyBindingObservationsPhysicallyRehashed": 834,
+  "actualKnownSuccessfulNativeProcessesChecked": 9,
+  "actualNativeExternalListenersCreated": 0,
+  "actualSelectedPePdbSourceDocumentAssociations": 100,
+  "actualSettingsObservations": 240,
+  "actualPrimaryPairs": [
+    {
+      "round": 1,
+      "key": "CollectionBinding:1",
+      "method": "CollectionBinding",
+      "count": 1,
+      "actualOriginalMeanNanoseconds": 564.9546390159646,
+      "actualCandidateMeanNanoseconds": 581.2736202948373,
+      "actualLessTimePercent": -2.888547177397638,
+      "actualNanosecondsSaved": -16.318981278872684,
+      "actualOriginalBytesPerOperation": 1456,
+      "actualCandidateBytesPerOperation": 1456
+    },
+    {
+      "round": 2,
+      "key": "CollectionBinding:1",
+      "method": "CollectionBinding",
+      "count": 1,
+      "actualOriginalMeanNanoseconds": 574.9816093720837,
+      "actualCandidateMeanNanoseconds": 564.3241046467806,
+      "actualLessTimePercent": 1.8535383656777649,
+      "actualNanosecondsSaved": 10.657504725303056,
+      "actualOriginalBytesPerOperation": 1456,
+      "actualCandidateBytesPerOperation": 1456
+    },
+    {
+      "round": 3,
+      "key": "CollectionBinding:1",
+      "method": "CollectionBinding",
+      "count": 1,
+      "actualOriginalMeanNanoseconds": 552.6785275805809,
+      "actualCandidateMeanNanoseconds": 652.57009713629,
+      "actualLessTimePercent": -18.074081870521887,
+      "actualNanosecondsSaved": -99.89156955570911,
+      "actualOriginalBytesPerOperation": 1456,
+      "actualCandidateBytesPerOperation": 1456
+    }
+  ],
+  "actualMaximumCvPercent": 15.094465382454809,
+  "actualByteExactCopiesPublished": 1386,
+  "actualHashedOmissions": 1866,
+  "actualPublicationWhitespace": {
+    "candidate": "F035",
+    "actualAuthoredPublicationWhitespaceExit": 0,
+    "actualAuthoredFiles": 17,
+    "actualAuthoredWhitespaceAndSyntaxObservations": [
+      {
+        "file": "F035-audit.mjs",
+        "sha256": "47C42290758F000AAA31F62711533FC6E8C757A4650AA93EECB6A3F64E6FD0EE",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-check-authoring.ps1",
+        "sha256": "3662F9BA97EC4DC6170666166FF978CA327DB4E5A6360CDB490E0A2E346FDD27",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-check-contracts.mjs",
+        "sha256": "2439DE300A9405E269647AE4C7CA947D03EEE515282C70CA38DFD1B28F606703",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-force-owner.ps1",
+        "sha256": "17650FC8D0914C173BF4C5A534AA5AE8246403597C592F200B0785221B7D4B8A",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-issue-template.md",
+        "sha256": "BEBF57D6B5FD6160CE1A2EED90382D9D96E64A9B08B13A41A3231D2D3B3DE46C",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": false
+      },
+      {
+        "file": "F035-live-audit.mjs",
+        "sha256": "6B3FBA9E6E6BC9C0FDE7B100949AE4B5CA13AE26AF4D01808E52C26F1502F03E",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-package.ps1",
+        "sha256": "118344B5B297131D17DA0D512281879A9B924D234C3415CE182FF7689FBF182A",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-plan.mjs",
+        "sha256": "47B0BC7DC399D4E2292E6CDB48AEA779C2DDA2CCACA38FEA84E3110E5CA426E1",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-prepare.ps1",
+        "sha256": "1953D8040295B7B6A99EEB308A3CCF0ED94C28DED64491B026B10A67246A3D00",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-publish-no-gain.mjs",
+        "sha256": "DAF0983A4A4CEF99D9181FE24284B709E32236C6B136E33C78B4B4063AF0B144",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-publish-source.mjs",
+        "sha256": "1F1A9ED119F5AD6F342726A05C65361E4397E6C47A090BEA68126E57BA4B0A11",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-reproduce.ps1",
+        "sha256": "380C03E3A8A0F386EAC2F43E9792322882B96BA44323FC73EFD2AAA3A5BF50C6",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-results-readme.md",
+        "sha256": "7C8920674F3C4EAD48571C4BB4CA95F06E246D42601C55F8ABE20EF3C8674E9A",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": false
+      },
+      {
+        "file": "F035-run-profile.ps1",
+        "sha256": "B9EDA8F9E831EFDDD1599D8379F52443CE7AEBB54E63D26BD64090AFCDAAA0CB",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-start.mjs",
+        "sha256": "0744F5C9EFBBEFA43E51BF4D3FE1E943F9130A2A41CA41D67A52FF887D832C76",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-statistics.mjs",
+        "sha256": "82BB8FF3031A7B060811553CEEEFFEF448E906389DC7420C89629A976852B880",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      },
+      {
+        "file": "F035-test.ps1",
+        "sha256": "1A12F25EC5FDB3C225271209881887C463F522E863E1F240FEB77683AD81A5DA",
+        "actualWhitespacePassed": true,
+        "actualRequiredSyntaxCheckPassed": true
+      }
+    ],
+    "actualSourceTrackedUnchanged": true,
+    "actualNativeTimingRerun": false,
+    "scope": "Authored session PS/Node/Markdown whitespace and PS/Node parsing;not rewriting raw sources/logs/native evidence."
+  },
+  "actualNativeBinaryBytesPublished": false,
+  "portableAuditRehashesOmittedNativeBytes": false,
+  "measuredConvincingOverallImprovementClaimed": false,
+  "productionFrequencyOrApplicationSpeedupClaimed": false,
+  "mergeReady": false,
+  "campaignFinalizedAfterVerifiedReceipt": 114,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 244,
+  "actualCreated": "2026-11-17T23:52:36.884Z",
+  "actualPrepublicationGitWhitespaceCorrection": {
+    "candidate": "F035",
+    "actualInitialFailedToolShellId": "f035-evidence-publication",
+    "actualInitialToolExitCode": 1,
+    "actualInitialGitWhitespaceNativeExitCodeCaptured": false,
+    "actualFailedToolOutputSha256": "DCBD2FFC660ECECADD5F2FF80073D64B96CEE101820C208DD0854DE7BBAF9F44",
+    "cause": "Byte-preserving -text attributes retain CRLF;default git diff --check interprets retained CR as trailing whitespace.",
+    "correction": "Command-scoped cr-at-eol plus all three default whitespace checks;no file-byte or persistent Git/OS setting changes.",
+    "actualCorrectedGitWhitespaceArguments": [
+      "-c",
+      "core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol",
+      "--no-pager",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      "F035\\README.md",
+      "F035\\comparison-results.md",
+      "F035\\validation-commands.md"
+    ],
+    "actualCorrectedGitWhitespaceExitCode": 0,
+    "actualAffectedFileObservations": [
+      {
+        "file": "F035\\README.md",
+        "actualSha256": "DEEEE3F73A7BA09D1902A77C1F268B9AD63445AA815DDA52DB985772B5FE60CC",
+        "actualCrLfLines": 174,
+        "actualLfOnlyLines": 21,
+        "actualLogicalTrailingWhitespaceErrors": 0
+      },
+      {
+        "file": "F035\\comparison-results.md",
+        "actualSha256": "65880A266668DE48613C81068AB4A493B09EA3FBBF5D5B11D47DA5D203A0F60F",
+        "actualCrLfLines": 0,
+        "actualLfOnlyLines": 28,
+        "actualLogicalTrailingWhitespaceErrors": 0
+      },
+      {
+        "file": "F035\\validation-commands.md",
+        "actualSha256": "2E1ABDC2A3DFC4738D0ABD7E3A625108DFDB9B30D34518227FD757829CBF419F",
+        "actualCrLfLines": 665,
+        "actualLfOnlyLines": 0,
+        "actualLogicalTrailingWhitespaceErrors": 0
+      }
+    ],
+    "actualImmutableCapsuleBytesChanged": false,
+    "actualComparisonBudgetAffected": false,
+    "actualInitialCommitOrPushReached": false
+  }
+}

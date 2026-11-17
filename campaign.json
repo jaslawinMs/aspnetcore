@@ -1295,11 +1295,15 @@
         "snippet": "public IEnumerator<string> GetEnumerator()\n{\n    return ((IEnumerable<string>)Values).GetEnumerator();\n}",
         "suppressed": false
       },
-      "status": "pending",
-      "notes": [],
-      "branch": null,
+      "status": "no-gain",
+      "notes": [
+        "Independent baseline37 branch excludes F033 guard. Current defaultf2484a6b,12owner/API/test/query-producer/collection-consumer files match baseline,45snapshots/history/docs and bounded existing-work searches retained. Reject replacing shipped IEnumerator<string> GetEnumerator return with a struct:existing binary consumers bind the exact signature;Values.GetEnumerator already supplies opt-in concrete enumeration. Investigate only same-signature body change and actual pinned StringValues/JIT behavior;34owning rows and real cursor/query/binder contracts required before any shipping edit or timing.",
+        "Both34-row owning suites passed0skipped;61concrete cursor/query/real binding/lifecycle observations match exactly;20actual benchmark lifecycles per variant. Measured304-file images share exact harness DLL/PDB;only tested MVC.Abstractions DLL/PDB differ (302unchanged including2harness,300other). Pre-edit20profile plan sealed;ordinary one-value real collection binding primary,Values/empty-bypass controls. Original compiler metadata uses runtime Async IL,direct real consumer call confirmed. Begin at most3alternating comparison slots;remaining IEnumerator box not claimed removed and JIT may already eliminate input box.",
+        "Tracking https://github.com/jaslawinMs/aspnetcore/issues/147. No-gain:3complete alternating comparison pairs/120rows/960samples;declaredCollectionBinding.Count1 -2.89/+1.85/-18.07%less time,1456B/opunchanged. Prepared8/64regress;smallQuery8/64positives,adverse direct-Values controls,Count64round2+1Bopresidual,maxCV15.09%retained. Both34-row owning suites pass0skipped;3x61exact observations include3x20actual lifecycles;6relocated files byte-exact. Identical measured harness/304-file images differ only2owner files;302unchanged includes2harness,300other. Forcedownerrebuilds match;originalsource/product restored,unchanged forkbranch37e809 verified.1391immutable blobs verified at5eba94a62b4454bcd484cd4ea399cb1ba15be79b before trackingissue;no optimizationcommit or PR. Failedinitial2warning/1errorbuild,untimed runtimeAsync metadata-assumption failure(noPID),corrected non-timing authoring/presentation checks retained. Final4-file receipt/index verification pending before official114/358 progress."
+      ],
+      "branch": "autoperf/F035-value-provider-enumeration",
       "pr_url": null,
-      "updated_at": null
+      "updated_at": "2026-11-17T15:53:05.1638044-08:00"
     },
     {
       "id": "F036",
