@@ -89,6 +89,39 @@ public class ManagedAuthenticatedEncryptorTests
 #endif
     }
 
+    [Theory]
+    [InlineData(0, 80)]
+    [InlineData(15, 80)]
+    [InlineData(16, 96)]
+    [InlineData(17, 96)]
+    [InlineData(191, 256)]
+    [InlineData(192, 272)]
+    [InlineData(193, 272)]
+    [InlineData(65536, 65616)]
+    public void Encrypt_BlockAndStreamBoundaries_RoundTripsWithOffsets(int plaintextLength, int expectedPayloadLength)
+    {
+        using var encryptor = new ManagedAuthenticatedEncryptor(new Secret(new byte[64]),
+            symmetricAlgorithmFactory: Aes.Create,
+            symmetricAlgorithmKeySizeInBytes: 32,
+            validationAlgorithmFactory: () => new HMACSHA256());
+        var plaintextBuffer = Enumerable.Range(0, plaintextLength + 4).Select(i => (byte)i).ToArray();
+        var aadBuffer = new byte[] { 9, 8, 7, 6, 5, 4 };
+        var originalPlaintext = plaintextBuffer.ToArray();
+        var originalAad = aadBuffer.ToArray();
+        var plaintext = new ArraySegment<byte>(plaintextBuffer, 2, plaintextLength);
+        var aad = new ArraySegment<byte>(aadBuffer, 1, 4);
+
+        var ciphertext = encryptor.Encrypt(plaintext, aad);
+        var ciphertextBuffer = new byte[ciphertext.Length + 7];
+        ciphertext.CopyTo(ciphertextBuffer, 3);
+        var decrypted = encryptor.Decrypt(new ArraySegment<byte>(ciphertextBuffer, 3, ciphertext.Length), aad);
+
+        Assert.Equal(expectedPayloadLength, ciphertext.Length);
+        Assert.Equal(originalPlaintext.AsSpan(2, plaintextLength).ToArray(), decrypted);
+        Assert.Equal(originalPlaintext, plaintextBuffer);
+        Assert.Equal(originalAad, aadBuffer);
+    }
+
     [Fact]
     public void Encrypt_Decrypt_RoundTrips()
     {
