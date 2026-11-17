@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 102/358 finalized**: 64 drafts, 15 no-gain, 19 rejected and 4 duplicates;
-256 findings remain unfinished.
+**Progress: 103/358 finalized**: 64 drafts, 15 no-gain, 19 rejected and 5 duplicates;
+255 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F019 | Duplicate of open [dotnet/aspnetcore#68299](https://github.com/dotnet/aspnetcore/pull/68299);source-only parent-layout metadata overlap,0 comparisons,no new draft | [Repeated parent-layout reflection](F019/README.md) |
 | F018 | [Draft jaslawinMs/aspnetcore#132](https://github.com/jaslawinMs/aspnetcore/pull/132);qualified synthetic UTF8 allocation/scaling gain,invalid-byte costs retained,1closed clear-gain pair;not login/merge-ready | [Guarded Google user-info parsing](F018/README.md) |
 | F016 | No-gain/mixed trade-off;[tracking jaslawinMs/aspnetcore#130](https://github.com/jaslawinMs/aspnetcore/issues/130);partial-block allocation gains and adverse latency retained,3closed pairs,no PR | [Legacy managed decryption capacity](F016/README.md) |
 | F015 | [Draft jaslawinMs/aspnetcore#129](https://github.com/jaslawinMs/aspnetcore/pull/129);legacy-only large-payload allocation gain,small/adverse timings retained,3closed pairs;no modern-path speedup | [Legacy managed encryption capacity](F015/README.md) |
