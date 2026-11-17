@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 109/358 finalized**: 68 drafts, 15 no-gain, 20 rejected and 6 duplicates;
-249 findings remain unfinished.
+**Progress: 110/358 finalized**: 68 drafts, 15 no-gain, 21 rejected and 6 duplicates;
+248 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -37,6 +37,7 @@ actual differences; the immutable F004 capsule is unchanged and no benchmark was
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F030 | Rejected: nonblocking replacement breaks synchronous writer completion; [tracking jaslawinMs/aspnetcore#142](https://github.com/jaslawinMs/aspnetcore/issues/142). Real parent/partial Razor producers characterized; one original-only diagnostic, zero source comparisons, no source edit or PR | [Synchronous RenderPartial completion](F030/README.md) |
 | F029 | Rejected: nonblocking replacement breaks synchronous completion; [tracking jaslawinMs/aspnetcore#141](https://github.com/jaslawinMs/aspnetcore/issues/141). Real Razor producer characterized; one original-only diagnostic, zero source comparisons, no source edit or PR | [Synchronous Partial completion](F029/README.md) |
 | F028 | [Draft jaslawinMs/aspnetcore#140](https://github.com/jaslawinMs/aspnetcore/pull/140); default4scheme tail24.11%less time/104fewerBop, synthetic128tail86.40%less; derived controls5.72/6.53%slower, all adverse results retained, 1closed pair; not application-speedup/merge-ready | [Guarded external login scheme lookup](F028/README.md) |
 | F024 | [Draft jaslawinMs/aspnetcore#138](https://github.com/jaslawinMs/aspnetcore/pull/138); explicit infinite-commit profiles save 160/96/32 B/op, finite controls 64/0/-64, matched difference 96; adverse default results retained, 3 closed pairs; not application-speedup/merge-ready | [Infinite session-commit timeout](F024/README.md) |
