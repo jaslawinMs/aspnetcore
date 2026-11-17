@@ -1,0 +1,27 @@
+{
+  "id": "F019",
+  "finding": {
+    "card_id": "uncached-reflection-in-hot-path",
+    "file": "src/Components/Components/src/LayoutView.cs",
+    "line_start": 80,
+    "line_end": 80,
+    "project": "Microsoft.AspNetCore.Components",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Nested layout metadata is rediscovered through reflection on every render.",
+    "explanation": "Render walks the layout chain whenever parameters are set, and every level calls GetCustomAttribute<LayoutAttribute>() without a per-Type cache. Layout parentage is immutable metadata, so repeated component renders redo reflection lookup and attribute materialization for the same layout types.",
+    "snippet": "private static Type? GetParentLayoutType(Type type)\n    => type.GetCustomAttribute<LayoutAttribute>()?.LayoutType;",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
