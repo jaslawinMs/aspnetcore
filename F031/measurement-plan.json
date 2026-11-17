@@ -1,0 +1,45 @@
+{
+  "candidate": "F031",
+  "definedBeforeTiming": true,
+  "strategyCount": 1,
+  "strategy": "Use IsCompletedSuccessfully solely to skip GetAwaiter().GetResult() for an already-successful real template task. The existing synchronous wait remains for pending, faulted and canceled tasks.",
+  "owningCasesPerVariant": 525,
+  "characterizationPerVariant": {
+    "completedProfiles": 6,
+    "findViewFallbackContracts": 2,
+    "alreadyFailedOrCanceledRealProducers": 4,
+    "pendingSuccessFailureCancellationRealProducers": 6
+  },
+  "benchmarkMethod": "One public synchronous Display or Editor invocation with actual TemplateBuilder, TemplateRenderer, real RazorView and CSharp page, then consume returned IHtmlContent before disposing its real request scope. Four custom-template targets and two unchanged built-in String display controls;32/4096-character models begin with <& to exercise encoding. Includes per-request/helper/lookup/template/output costs;the root provider and metadata provider are prebuilt/warmed.",
+  "maximumActualSourceComparisons": 3,
+  "pairedOrder": [
+    ["original", "candidate"],
+    ["candidate", "original"],
+    ["original", "candidate"]
+  ],
+  "identityPolicy": "Compile/freeze the harness once. Candidate consumer is a byte-exact copy with only the actually tested ViewFeatures DLL/PDB replaced. All294 consumer files per variant are guarded before/after each native profile;source-to-PDB witness documents and loaded runtime/owner assemblies are recorded.",
+  "job": {
+    "benchmarkDotNet": "0.13.0",
+    "toolchain": "Byte-exact settings-preserving in-process emitted executor",
+    "strategy": "Throughput",
+    "requestedIterationMilliseconds": 100,
+    "warmups": 3,
+    "measurements": 8,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "memoryDiagnoser": true,
+    "powerPlan": "Guid.Empty",
+    "sharedMachineNotIsolated": true
+  },
+  "decisionPolicy": "Retain every raw sample, adverse target and unchanged-control movement. Seek material repeatable target benefit not explained by controls, without contract or material resource regressions. A clear primary >=50% gain may close early;otherwise at most3 actual comparisons including any failed/partial timing. No justified compatible measured benefit means restore original shipping code and publish no-gain. Do not rank APIs or claim isolated awaiter/production throughput gains.",
+  "knownPreparationIssue": "The original fresh test runner passed525/525, but its wrapper's ordered-dictionary Measure-Object postprocessing guard returned a null Sum. Preserve the failed wrapper and unmodified native/TRX/outcome bytes; corrected numeric-value aggregation reverified that same native invocation without rerunning tests.",
+  "documentation": "The fetched display-templates.md contains both Display and Editor guidance. A separate editor-templates.md fetch returned404 and remains explicit.",
+  "notVerified": [
+    "HTTP application throughput or production template frequency",
+    "cshtml discovery or compilation",
+    "root provider startup",
+    "starvation or deadlock schedules",
+    "request-abort producer behavior",
+    "full compiler provenance or coverage from selected PDB documents"
+  ]
+}

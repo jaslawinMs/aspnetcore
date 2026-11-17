@@ -1,0 +1,23 @@
+{
+  "id": "F031",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs",
+    "line_start": 123,
+    "line_end": 124,
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "MVC template rendering synchronously blocks on asynchronous view rendering.",
+    "explanation": "TemplateRenderer.Render invokes IView.RenderAsync for each selected display/editor template and immediately calls GetAwaiter().GetResult(). This is a per-template request path and the task can represent genuine asynchronous rendering, so the current thread remains blocked until completion. The synchronous template API explains the compatibility constraint but does not remove the throughput cost; an internal async path or completed-task fast path would need to preserve existing exception timing and template semantics.",
+    "snippet": "                        var renderTask = viewEngineResult.View.RenderAsync(viewContext);\n                        renderTask.GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}

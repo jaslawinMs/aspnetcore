@@ -1,0 +1,17 @@
+diff --git a/src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs b/src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs
+index eae6181bf4..f6fcd60466 100644
+--- a/src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs
++++ b/src/Mvc/Mvc.ViewFeatures/src/TemplateRenderer.cs
+@@ -121,7 +121,11 @@ internal sealed class TemplateRenderer
+                     {
+                         var viewContext = new ViewContext(_viewContext, viewEngineResult.View, _viewData, writer);
+                         var renderTask = viewEngineResult.View.RenderAsync(viewContext);
+-                        renderTask.GetAwaiter().GetResult();
++                        if (!renderTask.IsCompletedSuccessfully)
++                        {
++                            renderTask.GetAwaiter().GetResult();
++                        }
++
+                         return viewBuffer;
+                     }
+                 }
