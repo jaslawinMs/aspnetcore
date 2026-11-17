@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
@@ -296,7 +295,6 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
         [NotNullWhen(true)] out RootComponentOperationBatch? result,
         bool deserializeMarkers = true)
     {
-        int[]? seenComponentIdsStorage = null;
         try
         {
             var typeInfo = ServerComponentSerializationSettings.JsonSerializationOptions.GetTypeInfo(typeof(RootComponentOperationBatch));
@@ -305,19 +303,25 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
 
             Span<int> seenSsrComponentIds = operations.Length <= 128
                 ? stackalloc int[operations.Length]
-                : (seenComponentIdsStorage = ArrayPool<int>.Shared.Rent(operations.Length)).AsSpan(0, operations.Length);
+                : default;
+            var seenSsrComponentIdSet = operations.Length > 128 ? new HashSet<int>(operations.Length) : null;
             var currentSsrComponentIdIndex = 0;
             for (var i = 0; i < operations.Length; i++)
             {
                 var operation = operations[i];
-                if (seenSsrComponentIds[0..currentSsrComponentIdIndex].Contains(operation.SsrComponentId))
+                if (seenSsrComponentIdSet is not null
+                    ? !seenSsrComponentIdSet.Add(operation.SsrComponentId)
+                    : seenSsrComponentIds[0..currentSsrComponentIdIndex].Contains(operation.SsrComponentId))
                 {
                     Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Duplicate component ID.");
                     result = null;
                     return false;
                 }
 
-                seenSsrComponentIds[currentSsrComponentIdIndex++] = operation.SsrComponentId;
+                if (seenSsrComponentIdSet is null)
+                {
+                    seenSsrComponentIds[currentSsrComponentIdIndex++] = operation.SsrComponentId;
+                }
 
                 if (operation.Type == RootComponentOperationType.Remove)
                 {
@@ -354,13 +358,6 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
             Log.FailedToProcessRootComponentOperations(_logger, ex);
             result = null;
             return false;
-        }
-        finally
-        {
-            if (seenComponentIdsStorage != null)
-            {
-                ArrayPool<int>.Shared.Return(seenComponentIdsStorage);
-            }
         }
     }
 
