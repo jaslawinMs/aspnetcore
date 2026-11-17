@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.StreamRemovalBenchmark-20261116-170946</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=original-diagnostic-only  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  InvocationCount=1  IterationCount=8  
+IterationTime=100.0000 ms  LaunchCount=1  RunStrategy=Monitoring  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>   Method</th><th>Scenario</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>TryRemoveStream</td><td>Missing</td><td>7.350 &mu;s</td><td>3.371 &mu;s</td><td>1.763 &mu;s</td><td>-</td><td>-</td><td>-</td><td>1,968 B</td>
+</tr><tr><td>TryRemoveStream</td><td>InputOne</td><td>29.212 &mu;s</td><td>18.329 &mu;s</td><td>9.587 &mu;s</td><td>-</td><td>-</td><td>-</td><td>2,352 B</td>
+</tr><tr><td>TryRemoveStream</td><td>InputSixteen</td><td>24.663 &mu;s</td><td>7.525 &mu;s</td><td>3.936 &mu;s</td><td>-</td><td>-</td><td>-</td><td>24 B</td>
+</tr><tr><td>TryRemoveStream</td><td>OutputOne</td><td>24.950 &mu;s</td><td>6.932 &mu;s</td><td>3.626 &mu;s</td><td>-</td><td>-</td><td>-</td><td>2,448 B</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,811 @@
+{
+  "candidate": "F002",
+  "commands": [
+    {
+      "label": "tracked-status",
+      "entryPoint": "git",
+      "arguments": [
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:00.688Z",
+      "completedAt": "2026-11-17T00:48:01.461Z"
+    },
+    {
+      "label": "fetch-current-main",
+      "entryPoint": "git",
+      "arguments": [
+        "fetch",
+        "--quiet",
+        "origin",
+        "main"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:01.462Z",
+      "completedAt": "2026-11-17T00:48:02.451Z"
+    },
+    {
+      "label": "fresh-default-api",
+      "entryPoint": "gh",
+      "arguments": [
+        "api",
+        "repos/dotnet/aspnetcore/commits/main",
+        "--jq",
+        ".sha"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:02.451Z",
+      "completedAt": "2026-11-17T00:48:03.066Z"
+    },
+    {
+      "label": "current-default-ref",
+      "entryPoint": "git",
+      "arguments": [
+        "rev-parse",
+        "origin/main"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:03.067Z",
+      "completedAt": "2026-11-17T00:48:03.213Z"
+    },
+    {
+      "label": "prior-head",
+      "entryPoint": "git",
+      "arguments": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:03.214Z",
+      "completedAt": "2026-11-17T00:48:03.362Z"
+    },
+    {
+      "label": "independent-branch",
+      "entryPoint": "git",
+      "arguments": [
+        "switch",
+        "-c",
+        "autoperf/F002-webtransport-stream-removal",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:03.363Z",
+      "completedAt": "2026-11-17T00:48:04.151Z"
+    },
+    {
+      "label": "independent-head",
+      "entryPoint": "git",
+      "arguments": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:04.152Z",
+      "completedAt": "2026-11-17T00:48:04.302Z"
+    },
+    {
+      "label": "baseline-source-0",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:04.307Z",
+      "completedAt": "2026-11-17T00:48:04.462Z"
+    },
+    {
+      "label": "default-source-0",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:04.463Z",
+      "completedAt": "2026-11-17T00:48:04.620Z"
+    },
+    {
+      "label": "baseline-source-1",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:04.724Z",
+      "completedAt": "2026-11-17T00:48:04.876Z"
+    },
+    {
+      "label": "default-source-1",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:04.877Z",
+      "completedAt": "2026-11-17T00:48:05.025Z"
+    },
+    {
+      "label": "baseline-source-2",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStreamType.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.032Z",
+      "completedAt": "2026-11-17T00:48:05.191Z"
+    },
+    {
+      "label": "default-source-2",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStreamType.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.192Z",
+      "completedAt": "2026-11-17T00:48:05.345Z"
+    },
+    {
+      "label": "baseline-source-3",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.353Z",
+      "completedAt": "2026-11-17T00:48:05.500Z"
+    },
+    {
+      "label": "default-source-3",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Internal/Http3/Http3Connection.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.501Z",
+      "completedAt": "2026-11-17T00:48:05.650Z"
+    },
+    {
+      "label": "baseline-source-4",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/Http3/Http3Stream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.658Z",
+      "completedAt": "2026-11-17T00:48:05.815Z"
+    },
+    {
+      "label": "default-source-4",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Internal/Http3/Http3Stream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.816Z",
+      "completedAt": "2026-11-17T00:48:05.967Z"
+    },
+    {
+      "label": "baseline-source-5",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/src/Internal/QuicStreamContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:05.974Z",
+      "completedAt": "2026-11-17T00:48:06.119Z"
+    },
+    {
+      "label": "default-source-5",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/src/Internal/QuicStreamContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.120Z",
+      "completedAt": "2026-11-17T00:48:06.270Z"
+    },
+    {
+      "label": "baseline-source-6",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/shared/CompletionPipeReader.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.280Z",
+      "completedAt": "2026-11-17T00:48:06.446Z"
+    },
+    {
+      "label": "default-source-6",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/shared/CompletionPipeReader.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.447Z",
+      "completedAt": "2026-11-17T00:48:06.600Z"
+    },
+    {
+      "label": "baseline-source-7",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/shared/CompletionPipeWriter.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.608Z",
+      "completedAt": "2026-11-17T00:48:06.753Z"
+    },
+    {
+      "label": "default-source-7",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/shared/CompletionPipeWriter.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.754Z",
+      "completedAt": "2026-11-17T00:48:06.898Z"
+    },
+    {
+      "label": "baseline-source-8",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Http/Http.Features/src/IWebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:06.904Z",
+      "completedAt": "2026-11-17T00:48:07.064Z"
+    },
+    {
+      "label": "default-source-8",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Http/Http.Features/src/IWebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.065Z",
+      "completedAt": "2026-11-17T00:48:07.220Z"
+    },
+    {
+      "label": "baseline-source-9",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Http/Http.Features/src/IHttpWebTransportFeature.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.231Z",
+      "completedAt": "2026-11-17T00:48:07.378Z"
+    },
+    {
+      "label": "default-source-9",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Http/Http.Features/src/IHttpWebTransportFeature.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.379Z",
+      "completedAt": "2026-11-17T00:48:07.528Z"
+    },
+    {
+      "label": "baseline-source-10",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Microsoft.AspNetCore.Server.Kestrel.Core.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.537Z",
+      "completedAt": "2026-11-17T00:48:07.695Z"
+    },
+    {
+      "label": "default-source-10",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Core/src/Microsoft.AspNetCore.Server.Kestrel.Core.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.696Z",
+      "completedAt": "2026-11-17T00:48:07.842Z"
+    },
+    {
+      "label": "baseline-source-11",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/InMemory.FunctionalTests.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.848Z",
+      "completedAt": "2026-11-17T00:48:07.991Z"
+    },
+    {
+      "label": "default-source-11",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/InMemory.FunctionalTests.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:07.991Z",
+      "completedAt": "2026-11-17T00:48:08.137Z"
+    },
+    {
+      "label": "baseline-source-12",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/shared/test/Http3/Http3InMemory.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.151Z",
+      "completedAt": "2026-11-17T00:48:08.304Z"
+    },
+    {
+      "label": "default-source-12",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/shared/test/Http3/Http3InMemory.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.305Z",
+      "completedAt": "2026-11-17T00:48:08.452Z"
+    },
+    {
+      "label": "baseline-source-13",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/Http3TestBase.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.461Z",
+      "completedAt": "2026-11-17T00:48:08.608Z"
+    },
+    {
+      "label": "default-source-13",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/Http3TestBase.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.609Z",
+      "completedAt": "2026-11-17T00:48:08.760Z"
+    },
+    {
+      "label": "baseline-source-14",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.769Z",
+      "completedAt": "2026-11-17T00:48:08.917Z"
+    },
+    {
+      "label": "default-source-14",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportSessionTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:08.918Z",
+      "completedAt": "2026-11-17T00:48:09.070Z"
+    },
+    {
+      "label": "baseline-source-15",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportStreamTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.079Z",
+      "completedAt": "2026-11-17T00:48:09.225Z"
+    },
+    {
+      "label": "default-source-15",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportStreamTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.225Z",
+      "completedAt": "2026-11-17T00:48:09.381Z"
+    },
+    {
+      "label": "baseline-source-16",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportHandshakeTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.389Z",
+      "completedAt": "2026-11-17T00:48:09.541Z"
+    },
+    {
+      "label": "default-source-16",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportHandshakeTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.542Z",
+      "completedAt": "2026-11-17T00:48:09.690Z"
+    },
+    {
+      "label": "baseline-source-17",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportTestUtilities.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.697Z",
+      "completedAt": "2026-11-17T00:48:09.848Z"
+    },
+    {
+      "label": "default-source-17",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/WebTransport/WebTransportTestUtilities.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:09.849Z",
+      "completedAt": "2026-11-17T00:48:10.009Z"
+    },
+    {
+      "label": "baseline-source-18",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Shared/runtime/Http3/Http3StreamType.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.016Z",
+      "completedAt": "2026-11-17T00:48:10.164Z"
+    },
+    {
+      "label": "default-source-18",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Shared/runtime/Http3/Http3StreamType.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.165Z",
+      "completedAt": "2026-11-17T00:48:10.314Z"
+    },
+    {
+      "label": "baseline-source-19",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/shared/test/TestServiceContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.324Z",
+      "completedAt": "2026-11-17T00:48:10.473Z"
+    },
+    {
+      "label": "default-source-19",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/shared/test/TestServiceContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.474Z",
+      "completedAt": "2026-11-17T00:48:10.627Z"
+    },
+    {
+      "label": "baseline-source-20",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:docs/WebTransport.md"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.634Z",
+      "completedAt": "2026-11-17T00:48:10.780Z"
+    },
+    {
+      "label": "default-source-20",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:docs/WebTransport.md"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.781Z",
+      "completedAt": "2026-11-17T00:48:10.928Z"
+    },
+    {
+      "label": "baseline-source-21",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/test/QuicTestHelpers.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:10.935Z",
+      "completedAt": "2026-11-17T00:48:11.085Z"
+    },
+    {
+      "label": "default-source-21",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/test/QuicTestHelpers.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.086Z",
+      "completedAt": "2026-11-17T00:48:11.245Z"
+    },
+    {
+      "label": "baseline-source-22",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/test/QuicStreamContextTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.251Z",
+      "completedAt": "2026-11-17T00:48:11.397Z"
+    },
+    {
+      "label": "default-source-22",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/test/QuicStreamContextTests.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.398Z",
+      "completedAt": "2026-11-17T00:48:11.543Z"
+    },
+    {
+      "label": "baseline-source-23",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/test/Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.Tests.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.548Z",
+      "completedAt": "2026-11-17T00:48:11.696Z"
+    },
+    {
+      "label": "default-source-23",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/test/Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.Tests.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.697Z",
+      "completedAt": "2026-11-17T00:48:11.848Z"
+    },
+    {
+      "label": "baseline-source-24",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:11.853Z",
+      "completedAt": "2026-11-17T00:48:12.003Z"
+    },
+    {
+      "label": "default-source-24",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/src/Internal/QuicConnectionContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:12.004Z",
+      "completedAt": "2026-11-17T00:48:12.148Z"
+    },
+    {
+      "label": "baseline-source-25",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Transport.Quic/src/Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:12.154Z",
+      "completedAt": "2026-11-17T00:48:12.305Z"
+    },
+    {
+      "label": "default-source-25",
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Servers/Kestrel/Transport.Quic/src/Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.csproj"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:12.306Z",
+      "completedAt": "2026-11-17T00:48:12.462Z"
+    },
+    {
+      "label": "session-history",
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "log",
+        "origin/main",
+        "-10",
+        "--format=%H %ad %s",
+        "--date=iso-strict",
+        "--",
+        "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:12.467Z",
+      "completedAt": "2026-11-17T00:48:12.840Z"
+    },
+    {
+      "label": "stream-history",
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "log",
+        "origin/main",
+        "-10",
+        "--format=%H %ad %s",
+        "--date=iso-strict",
+        "--",
+        "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:12.841Z",
+      "completedAt": "2026-11-17T00:48:13.209Z"
+    },
+    {
+      "label": "actual-quic-close-history",
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "log",
+        "origin/main",
+        "-10",
+        "--format=%H %ad %s",
+        "--date=iso-strict",
+        "--",
+        "src/Servers/Kestrel/Transport.Quic/src/Internal/QuicStreamContext.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:13.210Z",
+      "completedAt": "2026-11-17T00:48:13.462Z"
+    },
+    {
+      "label": "original-introduction",
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "show",
+        "b120cefca18a2000c93e5b297d7a4d68c6e89e47",
+        "--",
+        "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs",
+        "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportStream.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:13.463Z",
+      "completedAt": "2026-11-17T00:48:13.610Z"
+    },
+    {
+      "label": "session-cleanup-history",
+      "entryPoint": "git",
+      "arguments": [
+        "--no-pager",
+        "show",
+        "03c314bbe77aa36fffe1c97e56edd8e548d3017c",
+        "--",
+        "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:13.611Z",
+      "completedAt": "2026-11-17T00:48:13.752Z"
+    },
+    {
+      "label": "cleanup-pr",
+      "entryPoint": "gh",
+      "arguments": [
+        "pr",
+        "view",
+        "69708",
+        "--repo",
+        "dotnet/aspnetcore",
+        "--json",
+        "number,title,body,url,state,mergedAt,mergeCommit,files"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:13.753Z",
+      "completedAt": "2026-11-17T00:48:14.351Z"
+    },
+    {
+      "label": "exact-removal-callsite-search",
+      "entryPoint": "gh",
+      "arguments": [
+        "search",
+        "code",
+        "TryRemoveStream",
+        "--repo",
+        "dotnet/aspnetcore",
+        "--limit",
+        "30",
+        "--json",
+        "path,url"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:14.352Z",
+      "completedAt": "2026-11-17T00:48:15.197Z"
+    },
+    {
+      "label": "webtransport-host-feature-search",
+      "entryPoint": "gh",
+      "arguments": [
+        "search",
+        "code",
+        "EnableWebTransportAndH3Datagrams",
+        "--repo",
+        "dotnet/aspnetcore",
+        "--limit",
+        "35",
+        "--json",
+        "path,url"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:15.198Z",
+      "completedAt": "2026-11-17T00:48:16.039Z"
+    },
+    {
+      "label": "quic-owner-test-search",
+      "entryPoint": "gh",
+      "arguments": [
+        "search",
+        "code",
+        "QuicStreamContext",
+        "--repo",
+        "dotnet/aspnetcore",
+        "--limit",
+        "25",
+        "--json",
+        "path,url"
+      ],
+      "actualExitCode": 0,
+      "startedAt": "2026-11-17T00:48:16.039Z",
+      "completedAt": "2026-11-17T00:48:16.882Z"
+    }
+  ]
+}

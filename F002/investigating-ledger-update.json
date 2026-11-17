@@ -1,0 +1,29 @@
+{
+  "id": "F002",
+  "finding": {
+    "card_id": "blocking-async-result-or-wait",
+    "file": "src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs",
+    "line_start": 191,
+    "line_end": 191,
+    "project": "Microsoft.AspNetCore.Server.Kestrel.Core",
+    "target_frameworks": [
+      "$(DefaultNetCoreTargetFramework)"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "WebTransport stream removal synchronously blocks on asynchronous disposal.",
+    "explanation": "TryRemoveStream is a reusable per-stream server path and converts WebTransportStream.DisposeAsync into a blocking wait. The disposal performs genuinely asynchronous registration and pipe completion work, so a connection-processing thread can be occupied while continuations complete.",
+    "snippet": "stream.DisposeAsync().AsTask().GetAwaiter().GetResult();",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Fresh independent baseline branch37e,current default49147673,25/26 scoped source triples equal;known callback distinct from F001,real in-memory TestStreamContext uncancellable,actual QUIC close cancels after processing loops. Acceptance fixed before harness edits. No source change/comparison. Attempt actual bounded loopback FIN/HTTP3-association hybrid producer instead of treating direct removal as callback proof."
+  ],
+  "branch": "autoperf/F002-webtransport-stream-removal",
+  "pr_url": null,
+  "updated_at": "2026-11-17T00:51:15.1832181+00:00"
+}
