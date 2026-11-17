@@ -1,0 +1,205 @@
+diff --git a/src/Mvc/Mvc.ViewFeatures/src/ExpressionHelper.cs b/src/Mvc/Mvc.ViewFeatures/src/ExpressionHelper.cs
+index 5858adc33f..d2b8de85a9 100644
+--- a/src/Mvc/Mvc.ViewFeatures/src/ExpressionHelper.cs
++++ b/src/Mvc/Mvc.ViewFeatures/src/ExpressionHelper.cs
+@@ -7,12 +7,16 @@ using System.Globalization;
+ using System.Linq;
+ using System.Linq.Expressions;
+ using System.Reflection;
++using System.Reflection.Metadata;
++using System.Runtime.CompilerServices;
+ using System.Text;
+ 
+ namespace Microsoft.AspNetCore.Mvc.ViewFeatures;
+ 
+ internal static class ExpressionHelper
+ {
++    private static readonly ConcurrentDictionary<MethodInfo, MethodInfo> _indexerCache = new();
++
+     public static string GetUncachedExpressionText(LambdaExpression expression)
+         => GetExpressionText(expression, expressionTextCache: null);
+ 
+@@ -239,6 +243,11 @@ internal static class ExpressionHelper
+             return false;
+         }
+ 
++        if (!MetadataUpdater.IsSupported && _indexerCache.TryGetValue(methodExpression.Method, out _))
++        {
++            return true;
++        }
++
+         // Check whether GetDefaultMembers() (if present in CoreCLR) would return a member of this type. Compiler
+         // names the indexer property, if any, in a generated [DefaultMember] attribute for the containing type.
+         var declaringType = methodExpression.Method.DeclaringType;
+@@ -255,6 +264,12 @@ internal static class ExpressionHelper
+             if ((string.Equals(defaultMember.MemberName, property.Name, StringComparison.Ordinal) &&
+                 property.GetMethod == methodExpression.Method))
+             {
++                // Custom reflection types can expose changing metadata even without Hot Reload.
++                if (!MetadataUpdater.IsSupported && declaringType.GetType() == typeof(object).GetType())
++                {
++                    _indexerCache.TryAdd(methodExpression.Method, methodExpression.Method);
++                }
++
+                 return true;
+             }
+         }
+diff --git a/src/Mvc/Mvc.ViewFeatures/test/ExpressionHelperTest.cs b/src/Mvc/Mvc.ViewFeatures/test/ExpressionHelperTest.cs
+index f15c63d073..82c74b2c47 100644
+--- a/src/Mvc/Mvc.ViewFeatures/test/ExpressionHelperTest.cs
++++ b/src/Mvc/Mvc.ViewFeatures/test/ExpressionHelperTest.cs
+@@ -3,6 +3,12 @@
+ 
+ using System.Collections.Concurrent;
+ using System.Linq.Expressions;
++using System.Reflection;
++using System.Reflection.Emit;
++using System.Reflection.Metadata;
++using System.Runtime.CompilerServices;
++using Microsoft.AspNetCore.Mvc.ModelBinding;
++using Moq;
+ 
+ namespace Microsoft.AspNetCore.Mvc.ViewFeatures;
+ 
+@@ -453,6 +459,141 @@ public class ExpressionHelperTest
+         }
+     }
+ 
++    [Fact]
++    public void IsSingleArgumentIndexer_RepeatedClassificationMatchesMetadataUpdateSupport()
++    {
++        Expression<Func<List<TestModel>, TestModel>> expression = model => model[0];
++        var call = Assert.IsAssignableFrom<MethodCallExpression>(expression.Body);
++        for (var index = 0; index < 64; index++)
++        {
++            Assert.True(ExpressionHelper.IsSingleArgumentIndexer(call));
++        }
++
++        var before = GC.GetAllocatedBytesForCurrentThread();
++        for (var index = 0; index < 32; index++)
++        {
++            Assert.True(ExpressionHelper.IsSingleArgumentIndexer(call));
++        }
++        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
++
++        if (MetadataUpdater.IsSupported)
++        {
++            Assert.True(allocated > 0);
++        }
++        else
++        {
++            Assert.Equal(0L, allocated);
++        }
++    }
++
++    [Fact]
++    public void GetExpressionText_RetainedExpressionUsesCurrentIndex()
++    {
++        var provider = new ModelExpressionProvider(new EmptyModelMetadataProvider());
++        var index = 0;
++        Expression<Func<List<TestModel>, string>> expression = model => model[index].Name;
++
++        Assert.Equal("[0].Name", provider.GetExpressionText(expression));
++
++        index = 2;
++
++        Assert.Equal("[2].Name", provider.GetExpressionText(expression));
++    }
++
++    [Fact]
++    public void IsSingleArgumentIndexer_DoesNotCacheMutableReflectionMetadata()
++    {
++        Expression<Func<List<TestModel>, TestModel>> expression = model => model[0];
++        var originalCall = Assert.IsAssignableFrom<MethodCallExpression>(expression.Body);
++        var originalMethod = originalCall.Method;
++        var indexerName = originalMethod.DeclaringType.GetCustomAttribute<DefaultMemberAttribute>().MemberName;
++        var defaultMemberName = indexerName;
++        var declaringType = new Mock<TypeDelegator>(originalMethod.DeclaringType) { CallBase = true };
++        var method = new Mock<MethodInfo>();
++        var property = new Mock<PropertyInfo>();
++        method.SetupGet(value => value.DeclaringType).Returns(declaringType.Object);
++        method.SetupGet(value => value.Name).Returns(originalMethod.Name);
++        method.SetupGet(value => value.ReturnType).Returns(originalMethod.ReturnType);
++        method.SetupGet(value => value.Attributes).Returns(originalMethod.Attributes);
++        method.SetupGet(value => value.CallingConvention).Returns(originalMethod.CallingConvention);
++        method.Setup(value => value.GetParameters()).Returns(originalMethod.GetParameters);
++        property.SetupGet(value => value.Name).Returns(indexerName);
++        property.SetupGet(value => value.GetMethod).Returns(method.Object);
++        declaringType.Setup(value => value.GetCustomAttributes(typeof(DefaultMemberAttribute), It.IsAny<bool>()))
++            .Returns(() => new Attribute[] { new DefaultMemberAttribute(defaultMemberName) });
++        declaringType.Setup(value => value.GetProperties(It.IsAny<BindingFlags>()))
++            .Returns(new[] { property.Object });
++        declaringType.Setup(value => value.IsAssignableFrom(It.IsAny<Type>()))
++            .Returns((Type value) => originalMethod.DeclaringType.IsAssignableFrom(value));
++        var call = Expression.Call(originalCall.Object, method.Object, originalCall.Arguments);
++
++        Assert.True(ExpressionHelper.IsSingleArgumentIndexer(call));
++
++        defaultMemberName = nameof(TestModel.Name);
++
++        Assert.False(ExpressionHelper.IsSingleArgumentIndexer(call));
++
++        defaultMemberName = indexerName;
++
++        Assert.True(ExpressionHelper.IsSingleArgumentIndexer(call));
++    }
++
++    [Fact]
++    public void IsSingleArgumentIndexer_DoesNotRetainCollectibleMetadata()
++    {
++        var (type, method) = ExerciseCollectibleIndexer();
++        for (var attempt = 0; attempt < 10; attempt++)
++        {
++            GC.Collect();
++            GC.WaitForPendingFinalizers();
++            GC.Collect();
++            if (!IsAlive(type) && !IsAlive(method))
++            {
++                break;
++            }
++        }
++
++        Assert.False(IsAlive(type));
++        Assert.False(IsAlive(method));
++    }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    private static (WeakReference<Type> Type, WeakReference<MethodInfo> Method) ExerciseCollectibleIndexer()
++    {
++        const string IndexerName = "Entry";
++        var assembly = AssemblyBuilder.DefineDynamicAssembly(
++            new AssemblyName("CollectibleIndexer" + Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.RunAndCollect);
++        var module = assembly.DefineDynamicModule("Indexers");
++        var builder = module.DefineType("Indexer", TypeAttributes.Public);
++        builder.DefineDefaultConstructor(MethodAttributes.Public);
++        builder.SetCustomAttribute(new CustomAttributeBuilder(
++            typeof(DefaultMemberAttribute).GetConstructor(new[] { typeof(string) }), new object[] { IndexerName }));
++        var getter = builder.DefineMethod("get_" + IndexerName,
++            MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
++            typeof(string), new[] { typeof(int) });
++        var il = getter.GetILGenerator();
++        il.Emit(OpCodes.Ldstr, "value");
++        il.Emit(OpCodes.Ret);
++        builder.DefineProperty(IndexerName, PropertyAttributes.None, typeof(string), new[] { typeof(int) })
++            .SetGetMethod(getter);
++        var type = builder.CreateType();
++        var method = type.GetProperty(IndexerName).GetMethod;
++        Assert.Equal("value", method.Invoke(Activator.CreateInstance(type), new object[] { 3 }));
++        var parameter = Expression.Parameter(type, "model");
++        var call = Expression.Call(parameter, method, Expression.Constant(3));
++
++        Assert.True(ExpressionHelper.IsSingleArgumentIndexer(call));
++        Assert.Equal("[3]", ExpressionHelper.GetUncachedExpressionText(Expression.Lambda(call, parameter)));
++
++        return (new WeakReference<Type>(type), new WeakReference<MethodInfo>(method));
++    }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    private static bool IsAlive<T>(WeakReference<T> reference) where T : class
++    {
++        return reference.TryGetTarget(out _);
++    }
++
+     private class TestModel
+     {
+         public string Name { get; set; }

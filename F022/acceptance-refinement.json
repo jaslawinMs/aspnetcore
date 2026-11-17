@@ -1,0 +1,33 @@
+{
+  "candidate": "F022",
+  "definedBeforeShippingEdits": true,
+  "initialAcceptanceRetained": "acceptance.json",
+  "reason": "Two actual original-owner attempts established that the installed watcher rejects C# IndexerName edits as ENC0108 and all VB edits as ENC1009. Neither restart is invalidation evidence. Do not retain a mutable metadata cache in an update-enabled process.",
+  "selectedDesignToValidate": {
+    "cache": "Successful MethodInfo classifications only,using a ConditionalWeakTable with weak lifetime semantics.",
+    "runtimeOnly": "Only publish successful results discovered on a genuine runtime Type. Non-runtime reflection adapters continue through unchanged discovery on every call.",
+    "metadataUpdates": "Bypass both cache reads and publication whenever MetadataUpdater.IsSupported is true. Continue using the original on-demand metadata path,so no cache invalidation or new update handler is necessary in update-enabled processes.",
+    "runtimeCapabilityContract": "The public BCL property reports whether assembly updates are enabled and available. The documentation-linked CoreCLR implementation initializes a get-only property from IsApplyUpdateSupported. This external reference is not asserted to be the exact installed runtime source.",
+    "indexValues": "Never cache captured index values or full indexed expression text.",
+    "noNewApi": "No new public/protected surface,flags or cross-framework internal calls."
+  },
+  "lifecycleCriterionReplacement": {
+    "replaces": "acceptance.json criterion4 and the proposed atomic-table-swap/handler design,which apply only to a cache retained while metadata updates are available.",
+    "normalProcess": "Prove the actual compiled owner eliminates repeated successful metadata allocations when metadata updates are unavailable,without changing expression results or collectible metadata lifetime.",
+    "watchedProcess": "Under the actual watcher,observe MetadataUpdater.IsSupported=true,and resource evidence that the actual classifier still performs the original allocating metadata reads. Apply a supported real C# indexer getter-body edit,observe its value change through a retained compiled expression,retain the real public expression-text/control outputs,and require applied-delta evidence with one stable PID/start marker.",
+    "negativeControl": "A diagnostic cache-enabled-under-Hot-Reload prototype must fail the live-path resource assertion. This tests the deliberate bypass policy,not an unobserved classification-changing metadata edit.",
+    "limits": [
+      "A getter-body edit does not change indexer classification and is not described as proof of default-member cache invalidation.",
+      "The unsupported C# attribute and VB edits remain explicitly unverified in-place boundaries.",
+      "The selected design avoids the need for such invalidation by never using or filling this cache when assembly updates are enabled.",
+      "No direct metadata callback invocation,synthetic delta or restart is relabeled as a successful supported edit."
+    ]
+  },
+  "unchangedRequirements": "All original compatibility,real producer,red-green resource/lifetime,actual-owner/PDB closure,max3 comparisons,public-boundary primary,settings preservation,cold/control costs and fork-only verified-publication gates remain in force.",
+  "referenceUrls": [
+    "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.metadata.metadataupdater.issupported?view=net-10.0",
+    "https://learn.microsoft.com/en-us/dotnet/api/system.reflection.metadata.metadataupdater.applyupdate?view=net-10.0",
+    "https://raw.githubusercontent.com/dotnet/runtime/d099f075e45d2aa6007a22b71b45a08758559f80/src/coreclr/System.Private.CoreLib/src/System/Reflection/Metadata/MetadataUpdater.cs"
+  ],
+  "actualComparisonsStarted": 0
+}

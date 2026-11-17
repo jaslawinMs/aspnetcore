@@ -1,0 +1,27 @@
+{
+  "id": "F022",
+  "finding": {
+    "card_id": "uncached-reflection-in-hot-path",
+    "file": "src/Mvc/Mvc.ViewFeatures/src/ExpressionHelper.cs",
+    "line_start": 245,
+    "line_end": 253,
+    "project": "Microsoft.AspNetCore.Mvc.ViewFeatures",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Indexer expression rendering repeatedly rediscovers default-member reflection metadata.",
+    "explanation": "ExpressionHelper.GetExpressionText calls IsSingleArgumentIndexer while rendering indexed model expressions. That helper performs GetCustomAttribute and GetRuntimeProperties on the declaring type for every call. Indexed expressions are deliberately marked doNotCache, so this metadata discovery recurs on the view-rendering path instead of being cached per runtime type.",
+    "snippet": "var defaultMember = declaringType.GetCustomAttribute<DefaultMemberAttribute>(inherit: true);\nif (defaultMember == null)\n{\n    return false;\n}\n\nvar runtimeProperties = declaringType.GetRuntimeProperties();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
