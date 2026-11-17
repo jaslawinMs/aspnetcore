@@ -1,0 +1,27 @@
+{
+  "id": "F028",
+  "finding": {
+    "card_id": "all-items-snapshot-scanned-for-keyed-lookup",
+    "file": "src/Identity/Core/src/SignInManager.cs",
+    "line_start": 1339,
+    "line_end": 1340,
+    "project": "Microsoft.AspNetCore.Identity",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "External-login display-name resolution scans the full authentication-scheme snapshot for one provider.",
+    "explanation": "GetExternalLoginInfoAsync needs the scheme matching the provider name, but calls the virtual GetExternalAuthenticationSchemesAsync method, which obtains the complete scheme snapshot and applies a deferred external-scheme filter, then FirstOrDefault scans it by Name. AuthenticationSchemeProvider already owns a name-keyed dictionary and exposes GetSchemeAsync. The lookup runs during external sign-in processing and scales with the total registered schemes. Any correction must preserve SignInManager override behavior, external-display filtering, duplicate/ordering semantics, and the provider-name fallback.",
+    "snippet": "var providerDisplayName = (await GetExternalAuthenticationSchemesAsync()).FirstOrDefault(p => p.Name == provider)?.DisplayName\n                            ?? provider;",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
