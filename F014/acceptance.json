@@ -1,0 +1,36 @@
+{
+  "candidate": "F014",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F014-signalr-user-membership",
+  "finding": "Actual DefaultHubLifetimeManager.SendUsersAsync scans the live caller-owned user-ID collection for every registered connection.",
+  "scope": "Independent user-targeting evaluation, not F011 group/F012 broadcast/F013 connection targeting. The user path has no <=16 direct-lookup threshold; preserve its user-identifier producer, null identifiers, multiple connections per user, case/comparer/dispatch, duplicates and per-connection send-once semantics.",
+  "prerequisites": [
+    "Fresh current-default/source triples, actual owner/provider/context history, exact-symbol open-PR search, merged Fowler owner diff and applicable documentation before any shipping change.",
+    "Inspect actual DefaultUserIdProvider, IUserIdProvider, IConnectionUserFeature and HubConnectionContext user/identifier state. Use real connection principals and DefaultUserIdProvider.GetUserId to produce each pre-created warm user identifier, including absent-NameIdentifier nulls, without new shipping IVT/UnsafeAccessor or a copied provider.",
+    "Independent net12/C#13/BDN0.13 harness calls actual public OnConnectedAsync/SendUsersAsync with real HubConnectionContext, JSON producer, bounded256-byte transports and actual Pipes.",
+    "Characterize user case/duplicates/outside-group scope, multiple connections per user, provider-produced null identifiers, empty store without reading the target input, all-missing canceled-send/serialization laziness and shared actual JSON serialization.",
+    "Real JSON argument getter removes initially requested users from the same64-element array/List/read-only-wrapper backing input; explicit copied-input controls are not indexed owner implementations or performance comparisons.",
+    "Actual native ICollection.Contains and derived List dispatch; untimed repeated misses at1x1,8x16,32x64 with zero Count/indexer reads; actual Pipe completion/cancellation without injected callbacks or sleeps.",
+    "Explicit old F01127-row owning-test evidence/original bytes may be reused only after rehashing and attribution, not labeled a fresh suite. Every user-specific native control must execute independently. Any selected compatible shipping candidate requires fresh focused owning tests and all actual configured report rows.",
+    "Actual unchanged captured-default JSON bytes may be reused/rehashed from F011 only while the current revision/source remain identical; both actual user-send producer contexts must execute independently. No whole-current-default SDK/dependency integration claim or reuse of group/broadcast/connection timing."
+  ],
+  "candidate_family_to_evaluate_after_original_characterization": "The suggested per-send Ordinal membership index is not assumed compatible with live caller input or custom comparison/dispatch. Select an actual candidate only after native producer/recipient evidence establishes the relevant contracts. Constant-factor alternatives are not automatically wins and do not remove the asymptotic scan.",
+  "decision_gates": [
+    "Preserve actual user-identifier/recipient/send-once behavior, null-user handling, multi-connection users, custom/derived collection dispatch, actual same-count JSON-getter mutation, lazy serialization and real completion/cancellation.",
+    "No public API/default/dependency/TFM/visibility changes, copied private owner or isolated membership-only speed claim.",
+    "Any measured candidate uses the same compiled harness/settings/nonowner dependencies as its original role; preserve all raw failed/partial/unfavorable outputs and source/PE/PDB/runtime/settings evidence.",
+    "Maximum3 measured comparison attempts including failed or partial timing. A substantial faithful gain around50% may justify stopping after one; smaller/noisy effects use no more than3 total. Never reopen a closed budget.",
+    "If no compatible candidate is selected, at most one original-only diagnostic profile is permitted and cannot produce an improvement percentage. Publish design-blocked rejection, not comparative no-gain or proof every possible optimization is impossible.",
+    "Publish actual verified fork-only source/evidence and qualified outcome before advancing official counts; open every justified actual new draft PR immediately."
+  ],
+  "maximum_paired_comparisons": 3,
+  "maximum_original_only_diagnostic_profiles": 1,
+  "proposed_diagnostic_shapes": [
+    "NoConnections512", "EmptyTargets", "Small4List2",
+    "C32List64Miss", "C32Array64Miss", "C32ReadOnly64Miss",
+    "C128List256Miss", "C128Array256Miss", "C32List64Sparse", "C32Array64Sparse",
+    "C32List64All", "C32DupList64", "C32SharedUserList64", "C32NullUsersArray64"
+  ],
+  "timing_boundary": "Repeated actual public user-targeted sends over pre-registered connections whose user identifiers are produced by actual DefaultUserIdProvider from real principals during untimed setup. Real per-send JSON serialization where selected, synchronous fixed256-byte transport writers and minimal frame/byte counters; full checks outside timing. No timed principal/provider/connection/input/group construction, network, handshake, stateful reconnect, production-frequency or whole-application improvement claim. Actual pending Pipes characterized separately.",
+  "host": "Shared Windows VM, serialized CPU-heavy work, maximum2 build nodes, no deliberate OS power/priority/affinity or unrelated-process changes."
+}

@@ -1,0 +1,54 @@
+{
+  "candidate": "F014",
+  "template": "F012-prepare-original.ps1",
+  "templateSha256": "1B26A638AC6A6F26548BC58739EEBEDBF17EE30A1A6AA05CD84FC69C5B1125BA",
+  "resultSha256": "96300F3A2A7B634CC847E2446FB570FC85A8795CC7D63DCE70B11CDAB1BF8DB7",
+  "changes": [
+    {
+      "before": "newBroadcastProducerObservationsRequired",
+      "after": "newUserSendProducerObservationsRequired",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "priorGroupObservationsOrTimingReused",
+      "after": "priorGroupBroadcastConnectionObservationsOrTimingReused",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "New broadcast harness",
+      "after": "New user-send harness",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "f012ActualBroadcastCharacterizationRequired",
+      "after": "f014ActualUserSendCharacterizationRequired",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "priorF011GroupResultsReusedAsBroadcastProof",
+      "after": "priorGroupBroadcastConnectionResultsReusedAsUserSendProof",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "F014 independent original/current broadcast probes",
+      "after": "F014 independent original/current user-send probes",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "New-Item (Join-Path $originalSources 'harness') -ItemType Directory | Out-Null",
+      "after": "$additionalSources = @(\n    @{ from = 'src\\SignalR\\server\\Core\\src\\DefaultUserIdProvider.cs'; destination = 'owner\\DefaultUserIdProvider.cs' },\n    @{ from = 'src\\SignalR\\server\\Core\\src\\IUserIdProvider.cs'; destination = 'owner\\IUserIdProvider.cs' },\n    @{ from = 'src\\Servers\\Connections.Abstractions\\src\\Features\\IConnectionUserFeature.cs'; destination = 'producer\\IConnectionUserFeature.cs' }\n)\nforeach ($source in $additionalSources)\n{\n    $from = Join-Path $repo $source.from\n    $to = Join-Path $originalSources $source.destination\n    if ((Test-Path $to) -and (Get-FileHash $to).Hash -cne (Get-FileHash $from).Hash)\n    {\n        throw 'An existing frozen producer source differs from the selected actual baseline source.'\n    }\n    Copy-Item $from $to\n}\nNew-Item (Join-Path $originalSources 'harness') -ItemType Directory | Out-Null",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "$sourceFiles = Describe $originalSources\nif ($files.Count -ne 80 -or $sourceFiles.Count -ne 89)",
+      "after": "$sourceFiles = Describe $originalSources\n$expectedSourcePaths = @(\n    $priorManifest.sources | Where-Object { -not $_.path.StartsWith('harness\\') } | ForEach-Object { $_.path }\n    Get-ChildItem $harness -File | Where-Object { $_.Extension -in '.cs', '.csproj' } | ForEach-Object { \"harness\\$($_.Name)\" }\n    $additionalSources | ForEach-Object { $_.destination }\n) | Sort-Object -Unique\nif (@(Compare-Object -CaseSensitive @($expectedSourcePaths) @($sourceFiles.path)).Count -or\n    $files.Count -ne 80 -or $sourceFiles.Count -ne $expectedSourcePaths.Count)",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "sourceCandidateShapes = 0; pairedComparisons = 0; files = $files; sources = $sourceFiles",
+      "after": "sourceCandidateShapes = 0; pairedComparisons = 0; files = $files; sources = $sourceFiles\n    derivedSourceCatalogCount = $sourceFiles.Count; actualAdditionalSourceRequests = $additionalSources\n    expectedSourcePathsVerifiedExactly = $expectedSourcePaths",
+      "actualOccurrences": 1
+    }
+  ],
+  "qualification": "Independent actual user-send harness/preparation. Source-catalog paths are derived and exact-compared: prior snapshots already include DefaultUserIdProvider/IUserIdProvider; the feature interface adds one source, not three. No timings or prior method observations reused."
+}

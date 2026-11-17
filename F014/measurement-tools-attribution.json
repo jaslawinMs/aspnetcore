@@ -1,0 +1,54 @@
+{
+  "candidate": "F014",
+  "template": "F012-measure-original.ps1",
+  "templateSha256": "03D4B30587DF26CBB071AE42097884E79FC0E9522C60A4107CA6D1CC3D75C589",
+  "resultSha256": "A2CBBFE2537482056EB5ADE31182203BB7508CF272E1B396821E7FA62E726D3A",
+  "changes": [
+    {
+      "before": "$ready.contractChecks -ne 17",
+      "after": "$ready.contractChecks -ne 19",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "$ready.actualChecks -ne 29",
+      "after": "$ready.actualChecks -ne 33",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "$ready.actualTimedSetupsPreflighted -ne 12",
+      "after": "$ready.actualTimedSetupsPreflighted -ne 14",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "@(Get-ChildItem $states -Filter '*-producer.json').Count -ne 17",
+      "after": "@(Get-ChildItem $states -Filter '*-producer.json').Count -ne 19",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "@(Get-ChildItem $states -Filter '*-setup-preflight.json').Count -ne 12",
+      "after": "@(Get-ChildItem $states -Filter '*-setup-preflight.json').Count -ne 14",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "@(Get-ChildItem $states -Filter '*-benchmark-validated.json').Count -ne 12",
+      "after": "@(Get-ChildItem $states -Filter '*-benchmark-validated.json').Count -ne 14",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "All 12 actual timed wrappers",
+      "after": "All 14 actual timed wrappers",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "single original-only 12-shape profile",
+      "after": "single original-only 14-shape user-send profile",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "'--context', 'original-diagnostic-only', '--filter', '*', '--artifacts', $destination)",
+      "after": "'--context', 'original-diagnostic-only',\n    '--test-assembly', (Join-Path $run 'tests\\original\\test-image\\Microsoft.AspNetCore.SignalR.Tests.dll'),\n    '--spec-assembly', (Join-Path $run 'tests\\original\\test-image\\Microsoft.AspNetCore.SignalR.Specification.Tests.dll'),\n    '--filter', '*', '--artifacts', $destination)",
+      "actualOccurrences": 1
+    }
+  ],
+  "qualification": "Independent one-shot user-send original-only diagnostic. Requires both actual19-check/14-wrapper producer runs, freezes90-source/80-file images, spends before launch, preserves settings and includes the actual reused owning-test PE/PDB witnesses without rerunning that old suite."
+}

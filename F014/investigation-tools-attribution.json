@@ -1,0 +1,64 @@
+{
+  "candidate": "F014",
+  "template": "F013-investigate.mjs",
+  "templateSha256": "62FF4AAC9AC33A8F0CE0595A67E5327DA45713C882D959DFE9563283617585C4",
+  "resultSha256": "C9F6A9A638D88EE3E4C5C9117D41013C20A6312DD0C86576605E39579626BCF1",
+  "changes": [
+    {
+      "before": "assert(['autoperf/F012-signalr-broadcast-exclusions', acceptance.branch].includes(branch));",
+      "after": "assert(['autoperf/F013-signalr-targeted-membership', acceptance.branch].includes(branch));",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "const sources = previous.sources.filter(row => row.file.startsWith('src\\\\SignalR\\\\') || row.file.startsWith('src\\\\Servers\\\\'))\n  .map(row => {\n    const file = row.file;",
+      "after": "const selected = [\n  ...previous.sources.filter(row => row.file.startsWith('src\\\\SignalR\\\\') || row.file.startsWith('src\\\\Servers\\\\')).map(row => row.file),\n  'src\\\\SignalR\\\\server\\\\Core\\\\src\\\\DefaultUserIdProvider.cs',\n  'src\\\\SignalR\\\\server\\\\Core\\\\src\\\\IUserIdProvider.cs',\n  'src\\\\Servers\\\\Connections.Abstractions\\\\src\\\\Features\\\\IConnectionUserFeature.cs',\n];\nconst sources = selected.map(file => {",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "assert.equal(sources.length, 20);",
+      "after": "assert.equal(sources.length, 23);",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "SendConnectionsAsync repo:dotnet/aspnetcore",
+      "after": "SendUsersAsync repo:dotnet/aspnetcore",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "priorF011EvidenceIsNotTargetedSendBehaviorProof",
+      "after": "priorF011EvidenceIsNotUserSendBehaviorProof",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "all27 historical rows passed with identical owner/source/SDK. Explicit prior preparation evidence only; a selected compatible shipping candidate requires fresh focused owning tests and all four16/17 array/List payloads.",
+      "after": "all27 historical rows passed with identical owner/source/SDK. Explicit old preparation evidence only, not a fresh F014 suite; any selected compatible candidate requires fresh focused owning tests and actual user-send producer controls.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "every actual F014 targeted-send probe. This does not reuse F011/F012 exclusion observations or timing.",
+      "after": "every actual F014 user-send probe. This does not reuse F011/F012/F013 observations or timing.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "untimedOwningTestRerunPlanned: true",
+      "after": "untimedOwningTestRerunPlanned: false",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "subject: 'Actual owner diff optimizes <=16 requested IDs in SendConnectionsAsync. The independent F014 finding is its remaining >16 scan; do not mark the entire path duplicate.'",
+      "after": "subject: 'Actual owner diff optimizes SendConnectionsAsync, not the independent SendUsersAsync user-identifier scan. No upstream or prior group/broadcast/connection timing reused.'",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "Known owner and its SendToAllConnections body read directly; Known targeted-send owner and shared SendToAllConnections body read; no complete caller/dispatch graph claim.",
+      "after": "Known user-send owner, actual DefaultUserIdProvider/public user features and shared SendToAllConnections body read directly. LSP returned no workspace symbols for provider/feature; no complete caller/dispatch graph claim.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "write('investigation/open-exact-symbol-pr-search.json'",
+      "after": "write('investigation/provider-history.json', gh('api',\n  `repos/dotnet/aspnetcore/commits?sha=${fresh.sha}&path=src/SignalR/server/Core/src/DefaultUserIdProvider.cs&per_page=3`));\nwrite('investigation/context-history.json', gh('api',\n  `repos/dotnet/aspnetcore/commits?sha=${fresh.sha}&path=src/SignalR/server/Core/src/HubConnectionContext.cs&per_page=3`));\nwrite('investigation/open-exact-symbol-pr-search.json'",
+      "actualOccurrences": 1
+    }
+  ],
+  "qualification": "Checked independent user-send reader with fresh owner/provider/context history, actual additional provider/feature source triples and user-specific PR search. No investigation or timing launched by this scaffolder."
+}

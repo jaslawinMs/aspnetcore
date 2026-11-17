@@ -1,0 +1,2046 @@
+diff --git a/src/SignalR/common/Http.Connections/src/ServerSentEventsMessageFormatter.cs b/src/SignalR/common/Http.Connections/src/ServerSentEventsMessageFormatter.cs
+index fac77386abe3..4d33a1c5b7b1 100644
+--- a/src/SignalR/common/Http.Connections/src/ServerSentEventsMessageFormatter.cs
++++ b/src/SignalR/common/Http.Connections/src/ServerSentEventsMessageFormatter.cs
+@@ -2,6 +2,7 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Buffers;
++using System.Runtime.CompilerServices;
+ 
+ namespace Microsoft.AspNetCore.Http.Connections;
+ 
+@@ -12,29 +13,55 @@ internal static class ServerSentEventsMessageFormatter
+ 
+     private const byte LineFeed = (byte)'\n';
+ 
+-    public static async Task WriteMessageAsync(ReadOnlySequence<byte> payload, Stream output, CancellationToken token)
++    [MethodImpl(MethodImplOptions.AggressiveInlining)]
++    public static Task WriteMessageAsync(ReadOnlySequence<byte> payload, Stream output, CancellationToken token)
+     {
+         // Payload does not contain a line feed so write it directly to output
+-        if (payload.PositionOf(LineFeed) == null)
+-        {
+-            if (payload.Length > 0)
+-            {
+-                await output.WriteAsync(DataPrefix, token);
+-                await output.WriteAsync(payload, token);
+-                await output.WriteAsync(Newline, token);
+-            }
++        return payload.PositionOf(LineFeed) is null
++            ? WriteSingleLineAsync(payload, output, token)
++            : WriteMultilineAsync(payload, output, token);
++    }
+ 
++    private static async Task WriteSingleLineAsync(ReadOnlySequence<byte> payload, Stream output, CancellationToken token)
++    {
++        if (payload.Length > 0)
++        {
++            await output.WriteAsync(DataPrefix, token);
++            await output.WriteAsync(payload, token);
+             await output.WriteAsync(Newline, token);
+-            return;
+         }
+ 
+-        var ms = new MemoryStream();
++        await output.WriteAsync(Newline, token);
++    }
+ 
+-        // Parse payload and write formatted output to memory
+-        await WriteMessageToMemory(ms, payload);
+-        ms.Position = 0;
++    private static async Task WriteMultilineAsync(ReadOnlySequence<byte> payload, Stream output, CancellationToken token)
++    {
++        token.ThrowIfCancellationRequested();
++        var maximumLength = GetFormattedLengthUpperBound(payload);
++        var buffer = ArrayPool<byte>.Shared.Rent(maximumLength);
++        try
++        {
++            // Keep the output coalesced, but do not write unused space from trimmed carriage returns.
++            var length = WriteMessageToMemory(buffer.AsSpan(0, maximumLength), payload);
++            token.ThrowIfCancellationRequested();
++            await output.WriteAsync(buffer.AsMemory(0, length), token);
++        }
++        finally
++        {
++            ArrayPool<byte>.Shared.Return(buffer);
++        }
++    }
+ 
+-        await ms.CopyToAsync(output, token);
++    private static int GetFormattedLengthUpperBound(ReadOnlySequence<byte> payload)
++    {
++        var length = checked(payload.Length + DataPrefix.Length + (2 * Newline.Length));
++        foreach (var segment in payload)
++        {
++            // Each LF is replaced by CRLF and a data prefix. Trimming CR can only reduce the length.
++            length = checked(length + ((long)segment.Span.Count(LineFeed) * (DataPrefix.Length + Newline.Length - 1)));
++        }
++
++        return checked((int)length);
+     }
+ 
+     /// <summary>
+@@ -63,44 +90,52 @@ private static ReadOnlyMemory<byte> GetLastSegment(in ReadOnlySequence<byte> sou
+         throw new InvalidOperationException("Could not get last segment from sequence.");
+     }
+ 
+-    private static async Task WriteMessageToMemory(Stream output, ReadOnlySequence<byte> payload)
++    [MethodImpl(MethodImplOptions.AggressiveInlining)]
++    private static ReadOnlySequence<byte> ReadLine(ref ReadOnlySequence<byte> payload, out bool hasMore)
+     {
+-        var keepWriting = true;
+-        while (keepWriting)
++        var sliceEnd = payload.PositionOf(LineFeed);
++        if (sliceEnd is null)
+         {
+-            var sliceEnd = payload.PositionOf(LineFeed);
++            var remaining = payload;
++            payload = ReadOnlySequence<byte>.Empty;
++            hasMore = false;
++            return remaining;
++        }
+ 
+-            ReadOnlySequence<byte> lineSegment;
+-            if (sliceEnd == null)
+-            {
+-                lineSegment = payload;
+-                payload = ReadOnlySequence<byte>.Empty;
+-                keepWriting = false;
+-            }
+-            else
++        var line = payload.Slice(payload.Start, sliceEnd.Value);
++        if (line.Length > 1)
++        {
++            // Preserve the existing CRLF trimming behavior, including across segment boundaries.
++            var memory = GetLastSegment(line, out var offset);
++            if (memory.Span[memory.Length - 1] == '\r')
+             {
+-                lineSegment = payload.Slice(payload.Start, sliceEnd.Value);
+-
+-                if (lineSegment.Length > 1)
+-                {
+-                    // Check if the line ended in \r\n. If it did then trim the \r
+-                    var memory = GetLastSegment(lineSegment, out var offset);
+-                    if (memory.Span[memory.Length - 1] == '\r')
+-                    {
+-                        lineSegment = lineSegment.Slice(lineSegment.Start, offset + memory.Length - 1);
+-                    }
+-                }
+-
+-                // Update payload to remove \n
+-                payload = payload.Slice(payload.GetPosition(1, sliceEnd.Value));
++                line = line.Slice(line.Start, offset + memory.Length - 1);
+             }
++        }
++
++        payload = payload.Slice(payload.GetPosition(1, sliceEnd.Value));
++        hasMore = true;
++        return line;
++    }
+ 
+-            // Write line
+-            await output.WriteAsync(DataPrefix);
+-            await output.WriteAsync(lineSegment);
+-            await output.WriteAsync(Newline);
++    private static int WriteMessageToMemory(Span<byte> output, ReadOnlySequence<byte> payload)
++    {
++        var initialLength = output.Length;
++        bool hasMore;
++        do
++        {
++            var line = ReadLine(ref payload, out hasMore);
++            DataPrefix.Span.CopyTo(output);
++            output = output.Slice(DataPrefix.Length);
++            line.CopyTo(output);
++            output = output.Slice((int)line.Length);
++            Newline.Span.CopyTo(output);
++            output = output.Slice(Newline.Length);
+         }
++        while (hasMore);
++
++        Newline.Span.CopyTo(output);
+ 
+-        await output.WriteAsync(Newline);
++        return initialLength - output.Length + Newline.Length;
+     }
+ }
+diff --git a/src/SignalR/common/Http.Connections/test/ServerSentEventsMessageFormatterTests.cs b/src/SignalR/common/Http.Connections/test/ServerSentEventsMessageFormatterTests.cs
+index 2f05c5a9fea1..69342e920a65 100644
+--- a/src/SignalR/common/Http.Connections/test/ServerSentEventsMessageFormatterTests.cs
++++ b/src/SignalR/common/Http.Connections/test/ServerSentEventsMessageFormatterTests.cs
+@@ -5,8 +5,11 @@
+ using System.Collections.Generic;
+ using System.IO;
+ using System.Text;
++using System.Threading;
+ using System.Threading.Tasks;
+ using Microsoft.AspNetCore.Http.Connections.Internal;
++using Microsoft.AspNetCore.InternalTesting;
++using Moq;
+ using Xunit;
+ 
+ namespace Microsoft.AspNetCore.Http.Connections.Tests;
+@@ -37,6 +40,83 @@ public async Task WriteTextMessageFromMultipleSegments(string encoded, string pa
+         Assert.Equal(encoded, Encoding.UTF8.GetString(output.ToArray()));
+     }
+ 
++    [Fact]
++    public async Task MultilineMessageWritesOnlyFormattedBytesInOneWrite()
++    {
++        const string expected = "data: first\r\ndata: second\r\ndata: \r\n\r\n";
++        var buffer = ReadOnlySequenceFactory.CreateSegments(
++            Encoding.UTF8.GetBytes("first\r"),
++            Encoding.UTF8.GetBytes("\nsecond\r\n"));
++        var output = CreateOutputStream((bytes, token) =>
++        {
++            Assert.Equal(expected.Length, bytes.Length);
++            Assert.Equal(expected, Encoding.UTF8.GetString(bytes.Span));
++            return Task.CompletedTask;
++        });
++
++        await ServerSentEventsMessageFormatter.WriteMessageAsync(buffer, output.Object, default).DefaultTimeout();
++
++        Assert.Single(output.Invocations);
++    }
++
++    [Theory]
++    [InlineData(false)]
++    [InlineData(true)]
++    public async Task FormattingBufferIsRetainedUntilOutputWriteCompletes(bool cancelWrite)
++    {
++        using var cts = new CancellationTokenSource();
++        var pendingWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        ReadOnlyMemory<byte> pendingBytes = default;
++        var output = CreateOutputStream((bytes, token) =>
++        {
++            Assert.Equal(cts.Token, token);
++            pendingBytes = bytes;
++            return pendingWrite.Task;
++        });
++
++        var first = new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("first\r\nmessage"));
++        var writeTask = ServerSentEventsMessageFormatter.WriteMessageAsync(first, output.Object, cts.Token);
++        try
++        {
++            Assert.False(writeTask.IsCompleted);
++            var second = new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("other\ncontent"));
++            await ServerSentEventsMessageFormatter.WriteMessageAsync(second, Stream.Null, default).DefaultTimeout();
++            Assert.Equal("data: first\r\ndata: message\r\n\r\n", Encoding.UTF8.GetString(pendingBytes.Span));
++        }
++        finally
++        {
++            if (cancelWrite)
++            {
++                cts.Cancel();
++                pendingWrite.TrySetCanceled(cts.Token);
++            }
++            else
++            {
++                pendingWrite.TrySetResult();
++            }
++        }
++
++        if (cancelWrite)
++        {
++            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => writeTask).DefaultTimeout();
++        }
++        else
++        {
++            await writeTask.DefaultTimeout();
++        }
++    }
++
++    private static Mock<Stream> CreateOutputStream(Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync)
++    {
++        var output = new Mock<Stream>(MockBehavior.Strict);
++        output.Setup(s => s.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
++            .Returns((byte[] bytes, int offset, int count, CancellationToken token) => writeAsync(bytes.AsMemory(offset, count), token));
++        output.Setup(s => s.WriteAsync(It.IsAny<ReadOnlyMemory<byte>>(), It.IsAny<CancellationToken>()))
++            .Returns((ReadOnlyMemory<byte> bytes, CancellationToken token) => new ValueTask(writeAsync(bytes, token)));
++
++        return output;
++    }
++
+     public static IEnumerable<object[]> PayloadData => new List<object[]>
+         {
+             new object[] { "\r\n", "" },
+@@ -45,5 +125,11 @@ public async Task WriteTextMessageFromMultipleSegments(string encoded, string pa
+             new object[] { "data: Hello\r\ndata: World\r\n\r\n", "Hello\nWorld" },
+             new object[] { "data: Hello\r\ndata: \r\n\r\n", "Hello\n" },
+             new object[] { "data: Hello\r\ndata: \r\n\r\n", "Hello\r\n" },
++            new object[] { "data: \r\ndata: \r\n\r\n", "\n" },
++            new object[] { "data: \r\ndata: \r\ndata: \r\n\r\n", "\n\n" },
++            new object[] { "data: \u00e9\r\ndata: \u03bb\r\n\r\n", "\u00e9\n\u03bb" },
++            new object[] { "data: \r\r\ndata: \r\n\r\n", "\r\n" },
++            new object[] { "data: Hello\rWorld\r\ndata: Next\r\ndata: Last\r\r\n\r\n", "Hello\rWorld\r\nNext\nLast\r" },
++            new object[] { "data: \u00e9\r\ndata: \u03bb\r\n\r\n", "\u00e9\r\n\u03bb" },
+         };
+ }
+diff --git a/src/SignalR/common/Shared/MessageBuffer.cs b/src/SignalR/common/Shared/MessageBuffer.cs
+index b77d6612f7f7..0209e9439907 100644
+--- a/src/SignalR/common/Shared/MessageBuffer.cs
++++ b/src/SignalR/common/Shared/MessageBuffer.cs
+@@ -53,7 +53,8 @@ internal sealed class MessageBuffer : IDisposable
+     // Pool per connection
+     private readonly Stack<LinkedBuffer> _pool = new();
+ 
+-    private LinkedBuffer _buffer;
++    private LinkedBuffer _bufferHead;
++    private LinkedBuffer _bufferTail;
+     private long _bufferedByteCount;
+ 
+     static MessageBuffer()
+@@ -73,7 +74,7 @@ public MessageBuffer(ConnectionContext connection, IHubProtocol protocol, long b
+         _timer = new(AckRate, _timeProvider);
+ #endif
+ 
+-        _buffer = new LinkedBuffer();
++        _bufferHead = _bufferTail = new LinkedBuffer();
+ 
+         _writer = connection.Transport.Output;
+         _protocol = protocol;
+@@ -170,7 +171,7 @@ private async ValueTask<FlushResult> WriteAsyncCore(Type hubMessageType, ReadOnl
+             {
+                 _totalMessageCount++;
+                 _bufferedByteCount += messageBytes.Length;
+-                _buffer.AddMessage(messageBytes, _totalMessageCount, _pool);
++                _bufferTail = _bufferTail.AddMessage(messageBytes, _totalMessageCount, _pool);
+ 
+                 writeTask = _writer.WriteAsync(messageBytes, cancellationToken);
+             }
+@@ -197,8 +198,9 @@ public async Task AckAsync(AckMessage ackMessage)
+         await _writeLock.WaitAsync(cancellationToken: default).ConfigureAwait(false);
+         try
+         {
+-            var item = _buffer.RemoveMessages(ackMessage.SequenceId, _pool);
+-            _buffer = item.Buffer;
++            var item = _bufferHead.RemoveMessages(ackMessage.SequenceId, _pool);
++            // RemoveMessages retains the last buffer, so _bufferTail remains valid even when all messages are acknowledged.
++            _bufferHead = item.Buffer;
+             _bufferedByteCount -= item.ReturnCredit;
+ 
+             newCount = _bufferedByteCount;
+@@ -271,7 +273,7 @@ internal async Task ResendAsync(PipeWriter writer)
+ 
+             var isFirst = true;
+             // Loop over all buffered messages and send them
+-            foreach (var item in _buffer.GetMessages())
++            foreach (var item in _bufferHead.GetMessages())
+             {
+                 if (item.SequenceId > 0)
+                 {
+@@ -327,45 +329,36 @@ private sealed class LinkedBuffer
+ 
+         private readonly ReadOnlyMemory<byte>[] _messages = new ReadOnlyMemory<byte>[BufferLength];
+ 
+-        public void AddMessage(ReadOnlyMemory<byte> hubMessage, long sequenceId, Stack<LinkedBuffer> pool)
++        public LinkedBuffer AddMessage(ReadOnlyMemory<byte> hubMessage, long sequenceId, Stack<LinkedBuffer> pool)
+         {
+-            if (_startingSequenceId < 0)
+-            {
+-                Debug.Assert(_currentIndex == -1);
+-                _startingSequenceId = sequenceId;
+-            }
+-
+-            if (_currentIndex < BufferLength - 1)
+-            {
+-                Debug.Assert(_startingSequenceId + _currentIndex + 1 == sequenceId);
++            Debug.Assert(_next is null);
+ 
+-                _currentIndex++;
+-                _messages[_currentIndex] = hubMessage;
+-            }
+-            else if (_next is null)
++            var buffer = this;
++            if (_currentIndex == BufferLength - 1)
+             {
+                 if (pool.Count != 0)
+                 {
+-                    _next = pool.Pop();
++                    buffer = pool.Pop();
+                 }
+                 else
+                 {
+-                    _next = new LinkedBuffer();
++                    buffer = new LinkedBuffer();
+                 }
+-                _next.AddMessage(hubMessage, sequenceId, pool);
++                _next = buffer;
+             }
+-            else
++
++            if (buffer._startingSequenceId < 0)
+             {
+-                // TODO: Should we avoid this path by keeping a tail pointer?
++                Debug.Assert(buffer._currentIndex == -1);
++                buffer._startingSequenceId = sequenceId;
++            }
+ 
+-                var linkedBuffer = _next;
+-                while (linkedBuffer._next is not null)
+-                {
+-                    linkedBuffer = linkedBuffer._next;
+-                }
++            Debug.Assert(buffer._startingSequenceId + buffer._currentIndex + 1 == sequenceId);
+ 
+-                linkedBuffer.AddMessage(hubMessage, sequenceId, pool);
+-            }
++            buffer._currentIndex++;
++            buffer._messages[buffer._currentIndex] = hubMessage;
++
++            return buffer;
+         }
+ 
+         public (LinkedBuffer Buffer, int ReturnCredit) RemoveMessages(long sequenceId, Stack<LinkedBuffer> pool)
+diff --git a/src/SignalR/perf/Microbenchmarks/HubConnectionContextCreationBenchmark.cs b/src/SignalR/perf/Microbenchmarks/HubConnectionContextCreationBenchmark.cs
+new file mode 100644
+index 000000000000..9a521c57c5c5
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/HubConnectionContextCreationBenchmark.cs
+@@ -0,0 +1,48 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.SignalR.Microbenchmarks.Shared;
++using Microsoft.Extensions.Logging.Abstractions;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class HubConnectionContextCreationBenchmark
++{
++    private TestConnectionContext _connection;
++    private HubConnectionContextOptions _options;
++    private CancellationTokenSource _invocationCancellation;
++
++    [Params(false, true)]
++    public bool TrackCancellation;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _connection = new TestConnectionContext { ConnectionId = "benchmark" };
++        _options = new HubConnectionContextOptions
++        {
++            KeepAliveInterval = Timeout.InfiniteTimeSpan,
++        };
++        _invocationCancellation = new CancellationTokenSource();
++    }
++
++    [Benchmark]
++    public HubConnectionContext CreateAndCleanup()
++    {
++        var context = new HubConnectionContext(_connection, _options, NullLoggerFactory.Instance);
++        if (TrackCancellation)
++        {
++            context.ActiveRequestCancellationSources.TryAdd("invocation", _invocationCancellation);
++        }
++
++        context.Cleanup();
++        return context;
++    }
++
++    [GlobalCleanup]
++    public void GlobalCleanup()
++    {
++        _invocationCancellation.Dispose();
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/HubGroupListBenchmark.cs b/src/SignalR/perf/Microbenchmarks/HubGroupListBenchmark.cs
+new file mode 100644
+index 000000000000..814c3a54aad3
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/HubGroupListBenchmark.cs
+@@ -0,0 +1,50 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.SignalR.Internal;
++using Microsoft.AspNetCore.SignalR.Microbenchmarks.Shared;
++using Microsoft.AspNetCore.SignalR.Tests;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class HubGroupListBenchmark
++{
++    private const string GroupName = "group";
++    private HubGroupList _groups;
++    private HubConnectionContext _connection;
++
++    [Params(0, 1, 32, 1024)]
++    public int ConnectionsPerGroup;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _groups = new HubGroupList();
++        _connection = HubConnectionContextUtils.Create(new TestConnectionContext { ConnectionId = "churn" });
++
++        for (var i = 0; i < ConnectionsPerGroup; i++)
++        {
++            var connection = HubConnectionContextUtils.Create(new TestConnectionContext { ConnectionId = "member-" + i });
++            _groups.Add(connection, GroupName);
++        }
++    }
++
++    [Benchmark]
++    public void AddAndRemove()
++    {
++        // With no permanent members, each pair also creates and removes the group.
++        _groups.Add(_connection, GroupName);
++        _groups.Remove(_connection.ConnectionId, GroupName);
++    }
++
++    [GlobalCleanup]
++    public void GlobalCleanup()
++    {
++        var group = _groups[GroupName];
++        if (ConnectionsPerGroup == 0 ? group is not null : group?.Count != ConnectionsPerGroup)
++        {
++            throw new InvalidOperationException("Group membership changed during the benchmark.");
++        }
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/HubGroupListConcurrencyBenchmark.cs b/src/SignalR/perf/Microbenchmarks/HubGroupListConcurrencyBenchmark.cs
+new file mode 100644
+index 000000000000..041cb410ed12
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/HubGroupListConcurrencyBenchmark.cs
+@@ -0,0 +1,93 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.SignalR.Internal;
++using Microsoft.AspNetCore.SignalR.Microbenchmarks.Shared;
++using Microsoft.AspNetCore.SignalR.Tests;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class HubGroupListConcurrencyBenchmark
++{
++    private const int ChurnOperations = 1024;
++    private HubGroupList _groups;
++    private HubConnectionContext[] _connections;
++    private string[] _groupNames;
++    private ParallelOptions _parallelOptions;
++    private Action<int> _churnGroup;
++
++    [Params(1, 8)]
++    public int Workers;
++
++    [Params(1, 1024)]
++    public int ConnectionsPerGroup;
++
++    [Params(false, true)]
++    public bool SharedGroup;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _groups = new HubGroupList();
++        _connections = new HubConnectionContext[Workers];
++        _groupNames = new string[SharedGroup ? 1 : Workers];
++        _parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Workers };
++        _churnGroup = ChurnGroup;
++
++        for (var i = 0; i < Workers; i++)
++        {
++            _connections[i] = HubConnectionContextUtils.Create(new TestConnectionContext { ConnectionId = "churn-" + i });
++        }
++
++        for (var i = 0; i < _groupNames.Length; i++)
++        {
++            _groupNames[i] = "group-" + i;
++        }
++
++        for (var i = 0; i < ConnectionsPerGroup; i++)
++        {
++            var connection = HubConnectionContextUtils.Create(new TestConnectionContext { ConnectionId = "member-" + i });
++            foreach (var groupName in _groupNames)
++            {
++                _groups.Add(connection, groupName);
++            }
++        }
++    }
++
++    [Benchmark(OperationsPerInvoke = ChurnOperations)]
++    public void AddAndRemove()
++    {
++        // One operation is an add/remove pair; batching amortizes Parallel.For scheduling.
++        Parallel.For(0, Workers, _parallelOptions, _churnGroup);
++    }
++
++    private void ChurnGroup(int worker)
++    {
++        var connection = _connections[worker];
++        var groupName = _groupNames[SharedGroup ? 0 : worker];
++
++        for (var i = 0; i < ChurnOperations / Workers; i++)
++        {
++            _groups.Add(connection, groupName);
++            _groups.Remove(connection.ConnectionId, groupName);
++        }
++    }
++
++    [GlobalCleanup]
++    public void GlobalCleanup()
++    {
++        if (_groups.Count != _groupNames.Length)
++        {
++            throw new InvalidOperationException("The number of groups changed during the benchmark.");
++        }
++
++        foreach (var groupName in _groupNames)
++        {
++            if (_groups[groupName]?.Count != ConnectionsPerGroup)
++            {
++                throw new InvalidOperationException("Group membership changed during the benchmark.");
++            }
++        }
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/HubMethodAuthorizationBenchmark.cs b/src/SignalR/perf/Microbenchmarks/HubMethodAuthorizationBenchmark.cs
+new file mode 100644
+index 000000000000..ccdd00adb385
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/HubMethodAuthorizationBenchmark.cs
+@@ -0,0 +1,191 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Security.Claims;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.Connections;
++using Microsoft.AspNetCore.SignalR.Internal;
++using Microsoft.AspNetCore.SignalR.Protocol;
++using Microsoft.Extensions.DependencyInjection;
++using Microsoft.Extensions.DependencyInjection.Extensions;
++using Microsoft.Extensions.Logging.Abstractions;
++using Microsoft.Extensions.Options;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++/// <summary>
++/// Measures repeated dispatcher invocations with and without hub-method authorization.
++/// </summary>
++public class HubMethodAuthorizationBenchmark
++{
++    private const string InvocationPolicy = "InvokeHubMethod";
++    private const string InvocationRole = "Invoker";
++    private const string ExpectedResult = "Hello";
++
++    private ServiceProvider _serviceProvider;
++    private DefaultHubDispatcher<TestHub> _dispatcher;
++    private DefaultConnectionContext _connection;
++    private CompletionHubConnectionContext _connectionContext;
++    private InvocationMessage _authorizedInvocation;
++    private InvocationMessage _unprotectedInvocation;
++
++    /// <summary>
++    /// Gets or sets whether the policy provider permits caching composed policies.
++    /// </summary>
++    [Params(true, false)]
++    public bool AllowsCachingPolicies { get; set; }
++
++    /// <summary>
++    /// Gets or sets whether policy-provider identities are reused across invocations.
++    /// </summary>
++    [Params(ServiceLifetime.Singleton, ServiceLifetime.Scoped)]
++    public ServiceLifetime ProviderLifetime { get; set; }
++
++    /// <summary>
++    /// Creates a dispatcher, stable authorization metadata, and an authenticated connection.
++    /// </summary>
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        var services = new ServiceCollection();
++        services.AddLogging();
++        services.Add(new ServiceDescriptor(typeof(IAuthorizationPolicyProvider), provider =>
++            new BenchmarkAuthorizationPolicyProvider(provider.GetRequiredService<IOptions<AuthorizationOptions>>(), AllowsCachingPolicies),
++            ProviderLifetime));
++        services.AddSignalRCore();
++        services.Configure<AuthorizationOptions>(options =>
++        {
++            options.AddPolicy(InvocationPolicy, policy => policy
++                .RequireAuthenticatedUser()
++                .RequireClaim("permission", "invoke"));
++        });
++        _serviceProvider = services.BuildServiceProvider();
++
++        var lifetimeManager = _serviceProvider.GetRequiredService<HubLifetimeManager<TestHub>>();
++        _dispatcher = new DefaultHubDispatcher<TestHub>(
++            _serviceProvider.GetRequiredService<IServiceScopeFactory>(),
++            _serviceProvider.GetRequiredService<IHubContext<TestHub>>(),
++            enableDetailedErrors: true,
++            disableImplicitFromServiceParameters: true,
++            NullLogger<DefaultHubDispatcher<TestHub>>.Instance,
++            hubFilters: null,
++            lifetimeManager);
++
++        _connection = new DefaultConnectionContext("authorization-benchmark")
++        {
++            User = new ClaimsPrincipal(new ClaimsIdentity(
++            [
++                new Claim(ClaimTypes.NameIdentifier, "benchmark-user"),
++                new Claim(ClaimTypes.Role, InvocationRole),
++                new Claim("permission", "invoke"),
++            ], authenticationType: "benchmark")),
++        };
++        _connectionContext = new CompletionHubConnectionContext(_connection)
++        {
++            Protocol = new DefaultHubDispatcherBenchmark.FakeHubProtocol(),
++        };
++
++        object[] arguments = [ExpectedResult];
++        _authorizedInvocation = new InvocationMessage("1", nameof(TestHub.Authorized), arguments);
++        _unprotectedInvocation = new InvocationMessage("1", nameof(TestHub.Unprotected), arguments);
++
++        Invoke(_unprotectedInvocation);
++        Invoke(_authorizedInvocation);
++    }
++
++    /// <summary>
++    /// Invokes an unprotected method as a control for dispatcher overhead.
++    /// </summary>
++    [Benchmark(Baseline = true)]
++    public void Unprotected()
++    {
++        Invoke(_unprotectedInvocation);
++    }
++
++    /// <summary>
++    /// Invokes a method requiring a named policy and role authorization.
++    /// </summary>
++    [Benchmark]
++    public void Authorized()
++    {
++        Invoke(_authorizedInvocation);
++    }
++
++    private void Invoke(InvocationMessage invocation)
++    {
++        _connectionContext.Completion = null;
++        _dispatcher.DispatchMessageAsync(_connectionContext, invocation).GetAwaiter().GetResult();
++
++        // Dispatch can return before an invocation completes. The provider, handlers, hub methods,
++        // and response writer are synchronous here; verify the response rather than measuring enqueueing.
++        var completion = _connectionContext.Completion;
++        if (completion is null || completion.Error is not null ||
++            !completion.HasResult || completion.Result is not string result || result != ExpectedResult)
++        {
++            throw new InvalidOperationException($"Hub invocation did not complete successfully: {completion?.Error}");
++        }
++    }
++
++    /// <summary>
++    /// Releases the connection and all owned services.
++    /// </summary>
++    [GlobalCleanup]
++    public async Task GlobalCleanup()
++    {
++        _connectionContext.Cleanup();
++        await _connection.DisposeAsync();
++        await _serviceProvider.DisposeAsync();
++    }
++
++    private sealed class BenchmarkAuthorizationPolicyProvider(
++        IOptions<AuthorizationOptions> options,
++        bool allowsCachingPolicies) : DefaultAuthorizationPolicyProvider(options)
++    {
++        public override bool AllowsCachingPolicies => allowsCachingPolicies;
++    }
++
++    private sealed class CompletionHubConnectionContext(ConnectionContext connection)
++        : HubConnectionContext(connection, new HubConnectionContextOptions
++        {
++            KeepAliveInterval = Timeout.InfiniteTimeSpan,
++            MaximumParallelInvocations = 1,
++        }, NullLoggerFactory.Instance)
++    {
++        public CompletionMessage Completion { get; set; }
++
++        public override ValueTask WriteAsync(HubMessage message, CancellationToken cancellationToken = default)
++        {
++            if (message is CompletionMessage completion)
++            {
++                Completion = completion;
++            }
++
++            return ValueTask.CompletedTask;
++        }
++    }
++
++    /// <summary>
++    /// Provides equivalent synchronous methods with and without authorization metadata.
++    /// </summary>
++    public class TestHub : Hub
++    {
++        /// <summary>
++        /// Returns the supplied value after the dispatcher authorizes the invocation.
++        /// </summary>
++        [Authorize(Policy = InvocationPolicy)]
++        [Authorize(Roles = InvocationRole)]
++        public string Authorized(string value)
++        {
++            return value;
++        }
++
++        /// <summary>
++        /// Returns the supplied value without requiring authorization.
++        /// </summary>
++        public string Unprotected(string value)
++        {
++            return value;
++        }
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/MessageBufferBenchmark.cs b/src/SignalR/perf/Microbenchmarks/MessageBufferBenchmark.cs
+new file mode 100644
+index 000000000000..51c15d900414
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/MessageBufferBenchmark.cs
+@@ -0,0 +1,112 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Buffers;
++using System.IO.Pipelines;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.SignalR.Internal;
++using Microsoft.AspNetCore.SignalR.Microbenchmarks.Shared;
++using Microsoft.AspNetCore.SignalR.Protocol;
++using Microsoft.Extensions.Logging.Abstractions;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class MessageBufferBenchmark
++{
++    private const int BurstSize = 32;
++
++    private MessageBuffer _buffer;
++    private SerializedHubMessage _message;
++    private JsonHubProtocol _protocol;
++    private AckMessage _ack;
++    private PipeReader _input;
++
++    [Params(0, 10, 100, 1000)]
++    public int UnacknowledgedMessages;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _protocol = new JsonHubProtocol();
++        _message = new SerializedHubMessage(new InvocationMessage("Target", []));
++        _message.GetSerializedMessage(_protocol);
++        _ack = new AckMessage(0);
++        _input = PipeReader.Create(Stream.Null);
++        var connection = new TestConnectionContext
++        {
++            ConnectionId = "benchmark",
++            Transport = new DuplexPipe(_input, PipeWriter.Create(Stream.Null)),
++        };
++
++        // Isolate buffer bookkeeping from transport backpressure and byte-limit waits.
++        _buffer = new MessageBuffer(connection, _protocol, long.MaxValue, NullLogger.Instance);
++        for (var i = 0; i < UnacknowledgedMessages; i++)
++        {
++            _buffer.WriteAsync(_message, default).GetAwaiter().GetResult();
++        }
++    }
++
++    [Benchmark]
++    public void AppendAndAcknowledge()
++    {
++        _buffer.WriteAsync(_message, default).GetAwaiter().GetResult();
++
++        // Acknowledge the oldest message, keeping the backlog constant across invocations.
++        _ack.SequenceId++;
++        _buffer.AckAsync(_ack).GetAwaiter().GetResult();
++    }
++
++    [Benchmark(OperationsPerInvoke = BurstSize)]
++    public void BurstAndAcknowledge()
++    {
++        for (var i = 0; i < BurstSize; i++)
++        {
++            _buffer.WriteAsync(_message, default).GetAwaiter().GetResult();
++        }
++
++        // Acknowledge once per burst; results are normalized per appended message.
++        _ack.SequenceId += BurstSize;
++        _buffer.AckAsync(_ack).GetAwaiter().GetResult();
++    }
++
++    [GlobalCleanup]
++    public void GlobalCleanup()
++    {
++        using var output = new MemoryStream();
++        var writer = PipeWriter.Create(output, new StreamPipeWriterOptions(leaveOpen: true));
++        try
++        {
++            _buffer.ResendAsync(writer).GetAwaiter().GetResult();
++            var data = new ReadOnlySequence<byte>(output.GetBuffer().AsMemory(0, (int)output.Length));
++            var binder = new TestBinder(Array.Empty<Type>());
++            if (!_protocol.TryParseMessage(ref data, binder, out var firstMessage)
++                || firstMessage is not SequenceMessage sequence
++                || sequence.SequenceId != _ack.SequenceId + 1)
++            {
++                throw new InvalidOperationException("The replay sequence does not match the acknowledgement position.");
++            }
++
++            var count = 0;
++            while (_protocol.TryParseMessage(ref data, binder, out var message))
++            {
++                if (message is not InvocationMessage)
++                {
++                    throw new InvalidOperationException("An unexpected message was buffered.");
++                }
++
++                count++;
++            }
++
++            if (!data.IsEmpty || count != UnacknowledgedMessages)
++            {
++                throw new InvalidOperationException("The unacknowledged backlog changed during the benchmark.");
++            }
++        }
++        finally
++        {
++            writer.Complete();
++            _buffer.Dispose();
++            _input.Complete();
++        }
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/Microsoft.AspNetCore.SignalR.Microbenchmarks.csproj b/src/SignalR/perf/Microbenchmarks/Microsoft.AspNetCore.SignalR.Microbenchmarks.csproj
+index 12674ab2a016..8d5c77c1f622 100644
+--- a/src/SignalR/perf/Microbenchmarks/Microsoft.AspNetCore.SignalR.Microbenchmarks.csproj
++++ b/src/SignalR/perf/Microbenchmarks/Microsoft.AspNetCore.SignalR.Microbenchmarks.csproj
+@@ -22,6 +22,7 @@
+ 
+   <ItemGroup>
+     <Reference Include="BenchmarkDotNet" />
++    <Reference Include="Microsoft.AspNetCore.Authorization" />
+     <Reference Include="Microsoft.AspNetCore.Authorization.Policy" />
+     <Reference Include="Microsoft.AspNetCore.Http.Connections.Client" />
+     <Reference Include="Microsoft.AspNetCore.Http.Connections" />
+diff --git a/src/SignalR/perf/Microbenchmarks/SendConnectionsAdverseBenchmark.cs b/src/SignalR/perf/Microbenchmarks/SendConnectionsAdverseBenchmark.cs
+new file mode 100644
+index 000000000000..24712dea5e30
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/SendConnectionsAdverseBenchmark.cs
+@@ -0,0 +1,119 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Connections;
++using Microsoft.AspNetCore.SignalR.Protocol;
++using Microsoft.Extensions.Logging.Abstractions;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class SendConnectionsAdverseBenchmark
++{
++    private readonly object[] _arguments = ["value"];
++    private DefaultHubLifetimeManager<Hub> _manager;
++    private HubConnectionStore _connections;
++    private string[] _targets;
++
++    [Params("Empty", "DuplicateHeavy", "Missing", "Dense")]
++    public string Scenario { get; set; }
++
++    [GlobalSetup]
++    public void Setup()
++    {
++        _manager = new DefaultHubLifetimeManager<Hub>(NullLogger<DefaultHubLifetimeManager<Hub>>.Instance);
++        _connections = new HubConnectionStore();
++        var connectionCount = Scenario switch
++        {
++            "Empty" => 0,
++            "Dense" => 1000,
++            _ => 10,
++        };
++        var ids = new string[connectionCount];
++        for (var i = 0; i < connectionCount; i++)
++        {
++            ids[i] = $"connection-{i}";
++            var connection = new CountingConnection(new DefaultConnectionContext(ids[i]));
++            _connections.Add(connection);
++            _manager.OnConnectedAsync(connection).GetAwaiter().GetResult();
++        }
++
++        _targets = new string[Scenario == "Dense" ? connectionCount : 100_000];
++        for (var i = 0; i < _targets.Length; i++)
++        {
++            _targets[i] = Scenario is "Empty" or "Missing" ? "missing" : ids[i % ids.Length];
++        }
++
++        OriginalScan().GetAwaiter().GetResult();
++        IndexedSend().GetAwaiter().GetResult();
++        foreach (CountingConnection connection in _connections)
++        {
++            var expected = Scenario == "Missing" ? 0 : 2;
++            if (connection.Writes != expected)
++            {
++                throw new InvalidOperationException("Recipients were missed or received duplicate messages.");
++            }
++        }
++    }
++
++    // Preserve the original implementation as a control for input-dependent complexity.
++    [Benchmark(Baseline = true)]
++    public Task OriginalScan()
++    {
++        return SendToAllConnections("Method", _arguments,
++            (connection, state) => ((IReadOnlyList<string>)state).Contains(connection.ConnectionId), _targets);
++    }
++
++    private Task SendToAllConnections(string methodName, object[] arguments, Func<HubConnectionContext, object, bool> include, object state)
++    {
++        List<Task> tasks = null;
++        SerializedHubMessage message = null;
++        foreach (var connection in _connections)
++        {
++            if (!include(connection, state))
++            {
++                continue;
++            }
++
++            message ??= new SerializedHubMessage(new InvocationMessage(methodName, arguments));
++            var task = connection.WriteAsync(message);
++            if (!task.IsCompletedSuccessfully)
++            {
++                tasks ??= new List<Task>();
++                tasks.Add(task.AsTask());
++            }
++            else
++            {
++                task.GetAwaiter().GetResult();
++            }
++        }
++
++        return tasks is null ? Task.CompletedTask : Task.WhenAll(tasks);
++    }
++
++    [Benchmark]
++    public Task IndexedSend() => _manager.SendConnectionsAsync(_targets, "Method", _arguments);
++
++    [GlobalCleanup]
++    public void Cleanup()
++    {
++        foreach (CountingConnection connection in _connections)
++        {
++            connection.Cleanup();
++            connection.TransportContext.DisposeAsync().GetAwaiter().GetResult();
++        }
++    }
++
++    private sealed class CountingConnection(DefaultConnectionContext connection)
++        : HubConnectionContext(connection, new HubConnectionContextOptions(), NullLoggerFactory.Instance)
++    {
++        public DefaultConnectionContext TransportContext => connection;
++        public int Writes { get; private set; }
++
++        public override ValueTask WriteAsync(SerializedHubMessage message, CancellationToken cancellationToken = default)
++        {
++            Writes++;
++            return ValueTask.CompletedTask;
++        }
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/SendConnectionsBenchmark.cs b/src/SignalR/perf/Microbenchmarks/SendConnectionsBenchmark.cs
+new file mode 100644
+index 000000000000..e41fa3b4a55d
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/SendConnectionsBenchmark.cs
+@@ -0,0 +1,59 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.SignalR.Microbenchmarks.Shared;
++using Microsoft.AspNetCore.SignalR.Protocol;
++using Microsoft.Extensions.Logging.Abstractions;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class SendConnectionsBenchmark
++{
++    private DefaultHubLifetimeManager<Hub> _hubLifetimeManager;
++    private string[] _connectionIds;
++    private readonly object[] _arguments = ["Hello world!"];
++
++    [Params(10, 1000)]
++    public int Connections;
++
++    [Params(1, 2, 10)]
++    public int TargetConnections;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _hubLifetimeManager = new DefaultHubLifetimeManager<Hub>(NullLogger<DefaultHubLifetimeManager<Hub>>.Instance);
++        _connectionIds = new string[TargetConnections];
++        var protocol = new JsonHubProtocol();
++        var options = new HubConnectionContextOptions
++        {
++            KeepAliveInterval = Timeout.InfiniteTimeSpan,
++        };
++
++        for (var i = 0; i < Connections; i++)
++        {
++            var connection = new TestConnectionContext
++            {
++                ConnectionId = Guid.NewGuid().ToString(),
++                Transport = new TestDuplexPipe(),
++            };
++            var hubConnection = new HubConnectionContext(connection, options, NullLoggerFactory.Instance)
++            {
++                Protocol = protocol,
++            };
++            _hubLifetimeManager.OnConnectedAsync(hubConnection).GetAwaiter().GetResult();
++
++            if (i < _connectionIds.Length)
++            {
++                _connectionIds[i] = connection.ConnectionId;
++            }
++        }
++    }
++
++    [Benchmark]
++    public Task SendAsync()
++    {
++        return _hubLifetimeManager.SendConnectionsAsync(_connectionIds, "Method", _arguments);
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/ServerSentEventsAdverseBenchmark.cs b/src/SignalR/perf/Microbenchmarks/ServerSentEventsAdverseBenchmark.cs
+new file mode 100644
+index 000000000000..d80091310f8a
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/ServerSentEventsAdverseBenchmark.cs
+@@ -0,0 +1,53 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Buffers;
++using System.Text;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Http.Connections;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class ServerSentEventsAdverseBenchmark
++{
++    private ReadOnlySequence<byte> _payload;
++
++    [Params("Tiny", "DenseNewlines", "Fragmented", "LateNewline")]
++    public string Scenario { get; set; }
++
++    [GlobalSetup]
++    public void Setup()
++    {
++        var text = Scenario switch
++        {
++            "Tiny" => "a\nb",
++            "DenseNewlines" => new string('\n', 8190),
++            "Fragmented" => new string('x', 4096) + "\ny",
++            "LateNewline" => new string('x', 65535) + "\n",
++            _ => throw new InvalidOperationException("Unknown scenario."),
++        };
++        var bytes = Encoding.UTF8.GetBytes(text);
++        _payload = new ReadOnlySequence<byte>(bytes);
++        if (Scenario == "Fragmented")
++        {
++            var first = new BufferSegment(bytes.AsMemory(0, 1));
++            var last = first;
++            for (var i = 1; i < bytes.Length; i++)
++            {
++                last = last.Append(bytes.AsMemory(i, 1));
++            }
++            _payload = new ReadOnlySequence<byte>(first, 0, last, 1);
++        }
++
++        using var output = new MemoryStream();
++        ServerSentEventsMessageFormatter.WriteMessageAsync(_payload, output, default).GetAwaiter().GetResult();
++        var expected = string.Concat(text.Split('\n').Select(line => $"data: {line}\r\n")) + "\r\n";
++        if (Encoding.UTF8.GetString(output.ToArray()) != expected)
++        {
++            throw new InvalidOperationException("SSE framing changed.");
++        }
++    }
++
++    [Benchmark]
++    public Task WriteMessage() => ServerSentEventsMessageFormatter.WriteMessageAsync(_payload, Stream.Null, default);
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/ServerSentEventsFormattingBenchmark.cs b/src/SignalR/perf/Microbenchmarks/ServerSentEventsFormattingBenchmark.cs
+new file mode 100644
+index 000000000000..3cabcdca4727
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/ServerSentEventsFormattingBenchmark.cs
+@@ -0,0 +1,73 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Buffers;
++using System.Text;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Http.Connections;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class ServerSentEventsFormattingBenchmark
++{
++    private ReadOnlySequence<byte> _payload;
++
++    [Params(32, 4096)]
++    public int LineLength;
++
++    [Params(1, 16)]
++    public int LineCount;
++
++    [Params(false, true)]
++    public bool Segmented;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _payload = CreatePayload(LineLength, LineCount, Segmented, out var expected);
++
++        using var output = new MemoryStream();
++        ServerSentEventsMessageFormatter.WriteMessageAsync(_payload, output, default).GetAwaiter().GetResult();
++        if (!output.ToArray().AsSpan().SequenceEqual(expected))
++        {
++            throw new InvalidOperationException("The formatted SSE payload does not match the expected framing.");
++        }
++    }
++
++    internal static ReadOnlySequence<byte> CreatePayload(int lineLength, int lineCount, bool segmented, out byte[] expectedOutput)
++    {
++        var line = new string('x', lineLength);
++        var payload = new StringBuilder();
++        var expected = new StringBuilder();
++        for (var i = 0; i < lineCount; i++)
++        {
++            if (i > 0)
++            {
++                payload.Append("\r\n");
++            }
++
++            payload.Append(line);
++            expected.Append("data: ").Append(line).Append("\r\n");
++        }
++        expected.Append("\r\n");
++        expectedOutput = Encoding.UTF8.GetBytes(expected.ToString());
++
++        var bytes = Encoding.UTF8.GetBytes(payload.ToString());
++        if (segmented)
++        {
++            // Split the first CRLF across segments for multiline payloads.
++            var split = lineCount > 1 ? lineLength + 1 : lineLength / 2;
++            var first = new BufferSegment(bytes.AsMemory(0, split));
++            var last = first.Append(bytes.AsMemory(split));
++            return new ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
++        }
++
++        return new ReadOnlySequence<byte>(bytes);
++    }
++
++    [Benchmark]
++    public Task WriteMessage()
++    {
++        return ServerSentEventsMessageFormatter.WriteMessageAsync(_payload, Stream.Null, default);
++    }
++}
+diff --git a/src/SignalR/perf/Microbenchmarks/ServerSentEventsOutputBenchmark.cs b/src/SignalR/perf/Microbenchmarks/ServerSentEventsOutputBenchmark.cs
+new file mode 100644
+index 000000000000..958bb375581d
+--- /dev/null
++++ b/src/SignalR/perf/Microbenchmarks/ServerSentEventsOutputBenchmark.cs
+@@ -0,0 +1,126 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Buffers;
++using BenchmarkDotNet.Attributes;
++using Microsoft.AspNetCore.Http.Connections;
++
++namespace Microsoft.AspNetCore.SignalR.Microbenchmarks;
++
++public class ServerSentEventsOutputBenchmark
++{
++    private ReadOnlySequence<byte> _payload;
++    private byte[] _expected;
++    private OutputStream _output;
++
++    [Params(false, true)]
++    public bool ForceAsync;
++
++    [GlobalSetup]
++    public void GlobalSetup()
++    {
++        _payload = ServerSentEventsFormattingBenchmark.CreatePayload(4096, 16, segmented: true, out _expected);
++        _output = new OutputStream(_expected.Length, ForceAsync);
++        WriteMessage().GetAwaiter().GetResult();
++        VerifyOutput();
++    }
++
++    [Benchmark]
++    public Task WriteMessage()
++    {
++        _output.Reset();
++        return ServerSentEventsMessageFormatter.WriteMessageAsync(_payload, _output, default);
++    }
++
++    [GlobalCleanup]
++    public void GlobalCleanup()
++    {
++        try
++        {
++            VerifyOutput();
++        }
++        finally
++        {
++            _output.Dispose();
++        }
++    }
++
++    private void VerifyOutput()
++    {
++        if (!_output.Written.Span.SequenceEqual(_expected))
++        {
++            throw new InvalidOperationException("The output stream did not receive the expected SSE payload.");
++        }
++
++        if (ForceAsync && _output.AsynchronousWrites == 0)
++        {
++            throw new InvalidOperationException("The asynchronous output path was not exercised.");
++        }
++    }
++
++    // Wrapping MemoryStream prevents CopyToAsync from bypassing our asynchronous writes.
++    private sealed class OutputStream(int capacity, bool forceAsync) : Stream
++    {
++        private readonly MemoryStream _buffer = new(capacity);
++
++        public ReadOnlyMemory<byte> Written => _buffer.GetBuffer().AsMemory(0, (int)_buffer.Length);
++        public int AsynchronousWrites { get; private set; }
++
++        public override bool CanRead => false;
++        public override bool CanSeek => false;
++        public override bool CanWrite => true;
++        public override long Length => _buffer.Length;
++        public override long Position
++        {
++            get => _buffer.Position;
++            set => throw new NotSupportedException();
++        }
++
++        public void Reset()
++        {
++            _buffer.Position = 0;
++            _buffer.SetLength(0);
++            AsynchronousWrites = 0;
++        }
++
++        public override void Flush() => _buffer.Flush();
++        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
++        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
++        public override void SetLength(long value) => throw new NotSupportedException();
++        public override void Write(byte[] buffer, int offset, int count) => _buffer.Write(buffer, offset, count);
++
++        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
++        {
++            if (forceAsync)
++            {
++                AsynchronousWrites++;
++                await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
++            }
++
++            cancellationToken.ThrowIfCancellationRequested();
++            _buffer.Write(buffer, offset, count);
++        }
++
++        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
++        {
++            if (forceAsync)
++            {
++                AsynchronousWrites++;
++                await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
++            }
++
++            cancellationToken.ThrowIfCancellationRequested();
++            _buffer.Write(buffer.Span);
++        }
++
++        protected override void Dispose(bool disposing)
++        {
++            if (disposing)
++            {
++                _buffer.Dispose();
++            }
++
++            base.Dispose(disposing);
++        }
++    }
++}
+diff --git a/src/SignalR/server/Core/src/DefaultHubLifetimeManager.cs b/src/SignalR/server/Core/src/DefaultHubLifetimeManager.cs
+index 1eba4726f893..34e110284039 100644
+--- a/src/SignalR/server/Core/src/DefaultHubLifetimeManager.cs
++++ b/src/SignalR/server/Core/src/DefaultHubLifetimeManager.cs
+@@ -321,7 +321,63 @@ public override Task SendAllExceptAsync(string methodName, object?[] args, IRead
+     /// <inheritdoc />
+     public override Task SendConnectionsAsync(IReadOnlyList<string> connectionIds, string methodName, object?[] args, CancellationToken cancellationToken = default)
+     {
+-        return SendToAllConnections(methodName, args, (connection, state) => ((IReadOnlyList<string>)state!).Contains(connection.ConnectionId), connectionIds, cancellationToken);
++        // Bound deduplication costs. Large lists retain the original scan without target-sized allocations.
++        if (connectionIds.Count > 16)
++        {
++            return SendToAllConnections(methodName, args, (connection, state) => ((IReadOnlyList<string>)state!).Contains(connection.ConnectionId), connectionIds, cancellationToken);
++        }
++
++        List<Task>? tasks = null;
++        SerializedHubMessage? message = null;
++
++        for (var i = 0; i < connectionIds.Count; i++)
++        {
++            var connectionId = connectionIds[i];
++            if (IsDuplicateConnectionId(connectionIds, i, connectionId))
++            {
++                continue;
++            }
++
++            var connection = _connections[connectionId];
++            if (connection is null)
++            {
++                continue;
++            }
++
++            message ??= CreateSerializedInvocationMessage(methodName, args);
++
++            var task = connection.WriteAsync(message, cancellationToken);
++            if (!task.IsCompletedSuccessfully)
++            {
++                tasks ??= new List<Task>();
++                tasks.Add(task.AsTask());
++            }
++            else
++            {
++                // Consume IValueTaskSource-backed writes so their sources can be reset.
++                task.GetAwaiter().GetResult();
++            }
++        }
++
++        return tasks is null ? Task.CompletedTask : Task.WhenAll(tasks);
++    }
++
++    private static bool IsDuplicateConnectionId(IReadOnlyList<string> connectionIds, int count, string connectionId)
++    {
++        if (connectionIds is string[] array)
++        {
++            return array.AsSpan(0, count).Contains(connectionId);
++        }
++
++        for (var i = 0; i < count; i++)
++        {
++            if (string.Equals(connectionIds[i], connectionId, StringComparison.Ordinal))
++            {
++                return true;
++            }
++        }
++
++        return false;
+     }
+ 
+     /// <inheritdoc />
+diff --git a/src/SignalR/server/Core/src/HubConnectionContext.cs b/src/SignalR/server/Core/src/HubConnectionContext.cs
+index 41082a3509f6..ac81ae4abfa8 100644
+--- a/src/SignalR/server/Core/src/HubConnectionContext.cs
++++ b/src/SignalR/server/Core/src/HubConnectionContext.cs
+@@ -39,6 +39,8 @@ public partial class HubConnectionContext
+ 
+     private MessageBuffer? _messageBuffer;
+     private StreamTracker? _streamTracker;
++    private ConcurrentDictionary<string, CancellationTokenSource>? _activeRequestCancellationSources;
++    private object? _activeRequestCancellationSourcesLock;
+     private long _lastSendTick;
+     private ReadOnlyMemory<byte> _cachedPingMessage;
+     private bool _clientTimeoutActive;
+@@ -246,7 +248,21 @@ public UserIdProviderUserState(HubConnectionContext connection, ClaimsPrincipal
+     public virtual IHubProtocol Protocol { get; set; } = default!;
+ 
+     // Used to cancel hub invocations and streaming methods
+-    internal ConcurrentDictionary<string, CancellationTokenSource> ActiveRequestCancellationSources { get; } = new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.Ordinal);
++    internal ConcurrentDictionary<string, CancellationTokenSource> ActiveRequestCancellationSources =>
++        LazyInitializer.EnsureInitialized(ref _activeRequestCancellationSources, ref _activeRequestCancellationSourcesLock,
++            static () => new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.Ordinal));
++
++    internal bool TryGetActiveRequestCancellationSource(string invocationId, [NotNullWhen(true)] out CancellationTokenSource? cancellationSource)
++    {
++        var cancellationSources = Volatile.Read(ref _activeRequestCancellationSources);
++        if (cancellationSources is not null)
++        {
++            return cancellationSources.TryGetValue(invocationId, out cancellationSource);
++        }
++
++        cancellationSource = null;
++        return false;
++    }
+ 
+     /// <summary>
+     /// Write a <see cref="HubMessage"/> to the connection.
+diff --git a/src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs b/src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs
+index 279fd103e2e4..2cee6c2d0436 100644
+--- a/src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs
++++ b/src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs
+@@ -228,7 +228,7 @@ public override Task DispatchMessageAsync(HubConnectionContext connection, HubMe
+             case CancelInvocationMessage cancelInvocationMessage:
+                 // Check if there is an associated active invocation or stream and cancel it if it exists.
+                 // The cts will be removed when the hub method completes executing
+-                if (connection.ActiveRequestCancellationSources.TryGetValue(cancelInvocationMessage.InvocationId!, out var cts))
++                if (connection.TryGetActiveRequestCancellationSource(cancelInvocationMessage.InvocationId!, out var cts))
+                 {
+                     Log.CancelInvocation(_logger, cancelInvocationMessage.InvocationId!);
+                     cts.Cancel();
+@@ -770,18 +770,18 @@ private static Task<bool> IsHubMethodAuthorized(
+         return IsHubMethodAuthorizedSlow(
+             provider,
+             hubCallerContext.User ?? new ClaimsPrincipal(),
+-            descriptor.AuthorizationMetadata,
++            descriptor,
+             new HubInvocationContext(hubCallerContext, provider, hub, descriptor.MethodExecutor.MethodInfo, hubMethodArguments));
+     }
+ 
+-    private static async Task<bool> IsHubMethodAuthorizedSlow(IServiceProvider provider, ClaimsPrincipal principal, IReadOnlyList<object> authorizationMetadata, HubInvocationContext resource)
++    private static async Task<bool> IsHubMethodAuthorizedSlow(IServiceProvider provider, ClaimsPrincipal principal, HubMethodDescriptor descriptor, HubInvocationContext resource)
+     {
+         var policyProvider = provider.GetRequiredService<IAuthorizationPolicyProvider>();
+ 
+-        var authorizePolicy = await AuthorizationPolicy.CombineAsync(policyProvider, authorizationMetadata);
++        var authorizePolicy = await descriptor.GetAuthorizationPolicyAsync(policyProvider);
+         if (authorizePolicy is null)
+         {
+-            // The method had attributes, but none of them contributed authorization metadata 
++            // The method had attributes, but none of them contributed authorization metadata
+             return true;
+         }
+ 
+diff --git a/src/SignalR/server/Core/src/Internal/HubMethodDescriptor.cs b/src/SignalR/server/Core/src/Internal/HubMethodDescriptor.cs
+index b16bdae65e0d..fea0176ff6fe 100644
+--- a/src/SignalR/server/Core/src/Internal/HubMethodDescriptor.cs
++++ b/src/SignalR/server/Core/src/Internal/HubMethodDescriptor.cs
+@@ -27,6 +27,7 @@ internal sealed class HubMethodDescriptor
+ 
+     private readonly MethodInfo? _makeCancelableEnumeratorMethodInfo;
+     private Func<object, CancellationToken, IAsyncEnumerator<object?>>? _makeCancelableEnumerator;
++    private ConditionalWeakTable<IAuthorizationPolicyProvider, AuthorizationPolicy>? _authorizationPolicies;
+     // bitset to store which parameters come from DI up to 64 arguments
+     private ulong _isServiceArgument;
+ 
+@@ -180,6 +181,26 @@ private bool MarkServiceParameter(int index)
+ 
+     public bool HasSyntheticArguments { get; private set; }
+ 
++    public async ValueTask<AuthorizationPolicy?> GetAuthorizationPolicyAsync(IAuthorizationPolicyProvider policyProvider)
++    {
++        // Keep policies separate by provider identity without retaining scoped or transient providers.
++        var policies = policyProvider.AllowsCachingPolicies
++            ? LazyInitializer.EnsureInitialized(ref _authorizationPolicies)
++            : null;
++        if (policies is not null && policies.TryGetValue(policyProvider, out var cachedPolicy))
++        {
++            return cachedPolicy;
++        }
++
++        var policy = await AuthorizationPolicy.CombineAsync(policyProvider, AuthorizationMetadata);
++        if (policy is not null)
++        {
++            policies?.TryAdd(policyProvider, policy);
++        }
++
++        return policy;
++    }
++
+     public bool IsServiceArgument(int argumentIndex)
+     {
+         return (_isServiceArgument & (1UL << argumentIndex)) != 0;
+diff --git a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/DefaultHubLifetimeManagerTests.cs b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/DefaultHubLifetimeManagerTests.cs
+index a7007ecb0cd6..b827159a8a6e 100644
+--- a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/DefaultHubLifetimeManagerTests.cs
++++ b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/DefaultHubLifetimeManagerTests.cs
+@@ -9,6 +9,7 @@
+ using Microsoft.AspNetCore.InternalTesting;
+ using Microsoft.Extensions.Logging;
+ using Microsoft.Extensions.Logging.Abstractions;
++using Moq;
+ using Xunit;
+ 
+ namespace Microsoft.AspNetCore.SignalR.Tests;
+@@ -105,6 +106,92 @@ public async Task SendConnectionsAsyncWillCancelWithToken()
+         }
+     }
+ 
++    [Fact]
++    public async Task SendConnectionsAsyncDoesNotInspectLargeTargetListsWhenThereAreNoConnections()
++    {
++        var targets = new Mock<IReadOnlyList<string>>(MockBehavior.Strict);
++        targets.SetupGet(list => list.Count).Returns(17);
++        var manager = CreateNewHubLifetimeManager();
++
++        await manager.SendConnectionsAsync(targets.Object, "Hello", ["World"]).DefaultTimeout();
++
++        targets.VerifyGet(list => list[It.IsAny<int>()], Times.Never);
++    }
++
++    [Theory]
++    [InlineData(16, false)]
++    [InlineData(16, true)]
++    [InlineData(17, false)]
++    [InlineData(17, true)]
++    public async Task SendConnectionsAsyncWritesOnceToSpecifiedConnections(int targetCount, bool useList)
++    {
++        using var client1 = new TestClient();
++        using var client2 = new TestClient();
++        using var client3 = new TestClient();
++        client1.Connection.ConnectionId = "connection";
++        client2.Connection.ConnectionId = "CONNECTION";
++        client3.Connection.ConnectionId = "Connection";
++        var jsonProtocol = new JsonHubProtocol();
++        var protocol = new Mock<IHubProtocol>(MockBehavior.Strict);
++        protocol.Setup(p => p.Name).Returns(jsonProtocol.Name);
++        protocol.Setup(p => p.GetMessageBytes(It.IsAny<HubMessage>()))
++            .Returns((HubMessage message) => jsonProtocol.GetMessageBytes(message));
++
++        var manager = CreateNewHubLifetimeManager();
++        var connection1 = HubConnectionContextUtils.Create(client1.Connection, protocol.Object);
++        var connection2 = HubConnectionContextUtils.Create(client2.Connection, protocol.Object);
++        var connection3 = HubConnectionContextUtils.Create(client3.Connection, protocol.Object);
++        await manager.OnConnectedAsync(connection1).DefaultTimeout();
++        await manager.OnConnectedAsync(connection2).DefaultTimeout();
++        await manager.OnConnectedAsync(connection3).DefaultTimeout();
++
++        var connectionIds = new string[targetCount];
++        for (var i = 0; i < connectionIds.Length; i++)
++        {
++            connectionIds[i] = (i % 3) switch
++            {
++                0 => "missing",
++                1 => connection1.ConnectionId,
++                _ => connection2.ConnectionId,
++            };
++        }
++
++        IReadOnlyList<string> targets = useList ? new List<string>(connectionIds) : connectionIds;
++        await manager.SendConnectionsAsync(targets, "Hello", ["World"]).DefaultTimeout();
++
++        foreach (var client in new[] { client1, client2 })
++        {
++            var message = Assert.IsType<InvocationMessage>(client.TryRead());
++            Assert.Equal("Hello", message.Target);
++            Assert.Equal("World", Assert.Single(message.Arguments));
++            Assert.Null(client.TryRead());
++        }
++
++        Assert.Null(client3.TryRead());
++        protocol.Verify(p => p.GetMessageBytes(It.IsAny<HubMessage>()), Times.Once);
++    }
++
++    [Fact]
++    public async Task SendConnectionsAsyncWaitsForAllWrites()
++    {
++        using var client1 = new TestClient(pauseWriterThreshold: 2);
++        using var client2 = new TestClient(pauseWriterThreshold: 2);
++        var manager = CreateNewHubLifetimeManager();
++        var connection1 = HubConnectionContextUtils.Create(client1.Connection);
++        var connection2 = HubConnectionContextUtils.Create(client2.Connection);
++        await manager.OnConnectedAsync(connection1).DefaultTimeout();
++        await manager.OnConnectedAsync(connection2).DefaultTimeout();
++
++        var sendTask = manager.SendConnectionsAsync(
++            [connection1.ConnectionId, connection2.ConnectionId], "Hello", ["World"]);
++        Assert.False(sendTask.IsCompleted);
++
++        Assert.IsType<InvocationMessage>(await client2.ReadAsync().DefaultTimeout());
++        Assert.False(sendTask.IsCompleted);
++        Assert.IsType<InvocationMessage>(await client1.ReadAsync().DefaultTimeout());
++        await sendTask.DefaultTimeout();
++    }
++
+     [Fact]
+     public async Task SendGroupAsyncWillCancelWithToken()
+     {
+diff --git a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Authorization.cs b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Authorization.cs
+new file mode 100644
+index 000000000000..9675fecb7dcf
+--- /dev/null
++++ b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Authorization.cs
+@@ -0,0 +1,74 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#nullable enable
++
++using System.Security.Claims;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.InternalTesting;
++using Microsoft.Extensions.DependencyInjection;
++using Moq;
++
++namespace Microsoft.AspNetCore.SignalR.Tests;
++
++public partial class HubConnectionHandlerTests
++{
++    [Fact]
++    public async Task HubMethodAuthorizationUsesScopedServiceAndCurrentResourceOnEveryInvocation()
++    {
++        using var log = StartVerifiableLog();
++        var policy = new AuthorizationPolicyBuilder().RequireClaim("permission").Build();
++        var policyProvider = new Mock<IAuthorizationPolicyProvider>();
++        policyProvider.Setup(p => p.AllowsCachingPolicies).Returns(true);
++        policyProvider.Setup(p => p.GetPolicyAsync("test")).ReturnsAsync(policy);
++        var authorizationServices = new List<Mock<IAuthorizationService>>();
++        var resources = new List<HubInvocationContext>();
++        var principals = new List<ClaimsPrincipal>();
++        var authorized = true;
++        using var serviceProvider = (ServiceProvider)HubConnectionHandlerTestUtils.CreateServiceProvider(services =>
++        {
++            services.AddAuthorization();
++            services.AddSingleton(policyProvider.Object);
++            services.AddScoped<IAuthorizationService>(_ =>
++            {
++                var authorizationService = new Mock<IAuthorizationService>();
++                authorizationService.Setup(s => s.AuthorizeAsync(
++                    It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
++                    .Returns((ClaimsPrincipal principal, object resource, IEnumerable<IAuthorizationRequirement> requirements) =>
++                    {
++                        principals.Add(principal);
++                        resources.Add(Assert.IsType<HubInvocationContext>(resource));
++                        Assert.Equal(policy.Requirements, requirements);
++                        return Task.FromResult(authorized ? AuthorizationResult.Success() : AuthorizationResult.Failed());
++                    });
++                authorizationServices.Add(authorizationService);
++                return authorizationService.Object;
++            });
++        }, LoggerFactory);
++        var handler = serviceProvider.GetRequiredService<HubConnectionHandler<MethodHub>>();
++        using var client = new TestClient();
++        var connectionTask = await client.ConnectAsync(handler).DefaultTimeout();
++
++        var first = await client.InvokeAsync(nameof(MethodHub.MultiParamAuthMethod), "first", "value").DefaultTimeout();
++        Assert.Null(first.Error);
++
++        authorized = false;
++        var second = await client.InvokeAsync(nameof(MethodHub.MultiParamAuthMethod), "second", "value").DefaultTimeout();
++        Assert.NotNull(second.Error);
++
++        Assert.Equal(2, authorizationServices.Count);
++        Assert.All(authorizationServices, service => service.Verify(s => s.AuthorizeAsync(
++            It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()), Times.Once));
++        Assert.All(principals, principal => Assert.Same(client.Connection.User, principal));
++        Assert.Equal(2, resources.Count);
++        Assert.Equal(new object[] { "first", "value" }, resources[0].HubMethodArguments);
++        Assert.Equal(new object[] { "second", "value" }, resources[1].HubMethodArguments);
++        Assert.NotSame(resources[0], resources[1]);
++        Assert.NotSame(resources[0].ServiceProvider, resources[1].ServiceProvider);
++        Assert.NotSame(resources[0].Hub, resources[1].Hub);
++        policyProvider.Verify(p => p.GetPolicyAsync("test"), Times.Once);
++
++        client.Dispose();
++        await connectionTask.DefaultTimeout();
++    }
++}
+diff --git a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Cancellation.cs b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Cancellation.cs
+new file mode 100644
+index 000000000000..5b86f1800a5c
+--- /dev/null
++++ b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.Cancellation.cs
+@@ -0,0 +1,51 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#nullable enable
++
++using System.Collections.Concurrent;
++using System.Reflection;
++using Microsoft.AspNetCore.InternalTesting;
++using Microsoft.AspNetCore.SignalR.Protocol;
++using Microsoft.Extensions.DependencyInjection;
++using Moq;
++
++namespace Microsoft.AspNetCore.SignalR.Tests;
++
++public partial class HubConnectionHandlerTests
++{
++    [Fact]
++    public async Task InvocationsWithoutTrackedCancellationDoNotAllocateCancellationSources()
++    {
++        using var log = StartVerifiableLog();
++        var connected = new TaskCompletionSource<HubConnectionContext>(TaskCreationOptions.RunContinuationsAsynchronously);
++        var lifetimeManager = new Mock<HubLifetimeManager<MethodHub>>();
++        lifetimeManager.Setup(manager => manager.OnConnectedAsync(It.IsAny<HubConnectionContext>()))
++            .Callback<HubConnectionContext>(connection => connected.SetResult(connection))
++            .Returns(Task.CompletedTask);
++        using var serviceProvider = (ServiceProvider)HubConnectionHandlerTestUtils.CreateServiceProvider(
++            services => services.AddSingleton(lifetimeManager.Object), LoggerFactory);
++        var handler = serviceProvider.GetRequiredService<HubConnectionHandler<MethodHub>>();
++        using var client = new TestClient();
++        var connectionTask = await client.ConnectAsync(handler).DefaultTimeout();
++        var connection = await connected.Task.DefaultTimeout();
++        Assert.Null(GetCancellationSources(connection));
++
++        await client.SendHubMessageAsync(new CancelInvocationMessage("missing")).DefaultTimeout();
++        var result = await client.InvokeAsync(nameof(MethodHub.Echo), "value").DefaultTimeout();
++        Assert.Null(result.Error);
++        Assert.Equal("value", result.Result);
++        Assert.Null(GetCancellationSources(connection));
++
++        client.Dispose();
++        await connectionTask.DefaultTimeout();
++        Assert.Null(GetCancellationSources(connection));
++    }
++
++    private static ConcurrentDictionary<string, CancellationTokenSource>? GetCancellationSources(HubConnectionContext connection)
++    {
++        var field = typeof(HubConnectionContext).GetField("_activeRequestCancellationSources", BindingFlags.Instance | BindingFlags.NonPublic);
++        Assert.NotNull(field);
++        return (ConcurrentDictionary<string, CancellationTokenSource>?)field.GetValue(connection);
++    }
++}
+diff --git a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/HubMethodDescriptorTests.cs b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/HubMethodDescriptorTests.cs
+new file mode 100644
+index 000000000000..943104875f40
+--- /dev/null
++++ b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/HubMethodDescriptorTests.cs
+@@ -0,0 +1,154 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#nullable enable
++
++using System.Reflection;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.SignalR.Internal;
++using Microsoft.Extensions.Internal;
++using Moq;
++
++namespace Microsoft.AspNetCore.SignalR.Tests.Internal;
++
++public class HubMethodDescriptorTests
++{
++    [Theory]
++    [InlineData(true)]
++    [InlineData(false)]
++    public async Task CombinedAuthorizationPoliciesRespectCachingAndIncludeAllMetadata(bool allowsCaching)
++    {
++        var namedPolicy = new AuthorizationPolicyBuilder().RequireClaim("named").Build();
++        var explicitPolicy = new AuthorizationPolicyBuilder().RequireClaim("explicit").Build();
++        var requirement = new AuthorizationPolicyBuilder().RequireClaim("requirement").Build().Requirements[0];
++        var provider = CreateCachingProvider(namedPolicy);
++        provider.Setup(p => p.AllowsCachingPolicies).Returns(allowsCaching);
++        var descriptor = CreateDescriptor(
++            new AuthorizeAttribute("test"),
++            explicitPolicy,
++            new RequirementMetadata(requirement));
++
++        var first = await descriptor.GetAuthorizationPolicyAsync(provider.Object);
++        var second = await descriptor.GetAuthorizationPolicyAsync(provider.Object);
++
++        Assert.NotNull(first);
++        Assert.NotNull(second);
++        Assert.Equal(namedPolicy.Requirements.Concat(explicitPolicy.Requirements).Append(requirement), first.Requirements);
++        Assert.Equal(first.Requirements, second.Requirements);
++        if (allowsCaching)
++        {
++            Assert.Same(first, second);
++        }
++        else
++        {
++            Assert.NotSame(first, second);
++        }
++
++        provider.Verify(p => p.GetPolicyAsync("test"), Times.Exactly(allowsCaching ? 1 : 2));
++    }
++
++    [Fact]
++    public async Task NonAuthorizationMetadataDoesNotCacheNullPolicy()
++    {
++        var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
++        var provider = new Mock<IAuthorizationPolicyProvider>();
++        provider.Setup(p => p.AllowsCachingPolicies).Returns(true);
++        provider.SetupSequence(p => p.GetFallbackPolicyAsync())
++            .ReturnsAsync((AuthorizationPolicy?)null)
++            .ReturnsAsync(policy);
++        var descriptor = CreateDescriptor(new HubMethodNameAttribute("RenamedMethod"));
++
++        Assert.Null(await descriptor.GetAuthorizationPolicyAsync(provider.Object));
++        Assert.Same(policy, await descriptor.GetAuthorizationPolicyAsync(provider.Object));
++        Assert.Same(policy, await descriptor.GetAuthorizationPolicyAsync(provider.Object));
++        provider.Verify(p => p.GetFallbackPolicyAsync(), Times.Exactly(2));
++    }
++
++    [Fact]
++    public async Task CachedAuthorizationPoliciesAreSeparateForEachProviderInstance()
++    {
++        var descriptor = CreateDescriptor(new AuthorizeAttribute("test"));
++        var firstPolicy = new AuthorizationPolicyBuilder().RequireClaim("first").Build();
++        var secondPolicy = new AuthorizationPolicyBuilder().RequireClaim("second").Build();
++        var firstProvider = CreateCachingProvider(firstPolicy);
++        var secondProvider = CreateCachingProvider(secondPolicy);
++
++        var first = await descriptor.GetAuthorizationPolicyAsync(firstProvider.Object);
++        var second = await descriptor.GetAuthorizationPolicyAsync(secondProvider.Object);
++
++        Assert.NotNull(first);
++        Assert.NotNull(second);
++        Assert.Equal(firstPolicy.Requirements, first.Requirements);
++        Assert.Equal(secondPolicy.Requirements, second.Requirements);
++        Assert.NotSame(first, second);
++        Assert.Same(first, await descriptor.GetAuthorizationPolicyAsync(firstProvider.Object));
++        Assert.Same(second, await descriptor.GetAuthorizationPolicyAsync(secondProvider.Object));
++        firstProvider.Verify(p => p.GetPolicyAsync("test"), Times.Once);
++        secondProvider.Verify(p => p.GetPolicyAsync("test"), Times.Once);
++    }
++
++    [Fact]
++    public async Task CachedAuthorizationPoliciesAreSeparateForEachMethod()
++    {
++        var provider = new Mock<IAuthorizationPolicyProvider>();
++        provider.Setup(p => p.AllowsCachingPolicies).Returns(true);
++        var firstPolicy = new AuthorizationPolicyBuilder().RequireClaim("first").Build();
++        var secondPolicy = new AuthorizationPolicyBuilder().RequireClaim("second").Build();
++        provider.Setup(p => p.GetPolicyAsync("first")).ReturnsAsync(firstPolicy);
++        provider.Setup(p => p.GetPolicyAsync("second")).ReturnsAsync(secondPolicy);
++        var firstDescriptor = CreateDescriptor(new AuthorizeAttribute("first"));
++        var secondDescriptor = CreateDescriptor(new AuthorizeAttribute("second"));
++
++        var first = await firstDescriptor.GetAuthorizationPolicyAsync(provider.Object);
++        var second = await secondDescriptor.GetAuthorizationPolicyAsync(provider.Object);
++
++        Assert.NotNull(first);
++        Assert.NotNull(second);
++        Assert.Equal(firstPolicy.Requirements, first.Requirements);
++        Assert.Equal(secondPolicy.Requirements, second.Requirements);
++        Assert.Same(first, await firstDescriptor.GetAuthorizationPolicyAsync(provider.Object));
++        Assert.Same(second, await secondDescriptor.GetAuthorizationPolicyAsync(provider.Object));
++        provider.Verify(p => p.GetPolicyAsync("first"), Times.Once);
++        provider.Verify(p => p.GetPolicyAsync("second"), Times.Once);
++    }
++
++    [Fact]
++    public async Task FailedPolicyCombinationIsNotCached()
++    {
++        var policy = new AuthorizationPolicyBuilder().RequireClaim("permission").Build();
++        var provider = CreateCachingProvider(policy);
++        provider.SetupSequence(p => p.GetPolicyAsync("test"))
++            .ThrowsAsync(new InvalidOperationException("Policy unavailable."))
++            .ReturnsAsync(policy);
++        var descriptor = CreateDescriptor(new AuthorizeAttribute("test"));
++
++        await Assert.ThrowsAsync<InvalidOperationException>(() => descriptor.GetAuthorizationPolicyAsync(provider.Object).AsTask());
++
++        var combinedPolicy = await descriptor.GetAuthorizationPolicyAsync(provider.Object);
++        Assert.NotNull(combinedPolicy);
++        Assert.Equal(policy.Requirements, combinedPolicy.Requirements);
++        Assert.Same(combinedPolicy, await descriptor.GetAuthorizationPolicyAsync(provider.Object));
++        provider.Verify(p => p.GetPolicyAsync("test"), Times.Exactly(2));
++    }
++
++    private static Mock<IAuthorizationPolicyProvider> CreateCachingProvider(AuthorizationPolicy policy)
++    {
++        var provider = new Mock<IAuthorizationPolicyProvider>();
++        provider.Setup(p => p.AllowsCachingPolicies).Returns(true);
++        provider.Setup(p => p.GetPolicyAsync("test")).ReturnsAsync(policy);
++        return provider;
++    }
++
++    private sealed class RequirementMetadata(IAuthorizationRequirement requirement) : IAuthorizationRequirementData
++    {
++        public IEnumerable<IAuthorizationRequirement> GetRequirements() => [requirement];
++    }
++
++    private static HubMethodDescriptor CreateDescriptor(params object[] authorizationMetadata)
++    {
++        var executor = ObjectMethodExecutor.Create(
++            typeof(MethodHub).GetMethod(nameof(MethodHub.AuthMethod))!,
++            typeof(MethodHub).GetTypeInfo());
++        return new HubMethodDescriptor(executor, serviceProviderIsService: null, authorizationMetadata);
++    }
++}
+diff --git a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/MessageBufferTests.cs b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/MessageBufferTests.cs
+index 326ae611d7de..66872466fb55 100644
+--- a/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/MessageBufferTests.cs
++++ b/src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/MessageBufferTests.cs
+@@ -344,6 +344,68 @@ public async Task WriteManyMessagesAckSomeProperlyBuffers()
+         Assert.False(pipes.Application.Input.TryRead(out res));
+     }
+ 
++    [Fact]
++    public async Task BufferedMessagesRemainOrderedAfterAcksAndAppends()
++    {
++        // Reclaim and append more blocks than the pool can hold.
++        const int initialMessageCount = 131;
++        const int ackedMessageCount = 115;
++        const int appendedMessageCount = 120;
++        var protocol = new JsonHubProtocol();
++        var connection = new TestConnectionContext();
++        var pipes = DuplexPipe.CreateConnectionPair(new PipeOptions(), new PipeOptions());
++        connection.Transport = pipes.Transport;
++        var timeProvider = new FakeTimeProvider();
++        using var messageBuffer = new MessageBuffer(connection, protocol, bufferLimit: 100_000, NullLogger.Instance, timeProvider);
++
++        await WriteMessagesAsync(1, initialMessageCount);
++        await messageBuffer.AckAsync(new AckMessage(ackedMessageCount)).DefaultTimeout();
++        await WriteMessagesAsync(initialMessageCount + 1, appendedMessageCount);
++
++        var messageCount = initialMessageCount + appendedMessageCount;
++        await AssertResentMessagesAsync(ackedMessageCount + 1, messageCount - ackedMessageCount);
++
++        await messageBuffer.AckAsync(new AckMessage(messageCount)).DefaultTimeout();
++        await AssertResentMessagesAsync(messageCount + 1, 0);
++
++        await WriteMessagesAsync(messageCount + 1, 12);
++        await AssertResentMessagesAsync(messageCount + 1, 12);
++
++        async Task WriteMessagesAsync(int firstSequenceId, int count)
++        {
++            for (var i = firstSequenceId; i < firstSequenceId + count; i++)
++            {
++                await messageBuffer.WriteAsync(new StreamItemMessage("1", i), CancellationToken.None).DefaultTimeout();
++            }
++        }
++
++        async Task AssertResentMessagesAsync(int firstSequenceId, int count)
++        {
++            pipes.Application.Input.Complete();
++            DuplexPipe.UpdateConnectionPair(ref pipes, connection);
++            await messageBuffer.ResendAsync(pipes.Transport.Output).DefaultTimeout();
++
++            var res = await pipes.Application.Input.ReadAsync().DefaultTimeout();
++            var buffer = res.Buffer;
++            Assert.True(protocol.TryParseMessage(ref buffer, new TestBinder(), out var message));
++            var sequenceMessage = Assert.IsType<SequenceMessage>(message);
++            Assert.Equal(firstSequenceId, sequenceMessage.SequenceId);
++            pipes.Application.Input.AdvanceTo(buffer.Start);
++
++            for (var i = firstSequenceId; i < firstSequenceId + count; i++)
++            {
++                res = await pipes.Application.Input.ReadAsync().DefaultTimeout();
++                buffer = res.Buffer;
++                Assert.True(protocol.TryParseMessage(ref buffer, new TestBinder(), out message));
++                var streamItemMessage = Assert.IsType<StreamItemMessage>(message);
++                Assert.Equal(i, Assert.IsType<JsonElement>(streamItemMessage.Item).GetInt32());
++                pipes.Application.Input.AdvanceTo(buffer.Start);
++            }
++
++            Assert.False(pipes.Application.Input.TryRead(out _));
++        }
++    }
++
+     [Fact]
+     public async Task MessageBufferLimitCanBeModified()
+     {
