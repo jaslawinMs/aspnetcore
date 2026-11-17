@@ -1,0 +1,43 @@
+{
+  "candidate": "F023",
+  "definedBeforeProductEdits": true,
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "capturedCurrentDefault": "fa10021db581bdb7dc44e84953842ac9ccb34009",
+  "branch": "autoperf/F023-session-load-timeout-source",
+  "owner": "DistributedSession.LoadAsync",
+  "actualPublicProducer": "DistributedSessionStore.Create returns the actual DistributedSession;LoadAsync creates the owned linked source before calling IDistributedCache.GetAsync.",
+  "scope": "F023 asynchronous loading only. F024 CommitAsync,refresh and modified-session commit are not changed or consolidated into this proposal.",
+  "originalFindingBoundary": "Finite per-operation timeout/caller cancellation is a real contract. Never remove the timer merely because one cache happens to complete synchronously;never retrofit a timeout after calling a cache with another token.",
+  "candidateHypothesisNotYetEstablished": "For the explicitly documented Timeout.InfiniteTimeSpan option only,a fresh linked source may not need CancelAfter(-1). First characterize the actual pinned runtime and real public owner;do not assume this runtime allocates a timer or produces a gain.",
+  "compatibilityRequirements": [
+    "Keep fresh owned per-load token identity,CanBeCanceled and disposal semantics;do not pool sources or pass through an unowned caller token",
+    "Keep default/positive deadlines and pending underlying cache cancellation",
+    "Preserve caller cancellation before entry and while the real cache operation is pending",
+    "Keep timeout-vs-caller exception/log distinction and forwarded token",
+    "Preserve successful load,actual stored session data,already-loaded no-op,cache faults and retry after unsuccessful load",
+    "Do not change zero/invalid timeout behavior,public/protected declarations,defaults,dependencies,TFM or visibility",
+    "Keep F024 commit source exactly unchanged"
+  ],
+  "validationBeforeAnyPerformanceClaim": [
+    "Actual original owning SessionTests discovery/outcomes with XML-parsed fresh TRX",
+    "Smallest faithful original public LoadAsync resource/producer characterization",
+    "If implementing,focused original/selected preservation tests and a resource check that fails for the expected reason without the proposal",
+    "Actual cache operation/caller/deadline producers reach every claimed cancellation state;no direct callback invocation as producer evidence",
+    "Release actual net12 owner and runnable BDN harness use the repository-activated pinned SDK/runtime",
+    "Settings-preserving executor only,shared VM and all controls/cold costs explicit",
+    "At most3 actual comparison attempts,including failed/partial timing;slots recorded before launch"
+  ],
+  "timingCriteria": {
+    "primary": "Actual public fresh-session LoadAsync for the explicit infinite timeout with actual distributed-memory cache results;retained and new-data state must be consumed correctly",
+    "controls": "Default positive timeout,cancelable caller token,finite timeout and already-loaded paths retained",
+    "isolatedCtsObservationIsNotPublicBenefit": true,
+    "clearPrimaryPublicGainAtLeast50PercentMayStopEarly": true,
+    "otherwiseMaximumComparisons": 3,
+    "noGroundedGainMeansNoPerformanceDraft": true
+  },
+  "knownToolBoundaries": [
+    "Azure code index is not this GitHub repository;C#LSP symbols are available but references/workspace lookup omitted actual public/interface callers",
+    "Initial forward-slash glob patterns returned no tests on Windows;backslash patterns found the real SessionTests/project,which remain the source of truth",
+    "GitHub could not resolve the actual runtime informational commit dfd6ac738610ea05f42e704be82b386e71052e12;do not substitute main source as proof of the loaded binary"
+  ]
+}

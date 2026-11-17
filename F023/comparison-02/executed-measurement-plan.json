@@ -1,0 +1,46 @@
+{
+  "candidate": "F023",
+  "definedBeforeAnyComparativeTiming": true,
+  "maximumActualComparisons": 3,
+  "everyFailedOrPartialTimingAttemptConsumesItsSlot": true,
+  "scopedOptimization": "Only omit CancelAfter for the documented exact InfiniteTimeSpan value. Keep the fresh linked source and all other LoadAsync paths. F024 CommitAsync remains unchanged.",
+  "primaryPublicCases": [
+    "Load.Infinite.Miss.None",
+    "Load.Infinite.Hit.None"
+  ],
+  "additionalOptInCases": [
+    "Load.Infinite.Miss.Caller",
+    "Load.Infinite.Hit.Caller"
+  ],
+  "untouchedControls": [
+    "Load.Default.Miss.None",
+    "Load.Default.Hit.Caller",
+    "Loaded.Infinite.Hit.None",
+    "Loaded.Default.Hit.None"
+  ],
+  "timedWrapper": "Actual DistributedSessionStore.Create when fresh,actual DistributedSession.LoadAsync,real MemoryDistributedCache and public GetInt32/IsAvailable value consumption. Already-loaded cases are explicit retained controls. Task<int> consumer and per-wrapper accounting are common to both images.",
+  "warmupCount": 3,
+  "configuredIterationCount": 8,
+  "configuredIterationMilliseconds": 100,
+  "unrollFactor": 1,
+  "diagnoser": "MemoryDiagnoser",
+  "nativeRetainedNAfterOutlierFilteringIsAuthoritative": true,
+  "garbageCollector": "Server/concurrent in actual pinned net12 runtime",
+  "ownerProfilesPerComparison": 2,
+  "firstObservedPublicCasesPerImage": [
+    "Load.Infinite.Hit.None",
+    "Load.Default.Hit.Caller"
+  ],
+  "firstObservedBoundary": "Separate process:first family fixture,real cache seed/commit and one public create/load/value call,including JIT,metadata,seed and caller/fixture costs. Not process startup,isolated entry cost or remote I/O.",
+  "actualNativeProfilesPerComparison": 6,
+  "order": "Odd comparisons original then selected;even comparisons selected then original,with the same order used for each first-observed pair",
+  "settings": "Byte-exact reused settings-preserving emitted executor;Guid.Empty power plan. Never change OS/process/thread priority,affinity or power. Serialize all heavy work.",
+  "sourceAndImageGates": "Fresh all30 actual owning rows green;original resource test fails only its expected specific assertion;both frozen owners characterize all8 wrappers/16 value contracts and10 additional actual caller/deadline/lifetime/error producers. Pinned native loaded owner/closure/source-PE/PDB/settings identities match.",
+  "materialLimits": [
+    "Shared Windows VM,not isolated or dedicated",
+    "No remote provider/network,HTTP,production frequency or default-configuration improvement claim",
+    "96-byte primitive disabled-timer characterization is explanatory,not a public-boundary result",
+    "Retain every control,adverse result,cold observation,failed/partial attempt and raw measurement",
+    "No fourth historical comparison;fresh-consumer reproduction does not reopen a closed campaign budget"
+  ]
+}

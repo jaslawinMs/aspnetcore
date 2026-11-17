@@ -1,0 +1,27 @@
+{
+  "id": "F023",
+  "finding": {
+    "card_id": "cancellationtokensource-timeout-timer-hot-path",
+    "file": "src/Middleware/Session/src/DistributedSession.cs",
+    "line_start": 216,
+    "line_end": 218,
+    "project": "Microsoft.AspNetCore.Session",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "high",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Session loading creates and schedules a linked timeout source for each asynchronous load operation.",
+    "explanation": "LoadAsync is used on the session request path and creates a linked CancellationTokenSource followed by CancelAfter for each uncached load. The source is correctly disposed, but a high request rate can still create timer-queue and cancellation-registration churn; workload frequency determines the realized cost.",
+    "snippet": "using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))\n{\n    cts.CancelAfter(_ioTimeout);",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
