@@ -1,0 +1,112 @@
+{
+  "candidate": "F012",
+  "source": "F011-reproduce-analysis.mjs",
+  "sourceSha256": "1442972B3C6ADB24C5CC3E1FBF06FE25784CCF8B2B52C82C171E9C61F5CC5DA4",
+  "resultSha256": "47F28E2E79450EAFA42E23E25898F2543F6A3D93B666B5B3376B66FFBC76CDCC",
+  "changes": [
+    {
+      "before": "autoperf/F012-signalr-group-exclusions",
+      "after": "autoperf/F012-signalr-broadcast-exclusions",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "equal(investigation.sources.length, 21);",
+      "after": "equal(investigation.sources.length, 20);",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "assert(!ownerPatch.includes('SendGroupExceptAsync'));",
+      "after": "assert(!/^[+-](?![+-]).*SendAllExceptAsync/m.test(ownerPatch));",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "NoGroup512",
+      "after": "NoConnections512",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "G32",
+      "after": "C32",
+      "actualOccurrences": 11
+    },
+    {
+      "before": "G128",
+      "after": "C128",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "GroupScopeCaseAndDuplicates",
+      "after": "BroadcastScopeCaseAndDuplicates",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "MissingGroupDoesNotReadInput",
+      "after": "EmptyConnectionStoreDoesNotReadInput",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "RepeatedMissEnumerationG",
+      "after": "RepeatedMissEnumerationC",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "groupSize",
+      "after": "connectionCount",
+      "actualOccurrences": 5
+    },
+    {
+      "before": "GroupSendBenchmarks",
+      "after": "BroadcastSendBenchmarks",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "delivery(value, ['CONNECTION', 'Connection']);",
+      "after": "delivery(value, ['CONNECTION', 'Connection', 'outside']);",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "if (name === 'EmptyConnectionStoreDoesNotReadInput') {\n    equal(value.inputReads, 0);",
+      "after": "if (name === 'EmptyConnectionStoreDoesNotReadInput') {\n    equal(value.argumentGetterReads, 0);\n    equal(value.actual.connections.length, 0);\n    equal(value.inputReads, 0);",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "const expectedSize = data.shape === 'OneEmpty' ? 1",
+      "after": "const expectedSize = data.shape === 'NoConnections512' ? 0 : data.shape === 'OneEmpty' ? 1",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "equal([actuals, retained, warmups, overheads], [96, 87, 36, 227]);",
+      "after": "equal([actuals, warmups], [96, 36]);\nassert(retained >= 60 && retained <= 96 && overheads > 0);",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "  [96, 87, 36, 227]);",
+      "after": "  [actuals, retained, warmups, overheads]);",
+      "actualOccurrences": 1
+    },
+    {
+      "replacement": "F011 reader/overlay/restoration section replaced with explicit F012 source-reader failure, byte-identical prior test/current-producer attribution, checked source scaffold and untouched root outputs."
+    },
+    {
+      "before": "existingAreaRows: 27, repositoryAlwaysTestSentinelRows: 0, inheritedSpecificationRows: 12,",
+      "after": "existingAreaRows: 27, explicitlyReusedOriginalAreaRows: 27, actualNewOwningTestRuns: 0,\n  repositoryAlwaysTestSentinelRows: 0, inheritedSpecificationRows: 12,",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "All 27 actual TRX result/definition/entry identities, positive durations and four exact theory payloads;",
+      "after": "All 27 explicitly reused original F011 TRX result/definition/entry identities, positive durations and four exact theory payloads;",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "Only captured-default JSON source is substituted against the baseline SDK/dependencies; not whole-main integration.",
+      "after": "Identical prior F011 original owner/tests/current JSON bytes are explicitly reused/rehashed; all F012 broadcast observations and timing execute independently. No new owning-suite run/current producer build or F011 timing reuse. Only captured-default JSON source is substituted against baseline SDK/dependencies; not whole-main integration.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "audit passed: 12 original reports / 96 raw / 87 retained / 36 warmups / 227 overheads;",
+      "after": "audit passed: 12 original reports / ${actuals} raw / ${retained} retained / ${warmups} warmups / ${overheads} overheads;",
+      "actualOccurrences": 1
+    }
+  ],
+  "independence": "Raw-log/statistics/GC extractor remains independent from the separate analysis extractor; adapted for actual broadcast/empty-store effects, new data-derived sample counts and explicitly borrowed original test/producer evidence."
+}

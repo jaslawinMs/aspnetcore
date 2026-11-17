@@ -1,0 +1,27 @@
+diff --git a/src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs b/src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs
+index 35fdbf90f1..d753c36365 100644
+--- a/src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs
++++ b/src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs
+@@ -581,9 +581,20 @@ public sealed class JsonHubProtocol : IHubProtocol
+         if (message.Headers != null && message.Headers.Count > 0)
+         {
+             writer.WriteStartObject(HeadersPropertyNameBytes);
+-            foreach (var value in message.Headers)
++            // Enumerate Dictionary<,> directly to avoid boxing its enumerator.
++            if (message.Headers is Dictionary<string, string> headers)
+             {
+-                writer.WriteString(value.Key, value.Value);
++                foreach (var value in headers)
++                {
++                    writer.WriteString(value.Key, value.Value);
++                }
++            }
++            else
++            {
++                foreach (var value in message.Headers)
++                {
++                    writer.WriteString(value.Key, value.Value);
++                }
+             }
+             writer.WriteEndObject();
+         }

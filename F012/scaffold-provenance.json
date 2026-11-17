@@ -1,0 +1,213 @@
+{
+  "candidate": "F012",
+  "kind": "Checked bulk adaptation of the previously executed real-owner harness; no F011 source overwritten.",
+  "files": [
+    {
+      "source": "F011/harness/AutoPerf.Benchmarks.csproj",
+      "destination": "harness/AutoPerf.Benchmarks.csproj",
+      "sourceSha256": "9DC92D4CB7CBF822B4CF6334199B036D3A6E52D279FABC852A7304844B65D98D",
+      "resultSha256": "9DC92D4CB7CBF822B4CF6334199B036D3A6E52D279FABC852A7304844B65D98D",
+      "byteExactCopy": true
+    },
+    {
+      "source": "F011/harness/Program.cs",
+      "destination": "harness/Program.cs",
+      "sourceSha256": "86536A3EF56EB7FC2D07CD836442C625F5CF8CE5ABA29B436650AE17323538D6",
+      "resultSha256": "58289893639AD2011D95EA91BDDF94F591E70A6F77C1177859B3C32F2DFA7D03",
+      "byteExactCopy": false
+    },
+    {
+      "source": "F011/harness/GroupSendFixture.cs",
+      "destination": "harness/BroadcastSendFixture.cs",
+      "sourceSha256": "5D34F8C9603D4337B3EF4C31769ED548C824B20C4D52B344AC04A26CB3968CE0",
+      "resultSha256": "E914E90DA354D2A0F5938031DE7D1131CC9537BF04703210E8B14EAA2E0DC175",
+      "byteExactCopy": false
+    },
+    {
+      "source": "F011/harness/ContractProbes.cs",
+      "destination": "harness/ContractProbes.cs",
+      "sourceSha256": "2CAD62BE393184B272452546FDFB07C40B867B90EB434EF2B674DC41DCC53400",
+      "resultSha256": "85E8191BFEA25F0F8C2EC8F4FB17A4D90D5BEABD3034CB0AB2E787308CCC97CC",
+      "byteExactCopy": false
+    },
+    {
+      "source": "F011/harness/GroupSendBenchmarks.cs",
+      "destination": "harness/BroadcastSendBenchmarks.cs",
+      "sourceSha256": "BDC06304EF49710E827147CB3F248B6A248E206A2D6A17C5C9B3B4348965B0E0",
+      "resultSha256": "D1F68BBA2E333C4D04306247D71C618DE1E867D92726597273954B6407429BE8",
+      "byteExactCopy": false
+    },
+    {
+      "source": "F011/harness/SettingsPreservingEmitToolchain.cs",
+      "destination": "harness/SettingsPreservingEmitToolchain.cs",
+      "sourceSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+      "resultSha256": "02B69C0AA06612700D9DA122BA64081771EE333B126DABC08156C0BD118F115B",
+      "byteExactCopy": true
+    }
+  ],
+  "transformations": [
+    {
+      "before": "F011",
+      "after": "F012",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "GroupSendFixture",
+      "after": "BroadcastSendFixture",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "GroupSendBenchmarks",
+      "after": "BroadcastSendBenchmarks",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "public group sends",
+      "after": "public broadcast sends",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "GroupSendFixture",
+      "after": "BroadcastSendFixture",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "    private readonly string _targetGroup;\n",
+      "after": "",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "int groupMembers = -1, string targetGroup = \"group\", bool expectSingleRecipient = false",
+      "after": "int groupMembers = 0, bool expectSingleRecipient = false",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "        _targetGroup = targetGroup;\n",
+      "after": "",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "groupMembers < 0 || index < groupMembers",
+      "after": "index < groupMembers",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "Manager.SendGroupExceptAsync(_targetGroup, \"Probe\", _arguments, _excluded, cancellationToken)",
+      "after": "Manager.SendAllExceptAsync(\"Probe\", _arguments, _excluded, cancellationToken)",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "GroupSendFixture",
+      "after": "BroadcastSendFixture",
+      "actualOccurrences": 9
+    },
+    {
+      "before": "GroupScopeCaseAndDuplicates",
+      "after": "BroadcastScopeCaseAndDuplicates",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "MissingGroupDoesNotReadInput",
+      "after": "EmptyConnectionStoreDoesNotReadInput",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "[\"CONNECTION\", \"Connection\"], [\"World\"], groupMembers: 3",
+      "after": "[\"CONNECTION\", \"Connection\", \"outside\"], [\"World\"], groupMembers: 3",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "        var excluded = new UnreadableList();\n        await using var fixture = new BroadcastSendFixture([\"c0000\"], excluded, [], [\"World\"], targetGroup: \"GROUP\");\n        await fixture.Send();\n        fixture.Validate();\n        Evidence.Require(excluded.Reads == 0, \"An absent case-sensitive group touched caller input.\");\n\n        return new { inputReads = excluded.Reads, actual = fixture.Observe() };",
+      "after": "        var excluded = new UnreadableList();\n        var payload = new ObservedPayload(throwIfRead: true);\n        await using var fixture = new BroadcastSendFixture([], excluded, [], [payload]);\n        await fixture.Send();\n        fixture.Validate();\n        Evidence.Require(excluded.Reads == 0 && payload.Reads == 0, \"An empty connection store touched exclusions or serialized arguments.\");\n\n        return new { inputReads = excluded.Reads, argumentGetterReads = payload.Reads, actual = fixture.Observe() };",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "(Group:",
+      "after": "(Connections:",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "dimensions.Group",
+      "after": "dimensions.Connections",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "RepeatedMissEnumerationG",
+      "after": "RepeatedMissEnumerationC",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "groupSize",
+      "after": "connectionCount",
+      "actualOccurrences": 5
+    },
+    {
+      "before": "                await manager.AddToGroupAsync(hub.ConnectionId, \"group\");\n",
+      "after": "",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "manager.SendGroupExceptAsync(\"group\", \"Probe\", [\"World\"], [], cancellation.Token)",
+      "after": "manager.SendAllExceptAsync(\"Probe\", [\"World\"], [], cancellation.Token)",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "An absent group must not inspect exclusions.",
+      "after": "An empty connection store must not inspect exclusions.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "An entirely excluded group serialized the argument.",
+      "after": "An entirely excluded broadcast serialized the argument.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "The group send completed before the other actual pipe was drained.",
+      "after": "The broadcast completed before the other actual pipe was drained.",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "GroupSendBenchmarks",
+      "after": "BroadcastSendBenchmarks",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "GroupSendFixture",
+      "after": "BroadcastSendFixture",
+      "actualOccurrences": 2
+    },
+    {
+      "before": "NoGroup512",
+      "after": "NoConnections512",
+      "actualOccurrences": 5
+    },
+    {
+      "before": "G32",
+      "after": "C32",
+      "actualOccurrences": 17
+    },
+    {
+      "before": "G128",
+      "after": "C128",
+      "actualOccurrences": 7
+    },
+    {
+      "before": "groupSize",
+      "after": "connectionCount",
+      "actualOccurrences": 3
+    },
+    {
+      "before": "            Shape.OneEmpty => 1,",
+      "after": "            Shape.NoConnections512 => 0,\n            Shape.OneEmpty => 1,",
+      "actualOccurrences": 1
+    },
+    {
+      "before": "_fixture = new BroadcastSendFixture(ids, excluded, expectedRecipients, [\"World\"],\n            targetGroup: Shape is Shape.NoConnections512 ? \"missing\" : \"group\");",
+      "after": "_fixture = new BroadcastSendFixture(ids, excluded, expectedRecipients, [\"World\"]);",
+      "actualOccurrences": 1
+    }
+  ],
+  "actualBroadcastEntryPoints": 2,
+  "groupMembership": "Only the untimed scope control adds three of four connections to a group. All timed connections and actual Pipe controls require registration only.",
+  "outcome": "Source scaffolding only, not a build, producer observation or timing comparison."
+}
