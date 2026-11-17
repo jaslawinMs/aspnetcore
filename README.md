@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 88/358 finalized**: 59 drafts, 11 no-gain, 14 rejected and 4 duplicates;
-270 findings remain unfinished.
+**Progress: 89/358 finalized**: 59 drafts, 11 no-gain, 15 rejected and 4 duplicates;
+269 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -31,6 +31,7 @@ relabeled. See the [execution policy and historical clarification](F113/README.m
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F002 | Rejected/design-blocked;actual native FIN removal passes at hybrid boundary,no compatible measured optimization;one original-only4-case profile,0 comparisons,no source edit/PR | [WebTransport stream removal](F002/README.md) |
 | F001 | Rejected/design-blocked;no compatible local optimization or live QUIC blocking schedule established;one original-only3-case diagnostic,0 comparisons,no source edit/PR | [WebTransport shutdown ownership](F001/README.md) |
 | F003 | [Draft jaslawinMs/aspnetcore#39](https://github.com/jaslawinMs/aspnetcore/pull/39); modest gains, no structural heap saving, custom variance and all control/non-win outcomes retained | [Guarded protobuf ListValue construction](F003/README.md) |
 | F009 | Draft proposal | [Validation-summary metadata membership](F009/README.md) |
