@@ -1,0 +1,50 @@
+{
+  "candidate": "F005",
+  "classification": "Behavior-preserving private analyzer-state container optimization,not a diagnostic bug fix or new API.",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F005-potential-iterator-symbol-membership",
+  "target": "src\\Components\\Analyzers\\src\\ForLoopIteratorInClosureAnalyzer.cs:ForLoopAnalyzerState.IsPotentialIterator",
+  "beforeImplementation": true,
+  "scope": [
+    "Only potential-iterator membership/container and directly dependent add/removal sites;preserve SymbolEqualityComparer.Default.",
+    "F004 Iterators and F006 AllForVariables remain original and independent.",
+    "Preserve later mutation promotion,earlier occurrence reporting,negative unmutated/cached locals,same-name distinct compiler symbols and diagnostic ordering.",
+    "No public/protected API,analyzer ID/message/default,shipping package/TFM/dependency or visibility bridge changes."
+  ],
+  "productionBoundary": {
+    "owner": "ForLoopIteratorInClosureAnalyzer and its per-operation-block private state.",
+    "producer": "Actual Roslyn CSharpCompilation binding real loop-local symbols/operations,real CompilationWithAnalyzers scheduling and actual Components metadata.",
+    "observable": "Exact BL0014 diagnostics plus full-owner completed-driver timing/process-wide allocation observations.",
+    "permanentSurface": "Existing ForLoopIteratorInClosureAnalyzerTest facts;new permanent cases only for introduced/fixed behavior rather than duplicating existing coverage.",
+    "lowerBoundaryFalsePassRisk": "Ordinary for(i++;) populates Iterators,not a growing PotentialIterators list. Real multiple loop declarators not incremented at loop bottom and real later increment/assignment promotion must be proved;no fake symbols/private seeded containers/injected producer callbacks."
+  },
+  "correctnessAcceptance": [
+    "Capture fresh current default and actual relevant history/related work before implementation;check selected membership state and referenced contracts.",
+    "Fresh-build unmodified actual owner before baseline validation:repository outputs still contain the prior F004 candidate despite restored source.",
+    "Both original/candidate pass all20 exact existing source-defined facts,positive durations,unique TRX identities,zero skips.",
+    "Valid CSharp13 inputs bind actual ComponentBase override,EventCallbackFactory/RenderTreeBuilder and distinct compiler-owned potential symbols.",
+    "Exercise zero/one/common controls,growing potential sets16/64,all/partial later promotion,increment/assignment removal,cached and unmutated negatives,and separate same-name potential symbols.",
+    "Characterize ordinary/generated,serial/concurrent and warm/fresh compilation boundaries;check every expected ID,severity,message and source span.",
+    "If current owner differs,run captured current class with the new producer inputs through unchanged shipping project after verifying referenced prerequisites;do not claim whole-default integration.",
+    "Preserve adjacent original null-containing-namespace AD0001 as an excluded unrelated control,not a candidate gain or fix."
+  ],
+  "measurementAcceptance": [
+    "Freeze exact original/candidate sources and fresh actual owner/harness images;bind actual PE/portable-PDB/source identities.",
+    "BDN0.13.0/net12 pinned runtime,actual analyzer driver;parsing/reference/input validation excluded;consume completed diagnostics.",
+    "At most3 paired measured source comparisons,including partial/failed starts;reverse profile order in comparison2;stop early only for clear substantial justified benefit.",
+    "Settings-preserving emitted executor with Guid.Empty;no process/thread priority,affinity,power policy or unrelated-process changes on the shared machine.",
+    "Retain all cases,raw actual/overhead/warmup/result/GC samples,default filtering,all-eight actual and reported ratios,control/non-win outcomes and preparation failures.",
+    "Require defensible full-owner benefit with preserved contracts;otherwise archive no-gain/rejection and restore source,not a speculative PR."
+  ],
+  "excludedBoundaries": [
+    "Browser/DOM/render-mode/Server-WebAssembly-Auto/E2E/UI runtime claims:owner/final observable are compiler-owned.",
+    "Real Razor generation,whole-current-default repository integration,production workload frequency,old Roslyn3.3.1 host performance and total project build-duration gains unless separately executed.",
+    "Machine isolation,continuous OS tracing,complete SDK/native/all-TPA provenance or omitted-binary rehashing in portable published audit."
+  ],
+  "publicationAcceptance": [
+    "Independent fork branch,standalone runnable BDN project,frozen source/patch,all raw results and exact commands/outcomes.",
+    "Byte-preserving authoritative copy manifest and live/actual copied portable audit;do not publish binary images/binlogs.",
+    "Only fork-only draft PR justified by green acceptance/evidence;open actual created PR immediately.",
+    "Finalize campaign count only after actual remote immutable,receipt and root-index blob verification."
+  ]
+}

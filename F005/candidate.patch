@@ -1,0 +1,40 @@
+diff --git a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+index 91f8dc7028..d8446ffa11 100644
+--- a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
++++ b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+@@ -273,7 +273,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         // Variables that are being incremented on in the current context. 
+         public List<ILocalSymbol> Iterators { get; } = new();
+         // Potential variable that are not yet being incremented on which would not cause any issues so far.
+-        public List<ILocalSymbol> PotentialIterators { get; private set; } = new();
++        public HashSet<ILocalSymbol>? PotentialIterators { get; private set; }
+ 
+         // All variable that are being used in the current context. 
+         public List<ILocalSymbol> AllForVariables { get; } = new();
+@@ -288,7 +288,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+ 
+         public bool IsPotentialIterator(ILocalSymbol? target)
+         {
+-            return target is not null && PotentialIterators.Any(existing => SymbolEqualityComparer.Default.Equals(existing, target));
++            return target is not null && (PotentialIterators?.Contains(target) ?? false);
+         }
+ 
+         public void AddIterator(ILocalSymbol iterator)
+@@ -304,7 +304,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         {
+             if (!IsIterator(potentialIterator) && !IsPotentialIterator(potentialIterator))
+             {
+-                PotentialIterators.Add(potentialIterator);
++                (PotentialIterators ??= new(SymbolEqualityComparer.Default)).Add(potentialIterator);
+                 AllForVariables.Add(potentialIterator);
+             }
+         }
+@@ -315,7 +315,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         public void OnPotentialIteratorChanged(ILocalSymbol potentialIterator)
+         {
+             Iterators.Add(potentialIterator);
+-            PotentialIterators = PotentialIterators.Where(name => !SymbolEqualityComparer.Default.Equals(name, potentialIterator)).ToList();
++            PotentialIterators?.Remove(potentialIterator);
+         }
+ 
+         public void AddRelatedOccurrences(IEnumerable<ILocalReferenceOperation> variableReferences)

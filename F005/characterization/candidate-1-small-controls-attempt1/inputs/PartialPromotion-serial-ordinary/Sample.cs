@@ -1,0 +1,19 @@
+using System;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+namespace AutoPerfInput;
+public sealed class Sample : ComponentBase
+{
+    private static void Use(params int[] values) { }
+    protected override void BuildRenderTree(RenderTreeBuilder builder)
+    {
+        for (int i = 0, p0 = 0, p1 = 0, p2 = 0, p3 = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(p0, p2)));
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(p1, p3)));
+        p1++;
+        p3 += 1;
+        }
+    }
+}

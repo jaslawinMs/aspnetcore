@@ -1,0 +1,460 @@
+using System;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+namespace AutoPerfInput;
+public sealed class Sample : ComponentBase
+{
+    private static void Use(params int[] values) { }
+    protected override void BuildRenderTree(RenderTreeBuilder builder)
+    {
+        builder.AddContent(0, "no loop");
+    }
+    private void Other0(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other1(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other2(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other3(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other4(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other5(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other6(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other7(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other8(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other9(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other10(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other11(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other12(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other13(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other14(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other15(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other16(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other17(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other18(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other19(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other20(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other21(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other22(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other23(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other24(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other25(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other26(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other27(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other28(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other29(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other30(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other31(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other32(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other33(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other34(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other35(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other36(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other37(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other38(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other39(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other40(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other41(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other42(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other43(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other44(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other45(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other46(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other47(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other48(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other49(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other50(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other51(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other52(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other53(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other54(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other55(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other56(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other57(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other58(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other59(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other60(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other61(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other62(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+    private void Other63(RenderTreeBuilder builder)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+        builder.AddAttribute(0, "onclick", EventCallback.Factory.Create<int>(this, () => Use(i)));
+        }
+    }
+}

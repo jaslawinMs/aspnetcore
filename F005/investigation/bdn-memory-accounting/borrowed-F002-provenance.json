@@ -1,0 +1,12 @@
+{
+  "candidate": "F002",
+  "source_url": "https://github.com/dotnet/BenchmarkDotNet/blob/v0.13.0/src/BenchmarkDotNet/Engines/GcStats.cs",
+  "source_sha256": "8784625B02B605F2ACB3581CCC43F258748C16012DB38AB9FCB2B2AFB4EA8BAB",
+  "original_source_capture": "F118/investigation/bdn-memory-accounting",
+  "source_identity_reuse": "F001 same measured BDN DLL",
+  "source_fetch_rerun_for_f002": false,
+  "f002_measured_bdn_dll_sha256": "4560EE1128636D3913C3FA71B8419DD2317FB97FD331231A53AD5501D5BA5437",
+  "runtime": "Microsoft.NETCore.App/12.0.0-alpha.1.26562.105",
+  "source_observation": "ReadInitial/ReadFinal call GetAllocatedBytes;when available its reflected GC.GetTotalAllocatedBytes(bool) delegate is invoked with precise=true. It falls back to current-thread accounting only when that API is absent. The pinned net12 runtime supplies the process-wide API.",
+  "limitation": "Explicit reused upstream-source/identical-BDN-image evidence,not new source fetch,runtime delegate instrumentation or independent assembly/source binding. Process-wide all-worker/async fixture activity can contribute;not pure per-thread component allocation."
+}
