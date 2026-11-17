@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.RootBatchBenchmarks-20261116-204516</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F007  PowerPlanMode=00000000-0000-0000-0000-000000000000  Toolchain=SettingsPreservingEmitToolchain  
+IterationCount=8  IterationTime=100.0000 ms  RunStrategy=Throughput  
+UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>    Method</th><th>        Shape</th><th>    Mean</th><th>  Error</th><th>StdDev</th><th>  Median</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>DeserializeBatch</td><td>RemoveEmpty</td><td>1,015.3 ns</td><td>1,258.66 ns</td><td>658.31 ns</td><td>672.2 ns</td><td>0.0166</td><td>-</td><td>-</td><td>656 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove1</td><td>752.3 ns</td><td>28.28 ns</td><td>12.56 ns</td><td>753.3 ns</td><td>0.0196</td><td>-</td><td>-</td><td>872 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove16</td><td>3,701.9 ns</td><td>63.12 ns</td><td>33.01 ns</td><td>3,688.8 ns</td><td>0.0749</td><td>-</td><td>-</td><td>3,152 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove100</td><td>19,973.9 ns</td><td>501.32 ns</td><td>262.20 ns</td><td>19,936.6 ns</td><td>0.4153</td><td>-</td><td>-</td><td>16,441 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove128</td><td>25,036.8 ns</td><td>551.70 ns</td><td>288.55 ns</td><td>25,107.2 ns</td><td>0.5053</td><td>-</td><td>-</td><td>20,248 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove129</td><td>25,028.6 ns</td><td>1,177.98 ns</td><td>523.03 ns</td><td>24,972.8 ns</td><td>0.5094</td><td>-</td><td>-</td><td>24,673 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove256</td><td>48,924.8 ns</td><td>1,280.26 ns</td><td>669.60 ns</td><td>48,669.2 ns</td><td>0.9606</td><td>-</td><td>-</td><td>44,538 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove1024</td><td>193,404.6 ns</td><td>2,604.07 ns</td><td>1,156.22 ns</td><td>193,140.9 ns</td><td>4.2105</td><td>-</td><td>-</td><td>174,291 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove4096</td><td>768,465.2 ns</td><td>9,863.65 ns</td><td>4,379.52 ns</td><td>768,438.0 ns</td><td>15.5039</td><td>-</td><td>-</td><td>701,441 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Remove16384</td><td>3,365,674.9 ns</td><td>45,136.80 ns</td><td>20,041.02 ns</td><td>3,363,337.9 ns</td><td>34.4828</td><td>-</td><td>-</td><td>2,771,936 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume1</td><td>934.6 ns</td><td>58.18 ns</td><td>25.83 ns</td><td>926.6 ns</td><td>0.0221</td><td>-</td><td>-</td><td>976 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume100</td><td>34,537.9 ns</td><td>1,004.98 ns</td><td>446.22 ns</td><td>34,450.5 ns</td><td>0.6824</td><td>-</td><td>-</td><td>26,842 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume128</td><td>43,533.5 ns</td><td>1,134.51 ns</td><td>503.73 ns</td><td>43,441.9 ns</td><td>0.8707</td><td>-</td><td>-</td><td>33,562 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume129</td><td>43,126.6 ns</td><td>701.30 ns</td><td>311.38 ns</td><td>42,993.7 ns</td><td>0.8803</td><td>-</td><td>-</td><td>38,090 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume1024</td><td>336,489.2 ns</td><td>8,714.82 ns</td><td>4,558.02 ns</td><td>336,708.1 ns</td><td>6.7114</td><td>-</td><td>-</td><td>280,794 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume4096</td><td>1,370,094.8 ns</td><td>38,223.45 ns</td><td>16,971.45 ns</td><td>1,363,204.3 ns</td><td>28.9855</td><td>-</td><td>-</td><td>1,127,461 B</td>
+</tr><tr><td>DeserializeBatch</td><td>Resume16384</td><td>6,103,862.2 ns</td><td>157,814.78 ns</td><td>70,070.74 ns</td><td>6,120,529.4 ns</td><td>58.8235</td><td>-</td><td>-</td><td>4,476,001 B</td>
+</tr><tr><td>DeserializeBatch</td><td>DuplicateEarly129</td><td>25,145.2 ns</td><td>504.10 ns</td><td>263.65 ns</td><td>25,128.1 ns</td><td>0.5034</td><td>-</td><td>-</td><td>24,673 B</td>
+</tr><tr><td>DeserializeBatch</td><td>DuplicateLast129</td><td>25,876.4 ns</td><td>589.69 ns</td><td>308.42 ns</td><td>25,832.5 ns</td><td>0.5169</td><td>-</td><td>-</td><td>24,673 B</td>
+</tr><tr><td>DeserializeBatch</td><td>DuplicateMiddle4096</td><td>774,675.6 ns</td><td>28,174.62 ns</td><td>12,509.71 ns</td><td>769,149.6 ns</td><td>15.6250</td><td>-</td><td>-</td><td>701,442 B</td>
+</tr><tr><td>DeserializeBatch</td><td>DuplicateEarly4096</td><td>754,095.2 ns</td><td>17,000.28 ns</td><td>7,548.23 ns</td><td>753,323.1 ns</td><td>15.3846</td><td>-</td><td>-</td><td>701,441 B</td>
+</tr><tr><td>DeserializeBatch</td><td>DuplicateLast4096</td><td>779,415.8 ns</td><td>2,248.99 ns</td><td>802.01 ns</td><td>779,318.0 ns</td><td>15.6250</td><td>-</td><td>-</td><td>701,442 B</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,858 @@
+commit 8eaeccbd9dc346cb884a6270a39dfc36735c7964
+Author: Javier Calvarro Nelson <jacalvar@microsoft.com>
+Date:   Thu Aug 13 09:40:52 2026 +0200
+
+    [Blazor] Support Aspire Dashboard on Native AOT (#68307)
+    
+    * Enable minimal Blazor Server Native AOT path
+    
+    Keep reflection as the compatibility path while generating fixed server marker contracts, retaining outbound JS result types, and allowing apps to supply JS interop JSON metadata.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Support Blazor Web root operations in Native AOT
+    
+    Generate the fixed root-operation JSON contracts used by blazor.web.js and remove the form-binding-only change from this experiment.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Cover Aspire Dashboard Native AOT JSON paths
+    
+    Compose application JSON contracts into protected browser storage and generate the fixed NavigationOptions contract used by Server navigation.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Support interactive forms in Native AOT
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Cover remaining Dashboard Native AOT runtime JSON paths
+    
+    Use generated framework contracts for modules and persistent state, and provide converter-backed JS interop metadata without reflection serialization.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 19dd876d-31dc-41b4-a53b-aa2299746d2a
+    
+    * Test configured JSON metadata resolution
+    
+    Validate framework JSON metadata through the configured JsonSerializerOptions resolver chain instead of invoking individual resolvers directly.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    Copilot-Session: 22ea1330-4e21-4ac3-ab94-eafa89a2efc6
+    
+    * Add Native AOT Blazor browser coverage
+    
+    Exercise reflection-enabled Interactive Server paths used by the Aspire Dashboard with the current Components Testing Native AOT harness.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    Copilot-Session: 19dd876d-31dc-41b4-a53b-aa2299746d2a
+    
+    * Fix Native AOT test CI integration
+    
+    Keep ordinary restores off unpublished shared-framework runtime packs, restore the Native AOT fixture with matching harness properties, and tolerate JS interop completion races after cancellation.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Narrow Native AOT fixture diagnostics
+    
+    Root only the application assembly and keep the reflection-enabled fixture's reachable trim and AOT diagnostics as warnings under CI.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Keep fixture pruning diagnostics as warnings
+    
+    Allow known NU1510 package-pruning diagnostics from existing framework projects during the Native AOT fixture restore without suppressing them.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Fix Native AOT fixture restore graph
+    
+    Let the app's RuntimeIdentifiers prepare RID assets without imposing a RID on analyzer projects, and flow known NU1510 pruning diagnostics across referenced restores.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Isolate Native AOT fixture restore
+    
+    Restore only the fixture root with AOT properties so parallel CI builds do not rewrite shared transitive project assets.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    Copilot-Session: 19dd876d-31dc-41b4-a53b-aa2299746d2a
+    Copilot-Session: 22ea1330-4e21-4ac3-ab94-eafa89a2efc6
+
+diff --git a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+index eaebd88569..f4b513876a 100644
+--- a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
++++ b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+@@ -93,7 +93,8 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+ 
+     public bool TryDeserializeComponentDescriptorCollection(string serializedComponentRecords, out List<ComponentDescriptor> descriptors)
+     {
+-        var markers = JsonSerializer.Deserialize<IEnumerable<ComponentMarker>>(serializedComponentRecords, ServerComponentSerializationSettings.JsonSerializationOptions);
++        var markersTypeInfo = ServerComponentSerializationSettings.JsonSerializationOptions.GetTypeInfo(typeof(IEnumerable<ComponentMarker>));
++        var markers = (IEnumerable<ComponentMarker>)JsonSerializer.Deserialize(serializedComponentRecords, markersTypeInfo)!;
+         descriptors = new List<ComponentDescriptor>();
+         int lastSequence = -1;
+ 
+@@ -256,9 +257,8 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+ 
+         try
+         {
+-            result = JsonSerializer.Deserialize<ServerComponent>(
+-                unprotected,
+-                ServerComponentSerializationSettings.JsonSerializationOptions);
++            var typeInfo = ServerComponentSerializationSettings.JsonSerializationOptions.GetTypeInfo(typeof(ServerComponent));
++            result = (ServerComponent)JsonSerializer.Deserialize(unprotected, typeInfo)!;
+             return true;
+         }
+         catch (Exception e)
+@@ -299,9 +299,8 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         int[]? seenComponentIdsStorage = null;
+         try
+         {
+-            result = JsonSerializer.Deserialize<RootComponentOperationBatch>(
+-                serializedComponentOperations,
+-                ServerComponentSerializationSettings.JsonSerializationOptions);
++            var typeInfo = ServerComponentSerializationSettings.JsonSerializationOptions.GetTypeInfo(typeof(RootComponentOperationBatch));
++            result = (RootComponentOperationBatch)JsonSerializer.Deserialize(serializedComponentOperations, typeInfo)!;
+             var operations = result.Operations;
+ 
+             Span<int> seenSsrComponentIds = operations.Length <= 128
+
+commit 2ee09f5447875667e57a3ea32c7dfef3d3d42e74
+Author: Javier Calvarro Nelson <jacalvar@microsoft.com>
+Date:   Wed Jun 11 19:53:44 2025 +0200
+
+    [Blazor] Adds support for persisting and restoring disconnected circuits from storage (#62259)
+    
+    * Circuit persistence implementation
+    
+    * Added sample
+    
+    * Fix DI issues
+    
+    * Temporarily add JS bits
+    
+    * Fixes
+    
+    * Refine ts
+    
+    * Wire up the default handler
+    
+    * Sample cleanups
+    
+    * Provide expiration timeout for the serialized descriptors
+    
+    * tmp
+    
+    * Add tests
+    
+    * More tests
+    
+    * More tests
+    
+    * MemoryPersistenceProvider tests
+    
+    * Add E2E test
+    
+    * Cleanup E2E test
+    
+    * Undo sample changes
+    
+    * Fix build
+    
+    * Tmp
+    
+    * Address feedback
+    
+    * Fix test
+    
+    * Improve tests
+    
+    * Remove unnecessary files
+
+diff --git a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+index ca292c529d..eaebd88569 100644
+--- a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
++++ b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+@@ -291,7 +291,10 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         return (componentDescriptor, serverComponent);
+     }
+ 
+-    public bool TryDeserializeRootComponentOperations(string serializedComponentOperations, [NotNullWhen(true)] out RootComponentOperationBatch? result)
++    public bool TryDeserializeRootComponentOperations(
++        string serializedComponentOperations,
++        [NotNullWhen(true)] out RootComponentOperationBatch? result,
++        bool deserializeMarkers = true)
+     {
+         int[]? seenComponentIdsStorage = null;
+         try
+@@ -329,6 +332,13 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+                     return false;
+                 }
+ 
++                if (!deserializeMarkers)
++                {
++                    // If we are not deserializing markers, we can skip the rest of the processing.
++                    operation.Descriptor = null;
++                    continue;
++                }
++
+                 if (!TryDeserializeWebRootComponentDescriptor(operation.Marker.Value, out var descriptor))
+                 {
+                     result = null;
+
+commit 90cc8cd1a4b8be1f049ac804b431ce30bc9ff629
+Author: Javier Calvarro Nelson <jacalvar@microsoft.com>
+Date:   Thu Mar 13 23:34:36 2025 +0100
+
+    [Blazor] Support for declaratively persisting component and services state (#60634)
+    
+    # Adds a declarative model for persistent component and services state
+    
+    This PR augments the persistent component state feature with a declarative model that allows the developer to place an attribute on components and services properties to indicate that they should be persisted during prerendering so that it is accessible when the application becomes interactive.
+    
+    ## Scenarios
+    
+    ### Serializing state for a component
+    
+    ```razor
+    @page "/counter"
+    
+    <h1>Counter</h1>
+    
+    <p>Current count: @CurrentCount</p>
+    
+    <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    
+    @code {
+        [SupplyParameterFromPersistentComponentState]
+        private int CurrentCount { get; set; }
+    
+        private void IncrementCount()
+        {
+            CurrentCount++;
+        }
+    }
+    ```
+    * Properties annotated with `[SupplyParameterFromPersistentComponentState]` will be serialized and deserialized during prerendering.
+    
+    ### Serializing state for multiple components of the same type
+    
+    **ParentComponent.razor**
+    ```razor
+    @page "/parent"
+    
+    @foreach (var element in elements)
+    {
+        <ChildComponent @key="element.Name" />
+    }
+    ```
+    
+    **ChildComponent.razor**
+    ```razor
+    <div>
+        <p>Current count: @Element.CurrentCount</p>
+        <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    </div>
+    
+    @code {
+        [SupplyParameterFromPersistentComponentState]
+        public State Element { get; set; }
+    
+        private void IncrementCount()
+        {
+            Element.CurrentCount++;
+        }
+    
+        protected override void OnInitialized()
+        {
+            Element ??= new State();
+        }
+    
+        private class State
+        {
+            public int CurrentCount { get; set; }
+        }
+    }
+    ```
+    * Properties annotated with `[SupplyParameterFromPersistentComponentState]` will be serialized and deserialized during prerendering.
+    * The `@key` directive is used to ensure that the state is correctly associated with the component instance.
+    * The `Element` property is initialized in the `OnInitialized` method to avoid null reference exceptions similarly to how we do it for
+      query parameters and form data.
+    
+    ### Serializing state for a service
+    
+    **CounterService.cs**
+    ```csharp
+    public class CounterService
+    {
+        [SupplyParameterFromPersistentComponentState]
+        public int CurrentCount { get; set; }
+    
+        public void IncrementCount()
+        {
+            CurrentCount++;
+        }
+    }
+    ```
+    
+    **Program.cs**
+    ```
+    builder.Services.AddRazorComponents().RegisterPersistentService<CounterService>(RenderMode.InteractiveAuto);
+    ```
+    * Properties annotated with `[SupplyParameterFromPersistentComponentState]` will be serialized during prerendering and deserialized when the application becomes interactive.
+    * The `AddPersistentService` method is used to register the service for persistence.
+    * The render mode is required as can't be inferred from the service type.
+      * `RenderMode.Server` - The service will be available for interactive server mode.
+      * `RenderMode.Webassembly` - The service will be available for interactive webassembly mode.
+      * `RenderMode.InteractiveAuto` - The service will be available for both interactive server and webassembly modes if a component renders in any of those modes.
+    * The service will be resolved during interactive mode initialization and the properties annotated with `[SupplyParameterFromPersistentComponentState]` will be deserialized.
+    
+    ## Implementation details
+    
+    ### Key Computation
+    
+    #### For components
+    We need to generate a unique key for each property that needs to be persisted. For components, this key is computed based on:
+    
+    - The parent component type
+    - The component type
+    - The property name
+    - The `@key` directive if present and serializable (e.g., `Guid`, `DateOnly`, `TimeOnly`, and primitive types)
+    
+    The key computation ensures that even if multiple instances of the same component are present on the page (for example, in a loop),
+    each instance's state can be uniquely identified and persisted.
+    
+    The key computation algorithm only takes into account a small subset of a component hierarchy for performance reasons.
+    This limits the ability to persist state on recursive component hierarchies.
+    Our recommendation for those scenarios is to persist the state at the top level of the hierarchy.
+    
+    #### For services
+    Only persisting scoped services is supported. We need to generate a unique key for each property that needs to be persisted.
+    The key for services is derived from:
+    - The type used to register the persistent service
+      - Assembly
+      - Full type name
+      - Property name
+    
+    Properties to be serialized are identified from the actual service instance.
+    - This approach allows marking an abstraction as a persistent service.
+    - Enables actual implementations to be internal or different types.
+    - Supports shared code in different assemblies.
+    - Each instance must expose the same properties.
+    
+    ### Serialization and Deserialization
+    
+    By default properties are serialized using the System.Text.Json serializer with default settings.
+    Note that this method is not trimmer safe and requires the user to ensure that the types used are preserved through some other means.
+    This is consistent with our usage of System.Text.Json across other areas of the product, like root component parameters or JSInterop.
+
+diff --git a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+index 44053eee9a..ca292c529d 100644
+--- a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
++++ b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+@@ -59,7 +59,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+ {
+     private readonly IDataProtector _dataProtector;
+     private readonly ILogger<ServerComponentDeserializer> _logger;
+-    private readonly RootComponentTypeCache _rootComponentTypeCache;
++    private readonly RootTypeCache _RootTypeCache;
+     private readonly ComponentParameterDeserializer _parametersDeserializer;
+ 
+     // The following fields are only used in TryDeserializeSingleComponentDescriptor.
+@@ -72,7 +72,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+     public ServerComponentDeserializer(
+         IDataProtectionProvider dataProtectionProvider,
+         ILogger<ServerComponentDeserializer> logger,
+-        RootComponentTypeCache rootComponentTypeCache,
++        RootTypeCache RootTypeCache,
+         ComponentParameterDeserializer parametersDeserializer)
+     {
+         // When we protect the data we use a time-limited data protector with the
+@@ -87,7 +87,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+             .ToTimeLimitedDataProtector();
+ 
+         _logger = logger;
+-        _rootComponentTypeCache = rootComponentTypeCache;
++        _RootTypeCache = RootTypeCache;
+         _parametersDeserializer = parametersDeserializer;
+     }
+ 
+@@ -206,8 +206,8 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+     private bool TryDeserializeComponentTypeAndParameters(ServerComponent serverComponent, [NotNullWhen(true)] out Type? componentType, out ParameterView parameters)
+     {
+         parameters = default;
+-        componentType = _rootComponentTypeCache
+-            .GetRootComponent(serverComponent.AssemblyName, serverComponent.TypeName);
++        componentType = _RootTypeCache
++            .GetRootType(serverComponent.AssemblyName, serverComponent.TypeName);
+ 
+         if (componentType == null)
+         {
+
+commit c8115ed95a8d760a78b85f1c94487c4a747fc0df
+Author: Mackinnon Buck <mackinnon.buck@gmail.com>
+Date:   Tue Oct 10 16:38:40 2023 -0700
+
+    [release/8.0] [Blazor] Defer enhanced component updates until reconnection circuit completes (#51242)
+    
+    # Defer enhanced component updates until reconnection circuit completes
+    
+    Ensures that enhanced updates to interactive server components get deferred until the circuit is reconnected.
+    
+    ## Description
+    
+    This PR includes two changes:
+    1. Takes circuit "connected-ness" into account when determining if enhanced component updates can be applied
+    2. Waits until any given root component's disposal gets acknowledged by .NET before the browser stops tracking it for SSR updates
+    
+    Fixes #51082
+    
+    ## Customer Impact
+    
+    This change impacts Blazor Web scenarios where interactive server components exist on the page.
+    
+    With this fix, it's more likely that a customer with an unstable connection will be able to continue using the app without refreshing the page. In particular:
+    1. If a developer creates a custom, less intrusive reconnection dialog that allows the user to keep interacting with the app, a user-induced page navigation during reconnection won't bring the app to an unusable state
+    2. If the user quickly navigates between pages while the circuit is unstable, there won't be console errors caused by attempting to interactively update a component that was removed from the page
+    
+    ## Regression?
+    
+    - [ ] Yes
+    - [X] No
+    
+    These fixes only affect "Blazor Web" scenarios, which are new in .NET 8.
+    
+    ## Risk
+    
+    - [ ] High
+    - [X] Medium
+    - [X] Low
+    
+    This is a moderately-sized change. However, we have existing automated tests that verify the scenarios that this code is likely to impact, and we've added new tests to help ensure that these fixes introduce the above stability improvements.
+    
+    ## Verification
+    
+    - [X] Manual (required)
+    - [X] Automated
+    
+    ## Packaging changes reviewed?
+    
+    - [ ] Yes
+    - [ ] No
+    - [X] N/A
+
+diff --git a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+index 67ef8bd5d9..44053eee9a 100644
+--- a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
++++ b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+@@ -151,6 +151,12 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+             return false;
+         }
+ 
++        if (record.Key != serverComponent.Key)
++        {
++            Log.InvalidRootComponentKey(_logger);
++            return false;
++        }
++
+         // We're seeing a different invocation ID than we did the last time we processed a component.
+         // There are two possibilities:
+         // [1] A new invocation has started, in which case we should stop accepting components from the previous one.
+@@ -193,7 +199,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+             serverComponent.ParameterDefinitions.AsReadOnly(),
+             serverComponent.ParameterValues.AsReadOnly());
+ 
+-        result = new(componentType, serverComponent.Key, webRootComponentParameters);
++        result = new(componentType, webRootComponentParameters);
+         return true;
+     }
+ 
+@@ -285,28 +291,27 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         return (componentDescriptor, serverComponent);
+     }
+ 
+-    public bool TryDeserializeRootComponentOperations(string serializedComponentOperations, [NotNullWhen(true)] out CircuitRootComponentOperation[]? operations)
++    public bool TryDeserializeRootComponentOperations(string serializedComponentOperations, [NotNullWhen(true)] out RootComponentOperationBatch? result)
+     {
+         int[]? seenComponentIdsStorage = null;
+         try
+         {
+-            var result = JsonSerializer.Deserialize<RootComponentOperation[]>(
++            result = JsonSerializer.Deserialize<RootComponentOperationBatch>(
+                 serializedComponentOperations,
+                 ServerComponentSerializationSettings.JsonSerializationOptions);
++            var operations = result.Operations;
+ 
+-            operations = new CircuitRootComponentOperation[result.Length];
+-
+-            Span<int> seenSsrComponentIds = result.Length <= 128
+-                ? stackalloc int[result.Length]
+-                : (seenComponentIdsStorage = ArrayPool<int>.Shared.Rent(result.Length)).AsSpan(0, result.Length);
++            Span<int> seenSsrComponentIds = operations.Length <= 128
++                ? stackalloc int[operations.Length]
++                : (seenComponentIdsStorage = ArrayPool<int>.Shared.Rent(operations.Length)).AsSpan(0, operations.Length);
+             var currentSsrComponentIdIndex = 0;
+-            for (var i = 0; i < result.Length; i++)
++            for (var i = 0; i < operations.Length; i++)
+             {
+-                var operation = result[i];
++                var operation = operations[i];
+                 if (seenSsrComponentIds[0..currentSsrComponentIdIndex].Contains(operation.SsrComponentId))
+                 {
+                     Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Duplicate component ID.");
+-                    operations = null;
++                    result = null;
+                     return false;
+                 }
+ 
+@@ -314,24 +319,23 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+ 
+                 if (operation.Type == RootComponentOperationType.Remove)
+                 {
+-                    operations[i] = new(operation, null);
+                     continue;
+                 }
+ 
+                 if (operation.Marker == null)
+                 {
+                     Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Missing marker.");
+-                    operations = null;
++                    result = null;
+                     return false;
+                 }
+ 
+                 if (!TryDeserializeWebRootComponentDescriptor(operation.Marker.Value, out var descriptor))
+                 {
+-                    operations = null;
++                    result = null;
+                     return false;
+                 }
+ 
+-                operations[i] = new(operation, descriptor);
++                operation.Descriptor = descriptor;
+             }
+ 
+             return true;
+@@ -339,7 +343,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         catch (Exception ex)
+         {
+             Log.FailedToProcessRootComponentOperations(_logger, ex);
+-            operations = null;
++            result = null;
+             return false;
+         }
+         finally
+@@ -388,5 +392,8 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+ 
+         [LoggerMessage(12, LogLevel.Debug, "Failed to parse root component operations", EventName = nameof(FailedToProcessRootComponentOperations))]
+         public static partial void FailedToProcessRootComponentOperations(ILogger logger, Exception exception);
++
++        [LoggerMessage(13, LogLevel.Debug, "The provided root component key was not valid.", EventName = nameof(InvalidRootComponentKey))]
++        public static partial void InvalidRootComponentKey(ILogger logger);
+     }
+ }
+
+commit 7a0507f379a68e1f0e5aad61d467399d7e0c5b9d
+Author: Mackinnon Buck <mackinnon.buck@gmail.com>
+Date:   Mon Oct 2 09:09:41 2023 -0700
+
+    [release/8.0] [Blazor] Improvements to SSR component activation (#50848)
+    
+    # [release/8.0] [Blazor] Improvements to SSR component activation
+    
+    Improves how components rendered from a Blazor endpoint get activated for interactivity.
+    
+    ## Description
+    
+    This PR makes the following improvements:
+    1. An update from a Blazor endpoint cannot supply new parameters to an existing component, unless the component specifies a formattable, deterministic `@key` that uniquely identifies it.
+    2. The number of interactive Server root components originating from a Blazor endpoint cannot exceed the configured `CircuitRootComponentOptions.MaxJSRootComponents` option at any point in time.
+    
+    Fixes #50849
+    
+    ## Customer Impact
+    
+    This change helps to limit the quantity of server resources used by Blazor Server interactivity and ensure correctness when dynamically supplying component parameter updates.
+    
+    ## Regression?
+    
+    - [ ] Yes
+    - [X] No
+    
+    ## Risk
+    
+    - [ ] High
+    - [X] Medium
+    - [ ] Low
+    
+    The change that limits the total number of interactive server root components is fairly low-risk, and the default limit of 100 interactive server root components can be increased for apps that need it.
+    
+    However, the change to how new parameters are supplied is going to modify the behavior of Blazor Web apps built on previous .NET 8 preview releases. Furthermore, the code changes touch some of the core functionality of Blazor's new .NET 8 features. However, apps built prior to .NET 8 should continue to work the same way without any changes in behavior.
+    
+    ## Verification
+    
+    - [X] Manual (required)
+    - [X] Automated
+    
+    ## Packaging changes reviewed?
+    
+    - [ ] Yes
+    - [ ] No
+    - [X] N/A
+
+diff --git a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+index bea61cedf9..67ef8bd5d9 100644
+--- a/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
++++ b/src/Components/Server/src/Circuits/ServerComponentDeserializer.cs
+@@ -100,14 +100,7 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         var previousInstance = new ServerComponent();
+         foreach (var marker in markers)
+         {
+-            if (!IsWellFormedServerComponent(marker))
+-            {
+-                // The client sent us a marker with missing or obviously incorrect info.
+-                descriptors.Clear();
+-                return false;
+-            }
+-
+-            var (descriptor, serverComponent) = DeserializeServerComponent(marker);
++            var (descriptor, serverComponent) = DeserializeComponentDescriptor(marker);
+             if (descriptor == null)
+             {
+                 // We failed to deserialize the component descriptor for some reason.
+@@ -149,20 +142,12 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         return true;
+     }
+ 
+-    public bool TryDeserializeSingleComponentDescriptor(ComponentMarker record, [NotNullWhen(true)] out ComponentDescriptor? result)
++    public bool TryDeserializeWebRootComponentDescriptor(ComponentMarker record, [NotNullWhen(true)] out WebRootComponentDescriptor? result)
+     {
+         result = default;
+ 
+-        if (!IsWellFormedServerComponent(record))
++        if (!TryDeserializeServerComponent(record, out var serverComponent))
+         {
+-            // The client sent us a marker with missing or obviously incorrect info.
+-            return false;
+-        }
+-
+-        var (descriptor, serverComponent) = DeserializeServerComponent(record);
+-        if (descriptor is null)
+-        {
+-            // We failed to deserialize the component descriptor for some reason.
+             return false;
+         }
+ 
+@@ -196,13 +181,47 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+             return false;
+         }
+ 
++        if (!TryDeserializeComponentTypeAndParameters(serverComponent, out var componentType, out var parameters))
++        {
++            return false;
++        }
++
+         _seenSequenceNumbersForCurrentInvocation.Add(serverComponent.Sequence);
+-        result = descriptor;
++
++        var webRootComponentParameters = new WebRootComponentParameters(
++            parameters,
++            serverComponent.ParameterDefinitions.AsReadOnly(),
++            serverComponent.ParameterValues.AsReadOnly());
++
++        result = new(componentType, serverComponent.Key, webRootComponentParameters);
+         return true;
+     }
+ 
+-    private bool IsWellFormedServerComponent(ComponentMarker record)
++    private bool TryDeserializeComponentTypeAndParameters(ServerComponent serverComponent, [NotNullWhen(true)] out Type? componentType, out ParameterView parameters)
+     {
++        parameters = default;
++        componentType = _rootComponentTypeCache
++            .GetRootComponent(serverComponent.AssemblyName, serverComponent.TypeName);
++
++        if (componentType == null)
++        {
++            Log.FailedToFindComponent(_logger, serverComponent.TypeName, serverComponent.AssemblyName);
++            return false;
++        }
++
++        if (!_parametersDeserializer.TryDeserializeParameters(serverComponent.ParameterDefinitions, serverComponent.ParameterValues, out parameters))
++        {
++            // TryDeserializeParameters does appropriate logging.
++            return default;
++        }
++
++        return true;
++    }
++
++    private bool TryDeserializeServerComponent(ComponentMarker record, out ServerComponent result)
++    {
++        result = default;
++
+         if (record.Type is not (ComponentMarker.ServerMarkerType or ComponentMarker.AutoMarkerType))
+         {
+             Log.InvalidMarkerType(_logger, record.Type);
+@@ -215,11 +234,6 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+             return false;
+         }
+ 
+-        return true;
+-    }
+-
+-    private (ComponentDescriptor, ServerComponent) DeserializeServerComponent(ComponentMarker record)
+-    {
+         string unprotected;
+         try
+         {
+@@ -230,34 +244,34 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         catch (Exception e)
+         {
+             Log.FailedToUnprotectDescriptor(_logger, e);
+-            return default;
++            result = default;
++            return false;
+         }
+ 
+-        ServerComponent serverComponent;
+         try
+         {
+-            serverComponent = JsonSerializer.Deserialize<ServerComponent>(
++            result = JsonSerializer.Deserialize<ServerComponent>(
+                 unprotected,
+                 ServerComponentSerializationSettings.JsonSerializationOptions);
++            return true;
+         }
+         catch (Exception e)
+         {
+             Log.FailedToDeserializeDescriptor(_logger, e);
+-            return default;
++            result = default;
++            return false;
+         }
++    }
+ 
+-        var componentType = _rootComponentTypeCache
+-            .GetRootComponent(serverComponent.AssemblyName, serverComponent.TypeName);
+-
+-        if (componentType == null)
++    private (ComponentDescriptor, ServerComponent) DeserializeComponentDescriptor(ComponentMarker record)
++    {
++        if (!TryDeserializeServerComponent(record, out var serverComponent))
+         {
+-            Log.FailedToFindComponent(_logger, serverComponent.TypeName, serverComponent.AssemblyName);
+             return default;
+         }
+ 
+-        if (!_parametersDeserializer.TryDeserializeParameters(serverComponent.ParameterDefinitions, serverComponent.ParameterValues, out var parameters))
++        if (!TryDeserializeComponentTypeAndParameters(serverComponent, out var componentType, out var parameters))
+         {
+-            // TryDeserializeParameters does appropriate logging.
+             return default;
+         }
+ 
+@@ -265,13 +279,13 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+         {
+             ComponentType = componentType,
+             Parameters = parameters,
+-            Sequence = serverComponent.Sequence
++            Sequence = serverComponent.Sequence,
+         };
+ 
+         return (componentDescriptor, serverComponent);
+     }
+ 
+-    public bool TryDeserializeRootComponentOperations(string serializedComponentOperations, out (RootComponentOperation, ComponentDescriptor?)[] operations)
++    public bool TryDeserializeRootComponentOperations(string serializedComponentOperations, [NotNullWhen(true)] out CircuitRootComponentOperation[]? operations)
+     {
+         int[]? seenComponentIdsStorage = null;
+         try
+@@ -280,52 +294,30 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+                 serializedComponentOperations,
+                 ServerComponentSerializationSettings.JsonSerializationOptions);
+ 
+-            operations = new (RootComponentOperation, ComponentDescriptor?)[result.Length];
++            operations = new CircuitRootComponentOperation[result.Length];
+ 
+-            Span<int> seenComponentIds = result.Length <= 128
++            Span<int> seenSsrComponentIds = result.Length <= 128
+                 ? stackalloc int[result.Length]
+                 : (seenComponentIdsStorage = ArrayPool<int>.Shared.Rent(result.Length)).AsSpan(0, result.Length);
+-            var currentComponentIdIndex = 0;
++            var currentSsrComponentIdIndex = 0;
+             for (var i = 0; i < result.Length; i++)
+             {
+                 var operation = result[i];
+-                if (operation.Type == RootComponentOperationType.Remove ||
+-                    operation.Type == RootComponentOperationType.Update)
++                if (seenSsrComponentIds[0..currentSsrComponentIdIndex].Contains(operation.SsrComponentId))
+                 {
+-                    if (operation.ComponentId == null)
+-                    {
+-                        Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Missing component ID.");
+-                        operations = null;
+-                        return false;
+-                    }
+-
+-                    if (seenComponentIds[0..currentComponentIdIndex]
+-                        .Contains(operation.ComponentId.Value))
+-                    {
+-                        Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Duplicate component ID.");
+-                        operations = null;
+-                        return false;
+-                    }
+-
+-                    seenComponentIds[currentComponentIdIndex++] = operation.ComponentId.Value;
++                    Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Duplicate component ID.");
++                    operations = null;
++                    return false;
+                 }
+ 
++                seenSsrComponentIds[currentSsrComponentIdIndex++] = operation.SsrComponentId;
++
+                 if (operation.Type == RootComponentOperationType.Remove)
+                 {
+-                    operations[i] = (operation, null);
++                    operations[i] = new(operation, null);
+                     continue;
+                 }
+ 
+-                if (operation.Type == RootComponentOperationType.Add)
+-                {
+-                    if (operation.SelectorId is not { } selectorId)
+-                    {
+-                        Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Missing selector ID.");
+-                        operations = null;
+-                        return false;
+-                    }
+-                }
+-
+                 if (operation.Marker == null)
+                 {
+                     Log.InvalidRootComponentOperation(_logger, operation.Type, message: "Missing marker.");
+@@ -333,17 +325,16 @@ internal sealed partial class ServerComponentDeserializer : IServerComponentDese
+                     return false;
+                 }
+ 
+-                if (!TryDeserializeSingleComponentDescriptor(operation.Marker.Value, out var descriptor))
++                if (!TryDeserializeWebRootComponentDescriptor(operation.Marker.Value, out var descriptor))
+                 {
+                     operations = null;
+                     return false;
+                 }
+ 
+-                operations[i] = (operation, descriptor);
++                operations[i] = new(operation, descriptor);
+             }
+ 
+             return true;
+-
+         }
+         catch (Exception ex)
+         {

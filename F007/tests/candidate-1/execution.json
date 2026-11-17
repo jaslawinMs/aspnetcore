@@ -1,0 +1,63 @@
+{
+  "candidate": "F007",
+  "variant": "candidate-1",
+  "activation": ". .\\activate.ps1",
+  "commands": [
+    {
+      "entryPoint": "dotnet",
+      "arguments": [
+        "build",
+        "src\\Components\\Server\\src\\Microsoft.AspNetCore.Components.Server.csproj",
+        "--no-restore",
+        "--no-dependencies",
+        "-c",
+        "Release",
+        "-t:Rebuild",
+        "-m:2",
+        "-v:q",
+        "-p:UseIisNativeAssets=false",
+        "-bl:C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F007\\tests\\candidate-1\\fresh-owner-build.binlog"
+      ],
+      "actualExitCode": 0,
+      "name": "fresh-owner-build"
+    },
+    {
+      "entryPoint": "dotnet",
+      "arguments": [
+        "build",
+        "src\\Components\\Server\\test\\Microsoft.AspNetCore.Components.Server.Tests.csproj",
+        "--no-restore",
+        "-c",
+        "Release",
+        "-m:2",
+        "-v:q",
+        "-p:UseIisNativeAssets=false",
+        "-bl:C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F007\\tests\\candidate-1\\owning-test-build.binlog"
+      ],
+      "actualExitCode": 0,
+      "name": "owning-test-build"
+    },
+    {
+      "entryPoint": "dotnet",
+      "arguments": [
+        "test",
+        "src\\Components\\Server\\test\\Microsoft.AspNetCore.Components.Server.Tests.csproj",
+        "--no-build",
+        "--no-restore",
+        "-c",
+        "Release",
+        "-m:2",
+        "-v:q",
+        "-p:UseIisNativeAssets=false",
+        "--filter",
+        "FullyQualifiedName~ServerComponentDeserializerTest",
+        "--logger",
+        "trx;LogFileName=owning-candidate-1.trx",
+        "--results-directory",
+        "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F007\\tests\\candidate-1"
+      ],
+      "actualExitCode": 0,
+      "name": "owning-test-run"
+    }
+  ]
+}

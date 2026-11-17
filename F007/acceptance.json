@@ -1,0 +1,21 @@
+{
+  "candidate": "F007",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "branch": "autoperf/F007-root-operation-id-membership",
+  "selectedSeam": "TryDeserializeRootComponentOperations sequentially tests each actual JSON-deserialized SsrComponentId against the previously accepted prefix.",
+  "investigation": "Fresh default source/history,actual interface and both callers,wire DTO/serializer and owning tests before implementation;do not assume scan confidence establishes a measured problem.",
+  "behaviorOwner": "Actual in-tree Microsoft.AspNetCore.Components.Server ServerComponentDeserializer full JSON batch method.",
+  "productionProducer": "System.Text.Json creates the actual internal RootComponentOperationBatch and operation array from real wire JSON. Characterize actual ServerComponentSerializer-produced Add/Update descriptors and real Remove records;resume caller uses the existing deserializeMarkers=false path. Large batches are scaling stress,not established browser/user frequency.",
+  "finalObservable": "Boolean/null-result contract,batch identity/operation order and IDs,full marker/parameter conversion where enabled,first-invalid Debug log/event/order and state across subsequent batches;whole owning-method time/process-wide resources.",
+  "selectedPermanentSurface": "Existing ServerComponentDeserializerTest owning class,including its Unions partial. Temporary companion characterization extends valid/invalid/boundary coverage outside shipping changes. This is a private behavior-preserving performance experiment,not a new browser feature or bug-fix red/green claim.",
+  "lowerBoundaryFalsePassRisk": "A Contains-only integer-array microbenchmark bypasses actual JSON/parser/owner/error/state paths;using a duplicated RootComponentOperation type from Endpoints rather than the measured Server assembly also fails fidelity. Synthetic method callbacks do not prove browser queue reachability or rendering.",
+  "candidateHypothesis": "Keep small inputs' stack-backed prefix path and original sequential validation/error ordering. Evaluate a per-batch comparer-equivalent integer set only for larger inputs;avoid unused pooled storage if that path no longer needs it. No global pool/cache,public API,IVT,UnsafeAccessor,dependency or TFM changes.",
+  "coverage": "Empty/single/common small counts,127/128/129 stack-pool boundary,medium/large unique batches,duplicates early/middle/end and duplicate zero,negative/extreme/sparse IDs,missing marker before/after duplicate,parse failures,both descriptor modes,real marker/parameter conversion and retained owner-state behavior. Timed input sizes/roles fixed before first pair and all adverse controls retained.",
+  "harness": "Compile one standalone BDN harness once against original. Substitute only actual same-identity owner DLL/PDB into cloned images;all harness/nonowner bytes identical starting with comparison1. Cached reflection/compiled adapters may access internal owner only in standalone harness,never shipping bridges;record their exact boundary.",
+  "measurementBudget": "Maximum3 actual paired source comparisons,including partial/failed attempts. Reverse second order. A clear compatible approximately50percent win may stop early;otherwise at most3. No extra leaf runs or reruns to fix audit analysis.",
+  "sharedMachine": "Serialize CPU-heavy work,max2 build nodes,activate local SDK before every dotnet shell,pinned runtime,settings-preserving emitted executor/Guid.Empty power. No OS power/priority/affinity changes or unrelated process termination;no isolation assumption.",
+  "publication": "Independent fork branch,runnable immutable benchmark/raw capsule. Only defensible compatible proposal gets fork-only actual-template draft and immediate browser opening. Otherwise honest no-gain/rejection,exact source/owner restoration. Official count advances only after actual refs/blobs/receipt/index verified.",
+  "excluded": "No browser scheduling/DOM/rendering/circuit-dispatch or global app/build speed claim;no production batch-frequency estimate;no security assessment;no complete SDK/native provenance.",
+  "implementationStarted": false,
+  "comparisonsUsed": 0
+}
