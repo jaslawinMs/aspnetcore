@@ -1336,8 +1336,18 @@ public class SignInManager<TUser> where TUser : class
             return null;
         }
 
-        var providerDisplayName = (await GetExternalAuthenticationSchemesAsync()).FirstOrDefault(p => p.Name == provider)?.DisplayName
+        string providerDisplayName;
+        // Custom managers and providers can change the external scheme sequence.
+        if (GetType() == typeof(SignInManager<TUser>) && _schemes.GetType() == typeof(AuthenticationSchemeProvider))
+        {
+            var scheme = await _schemes.GetSchemeAsync(provider);
+            providerDisplayName = scheme is { DisplayName.Length: > 0 } ? scheme.DisplayName : provider;
+        }
+        else
+        {
+            providerDisplayName = (await GetExternalAuthenticationSchemesAsync()).FirstOrDefault(p => p.Name == provider)?.DisplayName
                                     ?? provider;
+        }
         return new ExternalLoginInfo(auth.Principal, provider, providerKey, providerDisplayName)
         {
             AuthenticationTokens = auth.Properties?.GetTokens(),
