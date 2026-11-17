@@ -1,0 +1,40 @@
+diff --git a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+index 91f8dc7028..ca02398416 100644
+--- a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
++++ b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+@@ -271,7 +271,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+     private sealed class ForLoopAnalyzerState
+     {
+         // Variables that are being incremented on in the current context. 
+-        public List<ILocalSymbol> Iterators { get; } = new();
++        public HashSet<ILocalSymbol>? Iterators { get; private set; }
+         // Potential variable that are not yet being incremented on which would not cause any issues so far.
+         public List<ILocalSymbol> PotentialIterators { get; private set; } = new();
+ 
+@@ -283,7 +283,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+ 
+         public bool IsIterator(ILocalSymbol target)
+         {
+-            return Iterators.Any(existing => SymbolEqualityComparer.Default.Equals(existing, target));
++            return Iterators?.Contains(target) ?? false;
+         }
+ 
+         public bool IsPotentialIterator(ILocalSymbol? target)
+@@ -295,7 +295,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         {
+             if (!IsIterator(iterator))
+             {
+-                Iterators.Add(iterator);
++                (Iterators ??= new(SymbolEqualityComparer.Default)).Add(iterator);
+                 AllForVariables.Add(iterator);
+             }
+         }
+@@ -314,7 +314,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+         /// </summary>
+         public void OnPotentialIteratorChanged(ILocalSymbol potentialIterator)
+         {
+-            Iterators.Add(potentialIterator);
++            (Iterators ??= new(SymbolEqualityComparer.Default)).Add(potentialIterator);
+             PotentialIterators = PotentialIterators.Where(name => !SymbolEqualityComparer.Default.Equals(name, potentialIterator)).ToList();
+         }
+ 

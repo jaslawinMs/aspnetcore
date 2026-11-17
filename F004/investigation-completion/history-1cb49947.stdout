@@ -1,0 +1,19 @@
+commit 1cb499475ebef1d44f9ab85a9f9fdc266a891a1d
+Author: Vinoth <Vinothkumar.y@syncfusion.com>
+Date:   Thu Nov 12 10:05:53 2026 +0530
+
+    BL0014 analyser (ForLoopIteratorInClosureAnalyzer) throws NullReferenceException (AD0001) when an array value is passed to an attribute after a @for loop
+
+diff --git a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+index 91f8dc7028..f0e0fd0419 100644
+--- a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
++++ b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+@@ -196,7 +196,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+             }
+             else if (valueArgument is IConversionOperation conversionOperation
+                 && conversionOperation.Operand.Type is not null
+-                && conversionOperation.Operand.Type.ContainingNamespace.ToString().StartsWith(ComponentsApi.AssemblyName, StringComparison.Ordinal))
++                && conversionOperation.Operand.Type.ContainingNamespace?.ToString().StartsWith(ComponentsApi.AssemblyName, StringComparison.Ordinal) == true)
+             {
+                 // If the value is a conversion operation, search if a delegate is created like RenderFragment or an EventCallback.
+                 // Multiple delegates at once shouldn't be possible.

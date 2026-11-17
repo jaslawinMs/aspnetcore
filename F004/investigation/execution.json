@@ -1,0 +1,213 @@
+{
+  "candidate": "F004",
+  "commands": [
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "actualExitCode": 0,
+      "label": "prior-head"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "diff",
+        "--name-only"
+      ],
+      "actualExitCode": 0,
+      "label": "prior-tracked-diff"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "diff",
+        "--cached",
+        "--name-only"
+      ],
+      "actualExitCode": 0,
+      "label": "prior-staged-diff"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "branch",
+        "--list",
+        "autoperf/F004-loop-iterator-symbol-membership"
+      ],
+      "actualExitCode": 0,
+      "label": "prior-target-branch"
+    },
+    {
+      "entryPoint": "gh",
+      "arguments": [
+        "api",
+        "repos/dotnet/aspnetcore",
+        "--jq",
+        ".default_branch"
+      ],
+      "actualExitCode": 0,
+      "label": "default-branch"
+    },
+    {
+      "entryPoint": "gh",
+      "arguments": [
+        "api",
+        "repos/dotnet/aspnetcore/git/ref/heads/main",
+        "--jq",
+        ".object.sha"
+      ],
+      "actualExitCode": 0,
+      "label": "default-ref"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "fetch",
+        "--quiet",
+        "origin",
+        "main"
+      ],
+      "actualExitCode": 0,
+      "label": "fetch-default"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "switch",
+        "-c",
+        "autoperf/F004-loop-iterator-symbol-membership",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5"
+      ],
+      "actualExitCode": 0,
+      "label": "create-independent-branch"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-0"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-0"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/src/ComponentsApi.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-1"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/src/ComponentsApi.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-1"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/src/DiagnosticDescriptors.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-2"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/src/DiagnosticDescriptors.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-2"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/src/Resources.resx"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-3"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/src/Resources.resx"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-3"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/src/Microsoft.AspNetCore.Components.Analyzers.csproj"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-4"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/src/Microsoft.AspNetCore.Components.Analyzers.csproj"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-4"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-5"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-5"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Analyzers/test/Microsoft.AspNetCore.Components.Analyzers.Tests.csproj"
+      ],
+      "actualExitCode": 0,
+      "label": "baseline-source-6"
+    },
+    {
+      "entryPoint": "git",
+      "arguments": [
+        "show",
+        "49147673007a4b1d676694e2c5f85b83ad76c36f:src/Components/Analyzers/test/Microsoft.AspNetCore.Components.Analyzers.Tests.csproj"
+      ],
+      "actualExitCode": 0,
+      "label": "default-source-6"
+    }
+  ]
+}

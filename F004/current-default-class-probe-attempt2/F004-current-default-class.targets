@@ -1,0 +1,12 @@
+<Project>
+  <Target Name="F004UseCapturedCurrentDefaultClass"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'Microsoft.AspNetCore.Components.Analyzers'">
+    <Error Condition="'$(F004CapturedSource)' == '' or !Exists('$(F004CapturedSource)')"
+           Text="The explicit captured F004 current-default class source is missing." />
+    <ItemGroup>
+      <Compile Remove="ForLoopIteratorInClosureAnalyzer.cs" />
+      <Compile Include="$(F004CapturedSource)" Link="ForLoopIteratorInClosureAnalyzer.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

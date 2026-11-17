@@ -1,0 +1,29 @@
+{
+  "id": "F004",
+  "finding": {
+    "card_id": "linear-contains-inside-loop",
+    "file": "src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs",
+    "line_start": 286,
+    "line_end": 286,
+    "project": "Microsoft.AspNetCore.Components.Analyzers",
+    "target_frameworks": [
+      "netstandard2.0"
+    ],
+    "severity": "high",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Iterator-symbol membership repeatedly scans a retained list.",
+    "explanation": "IsIterator performs List<ILocalSymbol>.Any with symbol equality. It is called while analyzer state is populated and from the ReportDiagnostics Where predicate for every recorded occurrence, producing repeated linear scans as nested-loop state grows.",
+    "snippet": "return Iterators.Any(existing => SymbolEqualityComparer.Default.Equals(existing, target));",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "Fresh default49147673 captured. Exact adjacent null-namespace fix differs;entire membership-state class is identical. Guard failure and real history/contract preserved. Preimplementation acceptance recorded;no shipping edit/profile yet."
+  ],
+  "branch": "autoperf/F004-loop-iterator-symbol-membership",
+  "pr_url": null,
+  "updated_at": "2026-11-17T01:40:23.9145374+00:00"
+}
