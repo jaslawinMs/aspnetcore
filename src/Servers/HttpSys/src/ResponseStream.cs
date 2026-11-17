@@ -57,7 +57,12 @@ internal sealed class ResponseStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        _onStart().GetAwaiter().GetResult();
+        var startTask = _onStart();
+        if (!startTask.IsCompletedSuccessfully)
+        {
+            startTask.GetAwaiter().GetResult();
+        }
+
         _innerStream.Write(buffer, offset, count);
     }
 
