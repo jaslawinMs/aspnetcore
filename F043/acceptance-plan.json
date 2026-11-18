@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "candidate": "F043",
+  "declaredBeforeShippingImplementation": true,
+  "shippingFile": "src\\Mvc\\Mvc.Razor\\src\\RazorPage.cs",
+  "operation": "RazorPage.DefineSection(string, RenderAsyncDelegate)",
+  "independentBase": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "currentDefaultToRevalidate": "c5baf473f31fa3bbe9f8201e3411361c632f3a91",
+  "hypothesis": "Calling concrete Dictionary.TryAdd can remove the additional lookup for registration in an already populated section store without changing section contracts. An IDictionary extension spelling is not assumed to perform one lookup.",
+  "proposedScope": [
+    "Keep RazorPage.DefineSection's public override, argument checks, duplicate error branch and message.",
+    "Use the existing non-virtual SectionWriters property's concrete Dictionary, as guaranteed by RazorPageBase's sole readonly field initializer and getter.",
+    "Do not change RazorPageBase, its private field, public API, layout rendering, collection allocation, caches or manifests.",
+    "Keep F044 separate: it identifies the distinct RazorPageBase implementation, not the RazorPage override evaluated here.",
+    "Do not include David Fowler's independent lazy-allocation changes from upstream70128."
+  ],
+  "validation": [
+    "Before editing shipping code, actually build the current-default Razor owner and pass the faithful public characterization against that owner.",
+    "Use real SDK-compiled cshtml section producers, not a copied registration algorithm; verify expected section names, values, deferred output and delegate transfer.",
+    "Exercise actual RazorView.RenderAsync, real scoped MemoryPoolViewBufferScope, layout section consumption and exact final HTML.",
+    "Cover ordinal-ignore-case duplicate detection, attempted-name error text, preserved original delegate/key, empty name, null argument order and unchanged state on rejected registration.",
+    "Run the existing RazorPageTest class plus any narrowly added preservation cases on original and candidate; inspect actual TRX rows, including every parameter row.",
+    "Record the actual loaded source-built owner, matching portable PDB, selected physical source hashes and complete frozen image hashes.",
+    "Keep both measured harness binaries and every non-owner consumer file byte-identical across original and candidate."
+  ],
+  "profiles": [
+    { "name": "NoSections", "count": 0, "namePadding": 0 },
+    { "name": "One", "count": 1, "namePadding": 0 },
+    { "name": "Two", "count": 2, "namePadding": 0 },
+    { "name": "Eight", "count": 8, "namePadding": 0 },
+    { "name": "SixtyFour", "count": 64, "namePadding": 0 },
+    { "name": "EightLong", "count": 8, "namePadding": 256 }
+  ],
+  "measuredBoundaries": [
+    {
+      "method": "RegisterFreshPage",
+      "includes": "A fresh actual compiled Razor page and its normal per-page collections/delegates, real compiled ExecuteAsync/DefineSection and observable section-count readback.",
+      "excludes": "Razor compilation, service/context setup, section callback execution, layout rendering and HTTP.",
+      "contextReuse": "The setup-created empty-body registration ViewContext may be reused; the actual page and section dictionary must be new per operation."
+    },
+    {
+      "method": "RenderFullView",
+      "includes": "A fresh actual compiled Razor page, real RazorView registration/transfer/layout execution, scoped pooled buffering, final HTML extraction and validation, scope/writer disposal.",
+      "excludes": "Razor compilation, view-engine discovery, production activation/DI injection of unused helpers, hosted requests, browser and network.",
+      "purpose": "Material rendering-boundary preservation and context for the local registration result; not an untouched-code control."
+    }
+  ],
+  "primary": {
+    "method": "RegisterFreshPage",
+    "profile": "Two",
+    "reason": "Two fresh registrations are the smallest full-page registration workload that reaches the already-populated store targeted by the redundant-lookup hypothesis. No production frequency is asserted.",
+    "minimumMedianPairedLessTimePercent": 5,
+    "requiredPrimaryFasterComparisonsWhenAllThreeRun": 2,
+    "alternativeRepeatedActualPrimaryBytesSaved": 16,
+    "allocationSavingAssumedFromSource": false
+  },
+  "decisionRules": [
+    "Stop after one complete comparison only for a clear approximately50 percent or greater primary gain with preservation and control checks passing.",
+    "Otherwise allow at most three source-comparison authorizations, counting timed failures and partial attempts; retain every adverse outcome.",
+    "Use median paired percentage effects, not a ratio of separately aggregated means.",
+    "NoSections is the predeclared unchanged-path control at both boundaries. Review its variability and allocation movement before crediting a small candidate effect.",
+    "Publish One, all scaled/long-name profiles, both boundaries, all allocation outcomes and uncertainty; do not replace the primary after observing results.",
+    "If the predeclared primary criteria are not met, or apparent gains are not credible against controls/variability, classify no-gain rather than open a performance PR.",
+    "A qualified local registration win does not establish a material full-view or application-throughput win.",
+    "Do not alter priority, affinity, power settings, protected dependency manifests or unrelated shared-machine processes."
+  ],
+  "budget": {
+    "maximumSourceComparisons": 3,
+    "comparisonsConsumedAtDeclaration": 0,
+    "untimedCharacterizationIsNotTiming": true,
+    "standaloneOriginalTimingAllowed": false
+  }
+}

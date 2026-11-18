@@ -1,0 +1,26 @@
+``` ini
+
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+
+Job=SettingsPreserving-F043  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+
+```
+|            Method |    Profile |         Mean |        Error |       StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|------------------ |----------- |-------------:|-------------:|-------------:|-------:|------:|------:|----------:|
+| **RegisterFreshPage** |      **Eight** |    **362.59 ns** |    **31.175 ns** |    **16.305 ns** | **0.0511** |     **-** |     **-** |   **1,920 B** |
+|    RenderFullView |      Eight | 14,606.28 ns | 7,134.504 ns | 3,731.484 ns | 0.1872 |     - |     - |  13,298 B |
+| **RegisterFreshPage** |  **EightLong** |  **1,737.34 ns** |    **67.568 ns** |    **35.339 ns** | **0.0519** |     **-** |     **-** |   **1,928 B** |
+|    RenderFullView |  EightLong | 14,938.07 ns |   771.404 ns |   403.459 ns | 0.4407 |     - |     - |  21,315 B |
+| **RegisterFreshPage** | **NoSections** |     **75.55 ns** |     **7.771 ns** |     **4.064 ns** | **0.0152** |     **-** |     **-** |     **568 B** |
+|    RenderFullView | NoSections |  4,963.26 ns |   205.928 ns |   107.705 ns | 0.1929 |     - |     - |   8,889 B |
+| **RegisterFreshPage** |        **One** |    **113.52 ns** |     **5.264 ns** |     **2.753 ns** | **0.0188** |     **-** |     **-** |     **744 B** |
+|    RenderFullView |        One |  5,549.91 ns |   230.962 ns |   120.798 ns | 0.2152 |     - |     - |   9,793 B |
+| **RegisterFreshPage** |  **SixtyFour** |  **2,153.70 ns** |   **268.731 ns** |   **140.551 ns** | **0.2275** |     **-** |     **-** |   **8,696 B** |
+|    RenderFullView |  SixtyFour | 15,526.29 ns | 1,886.136 ns |   986.486 ns | 0.8978 |     - |     - |  33,820 B |
+| **RegisterFreshPage** |        **Two** |    **134.69 ns** |    **15.715 ns** |     **8.219 ns** | **0.0204** |     **-** |     **-** |     **800 B** |
+|    RenderFullView |        Two |  5,730.97 ns |   463.404 ns |   242.369 ns | 0.2221 |     - |     - |  10,089 B |

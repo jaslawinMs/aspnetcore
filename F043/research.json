@@ -1,0 +1,39 @@
+{
+  "recordedAt": "2026-11-18T10:02:41.868Z",
+  "candidate": "F043",
+  "root": "C:\\src\\aspnetcore",
+  "currentDefaultRoot": "C:\\src\\autoperf-F042-default",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "currentDefault": "c5baf473f31fa3bbe9f8201e3411361c632f3a91",
+  "canonicalWholeRazorAreaTreeIdentical": "825c098684619f0cb0cd94a31bc3edcb4fbbb118",
+  "actualBuildOrRuntimeEquivalenceEstablishedByThisIntake": false,
+  "knownStoreInvariant": "RazorPageBase is non-partial; its sole readonly _sectionWriters initializer creates an ordinal-ignore-case Dictionary. Its non-virtual get-only SectionWriters returns that field. C# LSP found only the initializer and getter references. No supported setter or virtual replacement exists.",
+  "publicContract": "The existing IDictionary<string, RenderAsyncDelegate> return type and public override remain unchanged; no new API or framework assembly-boundary mechanism is proposed.",
+  "lookupCaveatToValidateUntimed": "Do not credit IDictionary extension TryAdd with a single lookup. Adjacent target-runtime counting-comparer diagnostics must be labelled BCL diagnostics, not instrumented production Razor dictionary counts.",
+  "firstRegistrationCaveat": "The fresh unallocated dictionary first-registration path need not hash during ContainsKey; measure and publish One rather than presume every registration saves a hash.",
+  "separateFinding": "F044 remains pending and targets the separate RazorPageBase implementation; this proposal must not modify it.",
+  "relatedWork": {
+    "number": 70128,
+    "url": "https://github.com/dotnet/aspnetcore/pull/70128",
+    "head": "aa1caffa818b400af873543c4eb6b7c9b5c5c16f",
+    "disposition": "Related, not the same optimization. Actual five-file patches change lazy per-page collections, layout bookkeeping and benchmarking, not DefineSection. Do not copy or claim those savings.",
+    "reviewedPatches": [
+      "src/Mvc/Mvc.Razor/src/RazorPage.cs",
+      "src/Mvc/Mvc.Razor/src/RazorPageBase.cs",
+      "src/Mvc/Mvc.Razor/src/RazorView.cs",
+      "src/Mvc/Mvc.Razor/src/RazorViewEngine.cs",
+      "src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/RazorViewRenderBenchmark.cs"
+    ],
+    "completenessLimit": "Bounded metadata searches and the complete named PR file patches are not a proof that no other upstream PR exists."
+  },
+  "documentation": {
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/views/layout?view=aspnetcore-10.0#sections",
+    "observedDocsCommit": "3693f2731062e678620df08e9c029c1acada66db",
+    "relevantContract": "Content pages define sections for their immediate layout. The view engine requires each body and section to be rendered or explicitly ignored.",
+    "readVia": "web_fetch before implementation; no third-party article content republished"
+  },
+  "scopeOfPlannedValidation": "SDK-compiled real section registration plus the actual managed RazorView transfer/buffering/output boundary, not a hosted application or browser.",
+  "settings": "Shared environment; no process-priority, thread-priority, affinity, power or unrelated-process modifications.",
+  "acceptancePlanSha256": "345043CD7309C92F2BD3DF5043185E80114F8C329623A868E549E0A070936F92",
+  "noShippingChangesAtIntake": true
+}

@@ -1,0 +1,27 @@
+{
+  "id": "F043",
+  "finding": {
+    "card_id": "dictionary-containskey-before-indexer",
+    "file": "src/Mvc/Mvc.Razor/src/RazorPage.cs",
+    "line_start": 60,
+    "line_end": 64,
+    "project": "Microsoft.AspNetCore.Mvc.Razor",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Section definition checks the dictionary before writing the same key.",
+    "explanation": "DefineSection calls SectionWriters.ContainsKey(name) and then writes SectionWriters[name] in the same per-page operation. A new section therefore pays two probes of the same dictionary key on the rendering path.",
+    "snippet": "if (SectionWriters.ContainsKey(name))\n{\n    throw new InvalidOperationException(Resources.FormatSectionAlreadyDefined(name));\n}\nSectionWriters[name] = section;",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
