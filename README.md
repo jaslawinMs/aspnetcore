@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 115/358 finalized**: 69 drafts, 19 no-gain, 21 rejected and 6 duplicates;
-243 findings remain unfinished.
+**Progress: 116/358 finalized**: 70 drafts, 19 no-gain, 21 rejected and 6 duplicates;
+242 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -43,6 +43,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F038 | [Draft jaslawinMs/aspnetcore#150](https://github.com/jaslawinMs/aspnetcore/pull/150); primary 7.49/8.07/6.36% less time, 74 B/op unchanged, all adverse/control rows retained; 3 closed pairs/1,920 samples, identical measured harness, 83+83 managed and 8 existing keyed Selenium passes; qualified renderer-only gain, not whole-app/merge-ready | [Keyed render-tree new-loop lookup](F038/README.md) |
 | F036 | No-gain; [tracking jaslawinMs/aspnetcore#148](https://github.com/jaslawinMs/aspnetcore/issues/148); primary takes 1.93/7.54/10.66% more time, 56 B/op unchanged, empty regressions and favorable scaled/control results retained; 3 closed pairs/1,536 samples plus separate 256-sample diagnostic, identical measured harness, original source/product restored, no PR | [MVC ViewDataDictionary enumeration](F036/README.md) |
 | F035 | No-gain; [tracking jaslawinMs/aspnetcore#147](https://github.com/jaslawinMs/aspnetcore/issues/147); one-value binding primary-2.89/+1.85/-18.07%less time and1456B/opunchanged, prepared8/64regress, small favorable query/adverse controls retained; 3closed pairs/960samples, identical measured harness, original source/product restored, no PR | [MVC ValueProviderResult enumeration](F035/README.md) |
 | F033 | [Draft jaslawinMs/aspnetcore#146](https://github.com/jaslawinMs/aspnetcore/pull/146); qualified no-callback8.23/11.47/19.10%less time, declared callback primary+3.75/-4.99/+0.54%, prepared-zero1.07-2.84%; 3closed pairs, identical measured harness, all adverse controls/allocations retained; not general/default/application or merge-ready gain | [HTTP.sys synchronous Write start task](F033/README.md) |
