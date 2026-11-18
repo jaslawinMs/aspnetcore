@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 120/358 finalized**: 72 drafts, 20 no-gain, 22 rejected and 6 duplicates;
-238 findings remain unfinished.
+**Progress: 121/358 finalized**: 72 drafts, 21 no-gain, 22 rejected and 6 duplicates;
+237 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F043 | No-gain/control-inconclusive; [tracking jaslawinMs/aspnetcore#157](https://github.com/jaslawinMs/aspnetcore/issues/157). Primary 5.21% less time passes the raw numerical gate but is no larger than the unchanged control in 2/3 pairs; 800 B/op unchanged. Scaled registration gains of 13.69/23.78/39.88% retained; 3 closed pairs/576 samples, 59+59 tests and independent real-compiler rebuild pass; no performance PR | [Razor section registration](F043/README.md) |
 | F042 | No-gain; [tracking jaslawinMs/aspnetcore#156](https://github.com/jaslawinMs/aspnetcore/issues/156). Primary median3.65% more time, actual byte savings2,-1,2 B/op; 3 closed pairs/576 retained samples; 34+34 tests, real current-default producer validation and independent project rebuild pass; conversion-safe experiment retained, no32B saving or performance PR | [JSON Patch dictionary replacement](F042/README.md) |
 | F041 | Rejected/design-blocked through the existing sealed Forms/Web property bag; [tracking jaslawinMs/aspnetcore#155](https://github.com/jaslawinMs/aspnetcore/issues/155). One original-only 6-profile/48-result diagnostic, zero source comparisons; 21 existing tests and 10 producer/public-bag characterizations pass, including independent untimed project rebuild; no shipping edit or PR, not measured no-gain | [Field-registry property-bag boundary](F041/README.md) |
 | F040 | [Draft jaslawinMs/aspnetcore#154](https://github.com/jaslawinMs/aspnetcore/pull/154); primary 16.88/16.66/16.17% less RemoveAndRestore time, median 16.66%, 0 B/op unchanged; 3 closed comparisons/1,920 samples; 73+73 managed and 10 existing Selenium passes; restoration timed, all adverse/control rows retained, not isolated Remove/app performance or merge-ready | [TempData collection Remove](F040/README.md) |

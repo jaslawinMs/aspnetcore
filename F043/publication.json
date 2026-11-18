@@ -1,0 +1,574 @@
+{
+  "candidate": "F043",
+  "disposition": "no-gain",
+  "subtype": "primary-control-inconclusive",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/157",
+  "actualTrackingIssueNumber": 157,
+  "actualTrackingIssueTitle": "[AutoPerf F043] Razor section registration: primary control-inconclusive no-gain",
+  "actualTrackingIssueBody": "## Disposition\r\n\r\n**F043: no-gain for the predeclared small-primary/control decision; no performance PR.**\r\n\r\nThe two-section registration primary is 5.213% faster by the median of three paired effects, with 800 B/op\r\non both versions. This passes the raw 5% numerical threshold. However, the unchanged no-section\r\nregistration control moves 4.343%, and in two of three comparisons its apparent gain is larger than\r\nthe primary's. The predeclared control/variability gate therefore does not justify a small-primary\r\nperformance recommendation on this shared machine.\r\n\r\nThis is not a claim of no improvement anywhere: 8 ordinary sections improve 13.69%, 64 improve 23.78%,\r\nand 8 deliberately long names improve 39.88% in the local registration boundary. Those secondary\r\nresults are retained, not substituted for the primary. Two-section full managed rendering has\r\nonly 0.61% median less time and includes a regression.\r\n\r\n## Connected artifacts\r\n\r\n| Artifact | Link |\r\n|---|---|\r\n| Complete guide and limitations | [Immutable evidence](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/README.md) |\r\n| Experimental source, not a merge recommendation | [Two-file commit](https://github.com/jaslawinMs/aspnetcore/commit/c486eef54e98f8e982509480019cd55490287193) |\r\n| Actual Razor SDK/BenchmarkDotNet project and six compiler fixtures | [Project](https://github.com/jaslawinMs/aspnetcore/tree/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/harness) |\r\n| Every result, control, regression and allocation | [All three pairs](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/comparison-results.md) |\r\n| Actual tests/builds and retained preparation failures | [Exact commands and outcomes](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/validation-commands.md) |\r\n| Independent fresh-project rebuild, no timing | [Reproduction](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/reproduction-paired-001/verified-reproduction.json) |\r\n| Preimplementation criteria and permanently consumed budget | [Plan](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/acceptance-plan.json), [closed 3/3 budget](https://github.com/jaslawinMs/aspnetcore/blob/a32186c47d357d1298bb7a6dc0499c6923b4ff68/F043/diagnostic-budget.json) |\r\n\r\nBoth versions pass all 59 `RazorPageTest` cases, including each new case-insensitive preservation theory\r\nrow. Actual current-default/original/candidate owners pass 9 public contracts and six real SDK-compiled\r\nproducers at 12 registration/full-render boundaries. Both independently rebuilt consumers repeat\r\nthose observations without timing. This is green/green preservation coverage, not a bug fix.\r\n\r\nAll 576 retained samples are independently recomputed. Only owner DLL/PDB differ between the 264-file\r\nmeasured images. Three selected executable PDB documents are checked, not complete compiler provenance.\r\nManaged validation excludes JS/static-web-assets, native IIS and full-repository builds.\r\nThe budget stays closed; no performance PR, browser launch or upstream publication is warranted.\n\nThe immutable evidence snapshot predates its additive publication receipt. Use the [current case guide](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F043/README.md) for that late receipt; the source, complete results, tests and file manifest stay pinned above. No sealed evidence is rewritten to add tracking metadata.\n",
+  "actualTrackingIssueState": "closed",
+  "actualTrackingIssueStateReason": "not_planned",
+  "actualTrackingIssueTitleAndBodyVerified": true,
+  "actualPerformancePrCreated": false,
+  "actualSourceBranch": "autoperf/F043-razor-section-try-add",
+  "actualSourceCommit": "c486eef54e98f8e982509480019cd55490287193",
+  "actualSourceFilesChanged": [
+    {
+      "path": "src/Mvc/Mvc.Razor/src/RazorPage.cs",
+      "gitBlob": "27f9dce4037c68228765651bafff4526de1a55ad",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "E82CA37267816143F97DDDC6FA18B611A1EE30DCB60160548A89C2C456CD942F"
+    },
+    {
+      "path": "src/Mvc/Mvc.Razor/test/RazorPageTest.cs",
+      "gitBlob": "4f055df5f58572b60b022bd1bbd62c070811113d",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "2D5CCA5513F9CFC55224C0D81833E190A14779544CF39E0B14BF26A47D0E4B25"
+    }
+  ],
+  "actualImmutableEvidenceCommit": "a32186c47d357d1298bb7a6dc0499c6923b4ff68",
+  "actualImmutableEvidenceFiles": 659,
+  "actualVerifiedRemoteImmutableBlobsBeforeIssue": 659,
+  "actualCopiedAuthoritativeFiles": 653,
+  "actualHashedOmittedCompiledRestoreFiles": 1908,
+  "actualIndependentProjectReproduction": {
+    "candidate": "F043",
+    "actualByteExactProjectFiles": 13,
+    "actualFreshProjectRestoredAndRebuilt": true,
+    "actualVariants": [
+      {
+        "variant": "Original",
+        "actualConsumerFiles": 264,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Benchmarks.dll",
+          "AutoPerf.Benchmarks.pdb"
+        ],
+        "actualCharacterizationCases": 9,
+        "actualCompiledProducers": 6,
+        "actualUntimedBoundaries": 12,
+        "actualObservationsIdentical": true
+      },
+      {
+        "variant": "Candidate",
+        "actualConsumerFiles": 264,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Benchmarks.dll",
+          "AutoPerf.Benchmarks.pdb"
+        ],
+        "actualCharacterizationCases": 9,
+        "actualCompiledProducers": 6,
+        "actualUntimedBoundaries": 12,
+        "actualObservationsIdentical": true
+      }
+    ],
+    "actualOwnerAndOtherDependencyBytesIdenticalToEachMeasuredVariant": true,
+    "actualAdditionalTimingSamples": 0,
+    "actualClosedBudgetBytesUnchanged": true,
+    "actualClosedBudgetSha256": "FC4E64AD84EF421F8EB317A82B01F870EB316FD6CFD05667C5503284E3DFFB0E",
+    "actualMeasuredImagesPreserved": true,
+    "actualShippingSourceTestsProtectedFilesAndReportsPreserved": true,
+    "actualExcludedBuildBoundaries": "JS/static-web-assets, native IIS and full-repository builds are not claimed."
+  },
+  "actualEvaluation": {
+    "candidate": "F043",
+    "disposition": "no-gain",
+    "subtype": "primary-control-inconclusive",
+    "recordedAt": "2026-11-18T10:53:48.7725193+00:00",
+    "numericalPrimaryTimingGateMet": true,
+    "allocationGateMet": false,
+    "controlCredibilityGateMet": false,
+    "primaryNoGreaterThanControlComparisons": [
+      1,
+      2
+    ],
+    "medianPrimaryLessTimePercent": 5.212943584893548,
+    "medianUnchangedRegistrationControlLessTimePercent": 4.342792318275601,
+    "reason": "The predeclared two-section primary meets the raw5% numerical timing gate, but in two of three comparisons its apparent gain is no larger than the untouched no-section registration control. With zero primary allocation savings, this does not establish a credible attributable small-primary improvement on the shared machine. The predeclared control/variability gate therefore rejects a performance recommendation.",
+    "scope": "No-gain is the campaign disposition for the declared primary/control decision; it does not mean every measured workload was unchanged.",
+    "secondaryEvidenceRetained": [
+      {
+        "method": "RegisterFreshPage",
+        "profile": "Eight",
+        "medianLessTimePercent": 13.694108777879709,
+        "eachLessTimePercent": [
+          12.245232996756194,
+          13.694108777879709,
+          15.876539549395075
+        ],
+        "eachManagedBytesSaved": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "method": "RegisterFreshPage",
+        "profile": "EightLong",
+        "medianLessTimePercent": 39.88203545161822,
+        "eachLessTimePercent": [
+          40.12994625504499,
+          39.88203545161822,
+          39.424481564405376
+        ],
+        "eachManagedBytesSaved": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "method": "RegisterFreshPage",
+        "profile": "SixtyFour",
+        "medianLessTimePercent": 23.778344078537273,
+        "eachLessTimePercent": [
+          26.60249526512758,
+          22.877610752308353,
+          23.778344078537273
+        ],
+        "eachManagedBytesSaved": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "primaryNotChangedAfterTiming": true,
+    "newPerformancePullRequestWarranted": false,
+    "additionalTimingAuthorized": false
+  },
+  "actualPreimplementationPlanAndBudgetPreserved": true,
+  "actualPrimaryResults": [
+    {
+      "attempt": 1,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 5.212943584893548,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 1,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 148.50414022932802,
+        "medianNs": 146.6549100906124,
+        "standardDeviationNs": 6.910894964274096,
+        "cvPercent": 4.653671576834102,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 2.2448927698553014,
+        "rawGc": [
+          14,
+          0,
+          0,
+          534855264,
+          668562
+        ],
+        "rawResultNsPerOperation": [
+          158.0830947615928,
+          144.25775021613552,
+          149.05206996508926,
+          142.6424923941235,
+          158.27425130354402,
+          143.18036322734466,
+          151.568216560319,
+          140.97488340647539
+        ]
+      },
+      "candidate": {
+        "attempt": 1,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 140.76270317794194,
+        "medianNs": 138.603556326794,
+        "standardDeviationNs": 7.472782602160955,
+        "cvPercent": 5.308780261710667,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.247499209592872,
+        "rawGc": [
+          14,
+          0,
+          0,
+          554148448,
+          692681
+        ],
+        "rawResultNsPerOperation": [
+          141.11676226141614,
+          134.88907592383796,
+          136.904866742411,
+          140.02520640814458,
+          144.60263815522586,
+          157.19515909921017,
+          137.18190624544343,
+          134.18601058784634
+        ]
+      }
+    },
+    {
+      "attempt": 2,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 3.2555375937472486,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 2,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 139.21842779372247,
+        "medianNs": 137.4764753166535,
+        "standardDeviationNs": 5.192161357267404,
+        "cvPercent": 3.7295072495435297,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.26300971284533,
+        "rawGc": [
+          15,
+          0,
+          0,
+          586198464,
+          732741
+        ],
+        "rawResultNsPerOperation": [
+          138.20968118339223,
+          141.88287539526246,
+          135.22909186192666,
+          134.6758267928231,
+          136.11576259551464,
+          150.48223041975268,
+          140.40868465119325,
+          136.74326944991478
+        ]
+      },
+      "candidate": {
+        "attempt": 2,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 134.68611953947396,
+        "medianNs": 132.3852727324609,
+        "standardDeviationNs": 8.219179300313252,
+        "cvPercent": 6.102469451504515,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.2528979904639095,
+        "rawGc": [
+          15,
+          0,
+          0,
+          588758464,
+          735941
+        ],
+        "rawResultNsPerOperation": [
+          132.3789542911728,
+          128.514378190643,
+          137.91567530549324,
+          128.54889182692634,
+          129.4385011841982,
+          134.94655142192104,
+          153.354412921688,
+          132.391591173749
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 6.630474877447856,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 3,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 144.89646817492644,
+        "medianNs": 139.47698962452063,
+        "standardDeviationNs": 13.966617557912333,
+        "cvPercent": 9.639032430418604,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 2.254139786544579,
+        "rawGc": [
+          14,
+          0,
+          0,
+          538197664,
+          672740
+        ],
+        "rawResultNsPerOperation": [
+          178.29703897493832,
+          145.65054850313643,
+          145.27224484942178,
+          139.977182864108,
+          136.77936498498676,
+          138.28128251627672,
+          138.97679638493327,
+          135.93728632161015
+        ]
+      },
+      "candidate": {
+        "attempt": 3,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 135.2891442542787,
+        "medianNs": 133.0918337408313,
+        "standardDeviationNs": 8.028742655304915,
+        "cvPercent": 5.934506201188419,
+        "allocatedBytesPerOperation": 800,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.934995925020375,
+        "rawGc": [
+          16,
+          0,
+          0,
+          613505664,
+          766875
+        ],
+        "rawResultNsPerOperation": [
+          154.30493887530562,
+          132.33825590872047,
+          128.161043194784,
+          130.77359413202933,
+          135.14679706601467,
+          133.2074979625102,
+          132.9761695191524,
+          135.40485737571314
+        ]
+      }
+    }
+  ],
+  "actualControlResults": [
+    {
+      "attempt": 1,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": 5.843977531262623,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 1,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 89.14930287762893,
+        "medianNs": 82.99145625266891,
+        "standardDeviationNs": 13.034074688608543,
+        "cvPercent": 14.620500966227192,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.922180782576081,
+        "rawGc": [
+          18,
+          0,
+          0,
+          699651584,
+          1231778
+        ],
+        "rawResultNsPerOperation": [
+          82.71709674957663,
+          81.71943320955562,
+          89.69895549360355,
+          94.19749337948883,
+          82.90219503839165,
+          83.08071746694615,
+          79.7006441095717,
+          119.17788757389724
+        ]
+      },
+      "candidate": {
+        "attempt": 1,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 83.93943764818303,
+        "medianNs": 83.2914275317838,
+        "standardDeviationNs": 4.36693353775286,
+        "cvPercent": 5.202481289017055,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9300162186925554,
+        "rawGc": [
+          18,
+          0,
+          0,
+          693076888,
+          1220197
+        ],
+        "rawResultNsPerOperation": [
+          84.35859127665451,
+          79.72458545628288,
+          82.90112170411827,
+          83.68173335944934,
+          85.93128814445537,
+          79.11943727119473,
+          93.18347774990431,
+          82.61526622340492
+        ]
+      }
+    },
+    {
+      "attempt": 2,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": 4.342792318275601,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 2,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 78.97924550007758,
+        "medianNs": 77.18881182591883,
+        "standardDeviationNs": 4.6347062343811185,
+        "cvPercent": 5.868258433003852,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9215728360880149,
+        "rawGc": [
+          19,
+          0,
+          0,
+          735667976,
+          1295189
+        ],
+        "rawResultNsPerOperation": [
+          86.02258048825307,
+          76.71613949778758,
+          86.60404002813489,
+          76.25829126096654,
+          75.74060619724226,
+          77.6614841540501,
+          74.8791103074532,
+          77.95171206673312
+        ]
+      },
+      "candidate": {
+        "attempt": 2,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 75.54934089346818,
+        "medianNs": 74.13313534185811,
+        "standardDeviationNs": 4.064436940434117,
+        "cvPercent": 5.379844340621532,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 17,
+        "actualMedianOverheadNsPerOperation": 1.925631667495851,
+        "rawGc": [
+          20,
+          0,
+          0,
+          747804248,
+          1316555
+        ],
+        "rawResultNsPerOperation": [
+          74.25895613931814,
+          74.24596769599447,
+          75.771008427297,
+          73.77739631082636,
+          74.02030298772175,
+          73.02832012335223,
+          85.42651085598399,
+          73.8662646072515
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": 1.0341869241812573,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 3,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 79.70316604202704,
+        "medianNs": 78.6255525658274,
+        "standardDeviationNs": 3.8182821993799423,
+        "cvPercent": 4.790628012652074,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.918844897174707,
+        "rawGc": [
+          19,
+          0,
+          0,
+          709278288,
+          1248720
+        ],
+        "rawResultNsPerOperation": [
+          79.3827279133833,
+          76.42866295086168,
+          81.70006086232301,
+          77.8683772182715,
+          77.43897751297328,
+          76.7729354859376,
+          88.07562944455123,
+          79.95795694791467
+        ]
+      },
+      "candidate": {
+        "attempt": 3,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 78.87888632066192,
+        "medianNs": 76.27889443085238,
+        "standardDeviationNs": 5.011644028397349,
+        "cvPercent": 6.353593796981099,
+        "allocatedBytesPerOperation": 568,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 2.2473487937593584,
+        "rawGc": [
+          20,
+          0,
+          0,
+          756383088,
+          1331658
+        ],
+        "rawResultNsPerOperation": [
+          87.20722587931736,
+          76.53519146807965,
+          73.89397277679404,
+          83.91621572505854,
+          76.02259739362509,
+          82.87878719611192,
+          75.92069435245386,
+          74.65640577385484
+        ]
+      }
+    }
+  ],
+  "actualRawNumericalTimingGateMet": true,
+  "actualControlCredibilityGateMet": false,
+  "actualStrongScaledAndAllAdverseResultsRetained": true,
+  "actualIndividuallyXmlParsedTestsPerVariant": [
+    59,
+    59
+  ],
+  "actualRuntimeRecordsChecked": 22,
+  "actualPerBenchmarkSettingsRecordsChecked": 144,
+  "actualAdditionalTimingSamplesDuringPublication": 0,
+  "actualRecordedBudgetPermanentlyClosed": true,
+  "actualReceiptLinkBoundary": "Immutable evidence predates this additive receipt. The issue links the current guide; all659sealed core files remain unchanged.",
+  "actualPublishedReportBlobUnchanged": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "actualBrowserLaunchRequestedForThisNonPr": false,
+  "campaignFinalizedAfterVerifiedReceipt": 121,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 237,
+  "campaignDispositionCounts": {
+    "drafted": 72,
+    "no-gain": 21,
+    "rejected": 22,
+    "duplicate": 6
+  },
+  "actualCreated": "2026-11-18T11:06:39.594Z"
+}
