@@ -151,7 +151,7 @@ internal sealed class TempData : ITempData
 
     bool ICollection<KeyValuePair<string, object?>>.Remove(KeyValuePair<string, object?> item)
     {
-        if (ContainsKey(item.Key) && Equals(Peek(item.Key), item.Value))
+        if (Data.TryGetValue(item.Key, out var value) && Equals(value, item.Value))
         {
             return Remove(item.Key);
         }

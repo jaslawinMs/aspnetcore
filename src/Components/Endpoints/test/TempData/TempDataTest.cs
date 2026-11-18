@@ -143,6 +143,53 @@ public class TempDataTest
         Assert.False(result);
     }
 
+    [Theory]
+    [InlineData("Message", "hello", true, false, true)]
+    [InlineData("MESSAGE", "hello", true, false, true)]
+    [InlineData("Message", "HELLO", false, true, true)]
+    [InlineData("Message", null, false, true, true)]
+    [InlineData("Null", null, true, true, false)]
+    [InlineData("Null", "hello", false, true, true)]
+    [InlineData("Missing", null, false, true, true)]
+    [InlineData("Missing", "hello", false, true, true)]
+    public void CollectionRemove_UpdatesRetainedValues_WhenFirstAccessTriggersLazyLoad(
+        string key, object value, bool expected, bool messageRetained, bool nullRetained)
+    {
+        var numberOfLoads = 0;
+        var tempData = new TempData(() =>
+        {
+            numberOfLoads++;
+            return new Dictionary<string, object>
+            {
+                ["Message"] = "hello",
+                ["Null"] = null,
+            };
+        });
+        var collection = (ICollection<KeyValuePair<string, object>>)tempData;
+        var item = new KeyValuePair<string, object>(key, value);
+        Assert.False(tempData.WasLoaded);
+        Assert.Equal(0, numberOfLoads);
+
+        var result = collection.Remove(item);
+
+        Assert.Equal(expected, result);
+        Assert.False(collection.Remove(item));
+        var saved = tempData.Save();
+        Assert.True(tempData.WasLoaded);
+        Assert.Equal(1, numberOfLoads);
+        Assert.Equal((messageRetained ? 1 : 0) + (nullRetained ? 1 : 0), saved.Count);
+        Assert.Equal(messageRetained, saved.ContainsKey("Message"));
+        Assert.Equal(nullRetained, saved.ContainsKey("Null"));
+        if (messageRetained)
+        {
+            Assert.Equal("hello", saved["Message"]);
+        }
+        if (nullRetained)
+        {
+            Assert.Null(saved["Null"]);
+        }
+    }
+
     [Fact]
     public void Save_ReturnsOnlyRetainedKeys()
     {
