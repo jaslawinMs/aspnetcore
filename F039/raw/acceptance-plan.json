@@ -1,0 +1,129 @@
+{
+  "candidate": "F039",
+  "actualAuthoredBeforeOwnerEdits": true,
+  "actualOriginalOwnerSha256": "708A888E3CFFE5A46F5A2F1F6192369631D47531924BCAC39C369B7ADF6615F1",
+  "actualAuthoredUtc": "2026-11-18T03:38:51.509Z",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualComparedDefault": "c5baf473f31fa3bbe9f8201e3411361c632f3a91",
+  "actualEighteenSelectedOwnerProducerInterfaceProjectAndTestFilesMatchDefault": true,
+  "actualFullCurrentDefaultBuildOrDependencyMatrixClaimed": false,
+  "scope": "Only ICollection<KeyValuePair<string,object?>>.Contains in Components Endpoints TempData; F040 Remove and unrelated code remain unchanged.",
+  "hypothesis": "Replace ContainsKey plus non-consuming Peek with the private Data dictionary TryGetValue plus the same object.Equals. Never use public IDictionary.TryGetValue, which consumes retained keys.",
+  "behaviorContract": [
+    "Actual public RazorComponentResult and registered cascading ITempData factory must produce the real source-built internal owner; no private constructor invocation, reflection member access, copied dictionary algorithm, new IVT or UnsafeAccessor.",
+    "Use the real registered cookie-provider lazy loader. A recorded actual provider log must show the first dictionary access loads once and subsequent Contains calls do not load again.",
+    "Preserve present-null versus missing-null, case-insensitive keys, case-sensitive/asymmetric/throwing value equality, null-key exception and the number of equality calls.",
+    "Contains must not consume unconsumed values or re-retain previously consumed values. The actual routed canonical sample must preserve/delete the cookie-backed value on the appropriate subsequent request.",
+    "A prepared benchmark lookup must invoke the actual ICollection.Contains slot (except the explicitly named untouched ContainsKey control), return the expected Boolean, and leave the prepared collection intact."
+  ],
+  "workflow": {
+    "sample": "BlazorWebAppPerPage/Components/Pages/F039TempDataProbe.razor",
+    "renderMode": "Static SSR, no interactive render mode; full real browser navigations exercise the actual RazorComponentEndpointInvoker and cookie persistence.",
+    "matrix": {
+      "included": [
+        "Windows x64 .NET12 server-side loaded collection lookup",
+        "Static SSR cookie-backed preservation across actual requests"
+      ],
+      "excluded": [
+        "InteractiveServer/WebAssembly/Auto state transfer",
+        "streaming-cookie persistence",
+        "session-storage provider",
+        "Mono/AOT performance",
+        "whole-app or transport/DOM timing"
+      ]
+    },
+    "originalChecks": [
+      "canonical static-SSR real navigation probe before owner edits",
+      "existing owning TempData unit tests",
+      "all original untimed semantic and benchmark-lifecycle checks"
+    ],
+    "permanentBoundary": {
+      "behaviorOwner": "Managed TempData Data/retained-key state and ICollection.Contains",
+      "producer": "Real registered cascading factory/lazy loader for characterization; actual TempData constructor and first Data access for focused owning managed preservation tests",
+      "observable": "Returned containment result, one actual load, and retained/consumed values in real Save output and the next cookie-backed sample request",
+      "selectedSurface": "Extend existing Endpoints TempDataTest with seam-specific preservation cases after original sample validation; run existing nonquarantined TempDataCookieTest facts for adjacent persistence contracts",
+      "lowerBoundaryFalsePassRisk": "Boolean-only Contains checks would miss a consuming public TryGetValue replacement, so saved-state assertions and actual routed next-request checks are mandatory."
+    },
+    "permanentNewCoverage": [
+      "Contains does not consume on first lazy access",
+      "present/missing null and key/value equality matrix",
+      "Contains does not re-retain an already consumed value"
+    ],
+    "newCoverageIsPreservationNotSemanticBugRedGreen": true,
+    "knownExcludedExistingTest": "TempDataCookieTest.TempDataPersistWithoutAccessing is pre-quarantined by dotnet/aspnetcore#70085; do not remove/override quarantine or count it as a pass.",
+    "cleanup": "Archive and remove only the task-created page after selected permanent tests pass; preserve the four unrelated reports; stop only captured owned helper PIDs."
+  },
+  "benchmarkDesign": {
+    "primary": "Match:12:8",
+    "counts": [
+      0,
+      1,
+      8,
+      64
+    ],
+    "keyLengths": [
+      12,
+      128
+    ],
+    "workloads": [
+      "Match",
+      "Different",
+      "Null",
+      "MissingNull",
+      "ControlContainsKey"
+    ],
+    "profiles": 40,
+    "warmupIterations": 3,
+    "resultIterations": 8,
+    "iterationTimeMilliseconds": 100,
+    "runtime": "12.0.0-alpha.1.26562.105",
+    "sdk": "12.0.100-alpha.1.26557.102",
+    "benchmarkDotNet": "0.13.0",
+    "langVersion": "13.0",
+    "serverGc": true,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "powerPlanMode": "Guid.Empty",
+    "boundary": "Prepared loaded real TempData ICollection.Contains only. DI/rendering/loading/keys/pairs/value preparation, evidence writing and cleanup are outside timing.",
+    "fixture": "Public RazorComponentResult produces the actual owner in a DefaultHttpContext with a memory response and real registered provider. It does not claim endpoint-invoker persistence; the separate canonical sample covers that.",
+    "keyAndValueDetails": "Actual string keys, precomputed case-variant queries and distinct equal string objects; one present-null target; a genuine missing-null query; count-zero profiles are explicitly misses.",
+    "controls": "All empty profiles plus unchanged ContainsKey for each count/key length. String hash seeding remains the runtime default and may differ between native members."
+  },
+  "sourceComparisons": {
+    "maximumAttemptsIncludingFailures": 3,
+    "order": [
+      [
+        "original",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "original"
+      ],
+      [
+        "original",
+        "candidate"
+      ]
+    ],
+    "clearPrimaryLessTimeAtLeast50PercentMayStopAfterOne": true,
+    "otherwiseMaximumThreeThenConclude": true,
+    "sameMeasuredHarnessDllAndPdb": true,
+    "onlyExpectedMeasuredConsumerDelta": [
+      "Microsoft.AspNetCore.Components.Endpoints.dll",
+      "Microsoft.AspNetCore.Components.Endpoints.pdb"
+    ],
+    "settings": "Observe and preserve initial process/thread priority and affinity in every native member and executor; never run the stock priority-changing executor or change VM power/OS/network settings."
+  },
+  "draftAcceptance": {
+    "allApplicableSemanticSourceBuildManagedSampleAndSelectedPermanentChecksMustPass": true,
+    "declaredPrimaryPositiveInEveryCompletedPair": true,
+    "declaredPrimaryMedianLessTimeAtLeastPercent": 5,
+    "noStructuralAllocationSavingClaimWithoutSeparateEvidence": true,
+    "allEmptyMissControlAllocationAndAdverseResultsMustBePublished": true,
+    "anyMissOrControlMedianRegressionAtLeast5PercentRequiresExplicitTradeoffQualification": true,
+    "productionFrequencyAndApplicationSpeedupNotEstablished": true,
+    "noGainOrRejectedGetsTrackingIssueNotArtificialOptimizationPr": true,
+    "forkOnlyDraftAndImmediateBrowserOpenAfterCreation": true,
+    "finalProgressOnlyAfterImmutableAndFourFileReceiptRemoteVerification": true
+  }
+}

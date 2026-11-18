@@ -1,0 +1,21 @@
+commit 2daa22c6508224fcc2f6d0d8fa576d0148545c46
+Author:     Daria Tiurina <dariatiurina@microsoft.com>
+AuthorDate: Wed Aug 12 09:12:08 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Aug 12 09:12:08 2026 +0200
+
+    Simplify and unify TempData and SupplyParameterFromSession serialization (#65483)
+
+diff --git a/src/Components/Endpoints/src/TempData/TempData.cs b/src/Components/Endpoints/src/TempData/TempData.cs
+index 5d2e691e87..c73abd4db0 100644
+--- a/src/Components/Endpoints/src/TempData/TempData.cs
++++ b/src/Components/Endpoints/src/TempData/TempData.cs
+@@ -190,7 +190,7 @@ internal sealed class TempData : ITempData
+             }
+         }
+ 
+-        object IEnumerator.Current => _innerEnumerator.Current;
++        object IEnumerator.Current => Current;
+ 
+         public void Dispose()
+         {

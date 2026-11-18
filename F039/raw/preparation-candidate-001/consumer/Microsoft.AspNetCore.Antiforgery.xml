@@ -1,0 +1,850 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AspNetCore.Antiforgery</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions">
+            <summary>
+            Anti-forgery extension methods for <see cref="T:Microsoft.AspNetCore.Builder.IApplicationBuilder"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery(Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Adds the anti-forgery middleware to the pipeline.
+            </summary>
+            <remarks>
+            <para>
+            The middleware validates anti-forgery tokens only for HTTP POST, PUT, and PATCH requests. Requests
+            using other HTTP methods are skipped.
+            </para>
+            <para>
+            If you need validation for other HTTP methods (for example, DELETE), resolve
+            <see cref="T:Microsoft.AspNetCore.Antiforgery.IAntiforgery"/> and call <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.ValidateRequestAsync(Microsoft.AspNetCore.Http.HttpContext)"/> or
+            <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.IsRequestValidAsync(Microsoft.AspNetCore.Http.HttpContext)"/> in your handler.
+            </para>
+            <para>
+            When using HTTP method override middleware configured to read the method from a form field before this middleware,
+            an incoming POST request can be overridden to another method. Anti-forgery validation still runs when the effective
+            method is POST, PUT, or PATCH, but does not run automatically when the override changes the request to a different
+            method outside that set (for example, DELETE).
+            </para>
+            </remarks>
+            <param name="builder">The <see cref="T:Microsoft.AspNetCore.Builder.IApplicationBuilder"/>.</param>
+            <returns>The app builder.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions">
+            <summary>
+            Provides programmatic configuration for the antiforgery token system.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.DefaultCookiePrefix">
+            <summary>
+            The default cookie prefix, which is ".AspNetCore.Antiforgery.".
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.Cookie">
+            <summary>
+            Determines the settings used to create the antiforgery cookies.
+            </summary>
+            <remarks>
+            <para>
+            If an explicit <see cref="P:Microsoft.AspNetCore.Http.CookieBuilder.Name"/> is not provided, the system will automatically generate a
+            unique name that begins with <see cref="F:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.DefaultCookiePrefix"/>.
+            </para>
+            <list type="bullet">
+            <item><description><see cref="P:Microsoft.AspNetCore.Http.CookieBuilder.SameSite"/> defaults to <see cref="F:Microsoft.AspNetCore.Http.SameSiteMode.Strict"/>.</description></item>
+            <item><description><see cref="P:Microsoft.AspNetCore.Http.CookieBuilder.HttpOnly"/> defaults to <c>true</c>.</description></item>
+            <item><description><see cref="P:Microsoft.AspNetCore.Http.CookieBuilder.IsEssential"/> defaults to <c>true</c>. The cookie used by the antiforgery system
+            is part of a security system that is necessary when using cookie-based authentication. It should be
+            considered required for the application to function.</description></item>
+            <item><description><see cref="P:Microsoft.AspNetCore.Http.CookieBuilder.SecurePolicy"/> defaults to <see cref="F:Microsoft.AspNetCore.Http.CookieSecurePolicy.None"/>.</description></item>
+            </list>
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.FormFieldName">
+            <summary>
+            Specifies the name of the antiforgery token field that is used by the antiforgery system.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.HeaderName">
+            <summary>
+            Specifies the name of the header value that is used by the antiforgery system. If <c>null</c> then
+            antiforgery validation will only consider form data.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.SuppressXFrameOptionsHeader">
+            <summary>
+            Specifies whether to suppress the generation of X-Frame-Options header
+            which is used to prevent ClickJacking. By default, the X-Frame-Options
+            header is generated with the value SAMEORIGIN. If this setting is 'true',
+            the X-Frame-Options header will not be generated for the response.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions.SuppressReadingTokenFromFormBody">
+            <summary>
+            Specifies whether to suppress load of antiforgery token from request body.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet">
+            <summary>
+            The antiforgery token pair (cookie and request token) for a request.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Creates the antiforgery token pair (cookie and request token) for a request.
+            </summary>
+            <param name="requestToken">The token that is supplied in the request.</param>
+            <param name="cookieToken">The token that is supplied in the request cookie.</param>
+            <param name="formFieldName">The name of the form field used for the request token.</param>
+            <param name="headerName">The name of the header used for the request token.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet.RequestToken">
+            <summary>
+            Gets the request token.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet.FormFieldName">
+            <summary>
+            Gets the name of the form field used for the request token.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet.HeaderName">
+            <summary>
+            Gets the name of the header used for the request token.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet.CookieToken">
+            <summary>
+            Gets the cookie token.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException">
+            <summary>
+            The <see cref="T:System.Exception"/> that is thrown when the antiforgery token validation fails.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException.#ctor(System.String)">
+            <summary>
+            Creates a new instance of <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException"/> with the specified
+            exception message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates a new instance of <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException"/> with the specified
+            exception message and inner exception.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="innerException">The inner <see cref="T:System.Exception"/>.</param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.IAntiforgery">
+            <summary>
+            Provides access to the antiforgery system, which provides protection against
+            Cross-site Request Forgery (XSRF, also called CSRF) attacks.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.GetAndStoreTokens(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Generates an <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet"/> for this request and stores the cookie token
+            in the response. This operation also sets the "Cache-control" and "Pragma" headers to "no-cache" and
+            the "X-Frame-Options" header to "SAMEORIGIN".
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet" /> with tokens for the response.</returns>
+            <remarks>
+            This method has a side effect:
+            A response cookie is set if there is no valid cookie associated with the request.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.GetTokens(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Generates an <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet"/> for this request.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet"/> for this request.</returns>
+            <remarks>
+            Unlike <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.GetAndStoreTokens(Microsoft.AspNetCore.Http.HttpContext)"/>, this method has no side effect. The caller
+            is responsible for setting the response cookie and injecting the returned
+            form token as appropriate.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.IsRequestValidAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Asynchronously returns a value indicating whether the request passes antiforgery validation. If the
+            request uses a safe HTTP method (GET, HEAD, OPTIONS, TRACE), the antiforgery token is not validated.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <returns>
+            A <see cref="T:System.Threading.Tasks.Task`1"/> that, when completed, returns <c>true</c> if the request uses a safe HTTP
+            method or contains a valid antiforgery token, otherwise returns <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.ValidateRequestAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Validates an antiforgery token that was supplied as part of the request.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> that completes when validation has completed.</returns>
+            <exception cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException">
+            Thrown when the request does not include a valid antiforgery token.
+            </exception>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.SetCookieTokenAndHeader(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Generates and stores an antiforgery cookie token if one is not available or not valid.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.IAntiforgeryAdditionalDataProvider">
+            <summary>
+            Allows providing or validating additional custom data for antiforgery tokens.
+            For example, the developer could use this to supply a nonce when the token is
+            generated, then validate it when the token is validated.
+            </summary>
+            <remarks>
+            The antiforgery system already embeds the client's username within the
+            generated tokens. This interface provides and consumes <em>supplemental</em>
+            data. If an incoming antiforgery token contains supplemental data but no
+            additional data provider is configured, the supplemental data will not be
+            validated.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryAdditionalDataProvider.GetAdditionalData(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Provides additional data to be stored for the antiforgery tokens generated
+            during this request.
+            </summary>
+            <param name="context">Information about the current request.</param>
+            <returns>Supplemental data to embed within the antiforgery token.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryAdditionalDataProvider.ValidateAdditionalData(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <summary>
+            Validates additional data that was embedded inside an incoming antiforgery
+            token.
+            </summary>
+            <param name="context">Information about the current request.</param>
+            <param name="additionalData">Supplemental data that was embedded within the token.</param>
+            <returns>True if the data is valid; false if the data is invalid.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryFeature">
+            <summary>
+            Used to hold per-request state.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.ValidationFailed(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Antiforgery validation failed with message &apos;{Message}&apos;.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.ValidatedAntiforgeryToken(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Antiforgery successfully validated a request.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.MissingCookieToken(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> The required antiforgery cookie &apos;{CookieName}&apos; is not present.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.MissingRequestToken(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> The required antiforgery request token was not provided in either form field &apos;{FormFieldName}&apos; or header &apos;{HeaderName}&apos;.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.NewCookieToken(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> A new antiforgery cookie token was created.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.ReusedCookieToken(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> An antiforgery cookie token was reused.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.TokenDeserializeException(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> An exception was thrown while deserializing the token.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.ResponseCacheHeadersOverridenToNoCache(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> The &apos;Cache-Control&apos; and &apos;Pragma&apos; headers have been overridden and set to &apos;no-cache, no-store&apos; and &apos;no-cache&apos; respectively to prevent caching of this response. Any response that uses antiforgery should not be cached.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.AntiforgeryLoggerExtensions.FailedToDeserialzeTokens(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Failed to deserialize antiforgery tokens.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery">
+            <summary>
+            Provides access to the antiforgery system, which provides protection against
+            Cross-site Request Forgery (XSRF, also called CSRF) attacks.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.GetAndStoreTokens(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.GetTokens(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.IsRequestValidAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.ValidateRequestAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.SetCookieTokenAndHeader(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgery.SetDoNotCacheHeaders(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Sets the 'Cache-Control' header to 'no-cache, no-store' and 'Pragma' header to 'no-cache' overriding any user set value.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.</param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryAdditionalDataProvider">
+            <summary>
+            A default <see cref="T:Microsoft.AspNetCore.Antiforgery.IAntiforgeryAdditionalDataProvider"/> implementation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryAdditionalDataProvider.GetAdditionalData(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryAdditionalDataProvider.ValidateAdditionalData(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryTokenGenerator.GenerateCookieToken">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryTokenGenerator.GenerateRequestToken(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryTokenGenerator.IsCookieTokenValid(Microsoft.AspNetCore.Antiforgery.AntiforgeryToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.DefaultAntiforgeryTokenGenerator.TryValidateTokenSet(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken,System.String@)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.DefaultClaimUidExtractor">
+            <summary>
+            Default implementation of <see cref="T:Microsoft.AspNetCore.Antiforgery.IClaimUidExtractor"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenGenerator">
+            <summary>
+            Generates and validates antiforgery tokens.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenGenerator.GenerateCookieToken">
+            <summary>
+            Generates a new random cookie token.
+            </summary>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryToken"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenGenerator.GenerateRequestToken(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken)">
+            <summary>
+            Generates a request token corresponding to <paramref name="cookieToken"/>.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <param name="cookieToken">A valid cookie token.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryToken"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenGenerator.IsCookieTokenValid(Microsoft.AspNetCore.Antiforgery.AntiforgeryToken)">
+            <summary>
+            Attempts to validate a cookie token.
+            </summary>
+            <param name="cookieToken">A valid cookie token.</param>
+            <returns><c>true</c> if the cookie token is valid, otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenGenerator.TryValidateTokenSet(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken,Microsoft.AspNetCore.Antiforgery.AntiforgeryToken,System.String@)">
+            <summary>
+            Attempts to validate a cookie and request token set for the given <paramref name="httpContext"/>.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the current request.</param>
+            <param name="cookieToken">A cookie token.</param>
+            <param name="requestToken">A request token.</param>
+            <param name="message">
+            Will be set to the validation message if the tokens are invalid, otherwise <c>null</c>.
+            </param>
+            <returns><c>true</c> if the tokens are valid, otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IAntiforgeryTokenStore.GetRequestTokensAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Gets the cookie and request tokens from the request.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> for the current request.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryTokenSet"/>.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.IClaimUidExtractor">
+            <summary>
+            This interface can extract unique identifiers for a <see cref="T:System.Security.Claims.ClaimsPrincipal"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.IClaimUidExtractor.TryExtractClaimUidBytes(System.Security.Claims.ClaimsPrincipal,System.Span{System.Byte})">
+            <summary>
+            Extracts claims identifier, and writes into <paramref name="destination"/> buffer.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Antiforgery.RequireAntiforgeryTokenAttribute">
+            <summary>
+            An attribute that can be used to indicate whether the antiforgery token must be validated.
+            </summary>
+            <remarks>
+            <para>
+            Validation performed by <see cref="M:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery(Microsoft.AspNetCore.Builder.IApplicationBuilder)"/>
+            only applies to HTTP POST, PUT, and PATCH requests. Endpoints using other HTTP methods are skipped by the
+            middleware even when this attribute is applied.
+            </para>
+            <para>
+            If you need validation for other HTTP methods, resolve <see cref="T:Microsoft.AspNetCore.Antiforgery.IAntiforgery"/> and call
+            <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.ValidateRequestAsync(Microsoft.AspNetCore.Http.HttpContext)"/> or
+            <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.IsRequestValidAsync(Microsoft.AspNetCore.Http.HttpContext)"/> in your handler.
+            </para>
+            </remarks>
+            <param name="required">A value indicating whether the antiforgery token should be validated.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.RequireAntiforgeryTokenAttribute.#ctor(System.Boolean)">
+            <summary>
+            An attribute that can be used to indicate whether the antiforgery token must be validated.
+            </summary>
+            <remarks>
+            <para>
+            Validation performed by <see cref="M:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery(Microsoft.AspNetCore.Builder.IApplicationBuilder)"/>
+            only applies to HTTP POST, PUT, and PATCH requests. Endpoints using other HTTP methods are skipped by the
+            middleware even when this attribute is applied.
+            </para>
+            <para>
+            If you need validation for other HTTP methods, resolve <see cref="T:Microsoft.AspNetCore.Antiforgery.IAntiforgery"/> and call
+            <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.ValidateRequestAsync(Microsoft.AspNetCore.Http.HttpContext)"/> or
+            <see cref="M:Microsoft.AspNetCore.Antiforgery.IAntiforgery.IsRequestValidAsync(Microsoft.AspNetCore.Http.HttpContext)"/> in your handler.
+            </para>
+            </remarks>
+            <param name="required">A value indicating whether the antiforgery token should be validated.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.RequireAntiforgeryTokenAttribute.RequiresValidation">
+            <summary>
+            Gets or sets a value indicating whether the antiforgery token should be validated.
+            </summary>
+            <remarks>
+            Defaults to <see langword="true"/>; <see langword="false"/> indicates that
+            the validation check for the antiforgery token can be avoided.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryTokenValidator_AuthenticatedUserWithoutUsername">
+            <summary>The provided identity of type '{0}' is marked {1} = {2} but does not have a value for {3}. By default, the antiforgery system requires that all authenticated identities have a unique {3}. If it is not possible to provide a unique {3} for this identity, con ...</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgeryTokenValidator_AuthenticatedUserWithoutUsername(System.Object,System.Object,System.Object,System.Object,System.Object,System.Object)">
+            <summary>The provided identity of type '{0}' is marked {1} = {2} but does not have a value for {3}. By default, the antiforgery system requires that all authenticated identities have a unique {3}. If it is not possible to provide a unique {3} for this identity, con ...</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_AdditionalDataCheckFailed">
+            <summary>The provided antiforgery token failed a custom data check.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_ClaimUidMismatch">
+            <summary>The provided antiforgery token was meant for a different claims-based user than the current user.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_UnauthenticatedUser">
+            <summary>The provided antiforgery token was meant for an authenticated user, but the current request is not authenticated.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_DeserializationFailed">
+            <summary>The antiforgery token could not be decrypted.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_SecurityTokenMismatch">
+            <summary>The antiforgery cookie token and request token do not match.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_TokensSwapped">
+            <summary>Validation of the provided antiforgery token failed. The cookie token and the request token were swapped.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_UnableToReadRequest">
+            <summary>Unable to read the antiforgery request token from the posted form.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.AntiforgeryToken_UsernameMismatch">
+            <summary>The provided antiforgery token was meant for user "{0}", but the current user is "{1}".</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgeryToken_UsernameMismatch(System.Object,System.Object)">
+            <summary>The provided antiforgery token was meant for user "{0}", but the current user is "{1}".</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_CookieToken_IsInvalid">
+            <summary>The antiforgery cookie token is invalid.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_CookieToken_MustBeProvided">
+            <summary>The required antiforgery cookie "{0}" is not present.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgery_CookieToken_MustBeProvided(System.Object)">
+            <summary>The required antiforgery cookie "{0}" is not present.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_CookieToken_MustBeProvided_Generic">
+            <summary>The required antiforgery cookie token must be provided.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_FormToken_MustBeProvided">
+            <summary>The required antiforgery form field "{0}" is not present.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgery_FormToken_MustBeProvided(System.Object)">
+            <summary>The required antiforgery form field "{0}" is not present.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_HeaderToken_MustBeProvided">
+            <summary>The required antiforgery header value "{0}" is not present.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgery_HeaderToken_MustBeProvided(System.Object)">
+            <summary>The required antiforgery header value "{0}" is not present.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_RequestToken_MustBeProvided">
+            <summary>The required antiforgery request token was not provided in either form field "{0}" or header value "{1}".</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgery_RequestToken_MustBeProvided(System.Object,System.Object)">
+            <summary>The required antiforgery request token was not provided in either form field "{0}" or header value "{1}".</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_RequestToken_MustBeProvided_Generic">
+            <summary>The required antiforgery request token must be provided.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.Antiforgery_RequiresSSL">
+            <summary>The antiforgery system has the configuration value {optionName} = {value}, but the current request is not an SSL request.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Antiforgery.Resources.FormatAntiforgery_RequiresSSL(System.Object,System.Object)">
+            <summary>The antiforgery system has the configuration value {optionName} = {value}, but the current request is not an SSL request.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Antiforgery.Resources.ArgumentCannotBeNullOrEmpty">
+            <summary>Value cannot be null or empty.</summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Http.MiddlewareInvokedKeys.PostRoutingPipeline">
+            <summary>
+            Key for a Func&lt;RequestDelegate, RequestDelegate&gt; stored in IApplicationBuilder.Properties by WebApplicationBuilder.
+            It composes the framework's implicit post-routing middleware pipeline.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.SafeHttpMethods">
+            <summary>
+            Helpers for identifying HTTP methods that are "safe" and therefore do not require
+            antiforgery/CSRF validation. GET, HEAD, OPTIONS, and TRACE are safe per RFC 9110;
+            QUERY is defined as a safe, idempotent method by RFC 10008.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.SafeHttpMethods.IsSafe(System.String)">
+            <summary>
+            Returns <see langword="true"/> when <paramref name="method"/> is a safe HTTP method
+            that does not require antiforgery/CSRF validation.
+            </summary>
+            <param name="method">The HTTP method name.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.Int7BitEncodingUtils.Read7BitEncodedInt(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <summary>
+            Reads a 7-bit encoded unsigned integer from the source span.
+            </summary>
+            <param name="source">The source span to read from.</param>
+            <param name="value">The decoded value.</param>
+            <returns>The number of bytes consumed from the source span.</returns>
+            <exception cref="T:System.FormatException">Thrown when the encoded value is malformed or exceeds 32 bits.</exception>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.Int7BitEncodingUtils.Write7BitEncodedString(System.Span{System.Byte},System.String)">
+            <summary>
+            Writes a 7-bit length-prefixed UTF-8 encoded string to the target span.
+            </summary>
+            <param name="target">The target span to write to.</param>
+            <param name="value">The string to encode.</param>
+            <returns>The number of bytes written to the target span.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.Int7BitEncodingUtils.Measure7BitEncodedStringLength(System.String)">
+            <summary>
+            Calculates the number of bytes required to write a 7-bit length-prefixed UTF-8 encoded string.
+            </summary>
+            <param name="value">The string to measure.</param>
+            <returns>The number of bytes required.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.Int7BitEncodingUtils.Read7BitEncodedString(System.ReadOnlySpan{System.Byte},System.String@)">
+            <summary>
+            Reads a 7-bit length-prefixed UTF-8 encoded string from the specified byte span and returns the number of bytes consumed.
+            </summary>
+            <param name="bytes">The span of bytes containing the 7-bit encoded length and UTF-8 encoded string data.</param>
+            <param name="value">When this method returns, contains the decoded string value, or <see cref="F:System.String.Empty"/> if the length is zero.</param>
+            <returns>The total number of bytes consumed from <paramref name="bytes"/> to read the string.</returns>
+            <exception cref="T:System.FormatException">Thrown if the encoded length is greater than the available bytes in <paramref name="bytes"/>.</exception>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNull(System.Object,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentNullException"/> if <paramref name="argument"/> is null.</summary>
+            <param name="argument">The reference type argument to validate as non-null.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNullOrEmpty(System.String,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentException"/> if <paramref name="argument"/> is null or empty.</summary>
+            <param name="argument">The <see cref="T:System.String"/> argument to validate as non-null and non-empty.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfZero(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is zero.</summary>
+            <param name="value">The argument to validate as non-zero.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegative(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative.</summary>
+            <param name="value">The argument to validate as non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegative(System.Int64,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative.</summary>
+            <param name="value">The argument to validate as non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegativeOrZero(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative or zero.</summary>
+            <param name="value">The argument to validate as non-zero or non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfGreaterThan``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is greater than <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as less or equal than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfGreaterThanOrEqual``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is greater than or equal <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as less than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfLessThan``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is less than <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as greatar than or equal than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfLessThanOrEqual``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is less than or equal <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as greatar than than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.AntiforgeryServiceCollectionExtensions">
+            <summary>
+            Extension methods for setting up antiforgery services in an <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.AntiforgeryServiceCollectionExtensions.AddAntiforgery(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Adds antiforgery services to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
+            <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> so that additional calls can be chained.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.AntiforgeryServiceCollectionExtensions.AddAntiforgery(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions})">
+            <summary>
+            Adds antiforgery services to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
+            <param name="setupAction">An <see cref="T:System.Action`1"/> to configure the provided <see cref="T:Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions"/>.</param>
+            <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> so that additional calls can be chained.</returns>
+        </member>
+        <member name="F:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.WebEncoders_InvalidCountOffsetOrLength">
+            <summary>
+            Invalid {0}, {1} or {2} length.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.WebEncoders_MalformedInput">
+            <summary>
+            Malformed input: {0} is an invalid input length.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.FormatWebEncoders_InvalidCountOffsetOrLength(System.Object,System.Object,System.Object)">
+            <summary>
+            Invalid {0}, {1} or {2} length.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.FormatWebEncoders_MalformedInput(System.Object)">
+            <summary>
+            Malformed input: {0} is an invalid input length.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Extensions.Internal.WebEncoders">
+            <summary>
+            Contains utility APIs to assist with common encoding and decoding operations.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Extensions.Internal.WebEncoders.s_base64vsBase64UrlDifferentiators">
+            <summary>SearchValues for the two Base64 and two Base64Url chars that differ from each other.</summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String)">
+            <summary>
+            Decodes a base64url-encoded string.
+            </summary>
+            <param name="input">The base64url-encoded input to decode.</param>
+            <returns>The base64url-decoded form of the input.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Int32)">
+            <summary>
+            Decodes a base64url-encoded substring of a given string.
+            </summary>
+            <param name="input">A string containing the base64url-encoded input to decode.</param>
+            <param name="offset">The position in <paramref name="input"/> at which decoding should begin.</param>
+            <param name="count">The number of characters in <paramref name="input"/> to decode.</param>
+            <returns>The base64url-decoded form of the input.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Decodes a base64url-encoded <paramref name="input"/> into a <c>byte[]</c>.
+            </summary>
+            <param name="input">A string containing the base64url-encoded input to decode.</param>
+            <param name="offset">The position in <paramref name="input"/> at which decoding should begin.</param>
+            <param name="buffer">
+            Scratch buffer to hold the <see cref="T:System.Char"/>s to decode. Array must be large enough to hold
+            <paramref name="bufferOffset"/> and <paramref name="count"/> characters as well as Base64 padding
+            characters. Content is not preserved.
+            </param>
+            <param name="bufferOffset">
+            The offset into <paramref name="buffer"/> at which to begin writing the <see cref="T:System.Char"/>s to decode.
+            </param>
+            <param name="count">The number of characters in <paramref name="input"/> to decode.</param>
+            <returns>The base64url-decoded form of the <paramref name="input"/>.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Span{System.Byte})">
+            <summary>
+            Decodes a base64url-encoded <paramref name="input"/> into <paramref name="output"/>.
+            </summary>
+            <param name="input">The base64url-encoded input to decode.</param>
+            <param name="output">The buffer to receive the decoded bytes.</param>
+            <returns>The number of bytes written to <paramref name="output"/>.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.GetArraySizeRequiredToDecode(System.Int32)">
+            <summary>
+            Gets the minimum <c>char[]</c> size required for decoding of <paramref name="count"/> characters
+            with the <see cref="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Char[],System.Int32,System.Int32)"/> method.
+            </summary>
+            <param name="count">The number of characters to decode.</param>
+            <returns>
+            The minimum <c>char[]</c> size required for decoding  of <paramref name="count"/> characters.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[])">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="offset">The offset into <paramref name="input"/> at which to begin encoding.</param>
+            <param name="count">The number of bytes from <paramref name="input"/> to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="offset">The offset into <paramref name="input"/> at which to begin encoding.</param>
+            <param name="output">
+            Buffer to receive the base64url-encoded form of <paramref name="input"/>. Array must be large enough to
+            hold <paramref name="outputOffset"/> characters and the full base64-encoded form of
+            <paramref name="input"/>, including padding characters.
+            </param>
+            <param name="outputOffset">
+            The offset into <paramref name="output"/> at which to begin writing the base64url-encoded form of
+            <paramref name="input"/>.
+            </param>
+            <param name="count">The number of <c>byte</c>s from <paramref name="input"/> to encode.</param>
+            <returns>
+            The number of characters written to <paramref name="output"/>, less any padding characters.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.GetArraySizeRequiredToEncode(System.Int32)">
+            <summary>
+            Get the minimum output <c>char[]</c> size required for encoding <paramref name="count"/>
+            <see cref="T:System.Byte"/>s with the <see cref="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Char[],System.Int32,System.Int32)"/> method.
+            </summary>
+            <param name="count">The number of characters to encode.</param>
+            <returns>
+            The minimum output <c>char[]</c> size required for encoding <paramref name="count"/> <see cref="T:System.Byte"/>s.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char})">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="output">The buffer to place the result in.</param>
+            <returns></returns>
+        </member>
+        <member name="T:System.Buffers.RefPooledArrayBufferWriter`1">
+            <summary>
+            A high-performance struct-based IBufferWriter&lt;byte&gt; implementation that uses ArrayPool for allocations.
+            Designed for zero-allocation scenarios when used with generic methods via `allows ref struct` constraint.
+            </summary>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.#ctor(System.Span{`0})">
+            <summary>
+            Initializes the <see cref="T:System.Buffers.RefPooledArrayBufferWriter`1"/> with initial buffer. 
+            </summary>
+            <param name="initialBuffer">The initial buffer to start writer with.</param>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.Dispose">
+            <summary>
+            Clears the buffer contents and returns the rented array to the ArrayPool.
+            This must be called to properly clean up resources.
+            </summary>
+        </member>
+        <member name="P:System.Buffers.RefPooledArrayBufferWriter`1.WrittenSpan">
+            <summary>
+            Gets a span of the written data.
+            </summary>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.GetMemory(System.Int32)">
+            <summary>
+            Gets a memory segment representing the available space for writing.
+            </summary>
+            <param name="sizeHint">A hint about the minimum size needed. Ignored in this implementation as resizing is not performed.</param>
+            <returns>A Memory&lt;byte&gt; segment for the available space.</returns>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.GetSpan(System.Int32)">
+            <summary>
+            Gets a span representing the available space for writing.
+            </summary>
+            <param name="sizeHint">A hint about the minimum size needed. Ignored in this implementation as resizing is not performed.</param>
+            <returns>A Span&lt;byte&gt; for the available space.</returns>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.Advance(System.Int32)">
+            <summary>
+            Advances the write position by the specified count.
+            </summary>
+            <param name="count">The number of bytes written.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown if count is negative.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown if advancing would exceed buffer capacity.</exception>
+        </member>
+    </members>
+</doc>

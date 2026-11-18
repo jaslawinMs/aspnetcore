@@ -1,0 +1,2203 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AspNetCore.Components.Endpoints</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AspNetCore.Components.ImportMap">
+            <summary>
+            Represents an <c><script type="importmap"></script></c> element that defines the import map for module scripts
+            in the application.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMap.HttpContext">
+            <summary>
+            Gets or sets the <see cref="P:Microsoft.AspNetCore.Components.ImportMap.HttpContext"/> for the component.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMap.ImportMapDefinition">
+            <summary>
+            Gets or sets the import map definition to use for the component. If not set
+            the component will generate the import map based on the assets defined for this
+            application.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMap.AdditionalAttributes">
+            <summary>
+            Gets or sets a collection of additional attributes that will be applied to the created <c>script</c> element.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.ImportMapDefinition">
+            <summary>
+            Represents the contents of a <c><script type="importmap"></script></c> element that defines the import map
+            for module scripts in the application.
+            </summary>
+            <remarks>
+            The import map is a JSON object that defines the mapping of module import specifiers to URLs.
+            <see cref="T:Microsoft.AspNetCore.Components.ImportMapDefinition"/> instances are expensive to create, so it is recommended to cache them if
+            you are creating an additional instance.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapDefinition.#ctor(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String}},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.ImportMapDefinition"/>."/> with the specified imports, scopes, and integrity.
+            </summary>
+            <param name="imports">The unscoped imports defined in the import map.</param>
+            <param name="scopes">The scoped imports defined in the import map.</param>
+            <param name="integrity">The integrity for the imports defined in the import map.</param>
+            <remarks>
+            The <paramref name="imports"/>, <paramref name="scopes"/>, and <paramref name="integrity"/> parameters
+            will be copied into the new instance. The original collections will not be modified.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapDefinition.FromResourceCollection(Microsoft.AspNetCore.Components.ResourceAssetCollection)">
+            <summary>
+            Creates an import map from a <see cref="T:Microsoft.AspNetCore.Components.ResourceAssetCollection"/>.
+            </summary>
+            <param name="assets">The collection of assets to create the import map from.</param>
+            <returns>The import map.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapDefinition.Combine(Microsoft.AspNetCore.Components.ImportMapDefinition[])">
+            <summary>
+            Combines one or more import maps into a single import map.
+            </summary>
+            <param name="sources">The list of import maps to combine.</param>
+            <returns>
+            A new import map that is the combination of all the input import maps with their
+            entries applied in order.
+            </returns>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapDefinition.Imports">
+            <summary>
+            Gets the unscoped imports defined in the import map.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapDefinition.Scopes">
+            <summary>
+            Gets the scoped imports defined in the import map.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapDefinition.Integrity">
+            <summary>
+            Gets the integrity properties defined in the import map.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapDefinition.ToString">
+            <inheritdoc />
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.ImportMapDefinition">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.IReadOnlyDictionaryStringIReadOnlyDictionaryStringString">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.IReadOnlyDictionaryStringString">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.String">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.Default">
+            <summary>
+            The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext"/> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions"/> instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ImportMapSerializerContext.GeneratedSerializerOptions">
+            <summary>
+            The source-generated options associated with this context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapSerializerContext.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapSerializerContext.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ImportMapSerializerContext.GetTypeInfo(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.ResourcePreloader">
+            <summary>
+            Represents a component that renders preload link elements for resources.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.BrowserOptions">
+            <summary>
+            Options that flow from the server to the Blazor client in the browser
+            via a DOM comment. Only serializable options are included; callbacks stay
+            with JS initializers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.BrowserOptions.LogLevel">
+            <summary>
+            Gets or sets the log level for the Blazor JS runtime. Applies to all render modes.
+            Maps to <c>WebStartOptions.logLevel</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.BrowserOptions.InteractiveWebAssembly">
+            <summary>Gets the interactive WebAssembly-specific options.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.BrowserOptions.InteractiveServer">
+            <summary>Gets the interactive server (circuit) specific options.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.BrowserOptions.StaticServer">
+            <summary>Gets the static server (SSR) specific options.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.BrowserOptions.GetBrowserOptions(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Gets the <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/> for the current request.
+            If not already set, seeds from endpoint metadata or creates a new instance.
+            </summary>
+            <param name="context">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/> for the current request.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.ConfigureBrowser">
+            <summary>
+            A component that configures the Blazor browser runtime by merging
+            options into the <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/> on the current
+            <see cref="P:Microsoft.AspNetCore.Components.ConfigureBrowser.HttpContext"/>. The merged options are emitted as
+            a <c>&lt;!--Blazor-Configuration:{...}--&gt;</c> DOM comment by the renderer.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ConfigureBrowser.Options">
+            <summary>
+            Gets or sets the <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/> to merge.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.InteractiveServerBrowserOptions">
+            <summary>
+            Serializable subset of <c>CircuitStartOptions</c> for the interactive server render mode.
+            Non-serializable options (<c>configureSignalR</c>, <c>reconnectionHandler</c>,
+            <c>circuitHandlers</c>) must use <c>Blazor.start()</c> or JS initializers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveServerBrowserOptions.ReconnectionMaxRetries">
+            <summary>
+            Gets or sets the maximum reconnection attempts before giving up.
+            Maps to <c>CircuitStartOptions.reconnectionOptions.maxRetries</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveServerBrowserOptions.ReconnectionRetryInterval">
+            <summary>
+            Gets or sets the base interval between reconnection attempts (scalar form).
+            The function form <c>(retryCount, currentMs) => number</c> requires JS.
+            Maps to <c>CircuitStartOptions.reconnectionOptions.retryIntervalMilliseconds</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveServerBrowserOptions.ReconnectionDialogId">
+            <summary>
+            Gets or sets the CSS ID of the reconnection dialog element.
+            Maps to <c>CircuitStartOptions.reconnectionOptions.dialogId</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveServerBrowserOptions.Extensions">
+            <summary>
+            Gets additional library-provided configuration that is serialized alongside the
+            known options and flows to the client circuit start options. Libraries (for example
+            the auto-pause package) populate their own key here so they can read it from a
+            JavaScript initializer without the core runtime needing to know about them.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.InteractiveWebAssemblyBrowserOptions">
+            <summary>
+            Serializable subset of <c>WebAssemblyStartOptions</c>.
+            Non-serializable options (<c>loadBootResource</c>, <c>configureRuntime</c>,
+            <c>initializers</c>) must use <c>Blazor.start()</c> or JS initializers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveWebAssemblyBrowserOptions.EnvironmentName">
+            <summary>
+            Gets or sets the hosting environment name (e.g., "Development", "Production").
+            Maps to <c>WebAssemblyStartOptions.environment</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveWebAssemblyBrowserOptions.ApplicationCulture">
+            <summary>
+            Gets or sets the application culture in BCP 47 format (e.g., "en-US").
+            Maps to <c>WebAssemblyStartOptions.applicationCulture</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.InteractiveWebAssemblyBrowserOptions.EnvironmentVariables">
+            <summary>
+            Gets the environment variables for the .NET WebAssembly runtime.
+            Use for OTEL endpoints, service URLs, etc.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.StaticServerBrowserOptions">
+            <summary>
+            Serializable subset of <c>SsrStartOptions</c> for the static server render mode.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.StaticServerBrowserOptions.PreserveDom">
+            <summary>
+            Gets or sets a value indicating whether the DOM is preserved during enhanced navigation.
+            When <see langword="false"/>, DOM preservation is disabled. <see langword="null"/> leaves the value unset.
+            Maps to <c>SsrStartOptions.disableDomPreservation</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.StaticServerBrowserOptions.CircuitInactivityTimeout">
+            <summary>
+            Gets or sets the timeout before an inactive circuit is disposed.
+            Maps to <c>SsrStartOptions.circuitInactivityTimeoutMs</c>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.ComponentEndpointConventionBuilderHelper">
+            <summary>
+            This type is not recommended for use outside of the Blazor framework.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.ComponentEndpointConventionBuilderHelper.AddRenderMode(Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder,Microsoft.AspNetCore.Components.IComponentRenderMode)">
+            <summary>
+            This method is not recommended for use outside of the Blazor framework.
+            </summary>
+            <param name="builder"></param>
+            <param name="renderMode"></param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.ComponentEndpointConventionBuilderHelper.GetEndpointRouteBuilder(Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder)">
+            <summary>
+            This method is not recommended for use outside of the Blazor framework.
+            </summary>
+            <param name="builder"></param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.RenderModeEndpointProvider">
+            <summary>
+            A provider that can register endpoints to support a specific <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.RenderModeEndpointProvider.Supports(Microsoft.AspNetCore.Components.IComponentRenderMode)">
+            <summary>
+            Determines whether this <see cref="T:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.RenderModeEndpointProvider"/> supports the specified <paramref name="renderMode"/>.
+            </summary>
+            <param name="renderMode">The <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/>.</param>
+            <returns><c>true</c> if the <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/> is supported; <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Infrastructure.RenderModeEndpointProvider.GetEndpointBuilders(Microsoft.AspNetCore.Components.IComponentRenderMode,Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Gets the endpoints for the specified <paramref name="renderMode"/>.
+            </summary>
+            <param name="renderMode">The <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/>.</param>
+            <param name="applicationBuilder">The <see cref="T:Microsoft.AspNetCore.Builder.IApplicationBuilder"/> used to configure non endpoint aware endpoints.</param>
+            <returns>The list of endpoints this provider is registering.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata">
+            <summary>
+            Metadata that represents the component associated with an endpoint.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata"/>.
+            </summary>
+            <param name="componentType">The component type.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata.Type">
+            <summary>
+            Gets the component type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.OpaqueRedirection.Log.OpaqueUrlUnprotectionFailed(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.OpaqueRedirection},System.Exception)">
+            <summary>
+            <para><b>Message:</b> Opaque URL unprotection failed.</para>
+            <para><b>Level:</b> Information</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.RazorComponentDataSourceOptions">
+            <summary>
+            Options associated with the endpoints defined by the components in the
+            given <see cref="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointRouteBuilderExtensions.MapRazorComponents``1(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)"/>
+            invocation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.ResourceAsset">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.ResourceAssetCollection">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.ResourceAssetProperty">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.IReadOnlyListResourceAsset">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.IReadOnlyListResourceAssetProperty">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.String">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.Default">
+            <summary>
+            The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext"/> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions"/> instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.GeneratedSerializerOptions">
+            <summary>
+            The source-generated options associated with this context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ResourceCollectionUrlEndpoint.ResourceCollectionSerializerContext.GetTypeInfo(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.RootComponentMetadata">
+            <summary>
+            Metadata that represents the root component associated with an endpoint.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.RootComponentMetadata.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.Endpoints.RootComponentMetadata"/>.
+            </summary>
+            <param name="rootComponentType">The component type.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RootComponentMetadata.Type">
+            <summary>
+            Gets the component type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CacheViewService.Log.BoundaryReRenderingFresh(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> CacheView with cache key &apos;{Key}&apos; re-rendered within the same request but no cached content was available; rendering its child content fresh.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CacheViewService.Log.BoundaryReRenderFromFaultedResolution(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> CacheView with cache key &apos;{Key}&apos; re-rendered within the same request but its original resolution faulted; rendering its child content fresh.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CacheViewService.Log.RestoreFromCacheFailed(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Failed to restore CacheView from cached data. Falling back to fresh render.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CacheViewService.Log.PersistFailed(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Failed to persist CacheView entry for key &apos;{Key}&apos;.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.MemoryCacheViewStore.Log.StoreEntryFailed(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Failed to store CacheView entry for key &apos;{Key}&apos;.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer">
+            <summary>
+            A service that can prerender Razor Components as HTML.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer.PrerenderComponentAsync(Microsoft.AspNetCore.Http.HttpContext,System.Type,Microsoft.AspNetCore.Components.IComponentRenderMode,Microsoft.AspNetCore.Components.ParameterView)">
+            <summary>
+            Prerenders a Razor Component as HTML.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.</param>
+            <param name="componentType">The type of component to prerender. This must implement <see cref="T:Microsoft.AspNetCore.Components.IComponent"/>.</param>
+            <param name="renderMode">The mode in which to prerender the component.</param>
+            <param name="parameters">Parameters for the component.</param>
+            <returns>A task that completes with the prerendered content.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer.PrerenderPersistedStateAsync(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Components.PersistedStateSerializationMode)">
+            <summary>
+            Prepares a serialized representation of any component state that is persistible within the current request.
+            </summary>
+            <param name="httpContext">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.</param>
+            <param name="serializationMode">The <see cref="T:Microsoft.AspNetCore.Components.PersistedStateSerializationMode"/>.</param>
+            <returns>A task that completes with the prerendered state content.</returns>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer.Dispatcher">
+            <summary>
+            Gets a <see cref="P:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer.Dispatcher"/> that should be used for calls to <see cref="M:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer.PrerenderComponentAsync(Microsoft.AspNetCore.Http.HttpContext,System.Type,Microsoft.AspNetCore.Components.IComponentRenderMode,Microsoft.AspNetCore.Components.ParameterView)"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.ITempDataProvider">
+            <summary>
+            Provides an abstraction for a provider that stores and retrieves temporary data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ITempDataProvider.LoadTempData(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Loads temporary data from the given <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.ITempDataProvider.SaveTempData(Microsoft.AspNetCore.Http.HttpContext,System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Saves temporary data to the given <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions">
+            <summary>
+            Provides options for configuring server-side rendering of Razor Components.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.DetailedErrors">
+            <summary>
+            Gets or sets a value that determines whether to include detailed information on errors.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.DisableClientValidation">
+            <summary>
+            Gets or sets a value that determines whether client-side validation is disabled for all
+            forms rendered with static server-side rendering. When <see langword="false"/> (the default),
+            forms using <see cref="T:Microsoft.AspNetCore.Components.Forms.DataAnnotationsValidator"/> emit
+            client-side validation rules so user errors can be reported without a round trip to the
+            server. When <see langword="true"/>, no client-side validation rules are emitted and only
+            server-side validation runs.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.MaxFormMappingCollectionSize">
+            <summary>
+            Gets or sets the maximum number of elements allowed in a form collection.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.MaxFormMappingRecursionDepth">
+            <summary>
+            Gets or sets the maximum depth allowed when recursively mapping form data.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.MaxFormMappingErrorCount">
+            <summary>
+            Gets or sets the maximum number of errors allowed when mapping form data.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.MaxFormMappingKeySize">
+            <summary>
+            Gets or sets the maximum size of the buffer used to read form data keys.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.TemporaryRedirectionUrlValidityDuration">
+            <summary>
+            Gets or sets the lifetime of data protection validity for temporary redirection URLs
+            emitted by Blazor server-side rendering. These are only used transiently so the lifetime
+            only needs to be long enough for a client to receive the URL and begin navigation to it.
+            However, it should also be long enough to allow for clock skew across servers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.TempDataCookie">
+            <summary>
+            Determines the settings used to create the TempData cookie.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.TempDataProviderType">
+            <summary>
+            Gets or sets the storage provider type for TempData.
+            Defaults to <see cref="F:Microsoft.AspNetCore.Components.Endpoints.TempDataProviderType.Cookie"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.CacheViewSizeLimit">
+            <summary>
+            Gets or sets the maximum size, in bytes, of the in-memory cache used by <see cref="T:Microsoft.AspNetCore.Components.CacheView"/>
+            for server-side rendering. When the limit is reached, no new entries are cached until
+            existing entries expire. Defaults to 100 MB. A value of 0 configures a zero-byte
+            cache size limit, so entries are not cached.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions.CacheViewHybridCache">
+            <summary>
+            Gets or sets the <see cref="T:Microsoft.Extensions.Caching.Hybrid.HybridCache"/> used by <see cref="T:Microsoft.AspNetCore.Components.CacheView"/> for server-side
+            rendering. When left unset, the registered <see cref="T:Microsoft.Extensions.Caching.Hybrid.HybridCache"/> service is used if one is
+            available; otherwise the in-memory store is used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.TempDataService.Log.CookieTempDataNotPersistedAfterResponseStarted(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> TempData values written during or after streaming SSR cannot be persisted by the cookie TempData provider because the response has already started. Switch to the session-storage TempData provider (RazorComponentsServiceOptions.TempDataProviderType = TempDataProviderType.SessionStorage) to enable persistence in streaming SSR scenarios.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataMapper.Log.CannotResolveConverter(Microsoft.Extensions.Logging.ILogger,System.Type,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Cannot resolve converter for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.StartResolveMetadataGraph(Microsoft.Extensions.Logging.ILogger,System.Type)">
+            <summary>
+            <para><b>Message:</b> Begin resolve metadata graph for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.EndResolveMetadataGraph(Microsoft.Extensions.Logging.ILogger,System.Type)">
+            <summary>
+            <para><b>Message:</b> End resolve metadata graph for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.MetadataFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Cached metadata found for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.NoMetadataFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> No cached metadata graph for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.RecursiveTypeFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type,System.String)">
+            <summary>
+            <para><b>Message:</b> Recursive type &apos;{Type}&apos; found in the resolution graph &apos;{Chain}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.PrimitiveType(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> &apos;{Type}&apos; identified as primitive.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.DictionaryType(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> &apos;{Type}&apos; identified as dictionary.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.CollectionType(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> &apos;{Type}&apos; identified as collection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.ObjectType(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> &apos;{Type}&apos; identified as object.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.ConstructorFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type,System.String)">
+            <summary>
+            <para><b>Message:</b> Constructor found for type &apos;{Type}&apos; with parameters &apos;{Parameters}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.ConstructorParameter(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type,System.String,System.Type)">
+            <summary>
+            <para><b>Message:</b> Constructor parameter &apos;{Name}&apos; of type &apos;{ParameterType}&apos; found for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.CandidateProperty(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String,System.Type)">
+            <summary>
+            <para><b>Message:</b> Candidate property &apos;{Name}&apos; of type &apos;{PropertyType}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.MatchingConstructorParameterFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Candidate property {PropertyName} has a matching constructor parameter &apos;{ConstructorParameterName}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.CustomParameterNameMetadata(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Candidate property or constructor parameter {PropertyName} defines a custom name &apos;{CustomName}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.IgnoredProperty(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String)">
+            <summary>
+            <para><b>Message:</b> Candidate property {Name} will not be mapped. It has been explicitly ignored.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.NonPublicSetter(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String)">
+            <summary>
+            <para><b>Message:</b> Candidate property {Name} will not be mapped. It has no public setter.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.PropertyRequired(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.String)">
+            <summary>
+            <para><b>Message:</b> Candidate property {Name} is marked as required.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.MetadataComputed(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Metadata created for {Type}.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.GenericTypeDefinitionNotSupported(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Can not map type generic type definition &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.MultiplePublicConstructorsFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Unable to select a constructor. Multiple public constructors found for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.InterfacesNotSupported(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Can not map interface type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.AbstractClassesNotSupported(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Can not map abstract type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.NoPublicConstructorFound(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type)">
+            <summary>
+            <para><b>Message:</b> Unable to select a constructor. No public constructors found for type &apos;{Type}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.ConstructorParameterTypeNotSupported(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type,System.String,System.Type)">
+            <summary>
+            <para><b>Message:</b> Can not map type &apos;{Type}&apos;. Constructor parameter {Name} of type {ParameterType} is not supported.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.PropertyTypeNotSupported(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory},System.Type,System.String,System.Type)">
+            <summary>
+            <para><b>Message:</b> Can not map type &apos;{Type}&apos;. Property {Name} of type {PropertyType} is not supported.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.__ConstructorParameterStruct">
+            <summary> This API supports the logging infrastructure and is not intended to be used directly from your code. It is subject to change in the future. </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.__MatchingConstructorParameterFoundStruct">
+            <summary> This API supports the logging infrastructure and is not intended to be used directly from your code. It is subject to change in the future. </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.FormMapping.Metadata.FormDataMetadataFactory.Log.__CustomParameterNameMetadataStruct">
+            <summary> This API supports the logging infrastructure and is not intended to be used directly from your code. It is subject to change in the future. </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.DictionaryUnparsableKey">
+            <summary>The value '{0}' is not a valid key for '{1}'.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.FormatDictionaryUnparsableKey(System.Object,System.Object)">
+            <summary>The value '{0}' is not a valid key for '{1}'.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.EnumMappingError">
+            <summary>The value '{0}' is not valid for '{1}'.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.FormatEnumMappingError(System.Object,System.Object)">
+            <summary>The value '{0}' is not valid for '{1}'.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.MappingExceptionMessage">
+            <summary>An error occurred while trying to map a value from form data. For more details, see the 'Error' property and the 'InnerException' property.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.MaxCollectionSizeReached">
+            <summary>The number of elements in the {0} exceeded the maximum number of '{1}' elements allowed.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.FormatMaxCollectionSizeReached(System.Object,System.Object)">
+            <summary>The number of elements in the {0} exceeded the maximum number of '{1}' elements allowed.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.ParsableMappingError">
+            <summary>The value '{0}' is not valid for '{1}'.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.FormMapping.FormDataResources.FormatParsableMappingError(System.Object,System.Object)">
+            <summary>The value '{0}' is not valid for '{1}'.</summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.IRazorComponentEndpointInvoker">
+            <summary>
+            Invokes a Razor component endpoint to render the given root component and populates the
+            <see cref="T:Microsoft.AspNetCore.Components.Routing.IRoutingStateProvider"/> with the given metadata (if any) to render a given
+            page.
+            </summary>
+            <remarks>
+            Razor component endpoints provide the root component via the <see cref="T:Microsoft.AspNetCore.Components.Endpoints.RootComponentMetadata"/>
+            metadata in the endpoint.
+            The page component is provided via the <see cref="T:Microsoft.AspNetCore.Components.Endpoints.ComponentTypeMetadata"/>.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.IRazorComponentEndpointInvoker.Render(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Invokes the Razor component endpoint.
+            </summary>
+            <param name="context">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> for the current request.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> that completes when the endpoint has been invoked and the component
+            has been rendered into the response.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointHost">
+             <summary>
+             Internal component type that acts as a root component when executing a Razor Component endpoint. It takes
+             care of rendering the component inside its hierarchy of layouts (via LayoutView) as well as converting
+             any information we want into component parameters. We could also use this to supply other data from the
+             original HttpContext as component parameters, e.g., for model binding.
+            
+             It happens to be almost the same as RouteView except it doesn't supply any query parameters. We can
+             resolve that at the same time we implement support for form posts.
+             </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.Log.BeginRenderRootComponent(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker},System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Begin render root component &apos;{componentType}&apos; with page &apos;{pageType}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.Log.MiddlewareAntiforgeryValidationFailed(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker})">
+            <summary>
+            <para><b>Message:</b> The antiforgery middleware already failed to validate the current token.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.Log.MiddlewareAntiforgeryValidationSucceeded(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker})">
+            <summary>
+            <para><b>Message:</b> The antiforgery middleware already succeeded to validate the current token.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.Log.InteractivityDisabledForErrorHandling(Microsoft.Extensions.Logging.ILogger{Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker})">
+            <summary>
+            <para><b>Message:</b> Error handling in progress. Interactive components are not enabled.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.Boolean">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.NullableBoolean">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.BrowserOptions">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.InteractiveServerBrowserOptions">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.InteractiveWebAssemblyBrowserOptions">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.StaticServerBrowserOptions">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.LogLevel">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.NullableLogLevel">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.IDictionaryStringJsonElement">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.IDictionaryStringString">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.JsonElement">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.TimeSpan">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.NullableTimeSpan">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.Int32">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.NullableInt32">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.String">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.Default">
+            <summary>
+            The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext"/> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions"/> instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.GeneratedSerializerOptions">
+            <summary>
+            The source-generated options associated with this context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.BrowserOptionsJsonContext.GetTypeInfo(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.EndpointComponentState.UpdateApplication(System.Type[])">
+            <summary>
+            MetadataUpdateHandler event. This is invoked by the hot reload host via reflection.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.EndpointHtmlRenderer">
+             <summary>
+             A <see cref="T:Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure.StaticHtmlRenderer"/> subclass which is also the implementation of the
+             <see cref="T:Microsoft.AspNetCore.Components.Endpoints.IComponentPrerenderer"/> DI service. This is the underlying mechanism shared by:
+            
+             * Html.RenderComponentAsync (the earliest prerendering mechanism - a Razor HTML helper)
+             * ComponentTagHelper (the primary prerendering mechanism before .NET 8)
+             * RazorComponentResult and RazorComponentEndpoint (the primary prerendering mechanisms since .NET 8)
+            
+             EndpointHtmlRenderer wraps the underlying <see cref="T:Microsoft.AspNetCore.Components.Web.HtmlRenderer"/> mechanism, annotating the
+             output with prerendering markers so the content can later switch into interactive mode when used with
+             blazor.*.js. It also deals with initializing the standard component DI services once per request.
+             </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.EndpointHtmlRenderer.Assets">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.SSRRenderModeBoundary">
+            <summary>
+            A component that describes a location in prerendered output where client-side code
+            should insert an interactive component.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SSRRenderModeBoundary.GetComponentMarkerKey(System.Int32,System.Object)">
+            <summary>
+            Gets the ComponentMarkerKey for this boundary if it has been computed.
+            This is used for state persistence across render modes.
+            </summary>
+            <returns>The ComponentMarkerKey if available, null otherwise.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionCascadingValueSupplier.Log.SessionPersistFail(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Persisting of the session element failed.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionCascadingValueSupplier.Log.SessionDeserializeFail(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Deserialization of the element from session failed.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionCascadingValueSupplier.Log.SessionUnavailable(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> No active HttpContext is available (interactive rendering); [SupplyParameterFromSession] is skipped.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionEstablishmentHelper.Log.ResponseHasStarted(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Session state was not persisted to the next request. The response has already started, so the session cookie can no longer be issued. To avoid this, place at least one [SupplyParameterFromSession] (or use Session.Set directly) before any await that triggers the first response flush.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionEstablishmentHelper.Log.SessionDoesNotExist(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Session state was not persisted to the next request. No session is available session middleware was not registered. To fix this, add &apos;builder.Services.AddSession()&apos; and &apos;app.UseSession()&apos; to your app.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CookieTempDataProvider.Log.TempDataCookieNotFound(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> The temp data cookie {CookieName} was not found.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CookieTempDataProvider.Log.TempDataCookieLoadFailure(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> The temp data cookie {CookieName} could not be loaded.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CookieTempDataProvider.Log.TempDataCookieSaveSuccess(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> The temp data cookie {CookieName} was successfully saved.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.CookieTempDataProvider.Log.TempDataCookieLoadSuccess(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> The temp data cookie {CookieName} was successfully loaded.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionStorageTempDataProvider.Log.TempDataSessionNotFound(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> TempData was not found in session.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionStorageTempDataProvider.Log.TempDataSessionLoadFailure(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> TempData could not be loaded from session.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionStorageTempDataProvider.Log.TempDataSessionSaveSuccess(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> TempData was successfully saved to session.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.SessionStorageTempDataProvider.Log.TempDataSessionLoadSuccess(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> TempData was successfully loaded from session.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.TempDataCascadingValueSupplier.Log.TempDataPersistFail(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Persisting of the TempData element failed.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.TempDataCascadingValueSupplier.Log.TempDataDeserializeFail(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Deserialization of the element from TempData failed.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.TempDataCascadingValueSupplier.Log.TempDataUnavailableForRead(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> No active HttpContext is available (interactive rendering); the [SupplyParameterFromTempData] value is skipped and will be null.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Endpoints.TempDataProviderType">
+            <summary>
+            Specifies the storage provider for TempData.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Components.Endpoints.TempDataProviderType.Cookie">
+            <summary>
+            Store TempData in cookies (default).
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Components.Endpoints.TempDataProviderType.SessionStorage">
+            <summary>
+            Store TempData in browser session storage.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.Resources.FailedToInferComponentPersistenceMode">
+            <summary>The persistence mode could not be determined based on the rendered components. Specify a value.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.Resources.TypeMustDeriveFromType">
+            <summary>The type '{0}' must derive from '{1}'.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Resources.FormatTypeMustDeriveFromType(System.Object,System.Object)">
+            <summary>The type '{0}' must derive from '{1}'.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.Resources.UnableToFindServices">
+            <summary>Unable to find the required services. Please add all the required services by calling '{0}.{1}' in the application startup code.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Resources.FormatUnableToFindServices(System.Object,System.Object)">
+            <summary>Unable to find the required services. Please add all the required services by calling '{0}.{1}' in the application startup code.</summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Endpoints.Resources.UnsupportedRenderMode">
+            <summary>Unsupported RenderMode '{0}'.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Endpoints.Resources.FormatUnsupportedRenderMode(System.Object)">
+            <summary>Unsupported RenderMode '{0}'.</summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Infrastructure.RazorComponentApplicationAttribute">
+            <summary>
+            Indicates how to collect the components that are part of a razor components
+            application.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Infrastructure.RazorComponentApplicationAttribute.GetBuilder">
+            <summary>
+            Creates a builder that can be used to customize the definition of the application.
+            For example, to add or remove pages, change routes, etc.
+            </summary>
+            <returns>
+            The <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/> associated with the application definition.
+            </returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Infrastructure.ComponentsActivityLinkStore">
+            <summary>
+            Helper for storing links between diagnostic activities in Blazor components.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Routing.RazorComponentsEndpointHttpContextExtensions">
+            <summary>
+            Extensions to <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> for Razor component applications.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Routing.RazorComponentsEndpointHttpContextExtensions.AcceptsInteractiveRouting(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Determines whether the current endpoint is a Razor component that can be reached through
+            interactive routing. This is true for all page components except if they declare the
+            attribute <see cref="T:Microsoft.AspNetCore.Components.ExcludeFromInteractiveRoutingAttribute"/>.
+            </summary>
+            <param name="context">The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>.</param>
+            <returns>True if the current endpoint is a Razor component that does not declare <see cref="T:Microsoft.AspNetCore.Components.ExcludeFromInteractiveRoutingAttribute"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Routing.RazorComponentsEndpointHttpContextExtensions.MetadataUpdateHandler.ClearCache(System.Type[])">
+            <summary>
+            Invoked as part of <see cref="T:System.Reflection.Metadata.MetadataUpdateHandlerAttribute" /> contract for hot reload.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.CacheView">
+            <summary>
+            A component that caches the rendered HTML of its child content during
+            server-side rendering (SSR). On cache hit, child components are not
+            instantiated or rendered.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.ChildContent">
+            <summary>
+            Gets or sets the content to be cached.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.CacheKey">
+            <summary>
+            Gets or sets an explicit cache key for disambiguation when multiple
+            <see cref="T:Microsoft.AspNetCore.Components.CacheView"/> instances share the same component ancestor.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.Enabled">
+            <summary>
+            Gets or sets whether caching is enabled. Defaults to <c>true</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.ExpiresAfter">
+            <summary>
+            Gets or sets how long after creation the cache entry should be evicted.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.ExpiresOn">
+            <summary>
+            Gets or sets the absolute <see cref="T:System.DateTimeOffset"/> when the cache entry should be evicted.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.ExpiresSliding">
+            <summary>
+            Gets or sets how long after last access the cache entry should be evicted.
+            Not supported when the cache view store uses <c>HybridCache</c>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByQuery">
+            <summary>
+            Gets or sets a comma-separated list of query string parameter names to vary the cache by.
+            Use <c>"*"</c> to vary by all query string parameters.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByRoute">
+            <summary>
+            Gets or sets a comma-separated list of route parameter names to vary the cache by.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByHeader">
+            <summary>
+            Gets or sets a comma-separated list of HTTP header names to vary the cache by.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByCookie">
+            <summary>
+            Gets or sets a comma-separated list of cookie names to vary the cache by.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByUser">
+            <summary>
+            Gets or sets whether to vary the cache by the authenticated user identity.
+            </summary>
+            <remarks>
+            When a nonempty name identifier is present, <see cref="P:Microsoft.AspNetCore.Components.CacheView.VaryByUser"/> does not include
+            roles or permissions in the key. Include values that affect the output in
+            <see cref="P:Microsoft.AspNetCore.Components.CacheView.VaryBy"/>, or keep authorization outside CacheView.
+            Include the tenant in <see cref="P:Microsoft.AspNetCore.Components.CacheView.VaryBy"/> when the same user identifier
+            can produce different output for different tenants.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryByCulture">
+            <summary>
+            Gets or sets whether to vary the cache by the current culture.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.CacheView.VaryBy">
+            <summary>
+            Gets or sets a custom string value to vary the cache by.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.CacheView.Microsoft#AspNetCore#Components#IComponent#Attach(Microsoft.AspNetCore.Components.RenderHandle)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.CacheView.Microsoft#AspNetCore#Components#IComponent#SetParametersAsync(Microsoft.AspNetCore.Components.ParameterView)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.CacheView.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.PersistedStateSerializationMode">
+            <summary>
+            Specifies the mode to use when serializing component persistent state.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Components.PersistedStateSerializationMode.Infer">
+            <summary>
+            Indicates that the serialization mode should be inferred from the current request context.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Components.PersistedStateSerializationMode.Server">
+            <summary>
+            Indicates that the state should be persisted so that execution may resume on Server.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Components.PersistedStateSerializationMode.WebAssembly">
+            <summary>
+            Indicates that the state should be persisted so that execution may resume on WebAssembly.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider">
+            <summary>
+            An <see cref="T:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider"/> intended for use in server-side Blazor.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider.GetAuthenticationStateAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider.SetAuthenticationState(System.Threading.Tasks.Task{Microsoft.AspNetCore.Components.Authorization.AuthenticationState})">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor">
+            <summary>
+            Represents an assembly along with the components and pages included in it.
+            </summary>
+            <remarks>
+            This API is meant to be consumed in a source generation context.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor.#ctor(System.String,System.Collections.Generic.IReadOnlyList{Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder},System.Collections.Generic.IReadOnlyList{Microsoft.AspNetCore.Components.Discovery.ComponentBuilder})">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor"/>.</summary>
+            <param name="name">The assembly name.</param>
+            <param name="pages">The list of pages in the assembly.</param>
+            <param name="components">The list of components in the assembly.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor.AssemblyName">
+            <summary>
+            Gets the name of the assembly.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor.Pages">
+            <summary>
+            Gets the pages in the assembly.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor.Components">
+            <summary>
+            Gets the components in the assembly.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder">
+            <summary>
+            Builder used to configure a razor component application.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.Build">
+            <summary>
+            Builds the component application definition.
+            </summary>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Components.Discovery.RazorComponentApplication"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.HasAssembly(System.String)">
+            <summary>
+            Indicates whether the current <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/> instance
+            has the given <paramref name="assemblyName"/>.
+            </summary>
+            <param name="assemblyName">The name of the assembly to check.</param>
+            <returns><c>true</c> when present; <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.AddAssembly(System.Reflection.Assembly)">
+            <summary>
+            Scans the given assembly for pages and adds them to the current set of pages.
+            </summary>
+            <param name="assembly">The <see cref="T:System.Reflection.Assembly"/> to scan for pages.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.RemoveAssembly(System.Reflection.Assembly)">
+            <summary>
+            Removes all the discovered pages that are part of the given assembly.
+            </summary>
+            <param name="assembly">The <see cref="T:System.Reflection.Assembly"/> to remove.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.AddLibrary(Microsoft.AspNetCore.Components.Discovery.AssemblyComponentLibraryDescriptor)">
+            <summary>
+            Adds a given assembly and associated pages and components to the build.
+            </summary>
+            <param name="libraryBuilder">The assembly with the pages and components.</param>
+            <exception cref="T:System.InvalidOperationException">When the assembly has already been added
+            to this component application builder.
+            </exception>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.Combine(Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder)">
+            <summary>
+            Combines the two <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/> instances.
+            </summary>
+            <param name="other">The <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/> to merge.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.Exclude(Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder)">
+            <summary>
+            Excludes the assemblies and other definitions in <paramref name="builder"/> from the
+            current <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>.
+            </summary>
+            <param name="builder"></param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.RemoveLibrary(System.String)">
+            <summary>
+            Removes the given <paramref name="assembly"/> and the associated definitions from
+            the current <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>.
+            </summary>
+            <param name="assembly">The assembly name.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder.GetBuilder``1">
+            <summary>
+            Gets the <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/> for the given <typeparamref name="TComponent"/>.
+            </summary>
+            <typeparam name="TComponent">A component inside the assembly.</typeparam>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder">
+            <summary>
+            Represents a discovered component.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.AssemblyName">
+            <summary>
+            Gets or sets the assembly name where this component comes from.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.ComponentType">
+            <summary>
+            Gets or sets the component type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.RenderMode">
+            <summary>
+            Gets or sets the render mode for the component.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.Equals(Microsoft.AspNetCore.Components.Discovery.ComponentBuilder)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentBuilder.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.ComponentCollectionBuilder">
+            <summary>
+            Represents the list of components defined in a <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>
+            before the configuration has finalized.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.ComponentInfo">
+            <summary>
+            Metadata captured for a component during discovery.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.ComponentInfo.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentInfo"/>.
+            </summary>
+            <param name="componentType">The component <see cref="T:System.Type"/>.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.ComponentInfo.ComponentType">
+            <summary>
+            Gets the component <see cref="T:System.Type"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.ComponentInfo.RenderMode">
+            <summary>
+            Gets the component <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.PageCollectionBuilder">
+            <summary>
+            Represents the list of pages in a <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentApplicationBuilder"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder">
+            <summary>
+            A razor component page <see cref="T:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.AssemblyName">
+            <summary>
+            Gets or sets the assembly name where this component comes from.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.RouteTemplates">
+            <summary>
+            Gets or sets the route templates for this page component.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.PageType">
+            <summary>
+            Gets or sets the page type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.HasSource(System.String)">
+            <summary>
+            Compares the given <paramref name="source"/> against the source for this <see cref="T:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder"/>.
+            </summary>
+            <param name="source">The source to compare against.</param>
+            <returns><c>true</c> when it has the same source; false otherwise.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.Equals(Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.PageComponentBuilder.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo">
+            <summary>
+            The definition for a page, including the type and the associated routes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo.#ctor(System.String,System.Type,System.String,System.Collections.Generic.IReadOnlyList{System.Object})">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo"/>.
+            </summary>
+            <param name="displayName">The name for the page. Used for logging and debug purposes across the system.</param>
+            <param name="type">The page <see cref="T:System.Type"/>.</param>
+            <param name="route">The see list of routes for the page.</param>
+            <param name="metadata">The page metadata.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo.DisplayName">
+            <summary>
+            Gets the page display name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo.Type">
+            <summary>
+            Gets the page type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo.Route">
+            <summary>
+            Gets the routes for the page.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo.Metadata">
+            <summary>
+            Gets the metadata for the page.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Discovery.RazorComponentApplication">
+            <summary>
+            The definition of a component based application.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.RazorComponentApplication.Pages">
+            <summary>
+            Gets the list of <see cref="T:Microsoft.AspNetCore.Components.Discovery.PageComponentInfo"/> associated with the application.
+            </summary>
+            <returns>The list of pages.</returns>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Discovery.RazorComponentApplication.Components">
+            <summary>
+            Gets the list of <see cref="T:Microsoft.AspNetCore.Components.Discovery.ComponentInfo"/> associated with the application.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Forms.ClientValidationRule">
+            <summary>
+            Describes a single client-side validation rule produced by an <see cref="T:Microsoft.AspNetCore.Components.Forms.IClientValidationRuleProvider"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Forms.ClientValidationRule.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates a rule with the specified name and optional parameters.
+            </summary>
+            <param name="name">
+            The rule name. Must be non-empty and must match the name registered with the JS
+            validator via <c>Blazor.formValidation.addValidator(name, ...)</c>.
+            </param>
+            <param name="parameters">
+            Optional parameters passed to the JS validator at runtime. All values are strings on the
+            wire; validators that need numeric or boolean values parse them at validation time
+            (<c>parseInt</c>, <c>parseFloat</c>, etc.). When <see langword="null"/> or empty, the
+            <c>params</c> object is omitted from the wire format.
+            </param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Forms.ClientValidationRule.Name">
+            <summary>
+            Gets the rule name. Matches the name registered with the JS validator.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.Forms.ClientValidationRule.Parameters">
+            <summary>
+            Gets the parameters passed to the JS validator at runtime. Empty when no parameters apply.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.Forms.IClientValidationRuleProvider">
+            <summary>
+            Implemented by <see cref="T:System.ComponentModel.DataAnnotations.ValidationAttribute"/> subclasses
+            that contribute client-side validation rules to Blazor SSR forms.
+            </summary>
+            <remarks>
+            Attributes that implement this interface participate in the client-side validation pipeline
+            for forms rendered server-side. Rule names must match a validator registered on the JS side via
+            <c>Blazor.formValidation.addValidator(name, ...)</c>.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Forms.IClientValidationRuleProvider.GetClientValidationRules">
+            <summary>
+            Produces the client-side validation rules for this attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.Forms.DefaultAntiforgeryStateProvider.GetAntiforgeryToken">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.BasePath">
+            <summary>
+            Renders a &lt;base&gt; element whose <c>href</c> value matches the current request path base.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.ITempData">
+            <summary>
+            Provides a dictionary for storing data that is needed for subsequent requests.
+            Data stored in TempData is automatically removed after it is read unless
+            <see cref="M:Microsoft.AspNetCore.Components.ITempData.Keep"/> or <see cref="M:Microsoft.AspNetCore.Components.ITempData.Keep(System.String)"/> is called, or it is accessed via <see cref="M:Microsoft.AspNetCore.Components.ITempData.Peek(System.String)"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ITempData.Get(System.String)">
+            <summary>
+            Gets the value associated with the specified key and then schedules it for deletion.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ITempData.Peek(System.String)">
+            <summary>
+            Gets the value associated with the specified key without scheduling it for deletion.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ITempData.Keep">
+            <summary>
+            Makes all of the keys currently in TempData persist for another request.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ITempData.Keep(System.String)">
+            <summary>
+            Makes the element with the <paramref name="key"/> persist for another request.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Components.TempData">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ComponentEndMarker">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ComponentMarker">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ComponentMarkerKey">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.NullableComponentMarkerKey">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ComponentParameter">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ComponentParameterArray">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ServerComponent">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.IEnumerableComponentMarker">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.IListComponentParameter">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.IListObject">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.Guid">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.Int32">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.NullableInt32">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.Object">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.ObjectArray">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.String">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.Default">
+            <summary>
+            The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext"/> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions"/> instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.ServerComponentJsonContext.GeneratedSerializerOptions">
+            <summary>
+            The source-generated options associated with this context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ServerComponentJsonContext.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ServerComponentJsonContext.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.ServerComponentJsonContext.GetTypeInfo(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.ByteArray">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.DictionaryStringByteArray">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.String">
+            <summary>
+            Defines the source generated JSON serialization contract metadata for a given type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.Default">
+            <summary>
+            The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext"/> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions"/> instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.GeneratedSerializerOptions">
+            <summary>
+            The source-generated options associated with this context.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.PrerenderComponentApplicationStoreSerializerContext.GetTypeInfo(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Components.HotReload.HotReloadManager.IsSubscribedTo">
+            <summary>
+            Gets a value that determines if OnDeltaApplied is subscribed to.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.HotReload.HotReloadManager.UpdateApplication(System.Type[])">
+            <summary>
+            MetadataUpdateHandler event. This is invoked by the hot reload host via reflection.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.SerializeFrames(Microsoft.AspNetCore.Components.RenderFragmentCapture,Microsoft.Extensions.Logging.ILogger,System.String)">
+            Converts the captured render tree frames from a <see cref="T:Microsoft.AspNetCore.Components.RenderFragmentCapture"/> into a
+            JSON-serializable tree of <see cref="T:Microsoft.AspNetCore.Components.RenderTreeNode"/> objects. This is the entry point for
+            serializing a RenderFragment that was captured in renderer.
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.SerializeChildren(System.Int32@,System.ReadOnlySpan{Microsoft.AspNetCore.Components.RenderTree.RenderTreeFrame},System.Int32,System.Collections.Generic.List{Microsoft.AspNetCore.Components.RenderTreeNode},Microsoft.AspNetCore.Components.RenderFragmentCapture,Microsoft.Extensions.Logging.ILogger,System.String)">
+            Walks a contiguous range of render tree frames and converts each into a <see cref="T:Microsoft.AspNetCore.Components.RenderTreeNode"/>,
+            recursively processing element children, component parameters, and nested RenderFragment captures.
+            Non-serializable frames (event handlers, @ref captures, @rendermode, @formname) are skipped with warnings.
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.Log.EventHandlerSkipped(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Event handler &apos;{AttributeName}&apos; inside a RenderFragment on component &apos;{OwnerComponentType}&apos; was skipped during serialization. Delegates cannot cross render mode boundaries.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.Log.ElementReferenceCaptureSkipped(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> An element @ref capture inside a RenderFragment on component &apos;{OwnerComponentType}&apos; was skipped during serialization. Element references cannot cross render mode boundaries.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.Log.ComponentReferenceCaptureSkipped(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> A component @ref capture inside a RenderFragment on component &apos;{OwnerComponentType}&apos; was skipped during serialization. Component references cannot cross render mode boundaries.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.Log.NamedEventSkipped(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> A @formname directive inside a RenderFragment on component &apos;{OwnerComponentType}&apos; was skipped during serialization. Named events are an SSR-only mechanism and cannot cross render mode boundaries.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Components.RenderFragmentSerializer.Log.GenericRenderFragmentSkipped(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> A generic RenderFragment&lt;T&gt; parameter &apos;{AttributeName}&apos; inside a RenderFragment on component &apos;{OwnerComponentType}&apos; was skipped during serialization. Only non-generic RenderFragment is supported across render mode boundaries.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder">
+            <summary>
+            Builds conventions that will be used for customization of <see cref="T:Microsoft.AspNetCore.Builder.EndpointBuilder"/> instances.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder.Add(System.Action{Microsoft.AspNetCore.Builder.EndpointBuilder})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder.Finally(System.Action{Microsoft.AspNetCore.Builder.EndpointBuilder})">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilderExtensions">
+            <summary>
+            Configures which assemblies are part of the given Razor Component Application.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilderExtensions.AddAdditionalAssemblies(Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder,System.Reflection.Assembly[])">
+            <summary>
+            Adds the given additional assemblies to the component application.
+            </summary>
+            <param name="builder">The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</param>"/>
+            <param name="assemblies">The <see cref="T:System.Reflection.Assembly"/> instances to add.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</returns>
+            <remarks>
+            The provided assemblies will be scanned for pages that will be mapped as endpoints.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilderExtensions.WithStaticAssets(Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder,System.String)">
+            <summary>
+            Sets a <see cref="T:Microsoft.AspNetCore.Components.ResourceAssetCollection"/> and <see cref="T:Microsoft.AspNetCore.Components.ImportMapDefinition"/> metadata
+            for the component application.
+            </summary>
+            <param name="builder">The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</param>
+            <param name="manifestPath">The manifest associated with the assets.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</returns>
+            <remarks>
+            The <paramref name="manifestPath"/> must match the path of the manifes file provided to
+            the <see cref="M:Microsoft.AspNetCore.Builder.StaticAssetsEndpointRouteBuilderExtensions.MapStaticAssets(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder,System.String)"/>
+            call.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilderExtensions.WithBrowserOptions(Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder,System.Action{Microsoft.AspNetCore.Components.BrowserOptions})">
+            <summary>
+            Configures a <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/> that will be emitted as a DOM comment
+            to the browser for all Razor component endpoints.
+            </summary>
+            <param name="builder">The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</param>
+            <param name="configureOptions">An action to configure the <see cref="T:Microsoft.AspNetCore.Components.BrowserOptions"/>.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/>.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointRouteBuilderExtensions">
+            <summary>
+            Extensions to <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> for razor component applications.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.RazorComponentsEndpointRouteBuilderExtensions.MapRazorComponents``1(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)">
+            <summary>
+            Maps the page components defined in the specified <typeparamref name="TRootComponent"/> to the given assembly
+            and renders the component specified by <typeparamref name="TRootComponent"/> when the route matches.
+            </summary>
+            <param name="endpoints">The <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/>.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Builder.RazorComponentsEndpointConventionBuilder"/> that can be used to further configure the API.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult">
+            <summary>
+            An <see cref="T:Microsoft.AspNetCore.Http.IResult"/> that renders a Razor Component.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.#ctor(System.Type)">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+            <param name="componentType">The type of the component to render. This must implement <see cref="T:Microsoft.AspNetCore.Components.IComponent"/>.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.#ctor(System.Type,System.Object)">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+            <param name="componentType">The type of the component to render. This must implement <see cref="T:Microsoft.AspNetCore.Components.IComponent"/>.</param>
+            <param name="parameters">Parameters for the component.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.#ctor(System.Type,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+            <param name="componentType">The type of the component to render. This must implement <see cref="T:Microsoft.AspNetCore.Components.IComponent"/>.</param>
+            <param name="parameters">Parameters for the component.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.ComponentType">
+            <summary>
+            Gets the component type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.ContentType">
+            <summary>
+            Gets or sets the Content-Type header for the response.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.StatusCode">
+            <summary>
+            Gets or sets the HTTP status code.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.Parameters">
+            <summary>
+            Gets the parameters for the component.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.PreventStreamingRendering">
+             <summary>
+             Gets or sets a flag to indicate whether streaming rendering should be prevented. If true, the renderer will
+             wait for the component hierarchy to complete asynchronous tasks such as loading before supplying the HTML response.
+             If false, streaming rendering will be determined by the components being rendered.
+            
+             The default value is false.
+             </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult.ExecuteAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Processes this result in the given <paramref name="httpContext" />.
+            </summary>
+            <param name="httpContext">An <see cref="T:Microsoft.AspNetCore.Http.HttpContext" /> associated with the current request.</param >
+            <returns >A <see cref="T:System.Threading.Tasks.Task" /> which will complete when execution is completed.</returns >
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult`1">
+            <summary>
+            An <see cref="T:Microsoft.AspNetCore.Http.IResult"/> that renders a Razor Component.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult`1.#ctor">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult`1.#ctor(System.Object)">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+            <param name="parameters">Parameters for the component.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult`1.#ctor(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Constructs an instance of <see cref="T:Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult"/>.
+            </summary>
+            <param name="parameters">Parameters for the component.</param>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Http.MiddlewareInvokedKeys.PostRoutingPipeline">
+            <summary>
+            Key for a Func&lt;RequestDelegate, RequestDelegate&gt; stored in IApplicationBuilder.Properties by WebApplicationBuilder.
+            It composes the framework's implicit post-routing middleware pipeline.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Internal.LinkerFlags.JsonSerialized">
+            <summary>
+            Flags for a member that is JSON (de)serialized.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Internal.LinkerFlags.Component">
+            <summary>
+            Flags for a component
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Internal.LinkerFlags.JSInvokable">
+            <summary>
+            Flags for a JSInvokable type.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Internal.ChunkingCookieManager">
+            <summary>
+            This handles cookies that are limited by per cookie length. It breaks down long cookies for responses, and reassembles them
+            from requests.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Internal.ChunkingCookieManager.DefaultChunkSize">
+            <summary>
+            The default maximum size of characters in a cookie to send back to the client.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Internal.ChunkingCookieManager.#ctor">
+            <summary>
+            Initializes a new instance of <see cref="T:Microsoft.AspNetCore.Internal.ChunkingCookieManager"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Internal.ChunkingCookieManager.ChunkSize">
+             <summary>
+             The maximum size of cookie to send back to the client. If a cookie exceeds this size it will be broken down into multiple
+             cookies. Set this value to null to disable this behavior. The default is 4050 characters, which is supported by all
+             common browsers.
+            
+             Note that browsers may also have limits on the total size of all cookies per domain, and on the number of cookies per domain.
+             </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Internal.ChunkingCookieManager.ThrowForPartialCookies">
+            <summary>
+            Throw if not all chunks of a cookie are available on a request for re-assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Internal.ChunkingCookieManager.GetRequestCookie(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <summary>
+            Get the reassembled cookie. Non chunked cookies are returned normally.
+            Cookies with missing chunks just have their "chunks-XX" header returned.
+            </summary>
+            <param name="context"></param>
+            <param name="key"></param>
+            <returns>The reassembled cookie, if any, or null.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Internal.ChunkingCookieManager.AppendResponseCookie(Microsoft.AspNetCore.Http.HttpContext,System.String,System.String,Microsoft.AspNetCore.Http.CookieOptions)">
+            <summary>
+            Appends a new response cookie to the Set-Cookie header. If the cookie is larger than the given size limit
+            then it will be broken down into multiple cookies as follows:
+            Set-Cookie: CookieName=chunks-3; path=/
+            Set-Cookie: CookieNameC1=Segment1; path=/
+            Set-Cookie: CookieNameC2=Segment2; path=/
+            Set-Cookie: CookieNameC3=Segment3; path=/
+            </summary>
+            <param name="context"></param>
+            <param name="key"></param>
+            <param name="value"></param>
+            <param name="options"></param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Internal.ChunkingCookieManager.DeleteCookie(Microsoft.AspNetCore.Http.HttpContext,System.String,Microsoft.AspNetCore.Http.CookieOptions)">
+            <summary>
+            Deletes the cookie with the given key by setting an expired state. If a matching chunked cookie exists on
+            the request, delete each chunk.
+            </summary>
+            <param name="context"></param>
+            <param name="key"></param>
+            <param name="options"></param>
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder">
+            <summary>
+            A builder that can be used to configure Razor Components.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder.Services">
+            <summary>
+            Gets the <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.RazorComponentsRazorComponentBuilderExtensions">
+            <summary>
+            Provides methods for configuring a Razor components based application.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.RazorComponentsRazorComponentBuilderExtensions.RegisterPersistentService``1(Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder,Microsoft.AspNetCore.Components.IComponentRenderMode)">
+            <summary>
+            Registers a persistent service with the specified render mode in the Razor components builder.
+            </summary>
+            <typeparam name="TPersistentService">The service to be registered for state management.</typeparam>
+            <param name="builder">The <see cref="T:Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder"/>.</param>
+            <param name="renderMode">The <see cref="T:Microsoft.AspNetCore.Components.IComponentRenderMode"/> that determines to which render modes the state should be persisted.</param>
+            <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder"/>.</returns>
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.RazorComponentsServiceCollectionExtensions">
+            <summary>
+            Provides methods for registering services required for server-side rendering of Razor Components.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.RazorComponentsServiceCollectionExtensions.AddRazorComponents(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions})">
+            <summary>
+            Registers services required for server-side rendering of Razor Components.
+            </summary>
+            <param name="services">The service collection.</param>
+            <param name="configure">An <see cref="T:System.Action`1"/> to configure the provided <see cref="T:Microsoft.AspNetCore.Components.Endpoints.RazorComponentsServiceOptions"/>.</param>
+            <returns>An <see cref="T:Microsoft.Extensions.DependencyInjection.IRazorComponentsBuilder"/> that can be used to further configure the Razor component services.</returns>
+        </member>
+        <member name="T:Microsoft.Extensions.Internal.ClosedGenericMatcher">
+            <summary>
+            Helper related to generic interface definitions and implementing classes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.ClosedGenericMatcher.ExtractGenericInterface(System.Type,System.Type)">
+            <summary>
+            Determine whether <paramref name="queryType"/> is or implements a closed generic <see cref="T:System.Type"/>
+            created from <paramref name="interfaceType"/>.
+            </summary>
+            <param name="queryType">The <see cref="T:System.Type"/> of interest.</param>
+            <param name="interfaceType">The open generic <see cref="T:System.Type"/> to match. Usually an interface.</param>
+            <returns>
+            The closed generic <see cref="T:System.Type"/> created from <paramref name="interfaceType"/> that
+            <paramref name="queryType"/> is or implements. <c>null</c> if the two <see cref="T:System.Type"/>s have no such
+            relationship.
+            </returns>
+            <remarks>
+            This method will return <paramref name="queryType"/> if <paramref name="interfaceType"/> is
+            <c>typeof(KeyValuePair{,})</c>, and <paramref name="queryType"/> is
+            <c>typeof(KeyValuePair{string, object})</c>.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.#ctor(System.Reflection.PropertyInfo)">
+            <summary>
+            Initializes a fast <see cref="T:Microsoft.Extensions.Internal.PropertyHelper"/>.
+            This constructor does not cache the helper. For caching, use <see cref="M:Microsoft.Extensions.Internal.PropertyHelper.GetProperties(System.Type)"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Internal.PropertyHelper.Property">
+            <summary>
+            Gets the backing <see cref="T:System.Reflection.PropertyInfo"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Internal.PropertyHelper.Name">
+            <summary>
+            Gets (or sets in derived types) the property name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Internal.PropertyHelper.ValueGetter">
+            <summary>
+            Gets the property value getter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Internal.PropertyHelper.ValueSetter">
+            <summary>
+            Gets the property value setter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.GetValue(System.Object)">
+            <summary>
+            Returns the property value for the specified <paramref name="instance"/>.
+            </summary>
+            <param name="instance">The object whose property value will be returned.</param>
+            <returns>The property value.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.SetValue(System.Object,System.Object)">
+            <summary>
+            Sets the property value for the specified <paramref name="instance" />.
+            </summary>
+            <param name="instance">The object whose property value will be set.</param>
+            <param name="value">The property value.</param>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.GetProperties(System.Type)">
+            <summary>
+            Creates and caches fast property helpers that expose getters for every public get property on the
+            specified type.
+            </summary>
+            <param name="type">The type to extract property accessors for.</param>
+            <returns>A cached array of all public properties of the specified type.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.GetVisibleProperties(System.Type)">
+            <summary>
+            <para>
+            Creates and caches fast property helpers that expose getters for every non-hidden get property
+            on the specified type.
+            </para>
+            <para>
+            <see cref="M:GetVisibleProperties"/> excludes properties defined on base types that have been
+            hidden by definitions using the <c>new</c> keyword.
+            </para>
+            </summary>
+            <param name="type">The type to extract property accessors for.</param>
+            <returns>
+            A cached array of all public properties of the specified type.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.MakeFastPropertyGetter(System.Reflection.PropertyInfo)">
+            <summary>
+            Creates a single fast property getter. The result is not cached.
+            </summary>
+            <param name="propertyInfo">propertyInfo to extract the getter for.</param>
+            <returns>a fast getter.</returns>
+            <remarks>
+            This method is more memory efficient than a dynamically compiled lambda, and about the
+            same speed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.MakeNullSafeFastPropertyGetter(System.Reflection.PropertyInfo)">
+            <summary>
+            Creates a single fast property getter which is safe for a null input object. The result is not cached.
+            </summary>
+            <param name="propertyInfo">propertyInfo to extract the getter for.</param>
+            <returns>a fast getter.</returns>
+            <remarks>
+            This method is more memory efficient than a dynamically compiled lambda, and about the
+            same speed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.MakeFastPropertySetter(System.Reflection.PropertyInfo)">
+            <summary>
+            Creates a single fast property setter for reference types. The result is not cached.
+            </summary>
+            <param name="propertyInfo">propertyInfo to extract the setter for.</param>
+            <returns>a fast getter.</returns>
+            <remarks>
+            This method is more memory efficient than a dynamically compiled lambda, and about the
+            same speed. This only works for reference types.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.ObjectToDictionary(System.Object)">
+             <summary>
+             Given an object, adds each instance property with a public get method as a key and its
+             associated value to a dictionary.
+            
+             If the object is already an <see cref="T:System.Collections.Generic.IDictionary`2"/> instance, then a copy
+             is returned.
+             </summary>
+             <remarks>
+             The implementation of PropertyHelper will cache the property accessors per-type. This is
+             faster when the same type is used multiple times with ObjectToDictionary.
+             </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.GetVisibleProperties(System.Type,System.Collections.Concurrent.ConcurrentDictionary{System.Type,Microsoft.Extensions.Internal.PropertyHelper[]},System.Collections.Concurrent.ConcurrentDictionary{System.Type,Microsoft.Extensions.Internal.PropertyHelper[]})">
+            <summary>
+            <para>
+            Creates and caches fast property helpers that expose getters for every non-hidden get property
+            on the specified type.
+            </para>
+            <para>
+            <see cref="M:GetVisibleProperties"/> excludes properties defined on base types that have been
+            hidden by definitions using the <c>new</c> keyword.
+            </para>
+            </summary>
+            <param name="type">The type to extract property accessors for.</param>
+            <param name="allPropertiesCache">The cache to store results in. Use <see cref="F:Microsoft.Extensions.Internal.PropertyHelper.PropertiesCache"/> to use the default cache. Use <see langword="null"/> to avoid caching.</param>
+            <param name="visiblePropertiesCache">The cache to store results in. Use <see cref="F:Microsoft.Extensions.Internal.PropertyHelper.VisiblePropertiesCache"/> if the calling type does not have its own independent cache. Use <see langword="null"/> to avoid caching.</param>
+            <returns>
+            A cached array of all public properties of the specified type.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.GetProperties(System.Type,System.Collections.Concurrent.ConcurrentDictionary{System.Type,Microsoft.Extensions.Internal.PropertyHelper[]})">
+            <summary>
+            Creates and caches fast property helpers that expose getters for every public get property on the
+            specified type.
+            </summary>
+            <param name="type">The type to extract property accessors for.</param>
+            <param name="cache">The cache to store results in. Use <see cref="F:Microsoft.Extensions.Internal.PropertyHelper.PropertiesCache"/> to use the default cache. Use <see langword="null"/> to avoid caching.</param>
+            <returns>A cached array of all public properties of the specified type.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.PropertyHelper.MetadataUpdateHandler.ClearCache(System.Type[])">
+            <summary>
+            Invoked as part of <see cref="T:System.Reflection.Metadata.MetadataUpdateHandlerAttribute" /> contract for hot reload.
+            </summary>
+        </member>
+        <member name="T:System.Buffers.RefPooledArrayBufferWriter`1">
+            <summary>
+            A high-performance struct-based IBufferWriter&lt;byte&gt; implementation that uses ArrayPool for allocations.
+            Designed for zero-allocation scenarios when used with generic methods via `allows ref struct` constraint.
+            </summary>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.#ctor(System.Span{`0})">
+            <summary>
+            Initializes the <see cref="T:System.Buffers.RefPooledArrayBufferWriter`1"/> with initial buffer. 
+            </summary>
+            <param name="initialBuffer">The initial buffer to start writer with.</param>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.Dispose">
+            <summary>
+            Clears the buffer contents and returns the rented array to the ArrayPool.
+            This must be called to properly clean up resources.
+            </summary>
+        </member>
+        <member name="P:System.Buffers.RefPooledArrayBufferWriter`1.WrittenSpan">
+            <summary>
+            Gets a span of the written data.
+            </summary>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.GetMemory(System.Int32)">
+            <summary>
+            Gets a memory segment representing the available space for writing.
+            </summary>
+            <param name="sizeHint">A hint about the minimum size needed. Ignored in this implementation as resizing is not performed.</param>
+            <returns>A Memory&lt;byte&gt; segment for the available space.</returns>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.GetSpan(System.Int32)">
+            <summary>
+            Gets a span representing the available space for writing.
+            </summary>
+            <param name="sizeHint">A hint about the minimum size needed. Ignored in this implementation as resizing is not performed.</param>
+            <returns>A Span&lt;byte&gt; for the available space.</returns>
+        </member>
+        <member name="M:System.Buffers.RefPooledArrayBufferWriter`1.Advance(System.Int32)">
+            <summary>
+            Advances the write position by the specified count.
+            </summary>
+            <param name="count">The number of bytes written.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown if count is negative.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown if advancing would exceed buffer capacity.</exception>
+        </member>
+    </members>
+</doc>

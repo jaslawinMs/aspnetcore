@@ -1,0 +1,65 @@
+@page "/autoperf-f039-tempdata"
+@using System.Security.Cryptography
+
+<PageTitle>F039 TempData containment</PageTitle>
+
+<h1>F039 TempData containment</h1>
+<p id="f039-mode">@(Mode ?? "idle")</p>
+<p id="f039-message">@_message</p>
+<p id="f039-contains">@_contains</p>
+<p id="f039-null-present">@_nullPresent</p>
+<p id="f039-null-missing">@_nullMissing</p>
+<p id="f039-owner">@_owner</p>
+
+<a id="f039-seed" href="/autoperf-f039-tempdata?mode=seed" data-enhance-nav="false">Seed values</a>
+<a id="f039-check" href="/autoperf-f039-tempdata?mode=contains" data-enhance-nav="false">Check containment</a>
+<a id="f039-peek" href="/autoperf-f039-tempdata?mode=peek" data-enhance-nav="false">Peek next request</a>
+<a id="f039-consume" href="/autoperf-f039-tempdata?mode=consume-and-check" data-enhance-nav="false">Consume then check</a>
+<a id="f039-dictionary" href="/autoperf-f039-tempdata?mode=dictionary-get" data-enhance-nav="false">Consuming dictionary control</a>
+
+@code {
+    private const string Payload = "F039 persisted value";
+    private string _message = "(none)";
+    private bool? _contains;
+    private bool? _nullPresent;
+    private bool? _nullMissing;
+    private string _owner = "";
+
+    [CascadingParameter] public ITempData? TempData { get; set; }
+    [SupplyParameterFromQuery(Name = "mode")] public string? Mode { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var tempData = TempData ?? throw new InvalidOperationException("The real request TempData cascade is required.");
+        var collection = (ICollection<KeyValuePair<string, object?>>)tempData;
+        _owner = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(ITempData).Assembly.Location)));
+
+        switch (Mode)
+        {
+            case "seed":
+                tempData.Clear();
+                tempData["Message"] = Payload;
+                tempData["Null"] = null;
+                _message = "seeded";
+                break;
+            case "contains":
+                _contains = collection.Contains(new("MESSAGE", Payload));
+                _nullPresent = collection.Contains(new("nUlL", null));
+                _nullMissing = collection.Contains(new("missing", null));
+                _message = "checked";
+                break;
+            case "peek":
+                _message = tempData.Peek("Message") as string ?? "(none)";
+                _nullPresent = tempData.ContainsKey("Null");
+                break;
+            case "consume-and-check":
+                _message = tempData.Get("Message") as string ?? "(none)";
+                _contains = collection.Contains(new("message", Payload));
+                break;
+            case "dictionary-get":
+                _contains = tempData.TryGetValue("MESSAGE", out var value);
+                _message = value as string ?? "(none)";
+                break;
+        }
+    }
+}

@@ -1,0 +1,137 @@
+commit e55796c6188a4b94f79129aa0a4eb7dafd2b31f6
+Author:     Daria Tiurina <dariatiurina@microsoft.com>
+AuthorDate: Tue Mar 10 17:03:39 2026 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Mar 10 16:03:39 2026 +0000
+
+    Fix TempData lazy loading bugs (#65722)
+
+diff --git a/src/Components/Endpoints/src/TempData/TempData.cs b/src/Components/Endpoints/src/TempData/TempData.cs
+index f1f312726d..5d2e691e87 100644
+--- a/src/Components/Endpoints/src/TempData/TempData.cs
++++ b/src/Components/Endpoints/src/TempData/TempData.cs
+@@ -49,8 +49,9 @@ internal sealed class TempData : ITempData
+ 
+     public object? Get(string key)
+     {
++        var value = Data.GetValueOrDefault(key);
+         _retainedKeys.Remove(key);
+-        return Data.GetValueOrDefault(key);
++        return value;
+     }
+ 
+     public object? Peek(string key)
+@@ -60,7 +61,7 @@ internal sealed class TempData : ITempData
+ 
+     public void Keep()
+     {
+-        _retainedKeys.UnionWith(_data.Keys);
++        _retainedKeys.UnionWith(Data.Keys);
+     }
+ 
+     public void Keep(string key)
+@@ -78,8 +79,9 @@ internal sealed class TempData : ITempData
+ 
+     public bool Remove(string key)
+     {
++        var removed = Data.Remove(key);
+         _retainedKeys.Remove(key);
+-        return Data.Remove(key);
++        return removed;
+     }
+ 
+     public IDictionary<string, object?> Save()
+@@ -175,7 +177,7 @@ internal sealed class TempData : ITempData
+         public TempDataEnumerator(TempData tempData)
+         {
+             _tempData = tempData;
+-            _innerEnumerator = tempData._data.GetEnumerator();
++            _innerEnumerator = tempData.Data.GetEnumerator();
+         }
+ 
+         public KeyValuePair<string, object?> Current
+diff --git a/src/Components/Endpoints/test/TempData/TempDataTest.cs b/src/Components/Endpoints/test/TempData/TempDataTest.cs
+index c7725e55e8..14312686fb 100644
+--- a/src/Components/Endpoints/test/TempData/TempDataTest.cs
++++ b/src/Components/Endpoints/test/TempData/TempDataTest.cs
+@@ -250,4 +250,80 @@ public class TempDataTest
+         Assert.True(tempData.WasLoaded);
+         Assert.Equal("Value", value);
+     }
++
++    [Fact]
++    public void Get_ConsumesValue_WhenFirstAccessTriggersLazyLoad()
++    {
++        var tempData = new TempData(() => new Dictionary<string, object>
++        {
++            ["Message"] = "hello"
++        });
++
++        var value = tempData.Get("Message");
++        var saved = tempData.Save();
++
++        Assert.Equal("hello", value);
++        Assert.Empty(saved);
++    }
++
++    [Fact]
++    public void Indexer_ConsumesValue_WhenFirstAccessTriggersLazyLoad()
++    {
++        var tempData = new TempData(() => new Dictionary<string, object>
++        {
++            ["Message"] = "hello"
++        });
++
++        var value = tempData["Message"];
++        var saved = tempData.Save();
++
++        Assert.Equal("hello", value);
++        Assert.Empty(saved);
++    }
++
++    [Fact]
++    public void Remove_RemovesValue_WhenFirstAccessTriggersLazyLoad()
++    {
++        var tempData = new TempData(() => new Dictionary<string, object>
++        {
++            ["Message"] = "hello"
++        });
++
++        var result = tempData.Remove("Message");
++        var saved = tempData.Save();
++
++        Assert.True(result);
++        Assert.Empty(saved);
++    }
++
++    [Fact]
++    public void Keep_RetainsAllKeys_WhenFirstAccessTriggersLazyLoad()
++    {
++        var tempData = new TempData(() => new Dictionary<string, object>
++        {
++            ["Key1"] = "Value1",
++            ["Key2"] = "Value2"
++        });
++
++        tempData.Keep();
++        var saved = tempData.Save();
++
++        Assert.Equal(2, saved.Count);
++        Assert.Equal("Value1", saved["Key1"]);
++        Assert.Equal("Value2", saved["Key2"]);
++    }
++
++    [Fact]
++    public void Enumerator_IteratesAllKeys_WhenFirstAccessTriggersLazyLoad()
++    {
++        var tempData = new TempData(() => new Dictionary<string, object>
++        {
++            ["Key1"] = "Value1",
++            ["Key2"] = "Value2"
++        });
++
++        var items = ((IEnumerable<KeyValuePair<string, object>>)tempData).ToList();
++
++        Assert.Equal(2, items.Count);
++    }
+ }
