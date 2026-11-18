@@ -1,0 +1,80 @@
+{
+  "candidate": "F042",
+  "scope": "One DictionaryAdapter<TKey,TValue>.TryReplace optimization, only if a measured compatible fast path is justified.",
+  "actualShippingOptimizationImplemented": false,
+  "beforeImplementationGates": [
+    "Inspect fresh upstream default, relevant source/history/docs and existing work.",
+    "Keep the primary global.json, package manifests, NuGet.config and all four unrelated reports unchanged.",
+    "The entire JsonPatch.SystemTextJson area has identical Git tree 2312e7c7c651f2d559d3be8afbb8c6e548f95110 on primary baseline37e809e and captured defaultc5baf47; default build-SDK pins differ.",
+    "Activate the unmodified detached default repository with its own global.json and actual owner before faithfully characterizing reported producer behavior.",
+    "Do not treat arbitrary custom IDictionary dispatch as a reached default path: AdapterFactory selects exact Dictionary<,> only.",
+    "Characterize through actual public JsonPatchDocument producer, actual adapter selection and actual custom JSON converters; no injected adapter or private callback stands in for production.",
+    "Prepare baseline and candidate from the unchanged primary SDK/build environment so differing default build-SDK pins do not confound the source comparison."
+  ],
+  "proposedBoundary": {
+    "onlyNonNullAlreadyAssignableValue": true,
+    "onlyExactConcreteDictionary": true,
+    "preserveKeyConversionBeforeExistenceCheck": true,
+    "preserveOriginalFallbackForNullAndConversion": true,
+    "noManagedReferenceHeldAcrossUserValueConversion": true,
+    "preserveMissingKeyErrorBeforeAnyValueConverter": true,
+    "noNewPublicOrProtectedApi": true,
+    "noFriendGrantOrUnsafeAccessor": true,
+    "noAdditionalCache": true,
+    "allocationReductionMustBeMeasuredNotAssumed": true
+  },
+  "requiredFaithfulCharacterizations": [
+    "Actual default producer replaces an existing dictionary value and preserves unrelated entries.",
+    "Actual deserialized patch object value reaches the target as the observed runtime representation, not an assumed synthetic precondition.",
+    "Programmatic already-typed replacement preserves reference identity and skips its registered value converter.",
+    "Existing null slot is distinguished from a missing storage reference.",
+    "Missing target rejects without invoking a value converter and leaves data unchanged.",
+    "Actual custom value converter can resize the same concrete dictionary before final replacement.",
+    "Actual custom value converter can clear the dictionary and insert another entry; final indexer replacement re-adds the original key without corrupting the other entry.",
+    "Invalid conversion preserves the old value and error contract.",
+    "Null, nullable boxed value, ordinal-ignore-case key, empty dictionary and invalid key partitions preserve their actual original behavior.",
+    "Actual default does not select DictionaryAdapter for a custom IDictionary merely because a direct internal test could invoke it."
+  ],
+  "measurement": {
+    "maximumSourceComparisonAuthorizationsIncludingFailedOrPartial": 3,
+    "sourceComparisonAuthorizationsConsumed": 0,
+    "noStandaloneOriginalOnlyTimingAuthorized": true,
+    "primary": "ParsedObjectExisting:Count=1, key=Value",
+    "counts": [
+      1,
+      64
+    ],
+    "profiles": [
+      "ParsedObjectExisting",
+      "ProgrammaticIntExisting",
+      "ParsedIntExisting",
+      "ParsedObjectMissing",
+      "ProgrammaticNullExisting",
+      "ParsedObjectTestControl"
+    ],
+    "boundary": "Prepared actual public ApplyTo plus consumed readback/error observation. JSON patch deserialization/setup is outside timing. Not isolated dictionary probes, HTTP, endpoint or whole-application performance.",
+    "retainedResultsPerProfile": 8,
+    "warmupsPerProfile": 3,
+    "requestedIterationMilliseconds": 100,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "memoryDiagnoser": true,
+    "minimumQualifyingMedianPrimaryLessTimePercent": 5,
+    "alternativeMinimumRepeatedManagedBytesSavedPerPrimaryOperation": 16,
+    "repeatedCommonControlRegressionPercentCeiling": 5,
+    "clearPrimaryLessTimePercentMayStopAfterOne": 50,
+    "otherwiseUseAtMostThreeAndRecordNoGainIfUnjustified": true,
+    "allAdverseControlAndAllocationRowsRetained": true,
+    "noRetimingClosedComparisons": true
+  },
+  "identityAndEnvironmentGates": [
+    "One prepared identical measured harness DLL/PDB across source variants; freeze consumer images and selected source/owner/PDB bindings before timing.",
+    "Only actual owner DLL/PDB may differ in measured images; current-default verification image is separate and never mixed into the paired measurements.",
+    "Run relevant existing tests and new focused preservation cases on original and candidate where an optimization is implemented.",
+    "Rebuild and untimed-characterize a byte-exact relocated project before publication.",
+    "Serialize heavy work, at most two MSBuild workers; no priority, affinity, power, OS, network or unrelated-process changes.",
+    "Settings-preserving executor observes actual before/after process/thread settings; no stock BDN priority-changing executor.",
+    "Record every real build, preparation, test and measurement failure; never report an attempted or skipped case as passed.",
+    "Publish runnable project, source scope, raw outputs/statistics, exact commands, tracking/PR and remote final receipt; no artificial optimization PR."
+  ]
+}

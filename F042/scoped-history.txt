@@ -1,0 +1,401 @@
+commit b9e9970af881c5fc0ff27b6469deffc6445bed37
+Author:     Artak <34246760+mkArtakMSFT@users.noreply.github.com>
+AuthorDate: 2025-04-21T15:53:42-07:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2025-04-21T15:53:42-07:00
+
+    Added System.Text.Json serialization-based JsonPatch implementation (#61313)
+    
+    * Added S.T.J-serialization based JsonPatch
+    
+    * Cleanup + a few bugfixes
+    
+    * Address review feedback
+    
+    * - Adopt the converter implementation provided by the S.T.J owner team
+    - Turn the IAdapter and IAdapterFactory types internal
+    
+    * Optimizations based on review from the Json team
+    
+    * Addressed review feedback
+    
+    * Added a unit test to validate that JsonNamingPolicy is taking into consideration
+
+diff --git a/src/Features/JsonPatch.SystemTextJson/src/Adapters/AdapterFactory.cs b/src/Features/JsonPatch.SystemTextJson/src/Adapters/AdapterFactory.cs
+new file mode 100644
+index 0000000000..aff6f3a6bf
+--- /dev/null
++++ b/src/Features/JsonPatch.SystemTextJson/src/Adapters/AdapterFactory.cs
+@@ -0,0 +1,40 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++using System.Collections;
++using System.Collections.Generic;
++using System.Text.Json.Nodes;
++using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
++using Microsoft.AspNetCore.Shared;
++
++namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Adapters;
++
++/// <summary>
++/// The default AdapterFactory to be used for resolving <see cref="IAdapter"/>.
++/// </summary>
++internal class AdapterFactory : IAdapterFactory
++{
++    internal static AdapterFactory Default { get; } = new();
++
++    /// <inheritdoc />
++    public virtual IAdapter Create(object target)
++    {
++        ArgumentNullThrowHelper.ThrowIfNull(target);
++
++        var typeToConvert = target.GetType();
++        if (typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Dictionary<,>))
++        {
++            return (IAdapter)Activator.CreateInstance(typeof(DictionaryAdapter<,>).MakeGenericType(typeToConvert.GenericTypeArguments[0], typeToConvert.GenericTypeArguments[1]));
++        }
++
++        return target switch
++        {
++            JsonObject => new JsonObjectAdapter(),
++            JsonArray => new ListAdapter(),
++            IList => new ListAdapter(),
++            _ => new PocoAdapter()
++        };
++    }
++}
++
+diff --git a/src/Features/JsonPatch.SystemTextJson/src/Internal/ConversionResultProvider.cs b/src/Features/JsonPatch.SystemTextJson/src/Internal/ConversionResultProvider.cs
+new file mode 100644
+index 0000000000..1ef5c87a92
+--- /dev/null
++++ b/src/Features/JsonPatch.SystemTextJson/src/Internal/ConversionResultProvider.cs
+@@ -0,0 +1,85 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++using System.Text.Json;
++
++namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
++
++internal static class ConversionResultProvider
++{
++    internal static ConversionResult ConvertTo(object value, Type typeToConvertTo, JsonSerializerOptions serializerOptions)
++    {
++        if (value == null)
++        {
++            return new ConversionResult(IsNullableType(typeToConvertTo), null);
++        }
++
++        if (typeToConvertTo.IsAssignableFrom(value.GetType()))
++        {
++            // No need to convert
++            return new ConversionResult(true, value);
++        }
++
++        return GetConvertedValue(value, serializerOptions, ref typeToConvertTo);
++    }
++
++    internal static ConversionResult CopyTo(object value, Type typeToConvertTo, JsonSerializerOptions serializerOptions)
++    {
++        var targetType = typeToConvertTo;
++        if (value == null)
++        {
++            return new ConversionResult(canBeConverted: true, convertedInstance: null);
++        }
++
++        if (typeToConvertTo != value.GetType() && typeToConvertTo.IsAssignableFrom(value.GetType()))
++        {
++            // Keep original type
++            targetType = value.GetType();
++        }
++
++        return GetConvertedValue(value, serializerOptions, ref targetType);
++    }
++
++    private static ConversionResult GetConvertedValue(object value, JsonSerializerOptions serializerOptions, ref Type targetType)
++    {
++        // Workaround for the https://github.com/dotnet/runtime/issues/113926
++        if (targetType.Name == "JsonValuePrimitive`1")
++        {
++            targetType = typeof(JsonElement);
++        }
++
++        try
++        {
++            var deserialized = ConvertToTargetType(value, targetType, serializerOptions);
++            return new ConversionResult(true, deserialized);
++        }
++        catch
++        {
++            return new ConversionResult(canBeConverted: false, convertedInstance: null);
++        }
++    }
++
++    private static bool IsNullableType(Type type)
++    {
++        if (type.IsValueType)
++        {
++            // value types are only nullable if they are Nullable<T>
++            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
++        }
++
++        // reference types are always nullable
++        return true;
++    }
++
++    private static object ConvertToTargetType(object value, Type targetType, JsonSerializerOptions serializerOptions)
++    {
++        if (value is JsonElement jsonElement)
++        {
++            return JsonSerializer.Deserialize(jsonElement, targetType, serializerOptions);
++        }
++
++        using JsonDocument doc = JsonSerializer.SerializeToDocument(value, serializerOptions);
++        return JsonSerializer.Deserialize(doc.RootElement, targetType, serializerOptions);
++    }
++}
+diff --git a/src/Features/JsonPatch.SystemTextJson/src/Internal/DictionaryAdapterOfTU.cs b/src/Features/JsonPatch.SystemTextJson/src/Internal/DictionaryAdapterOfTU.cs
+new file mode 100644
+index 0000000000..c0540d4c4c
+--- /dev/null
++++ b/src/Features/JsonPatch.SystemTextJson/src/Internal/DictionaryAdapterOfTU.cs
+@@ -0,0 +1,235 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Collections.Generic;
++using System.Text.Json;
++using System.Text.Json.Nodes;
++using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Helpers;
++
++namespace Microsoft.AspNetCore.JsonPatch.SystemTextJson.Internal;
++
++internal class DictionaryAdapter<TKey, TValue> : IAdapter
++{
++    public virtual bool TryAdd(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        object value,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        // As per JsonPatch spec, if a key already exists, adding should replace the existing value
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            return false;
++        }
++
++        if (!TryConvertValue(value, serializerOptions, out var convertedValue, out errorMessage))
++        {
++            return false;
++        }
++
++        dictionary[convertedKey] = convertedValue;
++        errorMessage = null;
++        return true;
++    }
++
++    public virtual bool TryGet(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        out object value,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            value = null;
++            return false;
++        }
++
++        if (!dictionary.TryGetValue(convertedKey, out var valueAsT))
++        {
++            value = null;
++            errorMessage = Resources.FormatTargetLocationAtPathSegmentNotFound(segment);
++            return false;
++        }
++
++        value = valueAsT;
++        errorMessage = null;
++        return true;
++    }
++
++    public virtual bool TryRemove(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            return false;
++        }
++
++        // As per JsonPatch spec, the target location must exist for remove to be successful
++        if (!dictionary.Remove(convertedKey))
++        {
++            errorMessage = Resources.FormatTargetLocationAtPathSegmentNotFound(segment);
++            return false;
++        }
++
++        errorMessage = null;
++        return true;
++    }
++
++    public virtual bool TryReplace(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        object value,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            return false;
++        }
++
++        // As per JsonPatch spec, the target location must exist for remove to be successful
++        if (!dictionary.ContainsKey(convertedKey))
++        {
++            errorMessage = Resources.FormatTargetLocationAtPathSegmentNotFound(segment);
++            return false;
++        }
++
++        if (!TryConvertValue(value, serializerOptions, out var convertedValue, out errorMessage))
++        {
++            return false;
++        }
++
++        dictionary[convertedKey] = convertedValue;
++
++        errorMessage = null;
++        return true;
++    }
++
++    public virtual bool TryTest(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        object value,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            return false;
++        }
++
++        // As per JsonPatch spec, the target location must exist for test to be successful
++        if (!dictionary.TryGetValue(convertedKey, out var currentValue))
++        {
++            errorMessage = Resources.FormatTargetLocationAtPathSegmentNotFound(segment);
++            return false;
++        }
++
++        if (!TryConvertValue(value, serializerOptions, out var convertedValue, out errorMessage))
++        {
++            return false;
++        }
++
++        // The target segment does not have an assigned value to compare the test value with
++        if (currentValue == null)
++        {
++            errorMessage = Resources.FormatValueForTargetSegmentCannotBeNullOrEmpty(segment);
++            return false;
++        }
++
++        if (!JsonUtilities.DeepEquals(currentValue, convertedValue, serializerOptions))
++        {
++            errorMessage = Resources.FormatValueNotEqualToTestValue(currentValue, value, segment);
++            return false;
++        }
++        else
++        {
++            errorMessage = null;
++            return true;
++        }
++    }
++
++    public virtual bool TryTraverse(
++        object target,
++        string segment,
++        JsonSerializerOptions serializerOptions,
++        out object nextTarget,
++        out string errorMessage)
++    {
++        var key = segment;
++        var dictionary = (IDictionary<TKey, TValue>)target;
++
++        if (!TryConvertKey(key, out var convertedKey, out errorMessage))
++        {
++            nextTarget = null;
++            return false;
++        }
++
++        if (dictionary.TryGetValue(convertedKey, out var valueAsT))
++        {
++            nextTarget = valueAsT;
++            errorMessage = null;
++            return true;
++        }
++        else
++        {
++            nextTarget = null;
++            errorMessage = null;
++            return false;
++        }
++    }
++
++    private static bool TryConvertKey(string key, out TKey convertedKey, out string errorMessage)
++    {
++        var options = new JsonSerializerOptions() { NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString };
++        var conversionResult = ConversionResultProvider.ConvertTo(key, typeof(TKey), options);
++        if (conversionResult.CanBeConverted)
++        {
++            errorMessage = null;
++            convertedKey = (TKey)conversionResult.ConvertedInstance;
++            return true;
++        }
++        else
++        {
++            errorMessage = Resources.FormatInvalidPathSegment(key);
++            convertedKey = default(TKey);
++            return false;
++        }
++    }
++
++    private static bool TryConvertValue(object value, JsonSerializerOptions serializerOptions, out TValue convertedValue, out string errorMessage)
++    {
++        var conversionResult = ConversionResultProvider.ConvertTo(value, typeof(TValue), serializerOptions);
++        if (conversionResult.CanBeConverted)
++        {
++            errorMessage = null;
++            convertedValue = (TValue)conversionResult.ConvertedInstance;
++            return true;
++        }
++        else
++        {
++            errorMessage = Resources.FormatInvalidValueForProperty(value);
++            convertedValue = default(TValue);
++            return false;
++        }
++    }
++}

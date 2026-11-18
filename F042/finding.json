@@ -1,0 +1,20 @@
+{
+  "id": "F042",
+  "card_id": "dictionary-containskey-before-indexer",
+  "file": "src/Features/JsonPatch.SystemTextJson/src/Internal/DictionaryAdapterOfTU.cs",
+  "line_start": 108,
+  "line_end": 119,
+  "project": "Microsoft.AspNetCore.JsonPatch.SystemTextJson",
+  "target_frameworks": [
+    "$(DefaultNetCoreTargetFramework)"
+  ],
+  "severity": "medium",
+  "confidence": "high",
+  "classification": "confirmed",
+  "hot_path": "moderate",
+  "tfm_sensitive": false,
+  "summary": "JSON Patch replacement probes the target dictionary key before setting it.",
+  "explanation": "TryReplace uses ContainsKey(convertedKey) to enforce the JSON Patch existence rule and later assigns dictionary[convertedKey] in the same operation. Successful replacements therefore hash and probe the same key twice; the value conversion between probes does not eliminate the duplicate dictionary work.",
+  "snippet": "if (!dictionary.ContainsKey(convertedKey))\n{\n    return false;\n}\n...\ndictionary[convertedKey] = convertedValue;",
+  "suppressed": false
+}

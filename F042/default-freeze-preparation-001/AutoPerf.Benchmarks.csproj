@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <LangVersion>13.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <Optimize>true</Optimize>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <BuildProjectReferences>false</BuildProjectReferences>
+    <BuildInParallel>false</BuildInParallel>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <AspNetCoreRoot>$(AUTOPERF_ASPNETCORE_ROOT)</AspNetCoreRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Features\JsonPatch.SystemTextJson\src\Microsoft.AspNetCore.JsonPatch.SystemTextJson.csproj" />
+  </ItemGroup>
+  <Target Name="ValidateSourceRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(AspNetCoreRoot)' == ''" Text="Set AUTOPERF_ASPNETCORE_ROOT to the independently validated source checkout." />
+    <Error Condition="!Exists('$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.JsonPatch.SystemTextJson\Release\net12.0\Microsoft.AspNetCore.JsonPatch.SystemTextJson.dll')" Text="First build the actual owning JsonPatch.SystemTextJson project in Release; do not substitute installed framework owners." />
+  </Target>
+</Project>
