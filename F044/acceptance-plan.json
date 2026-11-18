@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "candidate": "F044",
+  "declaredBeforeShippingImplementation": true,
+  "shippingFile": "src\\Mvc\\Mvc.Razor\\src\\RazorPageBase.cs",
+  "operation": "RazorPageBase.DefineSection(string, RenderAsyncDelegate)",
+  "independentBase": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "currentDefaultToRevalidate": "31c15331c03714b7a602e1817e65881474c29e2e",
+  "hypothesis": "Concrete Dictionary.TryAdd can remove a second lookup when direct-base custom Razor pages register an additional section. The ordinary RazorPage override does not reach this body, so F043 measurements cannot validate F044.",
+  "proposedScope": [
+    "Preserve the public virtual method, argument order, duplicate branch and attempted-name error message.",
+    "Use the existing non-virtual get-only SectionWriters property and its sole concrete readonly dictionary initializer; do not change the private field or public API.",
+    "Change only the RazorPageBase registration body and focused preservation coverage in the existing RazorPageTest class, which already tests the shared base implementation's other behaviors.",
+    "Do not change RazorPage.DefineSection, its override, layout behavior, dictionary allocation, manifests or the permanently closed F043 case.",
+    "Keep experimental source independent of F043 and David Fowler's distinct lazy-allocation work."
+  ],
+  "validation": [
+    "Build and actually characterize the latest observed current-default owner before changing shipping code.",
+    "Compile six actual cshtml producers with an explicit @inherits Microsoft.AspNetCore.Mvc.Razor.RazorPageBase directive.",
+    "Require every compiled producer's direct base and resolved DefineSection declaration to be RazorPageBase, not RazorPage or a harness reimplementation.",
+    "Verify deferred registration, exact names and dictionary/delegate identity, then execute actual RazorView.RenderAsync with a real RazorPage layout, real scoped MemoryPoolViewBufferScope, transferred original dictionary and exact final HTML.",
+    "Cover ordinal-ignore-case duplicates and attempted spelling, preserved original callback, empty names, externally populated null-valued slots, null argument order and unchanged state on rejection.",
+    "Exercise the protected legacy editor overload through a small direct-base probe without substituting it for the actual compiler-generated producers.",
+    "Execute the owning RazorPageTest class on original and candidate; inspect actual TRX rows, including every new parameterized case.",
+    "Bind all selected physical sources to matching loaded owner PE/PDB documents and record the complete frozen consumer image.",
+    "Keep all non-owner image files, including the measured harness DLL/PDB, byte-identical across original and candidate."
+  ],
+  "profiles": [
+    { "name": "NoSections", "count": 0, "namePadding": 0 },
+    { "name": "One", "count": 1, "namePadding": 0 },
+    { "name": "Two", "count": 2, "namePadding": 0 },
+    { "name": "Eight", "count": 8, "namePadding": 0 },
+    { "name": "SixtyFour", "count": 64, "namePadding": 0 },
+    { "name": "EightLong", "count": 8, "namePadding": 256 }
+  ],
+  "measuredBoundaries": [
+    {
+      "method": "RegisterFreshPage",
+      "includes": "A fresh actual compiled direct-base page and its normal per-page collections/delegates, real generated ExecuteAsync/base DefineSection, and count readback.",
+      "excludes": "Compilation, service/context setup, section callback execution, layout rendering, HTTP and the ordinary RazorPage override.",
+      "contextReuse": "Reuse only the setup-created registration ViewContext; every page and section dictionary must be new per operation."
+    },
+    {
+      "method": "RenderFullView",
+      "includes": "A fresh actual compiled direct-base content page, actual RazorView dictionary transfer, real RazorPage layout section consumption, scoped pooled buffering, exact HTML validation and disposal.",
+      "excludes": "Compilation, production view discovery/unused helper injection, hosted requests, browser and network.",
+      "purpose": "Faithful output and rendering-boundary preservation; not an unchanged-code control or an application-throughput claim."
+    }
+  ],
+  "primary": {
+    "method": "RegisterFreshPage",
+    "profile": "Two",
+    "reason": "Two registrations are the smallest full-page custom-base workload reaching an already populated store. This is an explicitly custom-base path, not a claim about ordinary generated MVC pages or production frequency.",
+    "minimumMedianPairedLessTimePercent": 5,
+    "requiredPrimaryFasterComparisonsWhenAllThreeRun": 2,
+    "alternativeRepeatedActualPrimaryBytesSaved": 16,
+    "allocationSavingAssumedFromSource": false
+  },
+  "decisionRules": [
+    "Stop after one complete comparison only for a clear approximately 50 percent primary improvement with preservation and control checks passing.",
+    "Otherwise allow at most three source-comparison authorizations, including failed or partial timed attempts; retain adverse results.",
+    "Use the median of paired percentage effects, never replace the declared primary with a scaled winner.",
+    "NoSections is the predeclared unchanged-path control at both boundaries. Review variability and allocation movement; do not credit a small primary result that is no larger than the corresponding unchanged registration control in at least two of three comparisons.",
+    "Publish One, all scaled and long-name profiles, both boundaries, every allocation outcome and uncertainty.",
+    "Classify no-gain rather than open a performance PR if the primary numerical or credibility criteria fail.",
+    "A qualified custom-base registration result is not a normal RazorPage, full-view or application-speedup result.",
+    "Do not alter shared-machine priority, affinity, power settings, protected dependency manifests or unrelated processes."
+  ],
+  "budget": {
+    "maximumSourceComparisons": 3,
+    "comparisonsConsumedAtDeclaration": 0,
+    "untimedCharacterizationIsNotTiming": true,
+    "standaloneOriginalTimingAllowed": false
+  }
+}
