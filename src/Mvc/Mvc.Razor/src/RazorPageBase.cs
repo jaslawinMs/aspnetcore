@@ -382,11 +382,11 @@ public abstract class RazorPageBase : IRazorPage
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(section);
 
-        if (SectionWriters.ContainsKey(name))
+        // SectionWriters is always backed by this class's concrete dictionary.
+        if (!((Dictionary<string, RenderAsyncDelegate>)SectionWriters).TryAdd(name, section))
         {
             throw new InvalidOperationException(Resources.FormatSectionAlreadyDefined(name));
         }
-        SectionWriters[name] = section;
     }
 
     /// <summary>
