@@ -1,0 +1,54 @@
+``` ini
+
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+
+Job=SettingsPreserving-F038-SourceComparison  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+
+```
+| Method | Count |    Keys |          Workload |        Mean |       Error |    StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|------- |------ |-------- |------------------ |------------:|------------:|----------:|-------:|------:|------:|----------:|
+| **Render** |     **0** | **Integer** |       **KeyedStable** |    **162.7 ns** |     **2.82 ns** |   **1.47 ns** | **0.0018** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** | **Integer** |      **KeyedReorder** |    **161.7 ns** |     **5.13 ns** |   **2.68 ns** | **0.0016** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** | **Integer** |      **KeyedReplace** |    **160.8 ns** |     **2.79 ns** |   **1.46 ns** | **0.0018** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** | **Integer** | **MixedKeyedUnkeyed** |    **164.4 ns** |     **7.98 ns** |   **4.18 ns** | **0.0016** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** | **Integer** |     **UnkeyedStable** |    **163.2 ns** |     **3.41 ns** |   **1.79 ns** | **0.0016** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** |  **String** |       **KeyedStable** |    **171.8 ns** |     **1.38 ns** |   **0.72 ns** | **0.0017** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** |  **String** |      **KeyedReorder** |    **169.8 ns** |     **2.23 ns** |   **1.16 ns** | **0.0016** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** |  **String** |      **KeyedReplace** |    **172.1 ns** |     **5.79 ns** |   **3.03 ns** | **0.0019** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** |  **String** | **MixedKeyedUnkeyed** |    **169.1 ns** |     **1.99 ns** |   **1.04 ns** | **0.0017** |     **-** |     **-** |      **72 B** |
+| **Render** |     **0** |  **String** |     **UnkeyedStable** |    **173.3 ns** |    **14.40 ns** |   **7.53 ns** | **0.0017** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** | **Integer** |       **KeyedStable** |    **349.3 ns** |     **5.04 ns** |   **2.64 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** | **Integer** |      **KeyedReorder** |    **349.0 ns** |     **3.97 ns** |   **2.08 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** | **Integer** |      **KeyedReplace** |    **589.6 ns** |    **10.08 ns** |   **5.27 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** | **Integer** | **MixedKeyedUnkeyed** |    **350.5 ns** |    **11.35 ns** |   **5.93 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** | **Integer** |     **UnkeyedStable** |    **287.3 ns** |     **3.57 ns** |   **1.87 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** |  **String** |       **KeyedStable** |    **373.1 ns** |     **2.67 ns** |   **1.40 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** |  **String** |      **KeyedReorder** |    **376.4 ns** |     **5.74 ns** |   **3.00 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** |  **String** |      **KeyedReplace** |    **498.6 ns** |     **9.18 ns** |   **4.80 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** |  **String** | **MixedKeyedUnkeyed** |    **383.5 ns** |     **6.59 ns** |   **3.45 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |     **1** |  **String** |     **UnkeyedStable** |    **285.5 ns** |     **3.71 ns** |   **1.94 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** | **Integer** |       **KeyedStable** |  **2,287.9 ns** |    **14.95 ns** |   **7.82 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** | **Integer** |      **KeyedReorder** |  **3,408.3 ns** |   **130.43 ns** |  **68.22 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** | **Integer** |      **KeyedReplace** |  **3,126.5 ns** |    **33.44 ns** |  **17.49 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** | **Integer** | **MixedKeyedUnkeyed** |  **2,955.1 ns** |    **24.82 ns** |  **12.98 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** | **Integer** |     **UnkeyedStable** |  **1,644.5 ns** |    **21.57 ns** |  **11.28 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** |  **String** |       **KeyedStable** |  **2,768.9 ns** |    **16.42 ns** |   **8.59 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** |  **String** |      **KeyedReorder** |  **4,537.4 ns** |   **118.88 ns** |  **62.18 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** |  **String** |      **KeyedReplace** |  **3,883.4 ns** |    **55.76 ns** |  **29.16 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** |  **String** | **MixedKeyedUnkeyed** |  **3,398.4 ns** |    **33.12 ns** |  **17.32 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |    **16** |  **String** |     **UnkeyedStable** |  **1,677.9 ns** |    **63.50 ns** |  **33.21 ns** |      **-** |     **-** |     **-** |      **72 B** |
+| **Render** |   **256** | **Integer** |       **KeyedStable** | **32,103.0 ns** |   **363.59 ns** | **190.16 ns** |      **-** |     **-** |     **-** |      **74 B** |
+| **Render** |   **256** | **Integer** |      **KeyedReorder** | **48,466.4 ns** |   **235.62 ns** | **123.23 ns** |      **-** |     **-** |     **-** |      **75 B** |
+| **Render** |   **256** | **Integer** |      **KeyedReplace** | **46,473.1 ns** | **1,075.94 ns** | **562.74 ns** |      **-** |     **-** |     **-** |      **75 B** |
+| **Render** |   **256** | **Integer** | **MixedKeyedUnkeyed** | **46,036.8 ns** |   **810.73 ns** | **424.03 ns** |      **-** |     **-** |     **-** |      **75 B** |
+| **Render** |   **256** | **Integer** |     **UnkeyedStable** | **22,827.2 ns** |   **167.95 ns** |  **87.84 ns** |      **-** |     **-** |     **-** |      **73 B** |
+| **Render** |   **256** |  **String** |       **KeyedStable** | **41,350.4 ns** |   **753.25 ns** | **393.96 ns** |      **-** |     **-** |     **-** |      **75 B** |
+| **Render** |   **256** |  **String** |      **KeyedReorder** | **69,371.0 ns** | **1,688.73 ns** | **883.24 ns** |      **-** |     **-** |     **-** |      **76 B** |
+| **Render** |   **256** |  **String** |      **KeyedReplace** | **63,507.1 ns** |   **371.69 ns** | **194.40 ns** |      **-** |     **-** |     **-** |      **76 B** |
+| **Render** |   **256** |  **String** | **MixedKeyedUnkeyed** | **53,481.8 ns** |   **192.96 ns** | **100.92 ns** |      **-** |     **-** |     **-** |      **75 B** |
+| **Render** |   **256** |  **String** |     **UnkeyedStable** | **22,884.5 ns** |   **122.94 ns** |  **64.30 ns** |      **-** |     **-** |     **-** |      **73 B** |

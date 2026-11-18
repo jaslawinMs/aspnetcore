@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.KeyedRenderBenchmarks-20261117-182203</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F038-SourceComparison  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>Count</th><th>Keys</th><th>   Workload</th><th> Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Render</td><td>0</td><td>Integer</td><td>KeyedStable</td><td>162.7 ns</td><td>2.82 ns</td><td>1.47 ns</td><td>0.0018</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>Integer</td><td>KeyedReorder</td><td>161.7 ns</td><td>5.13 ns</td><td>2.68 ns</td><td>0.0016</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>Integer</td><td>KeyedReplace</td><td>160.8 ns</td><td>2.79 ns</td><td>1.46 ns</td><td>0.0018</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>Integer</td><td>MixedKeyedUnkeyed</td><td>164.4 ns</td><td>7.98 ns</td><td>4.18 ns</td><td>0.0016</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>Integer</td><td>UnkeyedStable</td><td>163.2 ns</td><td>3.41 ns</td><td>1.79 ns</td><td>0.0016</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>String</td><td>KeyedStable</td><td>171.8 ns</td><td>1.38 ns</td><td>0.72 ns</td><td>0.0017</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>String</td><td>KeyedReorder</td><td>169.8 ns</td><td>2.23 ns</td><td>1.16 ns</td><td>0.0016</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>String</td><td>KeyedReplace</td><td>172.1 ns</td><td>5.79 ns</td><td>3.03 ns</td><td>0.0019</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>String</td><td>MixedKeyedUnkeyed</td><td>169.1 ns</td><td>1.99 ns</td><td>1.04 ns</td><td>0.0017</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>0</td><td>String</td><td>UnkeyedStable</td><td>173.3 ns</td><td>14.40 ns</td><td>7.53 ns</td><td>0.0017</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>Integer</td><td>KeyedStable</td><td>349.3 ns</td><td>5.04 ns</td><td>2.64 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>Integer</td><td>KeyedReorder</td><td>349.0 ns</td><td>3.97 ns</td><td>2.08 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>Integer</td><td>KeyedReplace</td><td>589.6 ns</td><td>10.08 ns</td><td>5.27 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>Integer</td><td>MixedKeyedUnkeyed</td><td>350.5 ns</td><td>11.35 ns</td><td>5.93 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>Integer</td><td>UnkeyedStable</td><td>287.3 ns</td><td>3.57 ns</td><td>1.87 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>String</td><td>KeyedStable</td><td>373.1 ns</td><td>2.67 ns</td><td>1.40 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>String</td><td>KeyedReorder</td><td>376.4 ns</td><td>5.74 ns</td><td>3.00 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>String</td><td>KeyedReplace</td><td>498.6 ns</td><td>9.18 ns</td><td>4.80 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>String</td><td>MixedKeyedUnkeyed</td><td>383.5 ns</td><td>6.59 ns</td><td>3.45 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>1</td><td>String</td><td>UnkeyedStable</td><td>285.5 ns</td><td>3.71 ns</td><td>1.94 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>Integer</td><td>KeyedStable</td><td>2,287.9 ns</td><td>14.95 ns</td><td>7.82 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>Integer</td><td>KeyedReorder</td><td>3,408.3 ns</td><td>130.43 ns</td><td>68.22 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>Integer</td><td>KeyedReplace</td><td>3,126.5 ns</td><td>33.44 ns</td><td>17.49 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>Integer</td><td>MixedKeyedUnkeyed</td><td>2,955.1 ns</td><td>24.82 ns</td><td>12.98 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>Integer</td><td>UnkeyedStable</td><td>1,644.5 ns</td><td>21.57 ns</td><td>11.28 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>String</td><td>KeyedStable</td><td>2,768.9 ns</td><td>16.42 ns</td><td>8.59 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>String</td><td>KeyedReorder</td><td>4,537.4 ns</td><td>118.88 ns</td><td>62.18 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>String</td><td>KeyedReplace</td><td>3,883.4 ns</td><td>55.76 ns</td><td>29.16 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>String</td><td>MixedKeyedUnkeyed</td><td>3,398.4 ns</td><td>33.12 ns</td><td>17.32 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>16</td><td>String</td><td>UnkeyedStable</td><td>1,677.9 ns</td><td>63.50 ns</td><td>33.21 ns</td><td>-</td><td>-</td><td>-</td><td>72 B</td>
+</tr><tr><td>Render</td><td>256</td><td>Integer</td><td>KeyedStable</td><td>32,103.0 ns</td><td>363.59 ns</td><td>190.16 ns</td><td>-</td><td>-</td><td>-</td><td>74 B</td>
+</tr><tr><td>Render</td><td>256</td><td>Integer</td><td>KeyedReorder</td><td>48,466.4 ns</td><td>235.62 ns</td><td>123.23 ns</td><td>-</td><td>-</td><td>-</td><td>75 B</td>
+</tr><tr><td>Render</td><td>256</td><td>Integer</td><td>KeyedReplace</td><td>46,473.1 ns</td><td>1,075.94 ns</td><td>562.74 ns</td><td>-</td><td>-</td><td>-</td><td>75 B</td>
+</tr><tr><td>Render</td><td>256</td><td>Integer</td><td>MixedKeyedUnkeyed</td><td>46,036.8 ns</td><td>810.73 ns</td><td>424.03 ns</td><td>-</td><td>-</td><td>-</td><td>75 B</td>
+</tr><tr><td>Render</td><td>256</td><td>Integer</td><td>UnkeyedStable</td><td>22,827.2 ns</td><td>167.95 ns</td><td>87.84 ns</td><td>-</td><td>-</td><td>-</td><td>73 B</td>
+</tr><tr><td>Render</td><td>256</td><td>String</td><td>KeyedStable</td><td>41,350.4 ns</td><td>753.25 ns</td><td>393.96 ns</td><td>-</td><td>-</td><td>-</td><td>75 B</td>
+</tr><tr><td>Render</td><td>256</td><td>String</td><td>KeyedReorder</td><td>69,371.0 ns</td><td>1,688.73 ns</td><td>883.24 ns</td><td>-</td><td>-</td><td>-</td><td>76 B</td>
+</tr><tr><td>Render</td><td>256</td><td>String</td><td>KeyedReplace</td><td>63,507.1 ns</td><td>371.69 ns</td><td>194.40 ns</td><td>-</td><td>-</td><td>-</td><td>76 B</td>
+</tr><tr><td>Render</td><td>256</td><td>String</td><td>MixedKeyedUnkeyed</td><td>53,481.8 ns</td><td>192.96 ns</td><td>100.92 ns</td><td>-</td><td>-</td><td>-</td><td>75 B</td>
+</tr><tr><td>Render</td><td>256</td><td>String</td><td>UnkeyedStable</td><td>22,884.5 ns</td><td>122.94 ns</td><td>64.30 ns</td><td>-</td><td>-</td><td>-</td><td>73 B</td>
+</tr></tbody></table>
+</body>
+</html>

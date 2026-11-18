@@ -1,0 +1,21 @@
+<li data-item="@ItemId" data-instance="@instance">
+    <span>@Label</span>
+    <button class="f038-increment" @onclick="Increment">Increment @ItemId</button>
+    <output class="f038-local">@count</output>
+</li>
+
+@code {
+    [Parameter]
+    public int ItemId { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "";
+
+    private readonly string instance = Guid.NewGuid().ToString("N");
+    private int count;
+
+    private void Increment()
+    {
+        count++;
+    }
+}

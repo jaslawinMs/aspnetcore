@@ -1,0 +1,103 @@
+diff --git a/src/Components/Components/src/RenderTree/Renderer.cs b/src/Components/Components/src/RenderTree/Renderer.cs
+index 43130ce396..61737ddbbb 100644
+--- a/src/Components/Components/src/RenderTree/Renderer.cs
++++ b/src/Components/Components/src/RenderTree/Renderer.cs
+@@ -513,7 +513,7 @@ public abstract partial class Renderer : IDisposable, IAsyncDisposable
+         // receives the callback" (i.e., callback.Receiver) is that if parent A passes a RenderFragment with events to child B,
+         // and then child B is disposed, we don't want to dispatch the events (because the developer considers them removed
+         // from the UI) even though the receiver A is still alive.
+-        if (!_componentStateById.ContainsKey(renderedByComponentId))
++        if (!_componentStateById.TryGetValue(renderedByComponentId, out var renderingComponentState))
+         {
+             // This is not an error since it can happen legitimately (in Blazor Server, the user might click a button at the same
+             // moment that the component is disposed remotely, and then the click event will arrive after disposal).
+@@ -533,6 +533,10 @@ public abstract partial class Renderer : IDisposable, IAsyncDisposable
+             _componentStateByComponent.TryGetValue(receiverComponent, out receiverComponentState);
+         }
+ 
++        // Non-component receivers have no component ancestry, so use the rendering component for error routing.
++        // Keep receiverComponentState separate because it also determines pending-task ownership.
++        var errorHandlingComponentState = callback.Receiver is IComponent ? receiverComponentState : renderingComponentState;
++
+         if (fieldInfo != null)
+         {
+             var latestEquivalentEventHandlerId = FindLatestEventHandlerIdInChain(eventHandlerId);
+@@ -576,7 +580,7 @@ public abstract partial class Renderer : IDisposable, IAsyncDisposable
+                 ComponentActivitySource.StopHandleEventActivity(activityHandle, e);
+             }
+ 
+-            HandleExceptionViaErrorBoundary(e, receiverComponentState);
++            HandleExceptionViaErrorBoundary(e, errorHandlingComponentState);
+             return Task.CompletedTask;
+         }
+         finally
+@@ -590,7 +594,7 @@ public abstract partial class Renderer : IDisposable, IAsyncDisposable
+ 
+         // Task completed synchronously or is still running. We already processed all of the rendering
+         // work that was queued so let our error handler deal with it.
+-        var errorHandledTask = GetErrorHandledTask(task, receiverComponentState);
++        var errorHandledTask = GetErrorHandledTask(task, errorHandlingComponentState);
+ 
+         if (waitForQuiescence)
+         {
+@@ -1180,7 +1184,14 @@ public abstract partial class Renderer : IDisposable, IAsyncDisposable
+     }
+ 
+     internal void HandleComponentException(Exception exception, int componentId)
+-        => HandleExceptionViaErrorBoundary(exception, GetRequiredComponentState(componentId));
++    {
++        if (_rendererIsDisposed)
++        {
++            return;
++        }
++
++        HandleExceptionViaErrorBoundary(exception, GetRequiredComponentState(componentId));
++    }
+ 
+     /// <summary>
+     /// If the exception can be routed to an error boundary around <paramref name="errorSourceOrNull"/>, do so.
+diff --git a/src/Components/Components/test/RendererTest.cs b/src/Components/Components/test/RendererTest.cs
+index 7737871ffe..8aa21e5940 100644
+--- a/src/Components/Components/test/RendererTest.cs
++++ b/src/Components/Components/test/RendererTest.cs
+@@ -6091,6 +6091,40 @@ public class RendererTest
+         }
+     }
+ 
++    [Fact]
++    public async Task DispatchExceptionAsync_AfterRendererIsDisposed_DoesNotThrow()
++    {
++        var renderer = new TestRenderer();
++        var component = new DispatchExceptionComponent();
++        var componentId = renderer.AssignRootComponentId(component);
++        await renderer.RenderRootComponentAsync(componentId);
++        renderer.Dispose();
++
++        await component.DispatchAsync(new InvalidTimeZoneException("Test exception"));
++
++        Assert.Empty(renderer.HandledExceptions);
++    }
++
++    [Fact]
++    public async Task DispatchExceptionAsync_AfterComponentIsRemoved_Throws()
++    {
++        var renderer = new TestRenderer();
++        var component = new DispatchExceptionComponent();
++        var componentId = renderer.AssignRootComponentId(component);
++        await renderer.RenderRootComponentAsync(componentId);
++        await renderer.Dispatcher.InvokeAsync(() => renderer.RemoveRootComponent(componentId));
++
++        var exception = await Assert.ThrowsAsync<ArgumentException>(() => component.DispatchAsync(new InvalidTimeZoneException("Test exception")));
++
++        Assert.Equal($"The renderer does not have a component with ID {componentId}.", exception.Message);
++        Assert.Empty(renderer.HandledExceptions);
++    }
++
++    private class DispatchExceptionComponent : ComponentBase
++    {
++        public Task DispatchAsync(Exception exception) => DispatchExceptionAsync(exception);
++    }
++
+     private class ComponentThatAwaitsTask : ComponentBase
+     {
+         [Parameter] public Task TaskToAwait { get; set; }

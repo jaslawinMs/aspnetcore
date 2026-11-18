@@ -1,0 +1,76 @@
+{
+  "candidate": "F038",
+  "phase": "pre-implementation acceptance and validation boundary",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefault": "f2484a6bf688bd1acb1af13802255c2c23a071dd",
+  "branch": "autoperf/F038-render-tree-keyed-lookup",
+  "scope": "Only the new-tree dictionary read/update loop in BuildKeyToInfoLookup. Preserve the old-tree loop, branch shape, explanatory existingEntry local, public and protected surface, key equality, duplicate messages, old/new index merging, sibling permutations and dictionary pool ownership.",
+  "priorWork": {
+    "proposal": "https://github.com/dotnet/aspnetcore/pull/70133",
+    "actualRemovedPrototypeCommit": "95837ac848beda6c84dc17f44be2298dd7414df2",
+    "credit": "The ref-based new-tree strategy is not novel. The earlier campaign tried it, then removed it under that campaign's no-CollectionsMarshal constraint. The closed PR's final old-tree-only change is outside F038. Historical performance numbers are not measurements from this machine.",
+    "noClaimThatBoundedSearchProvesAbsenceOfOtherWork": true
+  },
+  "currentDefaultBoundary": {
+    "selectedFiles": 21,
+    "byteIdenticalFiles": 20,
+    "ownerAndKeyedProducerFilesMatch": true,
+    "differentFile": "src/Components/Components/src/RenderTree/Renderer.cs",
+    "actualDrift": "DispatchEventAsync error routing for non-component receivers and HandleComponentException after renderer disposal. The exact patch is retained. The timed public RenderHandle producer does not dispatch events or component exceptions. The sample uses component-receiver click handlers with no expected exceptions.",
+    "excludedClaims": "Not a full current-main build, current-main event-error/disposed-exception validation, or a measurement on the current-main SDK/dependency graph. global.json and eng/Versions.props also differ and are not changed."
+  },
+  "requirements": [
+    "Confirm actual public RenderHandle -> RenderTreeBuilder.SetKey -> Renderer -> produced RenderBatch execution, not a copied dictionary algorithm or injected private callback.",
+    "Preserve complete keyed order, index merging and permutation edits for unchanged, reversed, inserted, deleted, disjoint-replacement and mixed keyed/unkeyed sibling ranges.",
+    "Preserve element/component distinctions, component identities and disposal through the actual renderer; preserve value equality, hash collisions, independent sibling scopes, growth and empty/singleton transitions.",
+    "Preserve exact owning duplicate-key exceptions and all existing RenderTreeDiffBuilderTest rows. Independently validate every discovered TRX result and parameterized row; this is preservation/performance work, not a semantic bug-fix red/green claim.",
+    "Exercise real canonical-sample browser clicks and observe ordered DOM, retained element/component identities, retained local component state and intact unkeyed neighbors, with current-page console/network checks. No browser timing or application throughput claim.",
+    "Keep one identical compiled benchmark harness across source variants; only the tested Components DLL/PDB may differ in copied consumer images. Validate loaded owner and selected source/PDB binding.",
+    "Use at most three actual source-comparison attempts, retain adverse, empty, singleton, scaled and unchanged-control results and raw samples. Never change affinity, thread/process priority, power plan or shared-machine settings.",
+    "Publish a compatible meaningful gain only when measured. Otherwise restore original source/product and publish the honest no-gain/rejected disposition without an artificial optimization PR."
+  ],
+  "permanentBoundary": {
+    "behaviorOwner": "Host-independent Components render-tree keyed diff construction and merging.",
+    "productionProducer": "Public RenderHandle rendering builds actual RenderTreeBuilder frames; Renderer owns component state, diffing and RenderBatch production. Browser smoke additionally uses actual InteractiveServer events and DOM application.",
+    "finalObservable": "Complete render-batch edits, key order, retained component identity and disposal, exact duplicate failures; browser smoke observes DOM and child state.",
+    "selectedPermanentSurface": "Existing Microsoft.AspNetCore.Components.Tests RenderTreeDiffBuilderTest keyed/duplicate coverage for the unchanged managed contract. Inspect and run existing owning keyed real-browser coverage if a proposal is retained; no new semantic behavior is introduced.",
+    "lowerBoundaryFalsePassRisk": "A standalone dictionary microbenchmark or manually synthesized batch could miss actual frame layout, old/new merging, recursive scopes, identity, disposal and pool reuse. A managed render batch alone does not establish DOM application or browser lifecycle behavior."
+  },
+  "runtimeMatrix": {
+    "managedMeasurement": "Windows x64 .NET12 RyuJIT, real host-independent Renderer, Release, ServerGC.",
+    "browserSmoke": "Canonical BlazorWebAppPerPage, explicit InteractiveServer with prerendering, ordinary click-driven keyed rerenders.",
+    "intentionallyUnmeasured": [
+      "Mono WebAssembly interpreter and AOT performance",
+      "InteractiveAuto cached/uncached activation and platform transitions",
+      "WebView/native hosts",
+      "Static SSR or streaming application throughput",
+      "Event-error routing, disposal-exception routing and hot reload",
+      "Network, transport serialization, browser timing or end-to-end application performance"
+    ],
+    "architecture": "No owner, assembly, DI lifetime, protocol, render-mode destination, restore/update ordering or cross-runtime boundary is changed. The temporary dictionary and returned KeyedItemInfo remain local to the same synchronous diff."
+  },
+  "benchmarkDesign": {
+    "counts": [0, 1, 16, 256],
+    "keyKinds": ["Integer", "String"],
+    "workloads": ["KeyedStable", "KeyedReorder", "KeyedReplace", "MixedKeyedUnkeyed", "UnkeyedStable"],
+    "profilesPerTimingMember": 40,
+    "primary": "KeyedStable:Integer:256",
+    "timedBoundary": "One complete prepared component rerender through the real default dispatcher, RenderHandle, builder, Renderer and RenderBatch delivery. Key objects, labels, alternative item arrays and delegates are prepared outside timing. No disk evidence serialization inside the timed rerender.",
+    "unchangedControl": "UnkeyedStable on the same renderer protocol; zero-item profiles also never construct a keyed lookup.",
+    "instrumentation": "Only untimed characterization may use counting/colliding keys. Timed keys are actual preboxed integers or prepared strings.",
+    "minimumMeaningfulDraft": "Unless the primary improves at least50% in a clear first comparison, require three complete comparisons, positive primary gain in every pair and at least5% median less time, explained alongside variability and unchanged-control movement. Do not retain material common-profile regressions or hide adverse allocations.",
+    "settings": {
+      "benchmarkDotNet": "0.13.0",
+      "warmupIterations": 3,
+      "measurementIterations": 8,
+      "iterationMilliseconds": 100,
+      "unrollFactor": 1,
+      "outlierMode": "DontRemove",
+      "powerPlan": "Guid.Empty",
+      "sourceComparisonPairOrder": ["original,candidate", "candidate,original", "original,candidate"],
+      "maximumSourceComparisonAttemptsIncludingPartialTiming": 3
+    }
+  },
+  "publication": "Fork-only jaslawinMs/aspnetcore. No upstream writes. Inspect the repository PR template before drafting any retained optimization. Preserve all prior F004/F032 index clarifications. Advance progress only after immutable remote evidence and the final receipt/index are verified.",
+  "shippingImplementationNotStarted": true
+}

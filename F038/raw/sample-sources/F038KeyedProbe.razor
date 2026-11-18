@@ -1,0 +1,76 @@
+@page "/autoperf-f038-keyed"
+@rendermode InteractiveServer
+@using System.Security.Cryptography
+
+<PageTitle>F038 keyed rendering probe</PageTitle>
+
+<h1>F038 keyed rendering probe</h1>
+<output id="f038-ready">@ready</output>
+<output id="f038-revision">@revision</output>
+<output id="f038-owner">@ownerHash</output>
+
+<button id="f038-reverse" @onclick="Reverse">Reverse</button>
+<button id="f038-insert" @onclick="Insert">Insert</button>
+<button id="f038-remove" @onclick="Remove">Remove middle</button>
+<button id="f038-replace" @onclick="Replace">Replace all</button>
+
+<ul id="f038-elements">
+    <li id="f038-before">Before</li>
+    @foreach (var item in items)
+    {
+        <li @key="item.Id" data-item="@item.Id">
+            <input aria-label="@($"Element {item.Id}")" value="@item.Label" />
+            <span>@item.Label</span>
+        </li>
+    }
+    <li id="f038-after">After</li>
+</ul>
+
+<ul id="f038-components">
+    @foreach (var item in items)
+    {
+        <F038ProbeRow @key="item.Id" ItemId="item.Id" Label="@item.Label" />
+    }
+</ul>
+
+@code {
+    private List<Item> items = [new(1, "First"), new(2, "Second"), new(3, "Third")];
+    private bool ready;
+    private int revision;
+    private readonly string ownerHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(ComponentBase).Assembly.Location)));
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ready = true;
+            StateHasChanged();
+        }
+    }
+
+    private void Reverse()
+    {
+        items.Reverse();
+        revision++;
+    }
+
+    private void Insert()
+    {
+        items.Insert(0, new(99, "Inserted"));
+        revision++;
+    }
+
+    private void Remove()
+    {
+        items.RemoveAll(item => item.Id == 2);
+        revision++;
+    }
+
+    private void Replace()
+    {
+        items = [new(41, "Replacement one"), new(42, "Replacement two"), new(43, "Replacement three")];
+        revision++;
+    }
+
+    private sealed record Item(int Id, string Label);
+}
