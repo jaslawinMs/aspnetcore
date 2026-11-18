@@ -1,0 +1,554 @@
+{
+  "candidate": "F044",
+  "disposition": "drafted",
+  "subtype": "workload-dependent-custom-base-local-gain",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/158",
+  "actualTrackingIssueNumber": 158,
+  "actualTrackingIssueTitle": "[AutoPerf F044] Measure custom-base Razor section registration",
+  "actualTrackingIssueBody": "# F044: custom-base Razor section registration\r\n\r\nQualified **workload-dependent custom-base local result**, not a normal RazorPage or application-speedup claim.\r\nUse concrete `Dictionary.TryAdd` only in `RazorPageBase.DefineSection`, preserving all guards,\r\ncase-insensitive duplicate behavior and original callback identity.\r\n\r\nThe predeclared SDK-compiled two-section registration primary uses **10.22% median paired less time**,\r\nwith **704 B/op unchanged**. All three source comparisons are closed: 576 retained samples.\r\nThe unchanged control moves 4.79% median, ranging -10.38% to 5.18%; uncertainty is retained.\r\n\r\n**Adverse outcomes:** one-section registration median 3.17% more time, including a 40.06% individual\r\nregression; full-view Eight median 6.74% more time. Full-view Two improves only 0.30%, not a material\r\nfull-view win. Long-name/scaled gains do not replace the primary or establish production frequency.\r\n\r\nBoth source variants pass all 59 owning test rows, including each new direct-base duplicate row.\r\nActual current-default and original/candidate SDK producers pass ten contracts and twelve\r\nregistration/rendering boundaries. A fresh exact-project rebuild reproduces both without timing.\r\nThe direct-base fixtures supply their required abstract context hooks and reject use as layouts;\r\nreal RazorPage layouts consume every section through real scoped pooled buffering.\r\n\r\n| Artifact | Direct link |\r\n|---|---|\r\n| Experimental implementation | [Two-file source commit](https://github.com/jaslawinMs/aspnetcore/commit/099fcb681338358303dbdb1ce3910a52bd3c23f6) |\r\n| Complete benchmark and scope guide | [Immutable evidence](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/README.md) |\r\n| All results, including regressions and variability | [Comparison tables](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/comparison-results.md) |\r\n| Exact commands, actual outcomes and preparation failure | [Validation catalog](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/validation-commands.md) |\r\n| XML-parsed preservation cases | [Actual 59+59 rows](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/actual-paired-test-row-validation.json) |\r\n| Independent reconstruction | [Fresh restore/build and both consumers](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/reproduction-paired-001/verified-reproduction.json) |\r\n\r\nThe candidate was measured before its later publication commit; physical source/PDB snapshots\r\nidentify the actual edit. No new public API, allocation-saving, broad throughput or merge-ready\r\nclaim. Fork-only research tracking; the draft and additive final receipt will be linked after creation.\n\nFork research draft: [jaslawinMs/aspnetcore#159](https://github.com/jaslawinMs/aspnetcore/pull/159). The immutable evidence snapshot predates its additive publication receipt; use the [current case guide](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F044/README.md) for that late receipt. All609sealed source/results files stay pinned and unchanged. Qualified custom-base scope and every adverse result remain; not merge-ready.\n",
+  "actualTrackingIssueState": "open",
+  "actualPerformancePrCreated": true,
+  "actualPerformancePrUrl": "https://github.com/jaslawinMs/aspnetcore/pull/159",
+  "actualPerformancePrNumber": 159,
+  "actualPrDraft": true,
+  "actualPrBody": "# [AutoPerf F044] Use one probe for custom-base Razor sections\n\n<!-- Thank you for submitting a pull request to our repo. -->\n\n<!-- If this is your first PR in the ASP.NET Core repo, please run through the checklist\nbelow to ensure a smooth review and merge process for your PR. -->\n\n- [x] You've read the [Contributor Guide](https://github.com/dotnet/aspnetcore/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/dotnet/aspnetcore/blob/main/CODE-OF-CONDUCT.md).\n- [x] You've included unit or integration tests for your change, where applicable.\n- [x] You've included inline docs for your change, where applicable.\n- [x] There's an open issue for the PR that you are making. If you'd like to propose a new feature or change, please open an issue to discuss the change or find an existing issue.\n\n<!-- Once all that is done, you're ready to go. Open the PR with the content below. -->\n\nUse one dictionary probe for custom-base Razor section registration\n\n## Description\n\n**Fork-only research draft; qualified custom-base registration result, not merge-ready.**\r\nThe declared two-section primary uses **10.22% median paired less time, 704 B/op unchanged**.\r\nThis changes `RazorPageBase.DefineSection`, **not** the override used by ordinary `RazorPage<T>`.\r\nNo normal RazorPage, application-throughput, allocation-saving or production-frequency claim.\r\n\r\nUse the class's concrete `Dictionary<string, RenderAsyncDelegate>.TryAdd` to retain one insertion\r\nprobe on populated stores. Preserve null guard order, case-insensitive duplicate detection,\r\nattempted-name error text and the original delegate. The private readonly store is initialized\r\nin this non-partial class and returned through a get-only nonvirtual property; the cast follows\r\nthat internal invariant. The interface `TryAdd` extension would retain the extra lookup.\r\nThere is no public API or field-type change.\r\n\r\n### Results and limitations\r\n\r\n| Pair | Order | Original ns/op | Candidate ns/op | Less time | Unchanged registration control less time | B/op |\r\n|---|---|---:|---:|---:|---:|---|\r\n| 1 | Original, Candidate | 138.16 | 124.04 | 10.22% | 4.79% | 704 / 704 |\r\n| 2 | Candidate, Original | 124.80 | 121.80 | 2.40% | -10.38% | 704 / 704 |\r\n| 3 | Original, Candidate | 168.64 | 144.79 | 14.14% | 5.18% | 704 / 704 |\r\n\r\nPrimary `RegisterFreshPage/Two` is faster in all three pairs and exceeds its paired unchanged\r\ncontrol each time. The predeclared timing and control gates pass, but **controls and primary\r\nvariance are material** on this shared machine: control median 4.79%, range -10.38% to 5.18%;\r\nprimary CV reaches 11.56%. This is not a precise or uniform performance guarantee.\r\n\r\n**Regressions are part of the proposal:** one-section registration is 3.17% slower at the median,\r\nincluding an individual 40.06% regression. Full-view Eight is 6.74% slower at the median, and\r\nfull-view One is 0.35% slower. Full-view Two is only 0.30% faster: **no material full-view win**.\r\nRegistration Eight/SixtyFour/EightLong medians are 12.42/23.88/39.04% less time, with unchanged\r\nallocations; the deliberately long-name workload is not asserted representative.\r\nAll 12 cases, 72 report rows, 576 retained observations and adverse byte/timing outcomes are\r\npublished. Three comparisons are permanently consumed; no fourth run or retuned primary.\r\n\r\n### Why the producer and new tests matter\r\n\r\nThe six actual SDK-compiled `.cshtml` fixtures explicitly inherit `RazorPageBase`, so their generated\r\n`ExecuteAsync` methods reach the changed inherited method. Each type's direct base and resolved\r\n`DefineSection.DeclaringType` are checked. Registration is not copied into a synthetic surrogate.\r\nThe ordinary `RazorPage` override and its separate F043 no-gain outcome remain unchanged.\r\n\r\nDirect-base content fixtures provide the three required abstract hooks: the context hooks are\r\nempty like `RazorPage`, while `EnsureRenderedBodyOrSections` throws if incorrectly used as a layout.\r\nA separate real `RazorPage` layout consumes the sections through actual `RazorView`,\r\n`MemoryPoolViewBufferScope`, transfer and disposal. Custom layouts are not evaluated.\r\n\r\nExisting duplicate-registration coverage uses the different `RazorPage` override.\r\n`DefineSection_BaseImplementationRejectsCaseInsensitiveDuplicateWithoutReplacingWriter`\r\ntherefore adds the `\"scripts\"` and `\"SCRIPTS\"` rows using `Mock<RazorPageBase> { CallBase = true }`.\r\nEach row independently passes on original and candidate and asserts attempted-name exception,\r\noriginal key/delegate identity, deferred execution and eventual original output.\r\nThe complete owning class passes **59 original + 59 candidate**, zero failed/skipped.\r\nThese are preservation tests, not a bug-fix red/green claim.\r\n\r\nCurrent default `31c15331c03714b7a602e1817e65881474c29e2e` was actually built and characterized.\r\nIts Razor-area tree matches the independent `37e809ead5824bc753a1c3d56f11615bdb1296c5` baseline.\r\nDefault/original/candidate pass ten contract cases and twelve actual producer/rendering boundaries.\r\nA separate restored/rebuilt 13-file project passes both variants without further timing.\r\n\r\nOnly the measured owner DLL/PDB differ between the 264-file images; the other 262 files, including\r\nthe common harness, are identical. Loaded PE/PDB identity and executable source checksums are\r\nverified. The candidate was built before publication; physical source snapshots/PDB checksums,\r\nnot the later commit URL or baseline SourceLink, identify the executed edit.\r\n\r\n### Connected artifacts\r\n\r\n| Artifact | Link |\r\n|---|---|\r\n| Tracking issue | [jaslawinMs/aspnetcore#158](https://github.com/jaslawinMs/aspnetcore/issues/158) |\r\n| Experimental two-file source | [Immutable source commit](https://github.com/jaslawinMs/aspnetcore/commit/099fcb681338358303dbdb1ce3910a52bd3c23f6) |\r\n| Scope guide and complete artifact map | [Immutable guide](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/README.md) |\r\n| All comparisons, regressions and variation | [Full results](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/comparison-results.md) |\r\n| Runnable 13-file BenchmarkDotNet/Razor SDK project | [Project and real fixtures](https://github.com/jaslawinMs/aspnetcore/tree/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/harness) |\r\n| Both parameterized rows and full XML inventories | [Actual 59+59-row audit](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/actual-paired-test-row-validation.json) |\r\n| Fresh independent rebuild | [Untimed reproduction](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/reproduction-paired-001/verified-reproduction.json) |\r\n| Every exact command and outcome | [Command catalog](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/validation-commands.md) |\r\n| Arithmetic, settings and file verification | [Independent audit](https://github.com/jaslawinMs/aspnetcore/blob/6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9/F044/audit-summary.json) |\r\n| Additive receipt after draft creation | [Current guide](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F044/README.md); all 609 sealed core files remain unchanged |\r\n\r\nSDK 12.0.100-alpha.1.26557.102; runtime 12.0.0-alpha.1.26562.105; BenchmarkDotNet 0.13.0; C# 13.\r\nThree warmups/eight retained iterations/requested 100 ms; settings-preserving in-process executor.\r\nNo priority, affinity or power changes. The managed build excludes native IIS, Node and static\r\nassets. Full repository, browser, native IIS, packaging and application validation are not claimed.\r\nThe first harness attempt failed 21 CS0534 errors for missing abstract fixture members; its exact\r\ninputs/output and successful fixture-only correction are retained, not erased.\n\n### Exact executed validation commands and outcomes\n\nThe following are historical commands, not instructions to rerun the closed timing budget.\nEach fresh shell activated the checkout first; complete streams and all other invocations are linked above.\n\n**default-managed-razor-build-001: Passed; 0 warnings, 0 errors on current default.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\autoperf-F042-default'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\autoperf-F042-default\\.dotnet\\dotnet.exe' 'build' 'C:\\src\\autoperf-F042-default\\src\\Mvc\\Mvc.Razor\\src\\Microsoft.AspNetCore.Mvc.Razor.csproj' '--no-restore' '-c' 'Release' '-p:UseSharedCompilation=false' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\n**original-managed-razor-test-build-001: Passed; 0 warnings, 0 errors.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'build' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\test\\Microsoft.AspNetCore.Mvc.Razor.Test.csproj' '--no-restore' '-c' 'Release' '-p:UseSharedCompilation=false' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\n**original-razor-page-tests-001: Passed; 59 cases, 0 failed/skipped; both new theory rows independently checked.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'test' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\test\\Microsoft.AspNetCore.Mvc.Razor.Test.csproj' '--no-build' '--no-restore' '-c' 'Release' '--filter' 'FullyQualifiedName~Microsoft.AspNetCore.Mvc.Razor.RazorPageTest' '--logger' 'trx;LogFileName=F044-original-razor.trx' '--results-directory' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\validation\\original-razor-page-tests-001\\test-results'\n```\n\n**candidate-managed-razor-test-build-001: Passed; 0 warnings, 0 errors.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'build' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\test\\Microsoft.AspNetCore.Mvc.Razor.Test.csproj' '--no-restore' '-c' 'Release' '-p:UseSharedCompilation=false' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\n**candidate-razor-page-tests-001: Passed; 59 cases, 0 failed/skipped; both new theory rows independently checked.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'test' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\test\\Microsoft.AspNetCore.Mvc.Razor.Test.csproj' '--no-build' '--no-restore' '-c' 'Release' '--filter' 'FullyQualifiedName~Microsoft.AspNetCore.Mvc.Razor.RazorPageTest' '--logger' 'trx;LogFileName=F044-candidate-razor.trx' '--results-directory' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\validation\\candidate-razor-page-tests-001\\test-results'\n```\n\n**candidate-format-whitespace-001: Passed; no source changes.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'format' 'whitespace' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor' '--folder' '--verify-no-changes' '--verbosity' 'normal' '--include' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\src\\RazorPageBase.cs' 'C:\\src\\aspnetcore\\src\\Mvc\\Mvc.Razor\\test\\RazorPageTest.cs' '--report' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\validation\\candidate-format-whitespace-001\\format-report.json'\n```\n\n**common-harness-restore-001: Passed.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'restore' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\harness\\AutoPerf.Benchmarks.csproj' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\n**common-harness-build-001: Failed; 21 CS0534 errors, preserved and corrected as described above.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'build' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\harness\\AutoPerf.Benchmarks.csproj' '--no-restore' '-c' 'Release' '-p:BuildProjectReferences=false' '-p:UseSharedCompilation=false' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\n**common-harness-build-002: Passed; 0 warnings, 0 errors after fixture-only correction.**\n\n```powershell\nSet-Location -LiteralPath 'C:\\src\\aspnetcore'\n. .\\activate.ps1\n$env:MSBUILDDISABLENODEREUSE = '1'\n$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'\n$env:DOTNET_NOLOGO = '1'\n& 'C:\\src\\aspnetcore\\.dotnet\\dotnet.exe' 'build' 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F044\\harness\\AutoPerf.Benchmarks.csproj' '--no-restore' '-c' 'Release' '-p:BuildProjectReferences=false' '-p:UseSharedCompilation=false' '-p:UseIisNativeAssets=false' '-p:BuildNodeJS=false' '-p:StaticWebAssetsEnabled=false' '/m:2' '/nr:false'\n```\n\nFixes jaslawinMs/aspnetcore#158\n",
+  "actualPrHeadAndTwoFileDiffVerified": true,
+  "actualRepositoryPrTemplateCommentsHeadingsChecklistAndOrderPreserved": true,
+  "actualBrowserLaunch": {
+    "actualPrUrl": "https://github.com/jaslawinMs/aspnetcore/pull/159",
+    "actualBrowserLaunchRequested": true,
+    "actualExecutable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "actualArguments": [
+      "--new-window",
+      "https://github.com/jaslawinMs/aspnetcore/pull/159"
+    ],
+    "actualRequestedImmediatelyAfterCreateBeforePrVerification": true,
+    "actualDistinctVisibleEdgeWindowObserved": true,
+    "actualPriorVisibleEdgeWindows": [
+      {
+        "Handle": 14419952,
+        "ProcessId": 28400,
+        "Title": "Dispose linked cancellation source after SPA proxy requests by jaslawinMs · Pull Request #69 · jaslawinMs/aspnetcore - Work - Microsoft​ Edge"
+      },
+      {
+        "Handle": 1049764,
+        "ProcessId": 28400,
+        "Title": "ASP.NET Core perf effort: summary of open performance PRs · Issue #70219 · dotnet/aspnetcore and 84 more pages - Work - Microsoft​ Edge"
+      }
+    ],
+    "actualNewVisibleEdgeWindows": [
+      {
+        "Handle": 3802668,
+        "ProcessId": 28400,
+        "Title": "Untitled - Work - Microsoft​ Edge"
+      }
+    ],
+    "actualPrTitleObservedInNewWindow": false,
+    "actualPageContentsOrUrlNotInspectedThroughBrowserAutomation": true,
+    "actualExistingReportWindowNotReopenedOrClosed": true,
+    "actualStarted": "2026-11-18T11:45:21.1687657Z",
+    "actualCompleted": "2026-11-18T11:45:22.0235724Z"
+  },
+  "actualExistingReportWindowNotReopenedOrClosed": true,
+  "actualSourceBranch": "autoperf/F044-razor-base-section-try-add",
+  "actualSourceCommit": "099fcb681338358303dbdb1ce3910a52bd3c23f6",
+  "actualIndependentBaseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualSourceFilesChanged": [
+    {
+      "path": "src/Mvc/Mvc.Razor/src/RazorPageBase.cs",
+      "gitBlob": "20ed4dfc2999e9382cbc8a0e342ef9de09b3ea83",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "770CEFD76ECD8470AC08F916DDEFC2A6C0D35CD05D7078E19B624B784AF9D9A1"
+    },
+    {
+      "path": "src/Mvc/Mvc.Razor/test/RazorPageTest.cs",
+      "gitBlob": "0a80d63ae6a3728b58a9402965f9f948d5bd4796",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "0F3C56CFC94B8DD7F232D78B3F673879C284A06E9E54B4D1E60E9CB37CFA0CAD"
+    }
+  ],
+  "actualImmutableEvidenceCommit": "6bfcabd8cd2cea25d29bf60337f9c595a5eb44b9",
+  "actualImmutableEvidenceFiles": 609,
+  "actualVerifiedRemoteImmutableBlobsBeforePr": 609,
+  "actualEvaluation": {
+    "candidate": "F044",
+    "disposition": "qualified",
+    "subtype": "workload-dependent-custom-base-local-gain",
+    "actualMeasuredScope": "SDK-compiled content fixtures explicitly deriving directly from RazorPageBase; excludes the ordinary RazorPage override and custom layout implementations.",
+    "numericalPrimaryTimingGateMet": true,
+    "allocationGateMet": false,
+    "controlCredibilityGateMet": true,
+    "primaryNoGreaterThanControlComparisons": [],
+    "medianPrimaryLessTimePercent": 10.217160023143313,
+    "actualMedianUnchangedControlLessTimePercent": 4.794008510927295,
+    "actualEachPrimaryLessTimePercent": [
+      10.217160023143313,
+      2.401481071143241,
+      14.142508990624947
+    ],
+    "actualPrimaryBytesPerOperation": 704,
+    "actualPrimaryManagedByteSavings": [
+      0,
+      0,
+      0
+    ],
+    "actualVariabilityReviewed": "All three primary pairs are faster, and exceed their corresponding unchanged control. The effect varies2.40 to14.14%; the unchanged control varies-10.38 to5.18%, and primary CV reaches11.56%. This is a qualified local draft result, not a precision or broad throughput claim.",
+    "actualAdverseOutcomesProminent": [
+      "RegisterFreshPage/One median3.17% more time, including pair3 40.06% more time; no one-section win.",
+      "RenderFullView/Eight median6.74% more time, including pair2 8.25% more time; do not claim a uniform full-render gain.",
+      "RenderFullView/One median0.35% more time.",
+      "RenderFullView/Two median0.30% less time is not a material full-view result.",
+      "Mixed few-byte full-view differences are not structural allocation savings."
+    ],
+    "actualSecondaryResultsNotReplacementPrimary": true,
+    "actualNoNormalRazorPageSpeedupClaimed": true,
+    "actualNoApplicationSpeedupClaimed": true,
+    "actualNoAllocationSavingClaimed": true,
+    "actualNoProductionFrequencyClaimed": true,
+    "actualMergeReady": false,
+    "actualDispositionAuthorizesForkResearchDraftOnly": true,
+    "actualAllThreeComparisonsPermanentlyClosed": true,
+    "actualMaximumComparisonsConsumed": 3
+  },
+  "actualCompletedComparisons": 3,
+  "actualRetainedSamples": 576,
+  "actualHistoricalTimingRerun": false,
+  "actualBudgetPermanentlyClosed": true,
+  "actualIndividuallyXmlParsedTestsPerVariant": [
+    59,
+    59
+  ],
+  "actualRuntimeRecordsChecked": 22,
+  "actualPerBenchmarkSettingsRecordsChecked": 144,
+  "actualIndependentThirteenFileProjectRestoredRebuiltAndCharacterizedBothVariantsWithoutTiming": true,
+  "actualOrdinaryRazorPageOrApplicationOrAllocationSavingClaimed": false,
+  "actualAllAdverseAndUnchangedControlResultsRetained": true,
+  "actualCreated": "2026-11-18T11:45:23.903Z",
+  "actualTrackingIssueTitleAndBodyVerified": true,
+  "actualCopiedAuthoritativeFiles": 603,
+  "actualHashedOmittedCompiledRestoreFiles": 1908,
+  "actualPrimaryResults": [
+    {
+      "attempt": 1,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 10.217160023143313,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 1,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 138.15742163239958,
+        "medianNs": 131.0537268874143,
+        "standardDeviationNs": 15.974827570600846,
+        "cvPercent": 11.56277193208313,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.27633772431602,
+        "rawGc": [
+          8,
+          0,
+          0,
+          323067744,
+          458895
+        ],
+        "rawResultNsPerOperation": [
+          174.98643480534764,
+          129.18053149413265,
+          131.47648154806654,
+          129.01709541398358,
+          135.9489643600388,
+          130.6309722267621,
+          128.1476154675906,
+          145.87127774327462
+        ]
+      },
+      "candidate": {
+        "attempt": 1,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 124.0416567803685,
+        "medianNs": 123.28590421024484,
+        "standardDeviationNs": 5.836573816709675,
+        "cvPercent": 4.705333650165661,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 2.2459158603841285,
+        "rawGc": [
+          15,
+          0,
+          0,
+          560781456,
+          796557
+        ],
+        "rawResultNsPerOperation": [
+          127.26835618794387,
+          123.99464194025035,
+          127.35937290112321,
+          122.44447038943855,
+          118.48430181393171,
+          115.63654578391754,
+          134.56839874610355,
+          122.57716648023933
+        ]
+      }
+    },
+    {
+      "attempt": 2,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 2.401481071143241,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 2,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 124.7961939015546,
+        "medianNs": 124.63699291594727,
+        "standardDeviationNs": 2.2693043079144823,
+        "cvPercent": 1.8184082678872575,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.2506255146153835,
+        "rawGc": [
+          15,
+          0,
+          0,
+          573715680,
+          814929
+        ],
+        "rawResultNsPerOperation": [
+          129.2085568190603,
+          124.086024672088,
+          125.42601870837828,
+          125.18796115980656,
+          123.2903725355215,
+          123.38142341234635,
+          126.08889854208158,
+          121.70029536315434
+        ]
+      },
+      "candidate": {
+        "attempt": 2,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 121.79923692750155,
+        "medianNs": 120.43962960706962,
+        "standardDeviationNs": 5.531086487814538,
+        "cvPercent": 4.54115036131696,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.2469373788477593,
+        "rawGc": [
+          15,
+          0,
+          0,
+          589445856,
+          837273
+        ],
+        "rawResultNsPerOperation": [
+          119.76571560291566,
+          119.2877353025835,
+          122.1310134209511,
+          121.11354361122358,
+          132.05537500910694,
+          115.37610791223412,
+          127.62910066370227,
+          117.03530389729515
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "method": "RegisterFreshPage",
+      "profile": "Two",
+      "lessTimePercent": 14.142508990624947,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 3,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 168.63767656206582,
+        "medianNs": 167.79430916900742,
+        "standardDeviationNs": 8.784360827880777,
+        "cvPercent": 5.209014383359201,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 2.2611997013636165,
+        "rawGc": [
+          11,
+          0,
+          0,
+          420562592,
+          597382
+        ],
+        "rawResultNsPerOperation": [
+          187.00613677680278,
+          173.03300065954448,
+          169.59399513209303,
+          160.49763802725894,
+          165.99462320592184,
+          169.7634009729118,
+          163.74263034373317,
+          159.46998737826047
+        ]
+      },
+      "candidate": {
+        "attempt": 3,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "Two",
+        "meanNs": 144.78807799269464,
+        "medianNs": 142.60320556912785,
+        "standardDeviationNs": 9.13824445565818,
+        "cvPercent": 6.311461953462256,
+        "allocatedBytesPerOperation": 704,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.253267237494367,
+        "rawGc": [
+          12,
+          0,
+          0,
+          474907168,
+          674576
+        ],
+        "rawResultNsPerOperation": [
+          141.3905920163184,
+          166.14910699461586,
+          143.6929271127345,
+          141.51348402552122,
+          139.66106117027584,
+          144.36549773487346,
+          145.5604705770736,
+          135.97148431014443
+        ]
+      }
+    }
+  ],
+  "actualControlResults": [
+    {
+      "attempt": 1,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": 4.794008510927295,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 1,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 67.08929811649338,
+        "medianNs": 66.72376618395546,
+        "standardDeviationNs": 2.841180457124374,
+        "cvPercent": 4.234923507756734,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9141511780986638,
+        "rawGc": [
+          19,
+          0,
+          0,
+          728538880,
+          1543504
+        ],
+        "rawResultNsPerOperation": [
+          66.85385978915507,
+          66.59367257875587,
+          66.0206905845401,
+          72.74176160217272,
+          67.85158962982928,
+          64.34651286941919,
+          68.72764826006282,
+          63.578649618012
+        ]
+      },
+      "candidate": {
+        "attempt": 1,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 63.8730314548673,
+        "medianNs": 62.75236045118214,
+        "standardDeviationNs": 3.9476128007068554,
+        "cvPercent": 6.180406207111431,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.914761681842797,
+        "rawGc": [
+          19,
+          0,
+          0,
+          733010872,
+          1552987
+        ],
+        "rawResultNsPerOperation": [
+          67.72097899080933,
+          60.706432185201805,
+          62.807544428897344,
+          62.69717647346694,
+          60.72909818304983,
+          63.05320005898311,
+          71.92268834188567,
+          61.34713297664436
+        ]
+      }
+    },
+    {
+      "attempt": 2,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": -10.384305219606071,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 2,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 63.22455592783265,
+        "medianNs": 62.85452161703948,
+        "standardDeviationNs": 2.1739608207841408,
+        "cvPercent": 3.4384754291759636,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9150815617454802,
+        "rawGc": [
+          20,
+          0,
+          0,
+          761430344,
+          1613195
+        ],
+        "rawResultNsPerOperation": [
+          62.71163746478262,
+          67.22063978626267,
+          65.30307867306804,
+          62.84007822984822,
+          63.034785007392166,
+          61.77275530856468,
+          60.04450794851211,
+          62.86896500423074
+        ]
+      },
+      "candidate": {
+        "attempt": 2,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 69.78998678911933,
+        "medianNs": 69.59928056408869,
+        "standardDeviationNs": 4.155872370981121,
+        "cvPercent": 5.954826132205324,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 20,
+        "actualMedianOverheadNsPerOperation": 1.9197160456491635,
+        "rawGc": [
+          19,
+          0,
+          0,
+          741363640,
+          1570675
+        ],
+        "rawResultNsPerOperation": [
+          66.75209702834769,
+          66.83441832333233,
+          68.85596956722428,
+          76.92396581087749,
+          70.3425915609531,
+          64.09667817976347,
+          74.02858643576806,
+          70.48558740668821
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "method": "RegisterFreshPage",
+      "profile": "NoSections",
+      "lessTimePercent": 5.184088247315777,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 3,
+        "variant": "Original",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 77.4479483781898,
+        "medianNs": 73.46785342174468,
+        "standardDeviationNs": 9.837198132741005,
+        "cvPercent": 12.701689765498383,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9311450107614836,
+        "rawGc": [
+          13,
+          0,
+          0,
+          510093232,
+          1080706
+        ],
+        "rawResultNsPerOperation": [
+          78.98114750912829,
+          70.72487799642086,
+          71.08510547734537,
+          71.15311657379527,
+          72.07353341241743,
+          99.86869694440486,
+          74.86217343107191,
+          80.8349356809345
+        ]
+      },
+      "candidate": {
+        "attempt": 3,
+        "variant": "Candidate",
+        "method": "RegisterFreshPage",
+        "profile": "NoSections",
+        "meanNs": 73.43297838852888,
+        "medianNs": 70.66299781822919,
+        "standardDeviationNs": 7.490937081450213,
+        "cvPercent": 10.201053049783948,
+        "allocatedBytesPerOperation": 472,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 1.9195241351612449,
+        "rawGc": [
+          17,
+          0,
+          0,
+          652264824,
+          1381905
+        ],
+        "rawResultNsPerOperation": [
+          77.39511760938704,
+          70.20757577402209,
+          70.22711402013887,
+          71.0988816163195,
+          67.98665610154099,
+          67.16018829080147,
+          90.22255509604496,
+          73.16573859997612
+        ]
+      }
+    }
+  ],
+  "actualPreimplementationPlanAndBudgetPreserved": true,
+  "actualAdditionalTimingSamplesDuringPublication": 0,
+  "actualReceiptLinkBoundary": "Immutable evidence predates this additive receipt. The issue and PR link the current guide; all609sealed core files remain unchanged.",
+  "actualPublishedReportBlobUnchanged": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "campaignFinalizedAfterVerifiedReceipt": 122,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 236,
+  "campaignDispositionCounts": {
+    "drafted": 73,
+    "no-gain": 21,
+    "rejected": 22,
+    "duplicate": 6
+  },
+  "actualFinalizationCreated": "2026-11-18T11:47:18.643Z"
+}
