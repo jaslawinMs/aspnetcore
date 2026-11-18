@@ -1,0 +1,30 @@
+{
+  "candidate": "F041",
+  "observations": [
+    {
+      "operation": "Read-only local upstream-object existence probe before F041-snapshot-inputs.mjs",
+      "toolShellId": "f041-snapshot-selected-source-inputs",
+      "actualExitCode": 1,
+      "actualGitCommandText": "git cat-file -e c5baf473f31fa3bbe9f8201e3411361c632f3a91^{commit}",
+      "observedDiagnostic": "error: unknown switch `n'; git usage followed. The PowerShell wrapper then threw its premature object-availability message.",
+      "diagnosis": "The unquoted ^{commit} argument was parsed by PowerShell. This is an argument-quoting failure, not evidence that the object is absent.",
+      "nextOperation": "Run the existing Node source-snapshot driver, which passes the exact object selector as a native argument array.",
+      "actualSourceSnapshotDriverExecuted": false,
+      "actualShippingSourceChanged": false,
+      "actualTestsOrBenchmarksStarted": false,
+      "actualSourceComparisonAuthorizationsConsumed": 0
+    },
+    {
+      "operation": "First strict selected-file parity snapshot",
+      "toolShellId": "f041-snapshot-native-arguments",
+      "actualExitCode": 1,
+      "observedDiagnostic": "AssertionError for src/Components/Web/src/Forms/InputBase.cs: baseline bc1e815e62f4cb12e53b70b507e03de53ec3e9ce differs from current-default 2bfe561fccd8316fde834befe205386eb46cc31a.",
+      "actualPartialCopiedSources": 3,
+      "preservation": "Executed driver, native Git invocation records, original acceptance and partial copies retained under source-snapshot-attempt1.",
+      "assessment": "Actual default change concerns failed-parsing recovery on later input parameter updates. Preserve its whole source/diff/history and require the complete first-initialization branch to match. Do not claim whole selected-file/default/toolchain equivalence.",
+      "actualShippingSourceChanged": false,
+      "actualTestsOrBenchmarksStarted": false,
+      "actualSourceComparisonAuthorizationsConsumed": 0
+    }
+  ]
+}

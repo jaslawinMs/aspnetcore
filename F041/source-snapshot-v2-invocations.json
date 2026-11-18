@@ -1,0 +1,325 @@
+[
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "HEAD"
+    ],
+    "actualExitCode": 0,
+    "stdout": "37e809ead5824bc753a1c3d56f11615bdb1296c5\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "branch",
+      "--show-current"
+    ],
+    "actualExitCode": 0,
+    "stdout": "autoperf/F041-field-registry-get-or-create\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=no"
+    ],
+    "actualExitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "cat-file",
+      "-e",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91^{commit}"
+    ],
+    "actualExitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Forms/ClientValidation/RenderedFieldRegistry.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "676408beeb0889509d65d310249b7f4ffc5fdcff\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/ClientValidation/RenderedFieldRegistry.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "676408beeb0889509d65d310249b7f4ffc5fdcff\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Forms/src/EditContextProperties.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "f213bc58a7b3774eab0aa00e3b7bf3da24256774\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Forms/src/EditContextProperties.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "f213bc58a7b3774eab0aa00e3b7bf3da24256774\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Forms/src/EditContext.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "ede563c55f6ded985377af4d54f84212c18e10ec\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Forms/src/EditContext.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "ede563c55f6ded985377af4d54f84212c18e10ec\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Forms/InputBase.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "bc1e815e62f4cb12e53b70b507e03de53ec3e9ce\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/InputBase.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "2bfe561fccd8316fde834befe205386eb46cc31a\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "show",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/InputBase.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "// Licensed to the .NET Foundation under one or more agreements.\n// The .NET Foundation licenses this file to you under the MIT license.\n\nusing System.Diagnostics.CodeAnalysis;\nusing System.Globalization;\nusing System.Linq;\nusing System.Linq.Expressions;\nusing Microsoft.AspNetCore.Components.Forms.Mapping;\n\nnamespace Microsoft.AspNetCore.Components.Forms;\n\n/// <summary>\n/// A base class for form input components. This base class automatically\n/// integrates with an <see cref=\"Forms.EditContext\"/>, which must be supplied\n/// as a cascading parameter.\n/// </summary>\npublic abstract class InputBase<TValue> : ComponentBase, IDisposable\n{\n    private readonly EventHandler<ValidationStateChangedEventArgs> _validationStateChangedHandler;\n    private bool _hasInitializedParameters;\n    private bool _parsingFailed;\n    private string? _incomingValueBeforeParsing;\n    private string? _formattedValueExpression;\n    private bool _previousParsingAttemptFailed;\n    private ValidationMessageStore? _parsingValidationMessages;\n    private Type? _nullableUnderlyingType;\n    private bool _shouldGenerateFieldNames;\n\n    [CascadingParameter] private EditContext? CascadedEditContext { get; set; }\n\n    [CascadingParameter] private HtmlFieldPrefix FieldPrefix { get; set; } = default!;\n\n    /// <summary>\n    /// Gets or sets a collection of additional attributes that will be applied to the created element.\n    /// </summary>\n    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }\n\n    /// <summary>\n    /// Gets or sets the value of the input. This should be used with two-way binding.\n    /// </summary>\n    /// <example>\n    /// @bind-Value=\"model.PropertyName\"\n    /// </example>\n    [Parameter]\n    public TValue? Value { get; set; }\n\n    /// <summary>\n    /// Gets or sets a callback that updates the bound value.\n    /// </summary>\n    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }\n\n    /// <summary>\n    /// Gets or sets an expression that identifies the bound value.\n    /// </summary>\n    [Parameter] public Expression<Func<TValue>>? ValueExpression { get; set; }\n\n    /// <summary>\n    /// Gets or sets the display name for this field.\n    /// <para>This value is used when generating error messages when the input value fails to parse correctly.</para>\n    /// </summary>\n    [Parameter] public string? DisplayName { get; set; }\n\n    internal string GetDisplayName()\n    {\n        if (DisplayName is not null)\n        {\n            return DisplayName;\n        }\n\n        return ExpressionMemberAccessor.TryGetDisplayName(ValueExpression!, out var displayName)\n            ? displayName\n            : FieldIdentifier.FieldName;\n    }\n\n    /// <summary>\n    /// Gets the associated <see cref=\"Forms.EditContext\"/>.\n    /// This property is uninitialized if the input does not have a parent <see cref=\"EditForm\"/>.\n    /// </summary>\n    protected EditContext EditContext { get; set; } = default!;\n\n    /// <summary>\n    /// Gets the <see cref=\"FieldIdentifier\"/> for the bound value.\n    /// </summary>\n    protected internal FieldIdentifier FieldIdentifier { get; set; }\n\n    /// <summary>\n    /// Gets or sets the current value of the input.\n    /// </summary>\n    protected TValue? CurrentValue\n    {\n        get => Value;\n        set\n        {\n            var hasChanged = !EqualityComparer<TValue>.Default.Equals(value, Value);\n            if (hasChanged)\n            {\n                _parsingFailed = false;\n\n                // If we don't do this, then when the user edits from A to B, we'd:\n                // - Do a render that changes back to A\n                // - Then send the updated value to the parent, which sends the B back to this component\n                // - Do another render that changes it to B again\n                // The unnecessary reversion from B to A can cause selection to be lost while typing\n                // A better solution would be somehow forcing the parent component's render to occur first,\n                // but that would involve a complex change in the renderer to keep the render queue sorted\n                // by component depth or similar.\n                Value = value;\n\n                _ = ValueChanged.InvokeAsync(Value);\n                EditContext?.NotifyFieldChanged(FieldIdentifier);\n            }\n        }\n    }\n\n    /// <summary>\n    /// Gets or sets the current value of the input, represented as a string.\n    /// </summary>\n    protected string? CurrentValueAsString\n    {\n        // InputBase-derived components can hold invalid states (e.g., an InputNumber being blank even when bound\n        // to an int value). So, if parsing fails, we keep the rejected string in the UI even though it doesn't\n        // match what's on the .NET model. This avoids interfering with typing, but still notifies the EditContext\n        // about the validation error message.\n        get => _parsingFailed ? _incomingValueBeforeParsing : FormatValueAsString(CurrentValue);\n\n        set\n        {\n            _incomingValueBeforeParsing = value;\n            _parsingValidationMessages?.Clear();\n\n            if (_nullableUnderlyingType != null && string.IsNullOrEmpty(value))\n            {\n                // Assume if it's a nullable type, null/empty inputs should correspond to default(T)\n                // Then all subclasses get nullable support almost automatically (they just have to\n                // not reject Nullable<T> based on the type itself).\n                _parsingFailed = false;\n                CurrentValue = default!;\n            }\n            else if (TryParseValueFromString(value, out var parsedValue, out var validationErrorMessage))\n            {\n                _parsingFailed = false;\n                CurrentValue = parsedValue!;\n            }\n            else\n            {\n                _parsingFailed = true;\n\n                // EditContext may be null if the input is not a child component of EditForm.\n                if (EditContext is not null)\n                {\n                    _parsingValidationMessages ??= new ValidationMessageStore(EditContext);\n                    _parsingValidationMessages.Add(FieldIdentifier, validationErrorMessage);\n\n                    // Since we're not writing to CurrentValue, we'll need to notify about modification from here\n                    EditContext.NotifyFieldChanged(FieldIdentifier);\n                }\n            }\n\n            // We can skip the validation notification if we were previously valid and still are\n            if (_parsingFailed || _previousParsingAttemptFailed)\n            {\n                EditContext?.NotifyValidationStateChanged();\n                _previousParsingAttemptFailed = _parsingFailed;\n            }\n        }\n    }\n\n    /// <summary>\n    /// Constructs an instance of <see cref=\"InputBase{TValue}\"/>.\n    /// </summary>\n    protected InputBase()\n    {\n        _validationStateChangedHandler = OnValidateStateChanged;\n    }\n\n    /// <summary>\n    /// Formats the value as a string. Derived classes can override this to determine the formatting used for <see cref=\"CurrentValueAsString\"/>.\n    /// </summary>\n    /// <param name=\"value\">The value to format.</param>\n    /// <returns>A string representation of the value.</returns>\n    protected virtual string? FormatValueAsString(TValue? value)\n        => value?.ToString();\n\n    /// <summary>\n    /// Parses a string to create an instance of <typeparamref name=\"TValue\"/>. Derived classes can override this to change how\n    /// <see cref=\"CurrentValueAsString\"/> interprets incoming values.\n    /// </summary>\n    /// <param name=\"value\">The string value to be parsed.</param>\n    /// <param name=\"result\">An instance of <typeparamref name=\"TValue\"/>.</param>\n    /// <param name=\"validationErrorMessage\">If the value could not be parsed, provides a validation error message.</param>\n    /// <returns>True if the value could be parsed; otherwise false.</returns>\n    protected abstract bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out TValue result, [NotNullWhen(false)] out string? validationErrorMessage);\n\n    /// <summary>\n    /// Gets a CSS class string that combines the <c>class</c> attribute and a string indicating\n    /// the status of the field being edited (a combination of \"modified\", \"valid\", and \"invalid\").\n    /// Derived components should typically use this value for the primary HTML element's 'class' attribute.\n    /// </summary>\n    protected string CssClass\n    {\n        get\n        {\n            var fieldClass = EditContext?.FieldCssClass(FieldIdentifier);\n            return AttributeUtilities.CombineClassNames(AdditionalAttributes, fieldClass) ?? string.Empty;\n        }\n    }\n\n    /// <summary>\n    /// Gets the value to be used for the input's \"name\" attribute.\n    /// </summary>\n    protected string NameAttributeValue\n    {\n        get\n        {\n            if (AdditionalAttributes?.TryGetValue(\"name\", out var nameAttributeValue) ?? false)\n            {\n                return Convert.ToString(nameAttributeValue, CultureInfo.InvariantCulture) ?? string.Empty;\n            }\n\n            if (_shouldGenerateFieldNames)\n            {\n                return GetFieldName();\n            }\n\n            return string.Empty;\n        }\n    }\n\n    /// <summary>\n    /// Gets the value to be used for the input's \"id\" attribute.\n    /// </summary>\n    /// <remarks>\n    /// If an explicit \"id\" is provided via <see cref=\"AdditionalAttributes\"/>, that value takes precedence.\n    /// Otherwise, the id is a sanitized version of <see cref=\"NameAttributeValue\"/> in SSR mode; generated independently in interactive mode.\n    /// </remarks>\n    protected string IdAttributeValue\n    {\n        get\n        {\n            if (AdditionalAttributes?.TryGetValue(\"id\", out var idAttributeValue) ?? false)\n            {\n                return Convert.ToString(idAttributeValue, CultureInfo.InvariantCulture) ?? string.Empty;\n            }\n\n            var fieldName = NameAttributeValue;\n            if (string.IsNullOrEmpty(fieldName))\n            {\n                fieldName = GetFieldName();\n            }\n\n            return FieldIdGenerator.SanitizeHtmlId(fieldName);\n        }\n    }\n\n    private string GetFieldName()\n        => _formattedValueExpression ??= FieldPrefix?.GetFieldName(ValueExpression!)\n            ?? ExpressionFormatter.FormatLambda(ValueExpression!);\n\n    /// <inheritdoc />\n    public override Task SetParametersAsync(ParameterView parameters)\n    {\n        var previousValue = Value;\n        parameters.SetParameterProperties(this);\n\n        if (!_hasInitializedParameters)\n        {\n            // This is the first run\n            // Could put this logic in OnInit, but its nice to avoid forcing people who override OnInit to call base.OnInit()\n\n            if (ValueExpression == null)\n            {\n                throw new InvalidOperationException($\"{GetType()} requires a value for the 'ValueExpression' \" +\n                    $\"parameter. Normally this is provided automatically when using 'bind-Value'.\");\n            }\n\n            FieldIdentifier = FieldIdentifier.Create(ValueExpression);\n\n            if (CascadedEditContext != null)\n            {\n                EditContext = CascadedEditContext;\n                EditContext.OnValidationStateChanged += _validationStateChangedHandler;\n                _shouldGenerateFieldNames = EditContext.ShouldUseFieldIdentifiers;\n\n                if (AssignedRenderMode is null)\n                {\n                    // Register the input for client-side validation if rendered in static SSR mode.\n                    RenderedFieldRegistry.GetOrCreate(EditContext).Register(FieldIdentifier, NameAttributeValue);\n                }\n            }\n            else\n            {\n                // Ideally we'd know if we were in an SSR context but we don't\n                _shouldGenerateFieldNames = !OperatingSystem.IsBrowser();\n            }\n\n            _nullableUnderlyingType = Nullable.GetUnderlyingType(typeof(TValue));\n            _hasInitializedParameters = true;\n        }\n        else if (CascadedEditContext != EditContext)\n        {\n            // Not the first run\n\n            // We don't support changing EditContext because it's messy to be clearing up state and event\n            // handlers for the previous one, and there's no strong use case. If a strong use case\n            // emerges, we can consider changing this.\n            throw new InvalidOperationException($\"{GetType()} does not support changing the \" +\n                $\"{nameof(Forms.EditContext)} dynamically.\");\n        }\n        else if ((_parsingFailed || _previousParsingAttemptFailed) && !EqualityComparer<TValue>.Default.Equals(Value, previousValue))\n        {\n            _parsingFailed = false;\n            _previousParsingAttemptFailed = false;\n            _incomingValueBeforeParsing = null;\n            _parsingValidationMessages?.Clear();\n            EditContext?.NotifyValidationStateChanged();\n        }\n\n        UpdateAdditionalValidationAttributes();\n\n        // For derived components, retain the usual lifecycle with OnInit/OnParametersSet/etc.\n        return base.SetParametersAsync(ParameterView.Empty);\n    }\n\n    private void OnValidateStateChanged(object? sender, ValidationStateChangedEventArgs eventArgs)\n    {\n        UpdateAdditionalValidationAttributes();\n\n        StateHasChanged();\n    }\n\n    private void UpdateAdditionalValidationAttributes()\n    {\n        if (EditContext is null)\n        {\n            return;\n        }\n\n        var hasAriaInvalidAttribute = AdditionalAttributes != null && AdditionalAttributes.ContainsKey(\"aria-invalid\");\n        if (EditContext.GetValidationMessages(FieldIdentifier).Any())\n        {\n            // If this input is associated with an incoming value from an HTTP form post (via model binding),\n            // retain the attempted value even if it's unparseable\n            var attemptedValue = EditContext.GetAttemptedValue(NameAttributeValue);\n            if (attemptedValue != null)\n            {\n                _parsingFailed = true;\n                _incomingValueBeforeParsing = attemptedValue;\n            }\n\n            if (hasAriaInvalidAttribute)\n            {\n                // Do not overwrite the attribute value\n                return;\n            }\n\n            if (ConvertToDictionary(AdditionalAttributes, out var additionalAttributes))\n            {\n                AdditionalAttributes = additionalAttributes;\n            }\n\n            // To make the `Input` components accessible by default\n            // we will automatically render the `aria-invalid` attribute when the validation fails\n            // value must be \"true\" see https://www.w3.org/TR/wai-aria-1.1/#aria-invalid\n            additionalAttributes[\"aria-invalid\"] = \"true\";\n        }\n        else if (hasAriaInvalidAttribute)\n        {\n            // No validation errors. Need to remove `aria-invalid` if it was rendered already\n\n            if (AdditionalAttributes!.Count == 1)\n            {\n                // Only aria-invalid argument is present which we don't need any more\n                AdditionalAttributes = null;\n            }\n            else\n            {\n                if (ConvertToDictionary(AdditionalAttributes, out var additionalAttributes))\n                {\n                    AdditionalAttributes = additionalAttributes;\n                }\n\n                additionalAttributes.Remove(\"aria-invalid\");\n            }\n        }\n    }\n\n    /// <summary>\n    /// Returns a dictionary with the same values as the specified <paramref name=\"source\"/>.\n    /// </summary>\n    /// <returns>true, if a new dictionary with copied values was created. false - otherwise.</returns>\n    private static bool ConvertToDictionary(IReadOnlyDictionary<string, object>? source, out Dictionary<string, object> result)\n    {\n        var newDictionaryCreated = true;\n        if (source == null)\n        {\n            result = new Dictionary<string, object>();\n        }\n        else if (source is Dictionary<string, object> currentDictionary)\n        {\n            result = currentDictionary;\n            newDictionaryCreated = false;\n        }\n        else\n        {\n            result = new Dictionary<string, object>();\n            foreach (var item in source)\n            {\n                result.Add(item.Key, item.Value);\n            }\n        }\n\n        return newDictionaryCreated;\n    }\n\n    /// <inheritdoc/>\n    protected virtual void Dispose(bool disposing)\n    {\n    }\n\n    void IDisposable.Dispose()\n    {\n        // When initialization in the SetParametersAsync method fails, the EditContext property can remain equal to null\n        EditContext?.OnValidationStateChanged -= _validationStateChangedHandler;\n\n        // Clear parsing validation messages store owned by the input when the input is disposed.\n        if (_parsingValidationMessages != null)\n        {\n            _parsingValidationMessages.Clear();\n            EditContext!.NotifyValidationStateChanged(); // when _parsingValidationMessages is not null, EditContext is also not null.\n        }\n\n        Dispose(disposing: true);\n    }\n}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Forms/EditForm.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "359d5c59cb27175e5bbaed1bdeb81963c256a2a2\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/EditForm.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "359d5c59cb27175e5bbaed1bdeb81963c256a2a2\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Forms/ClientValidation/ClientValidationData.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "ca7e3a9bd80f129ffe5f9aedb933c4acb801c7e2\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/ClientValidation/ClientValidationData.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "ca7e3a9bd80f129ffe5f9aedb933c4acb801c7e2\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Forms/ClientValidation/ClientValidationProvider.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "b3587aceb7f44efe7d99d5e19d586705e04042c0\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Forms/ClientValidation/ClientValidationProvider.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "b3587aceb7f44efe7d99d5e19d586705e04042c0\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Forms/src/DataAnnotationsValidator.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "d243c4970cf9eeddbbe8e2eb5fbd48f5d583699b\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Forms/src/DataAnnotationsValidator.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "d243c4970cf9eeddbbe8e2eb5fbd48f5d583699b\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Forms/src/Microsoft.AspNetCore.Components.Forms.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "a9f84517c4f208a3c133101d3f8a7133c5d6ea05\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Forms/src/Microsoft.AspNetCore.Components.Forms.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "a9f84517c4f208a3c133101d3f8a7133c5d6ea05\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/src/Microsoft.AspNetCore.Components.Web.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "8da4440e650e2c31eb73aebdd51b74353f1929fb\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/src/Microsoft.AspNetCore.Components.Web.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "8da4440e650e2c31eb73aebdd51b74353f1929fb\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/test/Microsoft.AspNetCore.Components.Web.Tests.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "a4b39771fe9b92e4d9708cf333787dfb6540564a\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/test/Microsoft.AspNetCore.Components.Web.Tests.csproj"
+    ],
+    "actualExitCode": 0,
+    "stdout": "a4b39771fe9b92e4d9708cf333787dfb6540564a\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Web/test/Forms/InputBaseTest.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "5f2ae4ce135ab947c16549ed8fd184bf6c797910\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Web/test/Forms/InputBaseTest.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "5f2ae4ce135ab947c16549ed8fd184bf6c797910\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Forms/test/EditContextTest.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "002bf38ae8889fe1d507554f64c3d32f6a9f352a\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "rev-parse",
+      "c5baf473f31fa3bbe9f8201e3411361c632f3a91:src/Components/Forms/test/EditContextTest.cs"
+    ],
+    "actualExitCode": 0,
+    "stdout": "002bf38ae8889fe1d507554f64c3d32f6a9f352a\n",
+    "stderr": ""
+  },
+  {
+    "executable": "git",
+    "arguments": [
+      "ls-files",
+      "--others",
+      "--exclude-standard"
+    ],
+    "actualExitCode": 0,
+    "stdout": "autoperf-issue-70219-deduplicated-report.html\nautoperf-issue-70219-duplicate-report.html\nautoperf-scan-report.md\nperformance-antipattern-findings.md\n",
+    "stderr": ""
+  }
+]

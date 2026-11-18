@@ -1,0 +1,73 @@
+{
+  "candidate": "F041",
+  "operation": "No-change boundary investigation of RenderedFieldRegistry.GetOrCreate",
+  "independentBaseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "sourceBranch": "autoperf/F041-field-registry-get-or-create",
+  "freshUpstreamDefault": "c5baf473f31fa3bbe9f8201e3411361c632f3a91",
+  "currentDefaultAssessmentBeforeAnyExecution": {
+    "initialParityGuardStopped": true,
+    "changedSelectedProducer": "src/Components/Web/src/Forms/InputBase.cs",
+    "baselineBlob": "bc1e815e62f4cb12e53b70b507e03de53ec3e9ce",
+    "defaultBlob": "2bfe561fccd8316fde834befe205386eb46cc31a",
+    "observedDelta": "Current default captures the previous auto-property Value and clears failed-parsing state on a later parameter update. The complete first-initialization branch, including actual registry creation/registration, is unchanged. Every diagnostic render creates fresh InputText instances; Warm refers to EditContext registry reuse, not repeated parameters on one input.",
+    "scope": "Require exact owner/property-bag/project/other selected-file parity and exact first-initialization-block parity. Preserve the newer producer source and full diff/history. The diagnostic remains on baseline 37e809e; do not claim a current-default build, parsing-recovery validation, new Arcade integration, or current-default render latency.",
+    "protectedManifests": "Keep global.json and all dependency manifests unchanged. The current-default Arcade/SqlClient version deltas are not applied."
+  },
+  "sourceMutationAuthorizedByThisPlan": false,
+  "hypothesis": "The existing public sealed EditContextProperties abstraction does not expose a compatible single-probe get-or-add. Its private dictionary belongs to Components.Forms, while the actual registry/producer live in Components.Web. Do not invent a public API, a new friend grant, UnsafeAccessor, private-member invocation, a replacement property bag, or another cache to force an optimization.",
+  "importantQualification": "A genuinely empty property bag has no dictionary yet, so its first failed TryGetValue performs no key hashing. With the normal DataAnnotationsValidator rendered first, its actual activation marker initializes the bag before InputBase registers the first field. The initial registry miss occurs once per EditContext; subsequent inputs use the existing registry.",
+  "faithfulBoundary": {
+    "owner": "Original framework RenderedFieldRegistry.GetOrCreate",
+    "producer": "Public HtmlRenderer renders actual EditForm, DataAnnotationsValidator and InputText components. InputBase.SetParametersAsync performs registration; no nonpublic call is injected.",
+    "consumer": "Original ClientValidationData invokes a registered public ClientValidationProvider implementation with the actual produced field map. The observer emits a diagnostic field-count carrier and checks field names/model identity.",
+    "excludedClaims": [
+      "No optimized candidate or measured improvement",
+      "No isolated GetOrCreate latency or exact actual Type-key probe count from the rendering benchmark",
+      "No browser validation, endpoint transport, postback, application latency, production frequency, other render modes, Mono or AOT claim",
+      "No public API proposal or shipping test changes"
+    ]
+  },
+  "requiredCharacterizationCases": [
+    "EmptyPropertyBag_MissDoesNotHashKey",
+    "InitializedPropertyBag_MissThenSetHashesTwice",
+    "StaticSsrFields_Cold_1",
+    "StaticSsrFields_Warm_1",
+    "StaticSsrFields_Cold_8",
+    "StaticSsrFields_Warm_8",
+    "StaticSsrFields_Cold_64",
+    "StaticSsrFields_Warm_64",
+    "SeparateForms_PreserveFieldAndPropertyIsolation",
+    "NoInputs_DoesNotInvokeFieldConsumer"
+  ],
+  "benchmark": {
+    "kind": "Original-only diagnostic",
+    "fixture": "AutoPerf.FieldRegistryBenchmarks",
+    "method": "RenderForm",
+    "fieldCounts": [1, 8, 64],
+    "registryStates": ["Cold", "Warm"],
+    "profiles": 6,
+    "warmupsPerProfile": 3,
+    "retainedResultsPerProfile": 8,
+    "iterationMilliseconds": 100,
+    "unrollFactor": 1,
+    "outliers": "DontRemove",
+    "timedScope": "Actual complete HtmlRenderer/EditForm/InputText/validator/public observer rendering and renderer disposal. Cold also creates its EditContext; warm reuses an EditContext with a previously produced registry. Neither profile is a source variant or an isolated lookup.",
+    "observerOverheadIncluded": true,
+    "publicBdnDiscoveryMustPrecedeAuthorization": true
+  },
+  "budget": {
+    "maximumSourceComparisonsIncludingFailures": 3,
+    "sourceComparisonsAuthorizedByThisPlan": 0,
+    "originalOnlyTimingAuthorizationsAllowed": 1,
+    "doNotRetuneUnchangedCodeToInventAGain": true
+  },
+  "publicationGate": [
+    "All selected baseline/default inputs except the explicitly assessed InputBase producer agree. Its exact full first-initialization block agrees; its newer parsing-recovery source/diff/history and unbuilt-current-default boundary are retained",
+    "Relevant existing producer tests, all ten characterization cases, all six BDN discovery/lifecycle profiles, and original-only diagnostic complete or limitations are explicit",
+    "Loaded owning assemblies and selected portable-PDB source documents match the frozen, hashed source/consumer inputs",
+    "Shared-machine priority, affinity and power settings are not changed; heavy work serialized with at most two MSBuild workers",
+    "Source remains unchanged; independent fork branch persists; a justified tracking issue replaces an artificial optimization PR",
+    "Raw original-only results, every failure and limitation are published without a no-gain or gain claim",
+    "Remote evidence and final campaign receipt/index are verified before increasing the finalized counter"
+  ]
+}

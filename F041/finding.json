@@ -1,0 +1,18 @@
+{
+  "id": "F041",
+  "finding": {
+    "card_id": "dictionary-containskey-before-indexer",
+    "file": "src/Components/Web/src/Forms/ClientValidation/RenderedFieldRegistry.cs",
+    "line_start": 27,
+    "line_end": 33,
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Static-SSR field registry creation performs two property-bag probes on a miss.",
+    "explanation": "GetOrCreate first calls EditContext.Properties.TryGetValue with the registry Type key, then stores through the indexer when absent. EditContextProperties is backed by a Dictionary, so the miss path hashes and probes the same key twice for each form registry creation. A semantic get-or-add operation would need to preserve the property bag abstraction and avoid introducing a public API solely for this internal optimization.",
+    "snippet": "        if (editContext.Properties.TryGetValue(typeof(RenderedFieldRegistry), out var existing))\n        {\n            return (RenderedFieldRegistry)existing;\n        }\n\n        var registry = new RenderedFieldRegistry();\n        editContext.Properties[typeof(RenderedFieldRegistry)] = registry;",
+    "suppressed": false
+  }
+}
