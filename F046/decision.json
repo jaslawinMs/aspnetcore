@@ -1,0 +1,58 @@
+{
+  "candidate": "F046",
+  "disposition": "qualified",
+  "classification": "Focused allocation-neutral lookup reduction",
+  "actualClaimedScope": "Fresh default-store HTTP.sys response preparation ending in one Connection: close append, with collection setup, Content-Length indexer write, delegate invocation and count readback included.",
+  "actualObservedProducer": "The compiled Response.ComputeHeaders body has one shared HeaderCollection.Append call site, taken for closing responses without an already-close response header.",
+  "actualNotGeneralApplicationOrRequestHeaderAppend": true,
+  "actualNativeHttpSysIisOrApplicationThroughputMeasured": false,
+  "actualProductionFrequencyMeasured": false,
+  "actualCandidateRecommendedForMerge": false,
+  "numericalPrimaryTimingGateMet": true,
+  "allocationGateMet": false,
+  "controlCredibilityGateMet": true,
+  "medianPrimaryLessTimePercent": 13.405738760545361,
+  "medianUnchangedControlLessTimePercent": -0.9642878858048709,
+  "primaryNoGreaterThanControlComparisons": [],
+  "actualPrimaryPairs": [
+    {
+      "attempt": 1,
+      "originalNs": 104.08210520757078,
+      "candidateNs": 94.25443837998785,
+      "lessTimePercent": 9.442225258591408,
+      "actualManagedBytesSaved": 0
+    },
+    {
+      "attempt": 2,
+      "originalNs": 111.54796685584664,
+      "candidateNs": 92.75049986190137,
+      "lessTimePercent": 16.851465359505134,
+      "actualManagedBytesSaved": 0
+    },
+    {
+      "attempt": 3,
+      "originalNs": 106.59362751723206,
+      "candidateNs": 92.30396427688314,
+      "lessTimePercent": 13.405738760545361,
+      "actualManagedBytesSaved": 0
+    }
+  ],
+  "actualNoManagedAllocationSaving": true,
+  "actualPrimaryAllocatedBytesBeforeAndAfter": 384,
+  "actualImportantQualifications": [
+    "This saves a second dictionary lookup only for the exact concrete Dictionary runtime type. Wrappers and subclasses retain their original interface read/write operations.",
+    "Only the narrow primary meets the declared qualification claim; secondary scaled values do not establish production frequency or end-to-end benefit.",
+    "The unchanged KeepAlive public-extension control appeared 27.437536149691866% faster in comparison2, exceeding the corresponding21.841356458836923% native secondary effect. This is explicit shared-machine drift evidence, not an additional optimization.",
+    "The WrappedStore fallback has a2.8543514688403437% median apparent benefit but regresses2.311780152266074% in comparison3. No fallback improvement is claimed.",
+    "The largest single-case coefficient of variation is13.460390324859006%. Three sequential AB/BA/AB pairs on shared hardware are not an application-throughput or formal statistical-significance result.",
+    "IIS compiles the changed shared class and passes actual managed contracts; no IIS call edge to this instance Append was found in the complete inspected managed owner IL, and native IIS is not validated.",
+    "Green/green preservation checks cover the optimization. Three initially incorrect fixture assumptions were corrected before any shipping edit or timing; they are not semantic-bug red/green evidence.",
+    "The measured candidate was built before its later publication commit. Physical source/PDB checksums bind the actual measured body; no complete compiler-provenance claim is made."
+  ],
+  "actualIndependentProjectRebuilt": true,
+  "actualAdditionalReconstructionTimingSamples": 0,
+  "actualTimingBudgetPermanentlyClosed": true,
+  "actualClosedBudgetSha256": "92E6CD45BBE2A38151D31C7E1789E0B68B83CD91FCDB197588E9E36D47346EF2",
+  "actualFixedClassifiedReportUpdated": false,
+  "actualDecidedAt": "2026-11-18T12:36:34.682Z"
+}

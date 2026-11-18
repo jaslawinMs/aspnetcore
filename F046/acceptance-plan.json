@@ -1,0 +1,113 @@
+{
+  "candidate": "F046",
+  "declaredAt": "2026-11-18T11:58:04.731Z",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualCurrentDefault": "31c15331c03714b7a602e1817e65881474c29e2e",
+  "branch": "autoperf/F046-httpsys-header-append-ref",
+  "actualDeclaredBeforeAnyF046ShippingSourceEditOrTiming": true,
+  "target": "Microsoft.AspNetCore.HttpSys.Internal.HeaderCollection.Append(string,string)",
+  "actualCompiledShippingOwners": [
+    "Microsoft.AspNetCore.Server.HttpSys",
+    "Microsoft.AspNetCore.Server.IIS"
+  ],
+  "actualObservedNarrowSourceProducer": "HTTP.sys Response.ComputeHeaders appends exactly Connection:close when connection lifetime requires closing and the response does not already equal close.",
+  "actualNotTheGeneralPublicHeaderDictionaryAppendExtension": true,
+  "actualLspReturnedNoIncomingCallsDespiteRealSourceCaller": true,
+  "requiredProducerEvidenceBeforeTiming": [
+    "Both real source-built owners contain the actual shared HeaderCollection body and matching source/PDB document.",
+    "Resolve the compiled HTTP.sys ComputeHeaders call target from actual owner IL, not a text-match completeness assumption.",
+    "Execute actual public UseHttpSys requests for HTTP/1.0, request Connection:close and unchanged keep-alive/application-close controls.",
+    "Observe actual managed response header values/read-only state after the real producer and material client protocol/header/body output.",
+    "Characterize original and actual current default before a shipping edit; do not inject producer callbacks, native request contexts or substitute header collections."
+  ],
+  "proposedChange": "After all existing guards, use CollectionsMarshal.GetValueRefOrAddDefault only when Store.GetType() equals the exact Dictionary<string,StringValues> type; preserve the original IDictionary read/concat/write fallback for wrappers and dictionary subclasses.",
+  "requiredPreservation": [
+    "Keep existing constructor, private Store type, guards/order, dictionary comparer, stored key spelling and concatenation order.",
+    "Missing keys, existing single/multiple values, empty/null values, read-only and trailer restrictions preserve existing state and errors.",
+    "A derived dictionary with explicit IDictionary operations must keep those operations; an is-Dictionary shortcut is insufficient.",
+    "No dictionary add/remove or callbacks while the returned ref is in use; StringValues.Concat computes the struct value before assignment.",
+    "No public/protected API change, new IVT or UnsafeAccessor, dependency-manifest or unrelated formatting change.",
+    "Build both source owners, run focused owning managed tests and relevant existing real HTTP.sys functional rows on both source variants.",
+    "IIS managed shared-class contracts are not passed off as native IIS integration or throughput."
+  ],
+  "measuredBoundary": "Fresh actual default HeaderCollection, ContentLength=0, optional preexisting Connection values, one fixed Connection:close append, collection-count readback; includes collection initialization and optional setup writes, excludes native HTTP/client/host costs.",
+  "primary": {
+    "method": "FreshNativeAppend",
+    "profile": "NoExisting",
+    "reason": "Smallest default-store shape produced by closing an empty response after Content-Length initialization; fixed real Connection key/close value, not arbitrary bulk/long-name appends."
+  },
+  "unchangedControl": {
+    "method": "FreshPublicExtensionControl",
+    "profile": "NoExisting",
+    "reason": "Same fresh header construction/value but explicit public HeaderDictionaryExtensions.Append, which does not call the changed instance method."
+  },
+  "profileKeys": [
+    "NoExisting",
+    "KeepAlive",
+    "TwoExisting",
+    "EightExisting",
+    "MixedCaseExisting",
+    "WrappedStore"
+  ],
+  "actualWrappedStoreAndScaledValuesAreSecondaryNotProductionFrequencyEvidence": true,
+  "benchmarkCasesPerSource": 12,
+  "warmupIterations": 3,
+  "retainedIterations": 8,
+  "requestedIterationMilliseconds": 100,
+  "unrollFactor": 1,
+  "outlierRemoval": "DontRemove",
+  "benchmarkDotNetVersion": "0.13.0",
+  "sourceComparisonsMaximum": 3,
+  "failedOrPartialComparisonAuthorizationsConsumeBudget": true,
+  "comparisonOrders": [
+    [
+      "Original",
+      "Candidate"
+    ],
+    [
+      "Candidate",
+      "Original"
+    ],
+    [
+      "Original",
+      "Candidate"
+    ]
+  ],
+  "clearPrimaryGainMayStopEarlyAtPercent": 50,
+  "numericalTimingCriterion": "At least5% median paired less time and primary faster in at least2of3 completed pairs.",
+  "allocationCriterion": "Alternative primary structural managed saving at least16B/op, repeated in at least2of3, never inferred from unmatched or control drift.",
+  "controlCredibilityCriterion": "Reject timing-only qualification if primary apparent benefit is no greater than the corresponding unchanged control in at least2of3; independently review all variance and adverse profiles.",
+  "localGainDoesNotImplyNativeHttpSysIisOrApplicationThroughputGain": true,
+  "imageCriterion": "One byte-identical common measured harness and full closures; only the two actual source-built owner DLL/PDB pairs may change.",
+  "reconstructionCriterion": "Independently restore/build byte-exact authored project elsewhere and characterize both source variants without extra timing.",
+  "sampleAuditCriterion": "Independently reconstruct every retained result from native actual/overhead measurements, validate allocation rounding, settings and individual parameterized TRX rows.",
+  "environment": "Shared Windows machine; no priority, affinity, power, URL ACL, firewall or OS changes; no unrelated process termination; serialize builds/benchmarks with at most2MSBuild workers.",
+  "protectedFiles": [
+    {
+      "path": "global.json",
+      "sha256": "C3D6E7C29D94C34B6343D4A2EFE74164929F29BFA26FD84B5E2020A15091CD53"
+    },
+    {
+      "path": "autoperf-issue-70219-deduplicated-report.html",
+      "sha256": "E4E69280D1F3AA0BAFB24D5CF587C627CB83C535A4B4E082B0079E21418ADCA8"
+    },
+    {
+      "path": "autoperf-issue-70219-duplicate-report.html",
+      "sha256": "9A1ABF429B9B23172A9FFB0B8901209AE764092B884E79573544571C1D79124E"
+    },
+    {
+      "path": "autoperf-scan-report.md",
+      "sha256": "8CC5AB40247F93804441E886B6BE18D66758C42624986A26EA2F7F68E175C8F8"
+    },
+    {
+      "path": "performance-antipattern-findings.md",
+      "sha256": "CCA40D0675858C9A7502BE24EA1F93BE88DCEE5EDE6A63E38B1EABD8FBAD1673"
+    }
+  ],
+  "documentation": {
+    "url": "https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.collectionsmarshal.getvaluereforadddefault?view=net-10.0",
+    "observedDocsCommit": "eb67337dea628c1898350f7d074e02e6a1c7ad65",
+    "relevantRemark": "Items should not be added to or removed from the dictionary while the ref TValue is in use.",
+    "observedBeforeCandidateImplementation": true
+  }
+}

@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const session = path.dirname(fileURLToPath(import.meta.url));
+const run = path.join(session, 'autoperf-runs', 'F046');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+const budget = read(path.join(run, 'diagnostic-budget.json'));
+assert.equal(budget.authorized.length, 0);
+assert.equal(budget.permanentlyClosed, false);
+assert.equal(fs.existsSync(path.join(run, 'harness', 'bin')), false);
+const previous = read(path.join(run, 'harness-source-hashes.json'));
+assert.equal(previous.length, 9);
+assert.deepEqual(previous, read(path.join(run, 'preparation', 'contract-expectations-001', 'harness-source-hashes.json')));
+const inputs = previous.map(item => {
+  const bytes = fs.readFileSync(path.join(run, 'harness', item.path));
+  return { path: item.path, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex').toUpperCase() };
+});
+const delta = inputs.filter(item => item.sha256 !== previous.find(old => old.path === item.path).sha256).map(item => item.path);
+assert.deepEqual(delta, ['Characterization.cs']);
+fs.writeFileSync(path.join(run, 'harness-source-hashes.json'), JSON.stringify(inputs, null, 2) + '\n');
+console.log('Refreshed only the corrected contract fixture input before any harness compilation or timing.');

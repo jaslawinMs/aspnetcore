@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.HeaderAppendBenchmarks-20261118-042436</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F046  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>               Method</th><th> ProfileKey</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>FreshNativeAppend</td><td>NoExisting</td><td>92.75 ns</td><td>8.135 ns</td><td>4.255 ns</td><td>0.0101</td><td>-</td><td>-</td><td>384 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>NoExisting</td><td>108.44 ns</td><td>6.719 ns</td><td>3.514 ns</td><td>0.0096</td><td>-</td><td>-</td><td>384 B</td>
+</tr><tr><td>FreshNativeAppend</td><td>KeepAlive</td><td>132.58 ns</td><td>6.758 ns</td><td>3.534 ns</td><td>0.0107</td><td>-</td><td>-</td><td>424 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>KeepAlive</td><td>169.88 ns</td><td>8.288 ns</td><td>4.335 ns</td><td>0.0101</td><td>-</td><td>-</td><td>424 B</td>
+</tr><tr><td>FreshNativeAppend</td><td>TwoExisting</td><td>156.15 ns</td><td>14.041 ns</td><td>7.344 ns</td><td>0.0115</td><td>-</td><td>-</td><td>432 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>TwoExisting</td><td>191.91 ns</td><td>18.195 ns</td><td>9.516 ns</td><td>0.0115</td><td>-</td><td>-</td><td>432 B</td>
+</tr><tr><td>FreshNativeAppend</td><td>EightExisting</td><td>201.75 ns</td><td>17.940 ns</td><td>9.383 ns</td><td>0.0119</td><td>-</td><td>-</td><td>480 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>EightExisting</td><td>299.80 ns</td><td>15.058 ns</td><td>7.876 ns</td><td>0.0120</td><td>-</td><td>-</td><td>480 B</td>
+</tr><tr><td>FreshNativeAppend</td><td>MixedCaseExisting</td><td>139.15 ns</td><td>15.248 ns</td><td>7.975 ns</td><td>0.0108</td><td>-</td><td>-</td><td>424 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>MixedCaseExisting</td><td>186.64 ns</td><td>22.193 ns</td><td>11.607 ns</td><td>0.0110</td><td>-</td><td>-</td><td>424 B</td>
+</tr><tr><td>FreshNativeAppend</td><td>WrappedStore</td><td>160.11 ns</td><td>7.924 ns</td><td>4.144 ns</td><td>0.0111</td><td>-</td><td>-</td><td>456 B</td>
+</tr><tr><td>FreshPublicExtensionControl</td><td>WrappedStore</td><td>183.77 ns</td><td>18.085 ns</td><td>9.459 ns</td><td>0.0117</td><td>-</td><td>-</td><td>456 B</td>
+</tr></tbody></table>
+</body>
+</html>

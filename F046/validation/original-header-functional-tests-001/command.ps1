@@ -1,0 +1,6 @@
+$ErrorActionPreference = 'Stop'
+Set-Location -LiteralPath 'C:\src\aspnetcore'
+. .\activate.ps1
+$dotnetArguments = @('test', 'C:\src\aspnetcore\src\Servers\HttpSys\test\FunctionalTests\Microsoft.AspNetCore.Server.HttpSys.FunctionalTests.csproj', '--no-build', '--no-restore', '-c', 'Release', '--filter', 'FullyQualifiedName=Microsoft.AspNetCore.Server.HttpSys.Listener.ResponseHeaderTests.ResponseHeaders_10Request_ServerSendsDefaultHeaders|FullyQualifiedName=Microsoft.AspNetCore.Server.HttpSys.Listener.ResponseHeaderTests.ResponseHeaders_10HeadRequest_ServerSendsDefaultHeaders|FullyQualifiedName=Microsoft.AspNetCore.Server.HttpSys.Listener.ResponseHeaderTests.ResponseHeaders_HTTP10KeepAliveRequest_KeepAliveHeader_Gets11NoClose|FullyQualifiedName=Microsoft.AspNetCore.Server.HttpSys.ResponseHeaderTests.ResponseHeaders_HTTP10Request_Gets11Close|FullyQualifiedName=Microsoft.AspNetCore.Server.HttpSys.ResponseHeaderTests.ResponseHeaders_ServerSendsConnectionClose_Closed', '--logger', 'trx;LogFileName=F046-original-header-functional.trx', '--results-directory', 'C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F046\validation\original-header-functional-tests-001\test-results')
+& 'C:\src\aspnetcore\.dotnet\dotnet.exe' @dotnetArguments
+exit $LASTEXITCODE
