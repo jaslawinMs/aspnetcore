@@ -1,0 +1,35 @@
+{
+  "candidate": "F120",
+  "actualSourceResearch": {
+    "owner": "internal sealed CopyOnWriteList<T> in Microsoft.AspNetCore.Mvc.Core",
+    "actualCurrentDefaultTargetBlob": "0c33a107e4464129ce8eb5b6fda3f78cc9d889e7",
+    "lastObservedTargetChange": "a020933a662680d4628bcbb087f6b1a19f037bd0: 2023 debugger support, not a Contains optimization",
+    "actualSourceBackedLoopUsesObjectEquals": true,
+    "actualOnlyWritableCopyAssignment": "new List<T>(_source)",
+    "actualCopyInitiallyNull": true,
+    "actualInitialProducerStores": "The four inspected MVC/Razor Pages producers cache MvcOptions.ValueProviderFactories.ToArray(), then construct a per-request CopyOnWriteList<IValueProviderFactory>.",
+    "actualProducerComments": "PERF: These are rarely going to be changed, so let's go copy-on-write.",
+    "actualOrdinaryPathNotProposedAsGain": true
+  },
+  "officialPublicContract": {
+    "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllercontext.valueproviderfactories?view=aspnetcore-10.0",
+    "property": "public virtual IList<IValueProviderFactory> ControllerContext.ValueProviderFactories",
+    "summary": "Gets or sets the list of IValueProviderFactory instances for the current request.",
+    "actualDocumentationVersionIsNotClaimedToBeNet12": true,
+    "actualPinnedSourcePropertyRead": "src/Mvc/Mvc.Core/src/ControllerContext.cs"
+  },
+  "validationDistinctions": {
+    "existingAddingAndDeletingResourceFilterTests": "ControllerActionInvokerTest passes a supplied List into its test context. Useful existing behavior coverage, but not proof that the shipping CopyOnWriteList producer ran.",
+    "requiredFaithfulProducer": "A real TestServer MVC request must let ControllerRequestDelegateFactory or ControllerActionInvokerProvider create the wrapper and expose it naturally through the activated controller.",
+    "queryPrerequisite": "A parameterless probe action must read the query directly for empty/custom-factory scenarios; unavailable value providers must not silently prevent the requested copy path.",
+    "realPageRequestBoundary": "Both page producers were read. Do not equate MVC HTTP evidence with a compiled Razor Pages request.",
+    "lsp": "Reference and definition lookups omit source-proven consumers. They cannot establish zero production reachability."
+  },
+  "scope": {
+    "proposed": "Only already-copied private List<T> Contains enumeration.",
+    "preserved": "Original fallback loop, object.Equals order/dispatch, early return, enumeration invalidation, original-source isolation.",
+    "notResolvedByThisFinding": ["F121", "F122", "F123", "F151", "F152"],
+    "actualShippingEditAtResearch": false,
+    "actualTimingAtResearch": false
+  }
+}

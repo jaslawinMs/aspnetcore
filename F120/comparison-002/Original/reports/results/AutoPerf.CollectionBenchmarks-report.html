@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.CollectionBenchmarks-20261118-070819</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F120  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>    Method</th><th>       Profile</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Contains</td><td>CopiedDefault5Miss</td><td>10.746 ns</td><td>0.2751 ns</td><td>0.1439 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedDefault5Miss</td><td>11.867 ns</td><td>0.3116 ns</td><td>0.1630 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>Unmod(...)5Miss [22]</td><td>49.094 ns</td><td>0.6331 ns</td><td>0.3311 ns</td><td>0.0005</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>Unmod(...)5Miss [22]</td><td>49.549 ns</td><td>1.0373 ns</td><td>0.5426 ns</td><td>0.0005</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Contains</td><td>CopiedDefault5First</td><td>2.533 ns</td><td>0.0401 ns</td><td>0.0210 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedDefault5First</td><td>2.552 ns</td><td>0.0540 ns</td><td>0.0283 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>CopiedDefault5Last</td><td>9.203 ns</td><td>0.1997 ns</td><td>0.1045 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedDefault5Last</td><td>10.033 ns</td><td>0.1883 ns</td><td>0.0985 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>CopiedEmptyMiss</td><td>6.634 ns</td><td>0.1661 ns</td><td>0.0869 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedEmptyMiss</td><td>6.484 ns</td><td>0.1344 ns</td><td>0.0703 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>CopiedOneMiss</td><td>3.633 ns</td><td>0.0712 ns</td><td>0.0372 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedOneMiss</td><td>3.920 ns</td><td>0.3730 ns</td><td>0.1951 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>CopiedEightMiss</td><td>15.895 ns</td><td>0.2444 ns</td><td>0.1278 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedEightMiss</td><td>17.796 ns</td><td>0.5333 ns</td><td>0.2789 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>Contains</td><td>Unmod(...)First [23]</td><td>18.613 ns</td><td>0.4954 ns</td><td>0.2591 ns</td><td>0.0008</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>Unmod(...)First [23]</td><td>19.612 ns</td><td>0.8733 ns</td><td>0.4567 ns</td><td>0.0008</td><td>-</td><td>-</td><td>32 B</td>
+</tr></tbody></table>
+</body>
+</html>

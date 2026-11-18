@@ -1,0 +1,40 @@
+commit a020933a662680d4628bcbb087f6b1a19f037bd0
+Author: James Newton-King <james@newtonking.com>
+Date:   Tue Aug 1 20:26:31 2023 +0800
+
+    Improve MVC and RazorPages debugging (#49353)
+
+diff --git a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+index 82d26cc259..0c33a107e4 100644
+--- a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
++++ b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+@@ -1,12 +1,14 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+-#nullable enable
+-
+ using System.Collections;
++using System.Diagnostics;
++using System.Linq;
+ 
+ namespace Microsoft.AspNetCore.Mvc.Infrastructure;
+ 
++[DebuggerDisplay("Count = {Count}")]
++[DebuggerTypeProxy(typeof(CopyOnWriteList<>.CopyOnWriteListDebugView))]
+ internal sealed class CopyOnWriteList<T> : IList<T>
+ {
+     private readonly IReadOnlyList<T> _source;
+@@ -113,4 +115,12 @@ internal sealed class CopyOnWriteList<T> : IList<T>
+     {
+         return GetEnumerator();
+     }
++
++    private sealed class CopyOnWriteListDebugView(CopyOnWriteList<T> collection)
++    {
++        private readonly CopyOnWriteList<T> _collection = collection;
++
++        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
++        public T[] Items => _collection.ToArray();
++    }
+ }

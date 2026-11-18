@@ -1,0 +1,24 @@
+diff --git a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+index 0c33a107e4..6e511453e7 100644
+--- a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
++++ b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+@@ -56,6 +56,19 @@ internal sealed class CopyOnWriteList<T> : IList<T>
+ 
+     public bool Contains(T item)
+     {
++        if (_copy is not null)
++        {
++            foreach (var obj in _copy)
++            {
++                if (object.Equals(obj, item))
++                {
++                    return true;
++                }
++            }
++
++            return false;
++        }
++
+         foreach (var obj in Readable)
+         {
+             if (object.Equals(obj, item))
