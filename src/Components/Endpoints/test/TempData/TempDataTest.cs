@@ -122,6 +122,54 @@ public class TempDataTest
         Assert.False(result);
     }
 
+    [Theory]
+    [InlineData("Message", "hello", true)]
+    [InlineData("MESSAGE", "hello", true)]
+    [InlineData("Message", "HELLO", false)]
+    [InlineData("Message", null, false)]
+    [InlineData("Null", null, true)]
+    [InlineData("Null", "hello", false)]
+    [InlineData("Missing", null, false)]
+    [InlineData("Missing", "hello", false)]
+    public void CollectionContains_PreservesValues_WhenFirstAccessTriggersLazyLoad(string key, object value, bool expected)
+    {
+        var numberOfLoads = 0;
+        var tempData = new TempData(() =>
+        {
+            numberOfLoads++;
+            return new Dictionary<string, object>
+            {
+                ["Message"] = "hello",
+                ["Null"] = null
+            };
+        });
+        var collection = (ICollection<KeyValuePair<string, object>>)tempData;
+        var item = new KeyValuePair<string, object>(key, value);
+
+        Assert.False(tempData.WasLoaded);
+        Assert.Equal(expected, collection.Contains(item));
+        Assert.Equal(expected, collection.Contains(item));
+
+        var saved = tempData.Save();
+        Assert.Equal(1, numberOfLoads);
+        Assert.Equal(2, saved.Count);
+        Assert.Equal("hello", saved["Message"]);
+        Assert.Null(saved["Null"]);
+    }
+
+    [Fact]
+    public void CollectionContains_DoesNotRetainConsumedValue()
+    {
+        var tempData = CreateTempData();
+        tempData["Message"] = "hello";
+        Assert.Equal("hello", tempData.Get("Message"));
+        var collection = (ICollection<KeyValuePair<string, object>>)tempData;
+
+        Assert.True(collection.Contains(new KeyValuePair<string, object>("MESSAGE", "hello")));
+
+        Assert.Empty(tempData.Save());
+    }
+
     [Fact]
     public void Remove_RemovesKeyAndReturnsTrue()
     {

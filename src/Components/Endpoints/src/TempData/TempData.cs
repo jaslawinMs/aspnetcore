@@ -141,7 +141,7 @@ internal sealed class TempData : ITempData
 
     bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item)
     {
-        return ContainsKey(item.Key) && Equals(Peek(item.Key), item.Value);
+        return Data.TryGetValue(item.Key, out var value) && Equals(value, item.Value);
     }
 
     void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
