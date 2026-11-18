@@ -13,6 +13,10 @@ or measured regressions.
 **Progress: 118/358 finalized**: 72 drafts, 19 no-gain, 21 rejected and 6 duplicates;
 240 findings remain unfinished.
 
+**Start here:** [Classified findings report and linked artifact map](REPORT.md)
+connects measured proposals to their code PRs, tracking issues, benchmark projects,
+full results and local test evidence, with trade-offs and non-obvious equivalence explained.
+
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
 as speculative optimization PRs. Incompatible replacements are marked
