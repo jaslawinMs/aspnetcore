@@ -411,6 +411,47 @@ public class RazorPageTest
         Assert.Equal("Section 'qux' is already defined.", ex.Message);
     }
 
+    [Theory]
+    [InlineData("scripts")]
+    [InlineData("SCRIPTS")]
+    public async Task DefineSection_RejectsCaseInsensitiveDuplicateWithoutReplacingWriter(string duplicateName)
+    {
+        var context = CreateViewContext();
+        var originalInvocations = 0;
+        var replacementInvocations = 0;
+        RenderAsyncDelegate original = () =>
+        {
+            originalInvocations++;
+            context.Writer.Write("original-section");
+            return Task.CompletedTask;
+        };
+        RenderAsyncDelegate replacement = () =>
+        {
+            replacementInvocations++;
+            return Task.CompletedTask;
+        };
+        var page = CreatePage(v => v.DefineSection("Scripts", original), context);
+
+        await page.ExecuteAsync();
+        var exception = Assert.Throws<InvalidOperationException>(() => page.DefineSection(duplicateName, replacement));
+
+        Assert.Equal($"Section '{duplicateName}' is already defined.", exception.Message);
+        var registration = Assert.Single(page.SectionWriters);
+        Assert.Equal("Scripts", registration.Key);
+        Assert.Same(original, registration.Value);
+        Assert.Equal(0, originalInvocations);
+        Assert.Equal(0, replacementInvocations);
+        Assert.Empty(page.RenderedContent);
+
+        var layout = CreatePage(v => v.Write(v.RenderSection("SCRIPTS")), context);
+        layout.PreviousSectionWriters = page.SectionWriters;
+        await layout.ExecuteAsync();
+
+        Assert.Equal("original-section", layout.RenderedContent);
+        Assert.Equal(1, originalInvocations);
+        Assert.Equal(0, replacementInvocations);
+    }
+
     [Fact]
     public async Task RenderSection_RendersSectionFromPreviousPage()
     {
