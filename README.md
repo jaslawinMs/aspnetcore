@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 116/358 finalized**: 70 drafts, 19 no-gain, 21 rejected and 6 duplicates;
-242 findings remain unfinished.
+**Progress: 117/358 finalized**: 71 drafts, 19 no-gain, 21 rejected and 6 duplicates;
+241 findings remain unfinished.
 
 Each item receives at most three measured before/after comparisons. A clear
 large win can stop early; non-improving items are marked `no-gain`, not published
@@ -43,6 +43,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F039 | [Draft jaslawinMs/aspnetcore#152](https://github.com/jaslawinMs/aspnetcore/pull/152); primary 45.83/45.62% less time, 0 B/op unchanged; 3 closed attempts include 1 before-timing failure and 2 completed comparisons/1,280 samples; 74+74 managed and 10 existing Selenium passes; loaded-lookup-only gain, all adverse/control rows retained, not cookie/app performance or merge-ready | [TempData collection Contains](F039/README.md) |
 | F038 | [Draft jaslawinMs/aspnetcore#150](https://github.com/jaslawinMs/aspnetcore/pull/150); primary 7.49/8.07/6.36% less time, 74 B/op unchanged, all adverse/control rows retained; 3 closed pairs/1,920 samples, identical measured harness, 83+83 managed and 8 existing keyed Selenium passes; qualified renderer-only gain, not whole-app/merge-ready | [Keyed render-tree new-loop lookup](F038/README.md) |
 | F036 | No-gain; [tracking jaslawinMs/aspnetcore#148](https://github.com/jaslawinMs/aspnetcore/issues/148); primary takes 1.93/7.54/10.66% more time, 56 B/op unchanged, empty regressions and favorable scaled/control results retained; 3 closed pairs/1,536 samples plus separate 256-sample diagnostic, identical measured harness, original source/product restored, no PR | [MVC ViewDataDictionary enumeration](F036/README.md) |
 | F035 | No-gain; [tracking jaslawinMs/aspnetcore#147](https://github.com/jaslawinMs/aspnetcore/issues/147); one-value binding primary-2.89/+1.85/-18.07%less time and1456B/opunchanged, prepared8/64regress, small favorable query/adverse controls retained; 3closed pairs/960samples, identical measured harness, original source/product restored, no PR | [MVC ValueProviderResult enumeration](F035/README.md) |
