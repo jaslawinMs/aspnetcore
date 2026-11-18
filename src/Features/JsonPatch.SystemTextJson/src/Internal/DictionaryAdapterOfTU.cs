@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson.Helpers;
@@ -102,6 +104,24 @@ internal class DictionaryAdapter<TKey, TValue> : IAdapter
         if (!TryConvertKey(key, out var convertedKey, out errorMessage))
         {
             return false;
+        }
+
+        // Value conversion can modify the dictionary, so only borrow a slot when conversion is unnecessary.
+        if (dictionary.GetType() == typeof(Dictionary<TKey, TValue>) &&
+            value is not null &&
+            typeof(TValue).IsAssignableFrom(value.GetType()))
+        {
+            var typedValue = (TValue)value;
+            ref var existingValue = ref CollectionsMarshal.GetValueRefOrNullRef((Dictionary<TKey, TValue>)dictionary, convertedKey);
+            if (Unsafe.IsNullRef(ref existingValue))
+            {
+                errorMessage = Resources.FormatTargetLocationAtPathSegmentNotFound(segment);
+                return false;
+            }
+
+            existingValue = typedValue;
+            errorMessage = null;
+            return true;
         }
 
         // As per JsonPatch spec, the target location must exist for remove to be successful
