@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -186,9 +187,17 @@ internal sealed class HeaderCollection : IHeaderDictionary
         ThrowIfReadOnly();
         ValidateHeaderCharacters(key);
         ValidateHeaderCharacters(value);
-        StringValues values;
-        Store.TryGetValue(key, out values);
-        Store[key] = StringValues.Concat(values, value);
+        if (Store.GetType() == typeof(Dictionary<string, StringValues>))
+        {
+            ref var values = ref CollectionsMarshal.GetValueRefOrAddDefault((Dictionary<string, StringValues>)Store, key, out _);
+            values = StringValues.Concat(values, value);
+        }
+        else
+        {
+            StringValues values;
+            Store.TryGetValue(key, out values);
+            Store[key] = StringValues.Concat(values, value);
+        }
     }
 
     public void Clear()
