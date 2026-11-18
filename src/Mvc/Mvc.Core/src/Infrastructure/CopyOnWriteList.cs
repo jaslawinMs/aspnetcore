@@ -56,6 +56,19 @@ internal sealed class CopyOnWriteList<T> : IList<T>
 
     public bool Contains(T item)
     {
+        if (_copy is not null)
+        {
+            foreach (var obj in _copy)
+            {
+                if (object.Equals(obj, item))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         foreach (var obj in Readable)
         {
             if (object.Equals(obj, item))
