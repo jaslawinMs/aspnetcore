@@ -1,0 +1,10 @@
+{
+  "candidate": "F036",
+  "actualInitialCombinedAuditExitCodes": [1, 1],
+  "observation": "The new combined auditor initially expected the earlier finding's top-level actualPlanSha256 field. F036's original-only seal instead stores that exact plan SHA256 in its sealedFiles entry. A second authoring attempt mapped session-root drivers to their eventual packaged paths even while auditing the original run, where those copies do not exist yet. Both attempts stopped before writing decision.json or comparison-results.md.",
+  "correction": "Read the actual retained schema, require exactly one measurement-plan.json sealed entry, and compare the actual plan hash to that entry. Rehash original session drivers at their retained original paths only when auditing the original run;for a copied capsule,require their copied local equivalents. Rehash all original-only and source-comparison sealed textual inputs.",
+  "actualAssertionRemovedOrWeakened": false,
+  "actualShippingHarnessOrRawMeasurementChanged": false,
+  "actualExtraNativeOrTimingInvocation": false,
+  "actualSourceComparisonBudgetAffected": false
+}

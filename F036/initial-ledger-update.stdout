@@ -1,0 +1,29 @@
+{
+  "id": "F036",
+  "finding": {
+    "card_id": "custom-collection-interface-foreach-enumerator",
+    "file": "src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs",
+    "line_start": 586,
+    "line_end": 594,
+    "project": "Microsoft.AspNetCore.Mvc.ViewFeatures",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "medium",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Concrete ViewDataDictionary iteration is forced through interface-returning enumerators.",
+    "explanation": "ViewDataDictionary exposes only explicit IEnumerable<T> and IEnumerable GetEnumerator implementations. Concrete foreach therefore cannot bind to a public pattern-based enumerator, and returning the underlying dictionary enumerator as IEnumerator<T> can box its struct enumerator on the per-request view-data path.",
+    "snippet": "IEnumerator<KeyValuePair<string, object?>> IEnumerable<KeyValuePair<string, object?>>.GetEnumerator()\n{\n    return _data.GetEnumerator();\n}\n\nIEnumerator IEnumerable.GetEnumerator()\n{\n    return _data.GetEnumerator();\n}",
+    "suppressed": false
+  },
+  "status": "investigating",
+  "notes": [
+    "F035 final1395-entry publication verified;independent37e809e branch created. Fresh f2484a6b selected12-file parity/history/docs captured before product edits/timing. Assessing actual lazy copy/derived enumeration constraints;no compatible implementation or native gain established."
+  ],
+  "branch": "autoperf/F036-viewdata-enumeration",
+  "pr_url": null,
+  "updated_at": "2026-11-18T00:06:49.4362786+00:00"
+}

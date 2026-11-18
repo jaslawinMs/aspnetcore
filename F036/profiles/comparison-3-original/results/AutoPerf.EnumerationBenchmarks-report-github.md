@@ -1,0 +1,46 @@
+``` ini
+
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+
+Job=SettingsPreserving-F036-SourceComparison  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+
+```
+|                    Method | Count |          Mean |       Error |     StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------------------------- |------ |--------------:|------------:|-----------:|-------:|------:|------:|----------:|
+|          **TopLevelConcrete** |     **0** |     **1.0570 ns** |   **0.1220 ns** |  **0.0638 ns** |      **-** |     **-** |     **-** |         **-** |
+|         TopLevelInterface |     0 |     1.0475 ns |   0.0591 ns |  0.0309 ns |      - |     - |     - |         - |
+|             TypedConcrete |     0 |     1.2792 ns |   0.1673 ns |  0.0875 ns |      - |     - |     - |         - |
+|                  ReadCopy |     0 |     6.1453 ns |   0.1643 ns |  0.0860 ns |      - |     - |     - |         - |
+|                NestedCopy |     0 |    14.4641 ns |   0.1060 ns |  0.0555 ns |      - |     - |     - |         - |
+|          MaterializedCopy |     0 |     7.1149 ns |   0.1240 ns |  0.0648 ns |      - |     - |     - |         - |
+|                NonGeneric |     0 |     1.1142 ns |   0.0420 ns |  0.0220 ns |      - |     - |     - |         - |
+| DictionaryConcreteControl |     0 |     0.3607 ns |   0.0407 ns |  0.0213 ns |      - |     - |     - |         - |
+|          **TopLevelConcrete** |     **1** |    **42.5686 ns** |   **0.5379 ns** |  **0.2813 ns** | **0.0013** |     **-** |     **-** |      **56 B** |
+|         TopLevelInterface |     1 |    42.3373 ns |   1.3067 ns |  0.6834 ns | 0.0014 |     - |     - |      56 B |
+|             TypedConcrete |     1 |    42.8833 ns |   1.1374 ns |  0.5949 ns | 0.0014 |     - |     - |      56 B |
+|                  ReadCopy |     1 |    45.8930 ns |   1.5075 ns |  0.7884 ns | 0.0012 |     - |     - |      56 B |
+|                NestedCopy |     1 |    55.4586 ns |   4.4896 ns |  2.3482 ns | 0.0013 |     - |     - |      56 B |
+|          MaterializedCopy |     1 |    47.6358 ns |   1.2265 ns |  0.6415 ns | 0.0013 |     - |     - |      56 B |
+|                NonGeneric |     1 |    56.2341 ns |   3.2530 ns |  1.7014 ns | 0.0023 |     - |     - |      88 B |
+| DictionaryConcreteControl |     1 |     2.8827 ns |   0.2363 ns |  0.1236 ns |      - |     - |     - |         - |
+|          **TopLevelConcrete** |     **8** |   **180.1720 ns** |   **1.4353 ns** |  **0.7507 ns** |      **-** |     **-** |     **-** |      **56 B** |
+|         TopLevelInterface |     8 |   180.4800 ns |   2.9862 ns |  1.5618 ns |      - |     - |     - |      56 B |
+|             TypedConcrete |     8 |   181.4094 ns |   2.2917 ns |  1.1986 ns |      - |     - |     - |      56 B |
+|                  ReadCopy |     8 |   186.1000 ns |   1.9690 ns |  1.0298 ns |      - |     - |     - |      56 B |
+|                NestedCopy |     8 |   197.9143 ns |   3.0722 ns |  1.6068 ns |      - |     - |     - |      56 B |
+|          MaterializedCopy |     8 |   186.8675 ns |   1.9418 ns |  1.0156 ns |      - |     - |     - |      56 B |
+|                NonGeneric |     8 |   284.6418 ns |   7.0563 ns |  3.6906 ns | 0.0057 |     - |     - |     312 B |
+| DictionaryConcreteControl |     8 |    40.9323 ns |   2.2488 ns |  1.1762 ns |      - |     - |     - |         - |
+|          **TopLevelConcrete** |    **64** | **1,226.0333 ns** |  **26.6272 ns** | **13.9266 ns** |      **-** |     **-** |     **-** |      **56 B** |
+|         TopLevelInterface |    64 | 1,235.1438 ns |  26.1101 ns | 13.6561 ns |      - |     - |     - |      56 B |
+|             TypedConcrete |    64 | 1,238.2469 ns |  45.6084 ns | 23.8541 ns |      - |     - |     - |      56 B |
+|                  ReadCopy |    64 | 1,241.4356 ns |  38.4571 ns | 20.1138 ns |      - |     - |     - |      56 B |
+|                NestedCopy |    64 | 1,238.8043 ns |  11.4249 ns |  5.9754 ns |      - |     - |     - |      56 B |
+|          MaterializedCopy |    64 | 1,243.0443 ns |  42.9854 ns | 22.4822 ns |      - |     - |     - |      56 B |
+|                NonGeneric |    64 | 1,977.0154 ns | 167.9874 ns | 87.8607 ns | 0.0385 |     - |     - |   2,104 B |
+| DictionaryConcreteControl |    64 |   361.1974 ns |  12.6629 ns |  6.6230 ns |      - |     - |     - |         - |

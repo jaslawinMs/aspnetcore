@@ -1,0 +1,17 @@
+diff --git a/src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs b/src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs
+index ea0040a6fa..39b356e9f1 100644
+--- a/src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs
++++ b/src/Mvc/Mvc.ViewFeatures/src/ViewDataDictionary.cs
+@@ -585,6 +585,12 @@ public class ViewDataDictionary : IDictionary<string, object?>
+     /// <inheritdoc />
+     IEnumerator<KeyValuePair<string, object?>> IEnumerable<KeyValuePair<string, object?>>.GetEnumerator()
+     {
++        // Preserve the interface enumerator's behavior for empty dictionaries.
++        if (_data is Dictionary<string, object?> { Count: > 0 } dictionary)
++        {
++            return dictionary.GetEnumerator();
++        }
++
+         return _data.GetEnumerator();
+     }
+ 

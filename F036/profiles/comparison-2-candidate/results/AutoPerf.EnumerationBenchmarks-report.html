@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.EnumerationBenchmarks-20261117-165032</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F036-SourceComparison  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>             Method</th><th>Count</th><th>   Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>TopLevelConcrete</td><td>0</td><td>1.4623 ns</td><td>0.1900 ns</td><td>0.0994 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TopLevelInterface</td><td>0</td><td>1.3638 ns</td><td>0.0348 ns</td><td>0.0182 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TypedConcrete</td><td>0</td><td>1.6408 ns</td><td>0.0245 ns</td><td>0.0128 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>ReadCopy</td><td>0</td><td>8.6553 ns</td><td>0.5096 ns</td><td>0.2665 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>NestedCopy</td><td>0</td><td>26.5937 ns</td><td>1.2127 ns</td><td>0.6343 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>MaterializedCopy</td><td>0</td><td>11.4392 ns</td><td>0.6091 ns</td><td>0.3186 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>NonGeneric</td><td>0</td><td>1.1011 ns</td><td>0.0489 ns</td><td>0.0256 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>DictionaryConcreteControl</td><td>0</td><td>0.3589 ns</td><td>0.0501 ns</td><td>0.0262 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TopLevelConcrete</td><td>1</td><td>44.1955 ns</td><td>0.6790 ns</td><td>0.3551 ns</td><td>0.0014</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TopLevelInterface</td><td>1</td><td>43.5925 ns</td><td>1.6577 ns</td><td>0.8670 ns</td><td>0.0014</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TypedConcrete</td><td>1</td><td>44.7409 ns</td><td>2.0003 ns</td><td>1.0462 ns</td><td>0.0014</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>ReadCopy</td><td>1</td><td>49.5905 ns</td><td>5.9284 ns</td><td>3.1007 ns</td><td>0.0010</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NestedCopy</td><td>1</td><td>65.7238 ns</td><td>1.0502 ns</td><td>0.5493 ns</td><td>0.0013</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>MaterializedCopy</td><td>1</td><td>50.8562 ns</td><td>4.7868 ns</td><td>2.5036 ns</td><td>0.0016</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NonGeneric</td><td>1</td><td>56.1500 ns</td><td>2.2569 ns</td><td>1.1804 ns</td><td>0.0023</td><td>-</td><td>-</td><td>88 B</td>
+</tr><tr><td>DictionaryConcreteControl</td><td>1</td><td>3.6228 ns</td><td>0.2379 ns</td><td>0.1244 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TopLevelConcrete</td><td>8</td><td>183.6514 ns</td><td>2.0604 ns</td><td>1.0776 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TopLevelInterface</td><td>8</td><td>177.8331 ns</td><td>2.4238 ns</td><td>1.2677 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TypedConcrete</td><td>8</td><td>177.7388 ns</td><td>3.2550 ns</td><td>1.7024 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>ReadCopy</td><td>8</td><td>186.3198 ns</td><td>4.0837 ns</td><td>2.1358 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NestedCopy</td><td>8</td><td>202.1809 ns</td><td>2.7744 ns</td><td>1.4511 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>MaterializedCopy</td><td>8</td><td>188.9081 ns</td><td>4.6918 ns</td><td>2.4539 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NonGeneric</td><td>8</td><td>286.0355 ns</td><td>25.9027 ns</td><td>13.5476 ns</td><td>0.0056</td><td>-</td><td>-</td><td>312 B</td>
+</tr><tr><td>DictionaryConcreteControl</td><td>8</td><td>45.5893 ns</td><td>1.6323 ns</td><td>0.8537 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>TopLevelConcrete</td><td>64</td><td>1,207.7305 ns</td><td>16.4804 ns</td><td>8.6196 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TopLevelInterface</td><td>64</td><td>1,193.7511 ns</td><td>24.7003 ns</td><td>12.9188 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>TypedConcrete</td><td>64</td><td>1,180.3147 ns</td><td>27.5504 ns</td><td>14.4094 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>ReadCopy</td><td>64</td><td>1,187.0853 ns</td><td>24.7374 ns</td><td>12.9381 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NestedCopy</td><td>64</td><td>1,204.7211 ns</td><td>23.9043 ns</td><td>12.5024 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>MaterializedCopy</td><td>64</td><td>1,197.4656 ns</td><td>14.8238 ns</td><td>7.7532 ns</td><td>-</td><td>-</td><td>-</td><td>56 B</td>
+</tr><tr><td>NonGeneric</td><td>64</td><td>1,979.4035 ns</td><td>220.3945 ns</td><td>115.2706 ns</td><td>0.0557</td><td>-</td><td>-</td><td>2,104 B</td>
+</tr><tr><td>DictionaryConcreteControl</td><td>64</td><td>378.6278 ns</td><td>15.2539 ns</td><td>7.9781 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "candidate": "F036",
+  "verdict": "Recommend not adding",
+  "proposalUnderReview": "Naively add public Dictionary<string,object?>.Enumerator GetEnumerator() to ViewDataDictionary as a universal allocation-free concrete foreach path.",
+  "currentSignature": "No public pattern GetEnumerator. Explicit IEnumerable<KeyValuePair<string,object?>>.GetEnumerator returns IEnumerator<KeyValuePair<string,object?>>;explicit IEnumerable.GetEnumerator returns IEnumerator.",
+  "proposedMemberRejectedRefDiff": "- public System.Collections.Generic.Dictionary<string,object?>.Enumerator GetEnumerator();\n// No API added.",
+  "scenarioModel": "MVC/Razor server rendering passes application/controller/handler metadata into base and typed view-data dictionaries. Public copy constructors and real TemplateBuilder/HtmlHelper flows create lazy copy-on-write scopes. End-app direct foreach and library/derived dictionaries exist;no frequency or dominant enumeration-hotpath established. This is not a browser/client or scale-out mechanism.",
+  "needAssessment": "Underlying data are not universally a concrete Dictionary. A permanent exported enumerator family needs actual benefit and preserved lazy/derived behavior,not only the presence of interface-returning enumeration.",
+  "typeAndAssemblyAssessment": "ViewDataDictionary remains the existing unsealed MVC.ViewFeatures implementation type. No justification yet for another durable public enumerator contract or changing its IDictionary relationships/defaults.",
+  "changesRecommended": [
+    "Do not cast heterogeneous private IDictionary storage to Dictionary.",
+    "Do not flatten lazy copies or bypass derived IEnumerable implementations to obtain a concrete cursor.",
+    "First characterize real owner producers/cursors and original allocation behavior. Evaluate a compatible internal strategy only if it preserves these constraints and has demonstrated need."
+  ],
+  "why": "Top-level data are a Dictionary,but copy constructors wrap the source ViewDataDictionary in CopyOnWriteDictionary. Eager materialization would alter visibility before the first write. The public unsealed type permits derived interface reimplementation;naive pattern binding/direct backing-store traversal can bypass it. These are constraints to prove with original owning producers,not a verified candidate-break claim.",
+  "potentialCompatibleStrategyEstablished": false,
+  "actualPublicApiOrBaselineEdit": false,
+  "actualApiApprovalClaimed": false,
+  "actualCandidateImplementationCompiled": false,
+  "actualCandidateBehavioralBreakVerified": false
+}
