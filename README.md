@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 123/358 finalized**: 74 drafts, 21 no-gain, 22 rejected and 6 duplicates;
-235 findings remain unfinished.
+**Progress: 124/358 finalized**: 75 drafts, 21 no-gain, 22 rejected and 6 duplicates;
+234 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F047 | [Draft jaslawinMs/aspnetcore#163](https://github.com/jaslawinMs/aspnetcore/pull/163), [tracking jaslawinMs/aspnetcore#162](https://github.com/jaslawinMs/aspnetcore/issues/162); allocation-only trade-off: primary saves 56 B/op in every pair (1616 -> 1560), no demonstrated speedup, primary 2.48%/1.43% slower in later pairs. Unstable first baseline and every adverse/control result retained; 3 closed pairs/384 samples, 314 passing XML rows and independent eight-file rebuild pass; not latency-neutral or merge-ready | [SSR parameter-key allocation trade-off](F047/README.md) |
 | F046 | [Draft jaslawinMs/aspnetcore#161](https://github.com/jaslawinMs/aspnetcore/pull/161), [tracking jaslawinMs/aspnetcore#160](https://github.com/jaslawinMs/aspnetcore/issues/160); narrow close-header suffix primary 13.41% median less time, 384 B/op unchanged. Unchanged secondary-control swing of 27.44% and fallback regression of 2.31% retained; 3 closed pairs/576 samples, 10 unit + 5 native functional rows per source and independent nine-file rebuild pass; not native/application throughput or merge-ready | [HTTP.sys connection-close header append](F046/README.md) |
 | F044 | [Draft jaslawinMs/aspnetcore#159](https://github.com/jaslawinMs/aspnetcore/pull/159), [tracking #158](https://github.com/jaslawinMs/aspnetcore/issues/158); custom-base-only primary 10.22% median less time, 704 B/op unchanged. One-section registration 3.17% slower and full-view Eight 6.74% slower retained; 3 closed pairs/576 samples, 59+59 tests and independent real-compiler rebuild pass; not ordinary RazorPage/app gain or merge-ready | [Custom-base Razor section registration](F044/README.md) |
 | F043 | No-gain/control-inconclusive; [tracking jaslawinMs/aspnetcore#157](https://github.com/jaslawinMs/aspnetcore/issues/157). Primary 5.21% less time passes the raw numerical gate but is no larger than the unchanged control in 2/3 pairs; 800 B/op unchanged. Scaled registration gains of 13.69/23.78/39.88% retained; 3 closed pairs/576 samples, 59+59 tests and independent real-compiler rebuild pass; no performance PR | [Razor section registration](F043/README.md) |
