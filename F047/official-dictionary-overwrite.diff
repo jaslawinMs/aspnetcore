@@ -1,0 +1,223 @@
+diff --git a/src/libraries/Common/tests/System/Collections/IDictionary.Generic.Tests.cs b/src/libraries/Common/tests/System/Collections/IDictionary.Generic.Tests.cs
+index 904d31e0ccab70..fb57c1c7e706cc 100644
+--- a/src/libraries/Common/tests/System/Collections/IDictionary.Generic.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IDictionary.Generic.Tests.cs
+@@ -175,6 +175,21 @@ protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOper
+                     return true;
+                 };
+             }
++            if ((operations & ModifyOperation.Overwrite) == ModifyOperation.Overwrite)
++            {
++                yield return (IEnumerable<KeyValuePair<TKey, TValue>> enumerable) =>
++                {
++                    IDictionary<TKey, TValue> casted = ((IDictionary<TKey, TValue>)enumerable);
++                    if (casted.Count() > 0)
++                    {
++                        var keys = casted.Keys.GetEnumerator();
++                        keys.MoveNext();
++                        casted[keys.Current] = CreateTValue(12);
++                        return true;
++                    }
++                    return false;
++                };
++            }
+             if ((operations & ModifyOperation.Remove) == ModifyOperation.Remove)
+             {
+                 yield return (IEnumerable<KeyValuePair<TKey, TValue>> enumerable) =>
+diff --git a/src/libraries/Common/tests/System/Collections/IDictionary.NonGeneric.Tests.cs b/src/libraries/Common/tests/System/Collections/IDictionary.NonGeneric.Tests.cs
+index b426bf5ffd20d5..b4fead53e33a41 100644
+--- a/src/libraries/Common/tests/System/Collections/IDictionary.NonGeneric.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IDictionary.NonGeneric.Tests.cs
+@@ -148,6 +148,21 @@ protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOper
+                     return true;
+                 };
+             }
++            if ((operations & ModifyOperation.Overwrite) == ModifyOperation.Overwrite)
++            {
++                yield return (IEnumerable enumerable) =>
++                {
++                    IDictionary casted = ((IDictionary)enumerable);
++                    if (casted.Count > 0)
++                    {
++                        var keys = casted.Keys.GetEnumerator();
++                        keys.MoveNext();
++                        casted[keys.Current] = CreateTValue(12);
++                        return true;
++                    }
++                    return false;
++                };
++            }
+             if ((operations & ModifyOperation.Remove) == ModifyOperation.Remove)
+             {
+                 yield return (IEnumerable enumerable) =>
+diff --git a/src/libraries/Common/tests/System/Collections/IEnumerable.Generic.Tests.cs b/src/libraries/Common/tests/System/Collections/IEnumerable.Generic.Tests.cs
+index 26c6949f0663fb..2152db7de161f7 100644
+--- a/src/libraries/Common/tests/System/Collections/IEnumerable.Generic.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IEnumerable.Generic.Tests.cs
+@@ -39,7 +39,7 @@ public abstract partial class IEnumerable_Generic_Tests<T> : TestBase<T>
+         /// </summary>
+         protected abstract IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations);
+ 
+-        protected virtual ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert | ModifyOperation.Remove | ModifyOperation.Clear;
++        protected virtual ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert | ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
+ 
+         protected virtual ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.None;
+ 
+diff --git a/src/libraries/Common/tests/System/Collections/IEnumerable.NonGeneric.Tests.cs b/src/libraries/Common/tests/System/Collections/IEnumerable.NonGeneric.Tests.cs
+index fa4b1a479dd51c..933230c61f2745 100644
+--- a/src/libraries/Common/tests/System/Collections/IEnumerable.NonGeneric.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IEnumerable.NonGeneric.Tests.cs
+@@ -36,7 +36,7 @@ public abstract partial class IEnumerable_NonGeneric_Tests : TestBase
+         /// </summary>
+         protected abstract IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations);
+ 
+-        protected virtual ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert | ModifyOperation.Remove | ModifyOperation.Clear;
++        protected virtual ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert | ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
+ 
+         protected virtual ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.None;
+ 
+diff --git a/src/libraries/Common/tests/System/Collections/IList.Generic.Tests.cs b/src/libraries/Common/tests/System/Collections/IList.Generic.Tests.cs
+index 99f6eb71afb866..02a34510f292be 100644
+--- a/src/libraries/Common/tests/System/Collections/IList.Generic.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IList.Generic.Tests.cs
+@@ -55,6 +55,19 @@ protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOper
+                     return false;
+                 };
+             }
++            if (!AddRemoveClear_ThrowsNotSupported && (operations & ModifyOperation.Overwrite) == ModifyOperation.Overwrite)
++            {
++                yield return (IEnumerable<T> enumerable) =>
++                {
++                    IList<T> casted = ((IList<T>)enumerable);
++                    if (casted.Count > 0)
++                    {
++                        casted[0] = CreateT(12);
++                        return true;
++                    }
++                    return false;
++                };
++            }
+             if (!AddRemoveClear_ThrowsNotSupported && (operations & ModifyOperation.Remove) == ModifyOperation.Remove)
+             {
+                 yield return (IEnumerable<T> enumerable) =>
+diff --git a/src/libraries/Common/tests/System/Collections/IList.NonGeneric.Tests.cs b/src/libraries/Common/tests/System/Collections/IList.NonGeneric.Tests.cs
+index 36dfbf19a7c828..77dd0ea90791b6 100644
+--- a/src/libraries/Common/tests/System/Collections/IList.NonGeneric.Tests.cs
++++ b/src/libraries/Common/tests/System/Collections/IList.NonGeneric.Tests.cs
+@@ -122,36 +122,38 @@ protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOper
+                     }
+                     return false;
+                 };
+-
++            }
++            if ((operations & ModifyOperation.Remove) == ModifyOperation.Remove)
++            {
+                 yield return (IEnumerable enumerable) =>
+                 {
+                     IList casted = ((IList)enumerable);
+-                    if (casted.Count > 0 && !casted.IsReadOnly)
++                    if (casted.Count > 0 && !casted.IsFixedSize && !casted.IsReadOnly)
+                     {
+-                        casted[0] = CreateT(12);
++                        casted.Remove(casted[0]);
+                         return true;
+                     }
+                     return false;
+                 };
+-            }
+-            if ((operations & ModifyOperation.Remove) == ModifyOperation.Remove)
+-            {
+                 yield return (IEnumerable enumerable) =>
+                 {
+                     IList casted = ((IList)enumerable);
+                     if (casted.Count > 0 && !casted.IsFixedSize && !casted.IsReadOnly)
+                     {
+-                        casted.Remove(casted[0]);
++                        casted.RemoveAt(0);
+                         return true;
+                     }
+                     return false;
+                 };
++            }
++            if ((operations & ModifyOperation.Overwrite) == ModifyOperation.Overwrite)
++            {
+                 yield return (IEnumerable enumerable) =>
+                 {
+                     IList casted = ((IList)enumerable);
+-                    if (casted.Count > 0 && !casted.IsFixedSize && !casted.IsReadOnly)
++                    if (casted.Count > 0 && !casted.IsReadOnly)
+                     {
+-                        casted.RemoveAt(0);
++                        casted[0] = CreateT(12);
+                         return true;
+                     }
+                     return false;
+diff --git a/src/libraries/Common/tests/System/Collections/TestBase.NonGeneric.cs b/src/libraries/Common/tests/System/Collections/TestBase.NonGeneric.cs
+index 587b03422049f3..352d9bf8416439 100644
+--- a/src/libraries/Common/tests/System/Collections/TestBase.NonGeneric.cs
++++ b/src/libraries/Common/tests/System/Collections/TestBase.NonGeneric.cs
+@@ -41,8 +41,9 @@ public enum ModifyOperation
+             None = 0,
+             Add = 1,
+             Insert = 2,
+-            Remove = 4,
+-            Clear = 8
++            Overwrite = 4,
++            Remove = 8,
++            Clear = 16
+         }
+ 
+         #endregion
+diff --git a/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Generic.Tests.cs b/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Generic.Tests.cs
+index 03413faf1af7d6..ffc23e09da2525 100644
+--- a/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Generic.Tests.cs
++++ b/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Generic.Tests.cs
+@@ -16,7 +16,7 @@ public abstract class Dictionary_Generic_Tests<TKey, TValue> : IDictionary_Gener
+     {
+         protected override ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert;
+ 
+-        protected override ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.Remove | ModifyOperation.Clear;
++        protected override ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
+ 
+         #region IDictionary<TKey, TValue Helper Methods
+ 
+diff --git a/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Tests.cs b/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Tests.cs
+index fba9b9aea5975e..909a36c2069a26 100644
+--- a/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Tests.cs
++++ b/src/libraries/System.Collections/tests/Generic/Dictionary/Dictionary.Tests.cs
+@@ -20,7 +20,7 @@ protected override IDictionary NonGenericIDictionaryFactory()
+ 
+         protected override ModifyOperation ModifyEnumeratorThrows => PlatformDetection.IsNetFramework ? base.ModifyEnumeratorThrows : ModifyOperation.Add | ModifyOperation.Insert;
+ 
+-        protected override ModifyOperation ModifyEnumeratorAllowed => PlatformDetection.IsNetFramework ? base.ModifyEnumeratorAllowed : ModifyOperation.Remove | ModifyOperation.Clear;
++        protected override ModifyOperation ModifyEnumeratorAllowed => PlatformDetection.IsNetFramework ? base.ModifyEnumeratorAllowed : ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
+ 
+         /// <summary>
+         /// Creates an object that is dependent on the seed given. The object may be either
+diff --git a/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/Dictionary.cs b/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/Dictionary.cs
+index 76a6333ce0f9c8..84ea4bf24ec683 100644
+--- a/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/Dictionary.cs
++++ b/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/Dictionary.cs
+@@ -512,7 +512,6 @@ private bool TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+                             if (behavior == InsertionBehavior.OverwriteExisting)
+                             {
+                                 entries[i].value = value;
+-                                _version++;
+                                 return true;
+                             }
+ 
+@@ -555,7 +554,6 @@ private bool TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+                             if (behavior == InsertionBehavior.OverwriteExisting)
+                             {
+                                 entries[i].value = value;
+-                                _version++;
+                                 return true;
+                             }
+ 
+@@ -595,7 +593,6 @@ private bool TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+                         if (behavior == InsertionBehavior.OverwriteExisting)
+                         {
+                             entries[i].value = value;
+-                            _version++;
+                             return true;
+                         }

@@ -1,0 +1,143 @@
+{
+  "candidate": "F047",
+  "declaredAt": "2026-11-18T13:02:18.894Z",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualCurrentDefault": "31c15331c03714b7a602e1817e65881474c29e2e",
+  "branch": "autoperf/F047-ssr-parameter-enumeration",
+  "actualDeclaredBeforeAnyF047ShippingSourceEditOrTiming": true,
+  "target": "SSRRenderModeBoundary.SetParametersAsync: top-level RenderFragment capture wrapping",
+  "actualSourceProducer": "EndpointHtmlRenderer.ResolveComponentForRenderMode and PrerenderComponentAsync create the boundary; Renderer supplies ParameterView, which is snapshotted before wrapping and rendering.",
+  "actualScalarInputsAlsoPayTheOldKeysSnapshotCost": true,
+  "proposedChange": "Enumerate the owned exact Dictionary key/value pairs and test each value directly; only overwrite existing values with capture delegates. Preserve the ParameterView snapshot, validation, wrapper construction, branch order and render/serialization flow.",
+  "authoritativeOverwriteContract": {
+    "pullRequest": "https://github.com/dotnet/runtime/pull/34667",
+    "mergeCommit": "c007a0d1ced0f3e5f69758f72cdf32a31d983db7",
+    "mergedAt": "2020-04-09T15:54:16Z",
+    "actualOfficialTestsExplicitlyAllowOverwriteDuringEnumeration": true,
+    "actualNoKeyAdditionRemovalOrCapacityChangeInTargetLoop": true,
+    "documentationCaveat": "The current generic enumerator remarks list Remove/Clear but omit the later overwrite change; the actual official runtime change/tests, not synthesized search text, establish this operation."
+  },
+  "requiredPreservation": [
+    "Keep parameters.ToDictionary and validation first, including generic-fragment/other-delegate error behavior and no retained ParameterView.",
+    "Keep canonical snapshot names, insertion/value order, scalar and null identities and original RenderFragment delegates untouched in the incoming frames.",
+    "Every top-level fragment, including several fragments interleaved with scalar/null values, receives its own capture and renders/serializes equivalently.",
+    "Prerender-disabled scalar parameters remain on an unchanged legal control path; disabled prerendering with fragments is not mislabeled a successful serialization path.",
+    "Nested-fragment serialization, Server/WebAssembly/Auto markers, and all existing public/protected APIs stay unchanged.",
+    "Only the actual Endpoints owner DLL/PDB may differ between measured frozen consumer images; the common harness and other dependency bytes must match.",
+    "No shipping IVT/UnsafeAccessor, dependency or protected-manifest edits, or unrelated formatting."
+  ],
+  "behaviorMatrix": {
+    "managed": [
+      "Server prerender enabled/disabled",
+      "WebAssembly prerender enabled/disabled",
+      "Auto prerender enabled/disabled"
+    ],
+    "browser": [
+      "Per-page Server: mixed fragments with prerendering and scalar-only without",
+      "Per-page WebAssembly: mixed fragments with prerendering and scalar-only without",
+      "Per-page Auto: first activation with the same legal inputs"
+    ],
+    "intentionallyExcluded": [
+      "Cached versus uncached Auto runtime choice",
+      "Global Router templates",
+      "Enhanced navigation/streaming overlap",
+      "Native AOT/trimming",
+      "Application or HTTP throughput"
+    ]
+  },
+  "permanentBoundary": {
+    "behaviorOwner": "Server-side Endpoints SSR boundary snapshot/capture preparation.",
+    "productionProducer": "Real EndpointHtmlRenderer component activation and parameter delivery, followed by capture execution, ToMarker serialization and actual interactive activation.",
+    "finalObservable": "Scalar/null and fragment output preserved through prerendering/serialization; actual interactive child handles a real click after activation.",
+    "selectedPermanentSurface": "Existing Endpoints renderer/fragment tests plus focused missing multiple-top-level-fragment coverage when needed, and the owning RenderFragmentSerializationTest Selenium suite.",
+    "lowerBoundaryFalsePassRisk": "Directly injecting capture callbacks or inspecting a dictionary does not establish real boundary creation, fragment invocation, serialization/deserialization or browser activation."
+  },
+  "requiredValidationBeforeTiming": [
+    "Build and characterize actual original and current-default source-built owners before a product edit; do not substitute installed framework assemblies.",
+    "Add and validate a temporary canonical sample before new permanent tests/product edits; record exact loaded owner and framework asset behavior.",
+    "Exercise real managed renderer boundaries, all eight actual benchmark lifecycles, multiple top-level/nested fragments and invalid delegates.",
+    "Build candidate and run focused preservation tests with every parameterized XML row independently checked.",
+    "Validate the candidate sample and owning permanent browser tests before publishing a retained implementation; remove only task-owned sample files after coverage passes."
+  ],
+  "benchmarkMethod": "FreshBoundarySetAndDispose",
+  "measuredBoundary": "Actual source-built internal SSR boundary construction, real Renderer attach/SetParametersAsync/child render and root removal/disposal, using stable prepared incoming ParameterView frames. No copied wrapping algorithm, marker serialization, HTTP hosting or browser work is timed.",
+  "primary": "PrerenderScalar1",
+  "unchangedControl": "NonPrerenderScalar1",
+  "profileKeys": [
+    "PrerenderScalar1",
+    "NonPrerenderScalar1",
+    "PrerenderEmpty",
+    "PrerenderScalar4",
+    "PrerenderFragment1",
+    "PrerenderMixed4",
+    "PrerenderFragments8",
+    "NonPrerenderScalar4"
+  ],
+  "actualScaledAndFragmentProfilesDoNotEstablishProductionFrequency": true,
+  "benchmarkCasesPerSource": 8,
+  "warmupIterations": 3,
+  "retainedIterations": 8,
+  "requestedIterationMilliseconds": 100,
+  "unrollFactor": 1,
+  "outlierRemoval": "DontRemove",
+  "benchmarkDotNetVersion": "0.13.0",
+  "sourceComparisonsMaximum": 3,
+  "failedOrPartialComparisonAuthorizationsConsumeBudget": true,
+  "comparisonOrders": [
+    [
+      "Original",
+      "Candidate"
+    ],
+    [
+      "Candidate",
+      "Original"
+    ],
+    [
+      "Original",
+      "Candidate"
+    ]
+  ],
+  "clearPrimaryGainMayStopEarlyAtPercent": 50,
+  "numericalTimingCriterion": "At least5% median paired less time and primary faster in at least2of3 completed pairs.",
+  "allocationCriterion": "Alternative primary structural managed saving at least32B/op, repeated in at least2of3 completed pairs, distinguished from unchanged-control drift.",
+  "controlCredibilityCriterion": "Reject timing-only qualification if primary apparent benefit is no greater than the corresponding unchanged control in at least2of3; retain/review all adverse timing and allocation outcomes.",
+  "actualStableAdversePrimaryTimingMustNotBeHiddenByAllocationSaving": true,
+  "imageCriterion": "One byte-identical measured harness and full closures, only the Endpoints owner DLL/PDB differs.",
+  "reconstructionCriterion": "Relocate exact authored project inputs, restore/rebuild and characterize both source variants without extra timing.",
+  "sampleAuditCriterion": "Independently reconstruct raw actual-minus-overhead statistics, allocation rounding, settings and every individual test-result row.",
+  "environment": "Shared Windows machine; no priority, affinity, power, URL ACL, firewall or OS changes; no unrelated process termination; serialize overlapping builds/benchmarks with at most2MSBuild workers.",
+  "protectedFiles": [
+    {
+      "path": "global.json",
+      "sha256": "C3D6E7C29D94C34B6343D4A2EFE74164929F29BFA26FD84B5E2020A15091CD53"
+    },
+    {
+      "path": "package.json",
+      "sha256": "693AF6A6057DF2DD34C63E38B3EED30896327D2A2CF6FD6ED342AB3BEB17AF0C"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "D368CB4CCAC7D871B4EC9B7A4229D1C379676AFF5FAA74E876988ADC441B1DF1"
+    },
+    {
+      "path": "autoperf-issue-70219-deduplicated-report.html",
+      "sha256": "E4E69280D1F3AA0BAFB24D5CF587C627CB83C535A4B4E082B0079E21418ADCA8"
+    },
+    {
+      "path": "autoperf-issue-70219-duplicate-report.html",
+      "sha256": "9A1ABF429B9B23172A9FFB0B8901209AE764092B884E79573544571C1D79124E"
+    },
+    {
+      "path": "autoperf-scan-report.md",
+      "sha256": "8CC5AB40247F93804441E886B6BE18D66758C42624986A26EA2F7F68E175C8F8"
+    },
+    {
+      "path": "performance-antipattern-findings.md",
+      "sha256": "CCA40D0675858C9A7502BE24EA1F93BE88DCEE5EDE6A63E38B1EABD8FBAD1673"
+    },
+    {
+      "path": "NuGet.config",
+      "sha256": "4062F41E0FD3B9531399B9190E93A58D63BF002702DCAD78E634E08A32A03115"
+    }
+  ]
+}

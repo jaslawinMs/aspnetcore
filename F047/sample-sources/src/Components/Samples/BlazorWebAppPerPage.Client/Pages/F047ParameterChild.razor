@@ -1,0 +1,34 @@
+<p id="f047-label">@Label</p>
+<p id="f047-number">@Number</p>
+<p id="f047-null">@(Optional is null)</p>
+<div id="f047-first-slot">@First</div>
+<div id="f047-second-slot">@Second</div>
+<p id="f047-interactive">@RendererInfo.IsInteractive</p>
+<p id="f047-renderer">@RendererInfo.Name</p>
+<button id="f047-increment" @onclick="Increment">Increment</button>
+<p id="f047-count">@count</p>
+
+@code
+{
+    private int count;
+
+    [Parameter]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public int Number { get; set; }
+
+    [Parameter]
+    public string? Optional { get; set; }
+
+    [Parameter]
+    public RenderFragment? First { get; set; }
+
+    [Parameter]
+    public RenderFragment? Second { get; set; }
+
+    private void Increment()
+    {
+        count++;
+    }
+}

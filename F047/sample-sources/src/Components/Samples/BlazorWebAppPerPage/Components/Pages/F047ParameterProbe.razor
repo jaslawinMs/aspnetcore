@@ -1,0 +1,43 @@
+@page "/autoperf-f047-parameters"
+@using System.Security.Cryptography
+@using Microsoft.AspNetCore.Builder
+@using BlazorWebAppPerPage.Client.Pages
+
+<h1>F047 parameter preservation</h1>
+<p id="f047-owner">@OwnerHash</p>
+
+@if (Prerender)
+{
+    <F047ParameterChild @rendermode="SelectedMode" Label="Scalar label" Number="47" Optional="@((string?)null)">
+        <First>
+            <span id="f047-first">First from SSR</span>
+        </First>
+        <Second>
+            <strong id="f047-second">Second from SSR</strong>
+        </Second>
+    </F047ParameterChild>
+}
+else
+{
+    <F047ParameterChild @rendermode="SelectedMode" Label="Scalar label" Number="47" Optional="@((string?)null)" />
+}
+
+@code
+{
+    [Parameter, SupplyParameterFromQuery(Name = "mode")]
+    public string Mode { get; set; } = "server";
+
+    [Parameter, SupplyParameterFromQuery(Name = "prerender")]
+    public bool Prerender { get; set; } = true;
+
+    private IComponentRenderMode SelectedMode => Mode switch
+    {
+        "server" => new InteractiveServerRenderMode(Prerender),
+        "wasm" => new InteractiveWebAssemblyRenderMode(Prerender),
+        "auto" => new InteractiveAutoRenderMode(Prerender),
+        _ => throw new ArgumentException("Unknown probe render mode.", nameof(Mode)),
+    };
+
+    private static string OwnerHash => Convert.ToHexString(SHA256.HashData(
+        File.ReadAllBytes(typeof(RazorComponentsEndpointRouteBuilderExtensions).Assembly.Location)));
+}
