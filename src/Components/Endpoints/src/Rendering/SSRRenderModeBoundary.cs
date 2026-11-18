@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
@@ -122,9 +121,9 @@ internal class SSRRenderModeBoundary : IComponent
             // so that when the component invokes the fragment during prerendering,
             // the output frames are captured for later serialization.
             var parametersDict = (Dictionary<string, object?>)_latestParameters;
-            foreach (var name in parametersDict.Keys.ToArray())
+            foreach (var (name, value) in parametersDict)
             {
-                if (parametersDict[name] is RenderFragment rf)
+                if (value is RenderFragment rf)
                 {
                     var capture = new RenderFragmentCapture(rf);
                     _topLevelCaptures ??= new();
