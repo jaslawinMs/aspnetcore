@@ -201,6 +201,88 @@ public class EndpointHtmlRendererTest
         Assert.Equal(InvokedRenderModes.Mode.WebAssembly, invoked.Value);
     }
 
+    [Theory]
+    [InlineData("server")]
+    [InlineData("wasm")]
+    [InlineData("auto")]
+    public async Task CanPrerender_MultipleRenderFragmentParameters(string mode)
+    {
+        var httpContext = GetHttpContext();
+        IComponentRenderMode renderMode = mode switch
+        {
+            "server" => RenderMode.InteractiveServer,
+            "wasm" => RenderMode.InteractiveWebAssembly,
+            "auto" => RenderMode.InteractiveAuto,
+            _ => throw new ArgumentException("Unknown render mode.", nameof(mode)),
+        };
+        RenderFragment first = builder => builder.AddContent(0, "First from SSR");
+        RenderFragment second = builder => builder.AddContent(0, "Second from SSR");
+        var parameters = new Dictionary<string, object>
+        {
+            [nameof(MultipleFragmentParametersComponent.Label)] = "Scalar",
+            [nameof(MultipleFragmentParametersComponent.First)] = first,
+            [nameof(MultipleFragmentParametersComponent.Optional)] = null,
+            [nameof(MultipleFragmentParametersComponent.Second)] = second,
+        };
+
+        var result = await renderer.PrerenderComponentAsync(httpContext, typeof(MultipleFragmentParametersHost),
+            null, ParameterView.FromDictionary(new Dictionary<string, object>
+            {
+                [nameof(MultipleFragmentParametersHost.Mode)] = renderMode,
+                [nameof(MultipleFragmentParametersHost.Parameters)] = parameters,
+            }));
+        var content = await renderer.Dispatcher.InvokeAsync(() => HtmlContentToString(result));
+        content = AssertAndStripBrowserConfiguration(content);
+        var match = Regex.Match(content, PrerenderedComponentPattern);
+
+        Assert.True(match.Success);
+        Assert.Equal("Scalar|First from SSR|True|Second from SSR", match.Groups["content"].Value);
+        var marker = JsonSerializer.Deserialize<ComponentMarker>(match.Groups["preamble"].Value,
+            ServerComponentSerializationSettings.JsonSerializationOptions);
+        Assert.Same(first, parameters[nameof(MultipleFragmentParametersComponent.First)]);
+        Assert.Same(second, parameters[nameof(MultipleFragmentParametersComponent.Second)]);
+
+        if (mode is "server" or "auto")
+        {
+            var protector = _dataprotectorProvider.CreateProtector(ServerComponentSerializationSettings.DataProtectionProviderPurpose)
+                .ToTimeLimitedDataProtector();
+            var serverComponent = JsonSerializer.Deserialize<ServerComponent>(protector.Unprotect(marker.Descriptor),
+                ServerComponentSerializationSettings.JsonSerializationOptions);
+            AssertParameters(serverComponent.ParameterDefinitions, serverComponent.ParameterValues);
+        }
+
+        if (mode is "wasm" or "auto")
+        {
+            var definitions = JsonSerializer.Deserialize<ComponentParameter[]>(Convert.FromBase64String(marker.ParameterDefinitions),
+                WebAssemblyComponentSerializationSettings.JsonSerializationOptions);
+            var values = JsonSerializer.Deserialize<object[]>(Convert.FromBase64String(marker.ParameterValues),
+                WebAssemblyComponentSerializationSettings.JsonSerializationOptions);
+            AssertParameters(definitions, values);
+        }
+
+        static void AssertParameters(IEnumerable<ComponentParameter> definitions, IEnumerable<object> values)
+        {
+            Assert.Equal(
+                [nameof(MultipleFragmentParametersComponent.Label), nameof(MultipleFragmentParametersComponent.First),
+                    nameof(MultipleFragmentParametersComponent.Optional), nameof(MultipleFragmentParametersComponent.Second)],
+                definitions.Select(definition => definition.Name));
+            Assert.Collection(values,
+                value => Assert.Equal("Scalar", Assert.IsType<JsonElement>(value).GetString()),
+                value => AssertFragment(value, "First from SSR"),
+                value => Assert.Null(value),
+                value => AssertFragment(value, "Second from SSR"));
+        }
+
+        static void AssertFragment(object value, string expectedContent)
+        {
+            var fragment = JsonSerializer.Deserialize<SerializedRenderFragment>(Assert.IsType<JsonElement>(value).GetRawText(),
+                ServerComponentSerializationSettings.JsonSerializationOptions);
+            var node = Assert.Single(fragment.Nodes);
+            Assert.Equal("text", node.Type);
+            Assert.Equal(expectedContent, node.Content);
+        }
+    }
+
     [Fact]
     public async Task CanRender_ComponentWithParameters_ClientMode()
     {
@@ -1894,6 +1976,42 @@ public class EndpointHtmlRendererTest
             builder.AddAttribute(1, "onsubmit", () => { });
             builder.AddNamedEvent("onsubmit", "default");
             builder.CloseElement();
+        }
+    }
+
+    private class MultipleFragmentParametersHost : ComponentBase
+    {
+        [Parameter] public IComponentRenderMode Mode { get; set; }
+        [Parameter] public IReadOnlyDictionary<string, object> Parameters { get; set; }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            builder.OpenComponent<MultipleFragmentParametersComponent>(0);
+            foreach (var (name, value) in Parameters)
+            {
+                builder.AddComponentParameter(1, name, value);
+            }
+            builder.AddComponentRenderMode(Mode);
+            builder.CloseComponent();
+        }
+    }
+
+    private class MultipleFragmentParametersComponent : ComponentBase
+    {
+        [Parameter] public string Label { get; set; }
+        [Parameter] public RenderFragment First { get; set; }
+        [Parameter] public string Optional { get; set; }
+        [Parameter] public RenderFragment Second { get; set; }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            builder.AddContent(0, Label);
+            builder.AddMarkupContent(1, "|");
+            builder.AddContent(2, First);
+            builder.AddMarkupContent(3, "|");
+            builder.AddContent(4, Optional is null);
+            builder.AddMarkupContent(5, "|");
+            builder.AddContent(6, Second);
         }
     }
 
