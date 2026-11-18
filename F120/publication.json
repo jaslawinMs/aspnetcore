@@ -1,0 +1,304 @@
+{
+  "candidate": "F120",
+  "disposition": "no-gain",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/164",
+  "actualTrackingIssueNumber": 164,
+  "actualTrackingIssueTitle": "[AutoPerf F120] MVC copied-store Contains: measured no-gain",
+  "actualTrackingIssueBody": "## Disposition\r\n\r\n**Measured no-gain; no performance PR.** Specializing the private copied store\r\nin MVC `CopyOnWriteList<T>.Contains` makes the declared copied-five-factory miss\r\n54.37% and 36.46% slower in the two complete source comparisons.\r\nBDN reports 0 B/op for both variants of that primary. Favorable empty and\r\nordinary-path observations are retained, not substituted for the primary.\r\n\r\n## Connected artifacts\r\n\r\n| Artifact | Link |\r\n|---|---|\r\n| Immutable evidence and artifact map | [F120 guide](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/README.md) |\r\n| Every profile and raw result | [Full comparison table](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/comparison-results.md) |\r\n| Runnable eight-input benchmark | [Project](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/harness/AutoPerf.Benchmarks.csproj) |\r\n| Independent arithmetic, settings, owners and XML audit | [Final audit](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/audit-summary.json) |\r\n| Exact commands and all outcomes | [Validation](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/validation-commands.md) |\r\n| Experimental source, not a merge recommendation | [Fork commit](https://github.com/jaslawinMs/aspnetcore/commit/6cbee2d052c988b07d936ea8de489456beb22317) |\r\n| Exact-input independent rebuild, no timing | [Reconstruction](https://github.com/jaslawinMs/aspnetcore/blob/26a042f3031f7614179d1c8a3144209ca69f7081/F120/reconstruction-paired-001/verified-reproduction.json) |\r\n\r\n## Scope and preservation\r\n\r\nReal MVC HTTP routing/controller activation produces the public collection.\r\nPublic add/remove creates the private copy; a second request checks source and\r\nwrapper isolation. Timing is one Contains call on that already-produced store,\r\nnot host/request/first-write cost. The ordinary source-backed path is retained.\r\nThe explicit object-equality loop is necessary: typed equality can disagree,\r\nand enumeration/version/short-circuit behavior must stay intact.\r\n\r\nOriginal/candidate each pass 35 selected XML rows, including seven green/green\r\npreservation rows. Actual current default passes 28 existing rows; candidate\r\nRazor Pages managed producer tests pass nine. Original/default/candidate and both\r\nindependently rebuilt variants agree on 48 real HTTP requests, 16 public\r\ncontracts, six extra equality/enumeration contracts and eight benchmark\r\nlifecycles per successful full characterization.\r\n\r\n## Budget and limitations\r\n\r\nAll three authorizations remain consumed and permanently closed.\r\nAuthorization 1 failed before workload samples because the pinned emitter did\r\nnot await async fixture setup. Its exact old fixture and output remain.\r\nOnly common untimed preparation was repaired; no source/profile/settings/gate\r\nretuning or replay followed. Authorizations 2/3 completed in opposite orders\r\nwith 512 retained observations, all independently recomputed.\r\n\r\nThis is a non-isolated shared Windows box and a .NET 12 preview runtime.\r\nAll adverse/control outcomes remain. No allocation-saving, specific JIT-cause,\r\nwhole-MVC, real compiled-page, browser, production-frequency or merge-readiness\r\nclaim is made. The fixed positive-findings report excludes this outcome.\r\n\r\nImmutable evidence commit: `26a042f3031f7614179d1c8a3144209ca69f7081`.\n\nThe immutable evidence snapshot predates its additive publication receipt. Use the [current case guide](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F120/README.md) for that late receipt; all 1233 sealed files remain pinned and unchanged. No performance PR is warranted; the independent source branch is retained only as a no-gain experiment.\n",
+  "actualTrackingIssueState": "closed",
+  "actualTrackingIssueStateReason": "not_planned",
+  "actualTrackingIssueTitleAndBodyVerified": true,
+  "actualPerformancePrCreated": false,
+  "actualSourceBranch": "autoperf/F120-copy-on-write-contains",
+  "actualSourceCommit": "6cbee2d052c988b07d936ea8de489456beb22317",
+  "actualSourceFilesChanged": [
+    {
+      "path": "src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs",
+      "gitBlob": "6e511453e706f8234ee30148fc2adca5ed247ade",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "DA0C252AAB630895AC30F69BEE0EFB9B8ED91B817BD3D3A6FCBB3A082DDF94F3"
+    },
+    {
+      "path": "src/Mvc/Mvc.Core/test/Infrastructure/CopyOnWriteListTest.cs",
+      "gitBlob": "28c88498998fe34ec0eb437e38b1f29daa416895",
+      "actualRemoteBytesVerified": true,
+      "actualLfCanonicalContentMatchesTestedPhysicalSnapshot": true,
+      "actualPhysicalSnapshotSha256": "97EABA1524D65F1DF8039EEF0B975F4EF80A7DCC489B219162EECA474F08AF47"
+    }
+  ],
+  "actualDiagnosticCandidateRecommendedForMerge": false,
+  "actualImmutableEvidenceCommit": "26a042f3031f7614179d1c8a3144209ca69f7081",
+  "actualImmutableEvidenceFiles": 1233,
+  "actualVerifiedRemoteImmutableBlobsBeforeIssue": 1233,
+  "actualCopiedAuthoritativeFiles": 1224,
+  "actualHashedOmittedCompiledRestoreFiles": 3948,
+  "actualIndependentProjectReproduction": {
+    "candidate": "F120",
+    "actualByteExactProjectFiles": 8,
+    "actualFreshProjectRestoredAndRebuilt": true,
+    "actualVariants": [
+      {
+        "variant": "Original",
+        "actualConsumerFiles": 328,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Benchmarks.dll",
+          "AutoPerf.Benchmarks.pdb"
+        ],
+        "actualRealMvcProducerCaptures": 24,
+        "actualRealHttpRequests": 48,
+        "actualPreparedPublicProfiles": 16,
+        "actualFreshBenchmarkProfiles": 8,
+        "actualAdditionalEqualityAndEnumerationContracts": 6,
+        "actualObservedBoundaryIdenticalToMeasuredSourceVariant": true
+      },
+      {
+        "variant": "Candidate",
+        "actualConsumerFiles": 328,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Benchmarks.dll",
+          "AutoPerf.Benchmarks.pdb"
+        ],
+        "actualRealMvcProducerCaptures": 24,
+        "actualRealHttpRequests": 48,
+        "actualPreparedPublicProfiles": 16,
+        "actualFreshBenchmarkProfiles": 8,
+        "actualAdditionalEqualityAndEnumerationContracts": 6,
+        "actualObservedBoundaryIdenticalToMeasuredSourceVariant": true
+      }
+    ],
+    "actualOwnerAndOtherDependencyBytesIdenticalToMeasuredVariants": true,
+    "actualAdditionalTimingSamples": 0,
+    "actualClosedBudgetBytesUnchanged": true,
+    "actualClosedBudgetSha256": "7CC170920F7E8977A2DBF8659FE3ED559D8FC721083874F9338FD52DD6B1E9D3",
+    "actualMeasuredImagesPreserved": true,
+    "actualProtectedSourceTestsSdkAndNugetConfigurationPreserved": true,
+    "actualExcludedBuildBoundaries": "This common-project rebuild does not repeat compiled Razor Pages, packaging or full-repository builds."
+  },
+  "actualEvaluation": {
+    "candidate": "F120",
+    "disposition": "no-gain",
+    "candidateRecommendedForMerge": false,
+    "classification": "Private copied-store specialization not supported by the predeclared primary; retain the experiment, not a performance proposal.",
+    "numericalPrimaryTimingGateMet": false,
+    "allocationGateMet": false,
+    "controlCredibilityGateMet": false,
+    "ordinaryPathRejectsAllocationOnly": false,
+    "medianPrimaryLessTimePercent": -45.41638598909539,
+    "primaryFasterComparisons": 0,
+    "actualPrimarySlowerComparisons": [
+      2,
+      3
+    ],
+    "actualPrimaryManagedByteSavings": [
+      0,
+      0
+    ],
+    "actualConsumedAuthorizations": 3,
+    "actualCompleteComparisons": 2,
+    "actualFailedAuthorizationNumbers": [
+      1
+    ],
+    "actualRetainedSamples": 512,
+    "actualComparisonBudgetPermanentlyClosed": true,
+    "actualClosedBudgetSha256": "7CC170920F7E8977A2DBF8659FE3ED559D8FC721083874F9338FD52DD6B1E9D3",
+    "actualFailedFirstAuthorization": "The pinned BDN0.13 in-process emitter invoked the workload before async GlobalSetup completed. It produced no WorkloadActual or WorkloadResult samples. Preserve the complete failed fixture epoch; its slot remains consumed and is not replayed.",
+    "actualCommonFixtureRepair": "Await all eight real HTTP producer setups in async Main before BDN. Each synchronous GlobalSetup selects its prepared immutable profile; Contains and UnchangedIndexOf share that same profile. Both timed method bodies, profiles, source candidate, orders, settings and acceptance gates are unchanged.",
+    "actualNoRetargetingToFavorableSecondaryOrOrdinaryPath": true,
+    "actualObservedBoundary": "One public IList<IValueProviderFactory>.Contains call on a real HTTP-produced, already-copied MVC collection; neither a request nor first-write cost.",
+    "actualAllocationObservation": "BDN reports0B/op for both original and candidate copied primary in both complete comparisons; ordinary source-array controls report32B/op in both variants. No inferred40B saving is claimed. Tiny raw amortized bookkeeping counts and midpoint-to-even rounding remain auditable.",
+    "actualJitDisassemblyCollected": false,
+    "actualNoSpecificJitCauseClaimed": true,
+    "actualPreservation": "Original and candidate each pass the same35 selected XML rows including seven new preservation rows; actual current default passes28 existing rows. Candidate Pages producer suite passes9. All three source variants and both exact-input rebuild variants pass48 real HTTP requests,16 prepared public contracts,six equality/enumeration contracts and eight benchmark lifecycles per successful characterization.",
+    "actualGreenGreenPerformancePreservationNotBugFixRedGreen": true,
+    "actualSourceBranchMayRetainDiagnosticCandidate": true,
+    "actualNewPerformancePullRequestWarranted": false,
+    "actualExcludedClaims": [
+      "ordinary/default-request gain",
+      "whole MVC/Razor Pages or application throughput",
+      "representative production frequency",
+      "browser behavior",
+      "AOT/trimming",
+      "packaging",
+      "merge readiness"
+    ],
+    "actualCreated": "2026-11-18T15:22:19.485Z"
+  },
+  "actualPrimaryResults": [
+    {
+      "attempt": 2,
+      "method": "Contains",
+      "profile": "CopiedDefault5Miss",
+      "lessTimePercent": -54.37340520905314,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 2,
+        "variant": "Original",
+        "method": "Contains",
+        "profile": "CopiedDefault5Miss",
+        "meanNs": 10.745711024455868,
+        "medianNs": 10.684675578733128,
+        "standardDeviationNs": 0.14386740432262735,
+        "cvPercent": 1.3388355967809247,
+        "allocatedBytesPerOperation": 0,
+        "firstHalfMeanNs": 10.808658857835397,
+        "secondHalfMeanNs": 10.68276319107634,
+        "secondHalfLessTimePercent": 1.1647667709282272,
+        "fittedEndToEndTrendPercent": -2.7027434535261827,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.2337452786336067,
+        "rawGc": [
+          0,
+          0,
+          0,
+          4320,
+          7843598
+        ],
+        "rawResultNsPerOperation": [
+          10.981988113108295,
+          10.955495169436272,
+          10.639122504748459,
+          10.658029644048561,
+          10.69148367879129,
+          10.751711140729038,
+          10.609990466110068,
+          10.677867478674965
+        ]
+      },
+      "candidate": {
+        "attempt": 2,
+        "variant": "Candidate",
+        "method": "Contains",
+        "profile": "CopiedDefault5Miss",
+        "meanNs": 16.588520022377153,
+        "medianNs": 16.61369524865177,
+        "standardDeviationNs": 0.12514252496829678,
+        "cvPercent": 0.754392343617666,
+        "allocatedBytesPerOperation": 0,
+        "firstHalfMeanNs": 16.504280021096754,
+        "secondHalfMeanNs": 16.672760023657546,
+        "secondHalfLessTimePercent": -1.0208261271950736,
+        "fittedEndToEndTrendPercent": 1.427598193653565,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.23278342065956,
+        "rawGc": [
+          0,
+          0,
+          0,
+          1968,
+          5373338
+        ],
+        "rawResultNsPerOperation": [
+          16.530264800018163,
+          16.330928744850965,
+          16.613546365406382,
+          16.54238017411151,
+          16.701238596939184,
+          16.643304404078062,
+          16.73265296171579,
+          16.613844131897157
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "method": "Contains",
+      "profile": "CopiedDefault5Miss",
+      "lessTimePercent": -36.45936676913764,
+      "actualManagedBytesSaved": 0,
+      "original": {
+        "attempt": 3,
+        "variant": "Original",
+        "method": "Contains",
+        "profile": "CopiedDefault5Miss",
+        "meanNs": 11.941528379672887,
+        "medianNs": 11.902885069036895,
+        "standardDeviationNs": 0.1880575890999788,
+        "cvPercent": 1.5748200994111798,
+        "allocatedBytesPerOperation": 0,
+        "firstHalfMeanNs": 12.020713978734005,
+        "secondHalfMeanNs": 11.862342780611772,
+        "secondHalfLessTimePercent": 1.3174857866380396,
+        "fittedEndToEndTrendPercent": -0.6188323470438888,
+        "actualOverheadSamples": 15,
+        "actualMedianOverheadNsPerOperation": 2.2315509161023805,
+        "rawGc": [
+          0,
+          0,
+          0,
+          0,
+          7043263
+        ],
+        "rawResultNsPerOperation": [
+          11.802157607915536,
+          11.992609107454882,
+          12.310033006008721,
+          11.978056193556878,
+          11.82771394451691,
+          11.741376120698602,
+          11.807141093552804,
+          12.073139963678766
+        ]
+      },
+      "candidate": {
+        "attempt": 3,
+        "variant": "Candidate",
+        "method": "Contains",
+        "profile": "CopiedDefault5Miss",
+        "meanNs": 16.295334009458482,
+        "medianNs": 16.229648087765405,
+        "standardDeviationNs": 0.4551635078988169,
+        "cvPercent": 2.79321373611993,
+        "allocatedBytesPerOperation": 0,
+        "firstHalfMeanNs": 16.0583266993097,
+        "secondHalfMeanNs": 16.532341319607266,
+        "secondHalfLessTimePercent": -2.9518307179411396,
+        "fittedEndToEndTrendPercent": 4.755568369974327,
+        "actualOverheadSamples": 18,
+        "actualMedianOverheadNsPerOperation": 2.2352751938407183,
+        "rawGc": [
+          0,
+          0,
+          0,
+          4032,
+          5501940
+        ],
+        "rawResultNsPerOperation": [
+          15.839967356968632,
+          16.18262830928727,
+          16.307438830667,
+          15.903272300315889,
+          16.248132476908147,
+          16.211163698622666,
+          17.327188228152252,
+          16.342880874745997
+        ]
+      }
+    }
+  ],
+  "actualPreimplementationPlanAndBudgetPreserved": true,
+  "actualConsumedAuthorizations": 3,
+  "actualCompleteComparisons": 2,
+  "actualFailedAuthorizationNumbers": [
+    1
+  ],
+  "actualAdditionalTimingSamplesDuringPublication": 0,
+  "actualRecordedBudgetPermanentlyClosed": true,
+  "actualManifestSelfLinkPreparationFailurePreservedAndCorrected": true,
+  "actualReceiptLinkBoundary": "Immutable evidence predates this additive receipt. The issue links the current guide; all 1233 core files remain unchanged.",
+  "actualPublishedReportBlobUnchanged": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "actualBrowserLaunchRequestedForThisNonPr": false,
+  "actualFinalizerDriverSha256": "9FB9E93BB5FFDD54AD64C1EBE0B1E760EE03F47201DEBED13B776E814C09CE0D",
+  "campaignFinalizedAfterVerifiedReceipt": 125,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 233,
+  "campaignDispositionCounts": {
+    "drafted": 75,
+    "no-gain": 22,
+    "rejected": 22,
+    "duplicate": 6
+  },
+  "actualCreated": "2026-11-18T15:35:20.391Z"
+}
