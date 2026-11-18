@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.TempDataRemoveBenchmarks-20261117-213302</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F040-SourceComparison  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>    Method</th><th>Count</th><th>KeyLength</th><th>  Workload</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>RemoveAndRestore</td><td>0</td><td>12</td><td>Match</td><td>1.124 ns</td><td>0.0742 ns</td><td>0.0388 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>12</td><td>Different</td><td>1.242 ns</td><td>0.0408 ns</td><td>0.0214 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>12</td><td>Null</td><td>1.253 ns</td><td>0.0893 ns</td><td>0.0467 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>12</td><td>MissingNull</td><td>1.235 ns</td><td>0.0455 ns</td><td>0.0238 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>12</td><td>ControlRemoveKey</td><td>3.655 ns</td><td>0.1134 ns</td><td>0.0593 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>128</td><td>Match</td><td>1.232 ns</td><td>0.0403 ns</td><td>0.0211 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>128</td><td>Different</td><td>1.248 ns</td><td>0.0640 ns</td><td>0.0335 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>128</td><td>Null</td><td>1.269 ns</td><td>0.1477 ns</td><td>0.0772 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>128</td><td>MissingNull</td><td>1.238 ns</td><td>0.0632 ns</td><td>0.0330 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>0</td><td>128</td><td>ControlRemoveKey</td><td>3.684 ns</td><td>0.0927 ns</td><td>0.0485 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>12</td><td>Match</td><td>97.594 ns</td><td>3.6773 ns</td><td>1.9233 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>12</td><td>Different</td><td>68.624 ns</td><td>1.4284 ns</td><td>0.7471 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>12</td><td>Null</td><td>94.884 ns</td><td>5.1812 ns</td><td>2.7099 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>12</td><td>MissingNull</td><td>41.636 ns</td><td>1.2568 ns</td><td>0.6573 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>12</td><td>ControlRemoveKey</td><td>62.040 ns</td><td>1.5370 ns</td><td>0.8039 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>128</td><td>Match</td><td>565.127 ns</td><td>15.3472 ns</td><td>8.0269 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>128</td><td>Different</td><td>379.992 ns</td><td>2.9034 ns</td><td>1.5185 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>128</td><td>Null</td><td>564.280 ns</td><td>34.4839 ns</td><td>18.0357 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>128</td><td>MissingNull</td><td>255.455 ns</td><td>1.9797 ns</td><td>1.0354 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>1</td><td>128</td><td>ControlRemoveKey</td><td>360.523 ns</td><td>5.9077 ns</td><td>3.0899 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>12</td><td>Match</td><td>98.399 ns</td><td>5.3307 ns</td><td>2.7881 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>12</td><td>Different</td><td>69.380 ns</td><td>2.7323 ns</td><td>1.4291 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>12</td><td>Null</td><td>96.001 ns</td><td>6.8472 ns</td><td>3.5812 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>12</td><td>MissingNull</td><td>39.712 ns</td><td>1.0154 ns</td><td>0.5311 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>12</td><td>ControlRemoveKey</td><td>61.060 ns</td><td>2.1863 ns</td><td>1.1435 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>128</td><td>Match</td><td>567.377 ns</td><td>13.9630 ns</td><td>7.3029 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>128</td><td>Different</td><td>378.838 ns</td><td>2.6929 ns</td><td>1.4085 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>128</td><td>Null</td><td>551.278 ns</td><td>3.7375 ns</td><td>1.9548 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>128</td><td>MissingNull</td><td>253.607 ns</td><td>1.4770 ns</td><td>0.7725 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>8</td><td>128</td><td>ControlRemoveKey</td><td>359.771 ns</td><td>3.9858 ns</td><td>2.0847 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>12</td><td>Match</td><td>95.352 ns</td><td>1.1291 ns</td><td>0.5905 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>12</td><td>Different</td><td>67.600 ns</td><td>0.6833 ns</td><td>0.3574 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>12</td><td>Null</td><td>92.398 ns</td><td>2.0467 ns</td><td>1.0705 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>12</td><td>MissingNull</td><td>40.107 ns</td><td>0.9017 ns</td><td>0.4716 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>12</td><td>ControlRemoveKey</td><td>64.624 ns</td><td>1.1795 ns</td><td>0.6169 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>128</td><td>Match</td><td>564.511 ns</td><td>9.2474 ns</td><td>4.8366 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>128</td><td>Different</td><td>380.106 ns</td><td>4.4394 ns</td><td>2.3219 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>128</td><td>Null</td><td>558.231 ns</td><td>5.5424 ns</td><td>2.8988 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>128</td><td>MissingNull</td><td>254.031 ns</td><td>4.1037 ns</td><td>2.1463 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RemoveAndRestore</td><td>64</td><td>128</td><td>ControlRemoveKey</td><td>361.250 ns</td><td>5.2196 ns</td><td>2.7299 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr></tbody></table>
+</body>
+</html>

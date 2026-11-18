@@ -1,0 +1,89 @@
+{
+  "candidate": "F040",
+  "actualCreatedUtc": "2026-11-18T05:34:32.194Z",
+  "actualCloseoutOnlyNotMeasurementInput": true,
+  "actualProducerSeleniumFact": "CanRemoveTheElementWithRemove",
+  "actualAdjacentStringKeyNotDirectCollectionRemovalClaim": true,
+  "actualIndependentReproductionAddsNoTiming": true,
+  "records": [
+    {
+      "source": "F039-e2e-build.ps1",
+      "sourceSha256": "B9DED63230BADC7B2F703A1E61937C9398A2AA993B6EB6AA51327C51B5FB1F69",
+      "destination": "F040-e2e-build.ps1",
+      "destinationSha256": "457BE10A37D2677AA6DDDE0A718FD65D18190939D6342339B8F60B84628B89D1",
+      "reviewedSeams": [],
+      "actualCommonCaseLabelChanged": true,
+      "actualMeasuredInputsOrExistingF039EvidenceChanged": false
+    },
+    {
+      "source": "F039-selenium.ps1",
+      "sourceSha256": "9A495B5ADA5D0D1ED09E45C6A2D6C6955928FCD85128FB3DC989DB6FB7376333",
+      "destination": "F040-selenium.ps1",
+      "destinationSha256": "FDDA30C8E942B3C37255F6130B58EA419EDDEAD44DA79E2B08C60E963F6865C9",
+      "reviewedSeams": [
+        {
+          "before": "$names = @('CanCheckIfTempDataContainsKey')",
+          "after": "$names = @('CanRemoveTheElementWithRemove')"
+        },
+        {
+          "before": "$_ -cne 'CanCheckIfTempDataContainsKey'",
+          "after": "$_ -cne 'CanRemoveTheElementWithRemove'"
+        },
+        {
+          "before": "actualContainsKeyIsAdjacentNotDirectCollectionContainsCoverage",
+          "after": "actualStringKeyRemoveIsAdjacentNotDirectCollectionRemoveCoverage"
+        }
+      ],
+      "actualCommonCaseLabelChanged": true,
+      "actualMeasuredInputsOrExistingF039EvidenceChanged": false
+    },
+    {
+      "source": "F039-reproduce.ps1",
+      "sourceSha256": "5E3CB2A7D6B21B539F40315FA99BDEB2A7D2D7D95E25813F82BB7E90B4B4FE33",
+      "destination": "F040-reproduce.ps1",
+      "destinationSha256": "1F5CBF86E2C4BEACE8868311C5D32672E87EC3B9DB4B2BA5C1565938B87C118B",
+      "reviewedSeams": [
+        {
+          "before": "(Join-Path $run 'harness-v2')",
+          "after": "(Join-Path $run 'harness')"
+        },
+        {
+          "before": "Relocate exactly the seven corrected measured source inputs.",
+          "after": "Relocate exactly the seven measured source inputs."
+        }
+      ],
+      "actualCommonCaseLabelChanged": true,
+      "actualMeasuredInputsOrExistingF039EvidenceChanged": false
+    },
+    {
+      "source": "F039-verify-reproduction.mjs",
+      "sourceSha256": "668D2A54E86187E77E08F51AC1DAEC894E07E5A5CAB359A758B2C207B1A89B19",
+      "destination": "F040-verify-reproduction.mjs",
+      "destinationSha256": "B6B566CB71FE69D02AA364CDB61F780890F7AE3BCED399D96ADE78BF21FD207E",
+      "reviewedSeams": [
+        {
+          "before": "'preparation-candidate-002'",
+          "after": "'preparation-candidate-001'"
+        },
+        {
+          "before": "'characterize-candidate-002'",
+          "after": "'characterize-candidate-001'"
+        },
+        {
+          "before": "assert.equal(actual.records.length, 15);",
+          "after": "assert.equal(actual.records.length, 17);"
+        },
+        {
+          "before": "actualSemanticRecordsExactlyEqual: 15,",
+          "after": "actualSemanticRecordsExactlyEqual: 17,"
+        },
+        {
+          "before": "15 semantic records/40 lifecycles passed",
+          "after": "17 semantic records/40 lifecycles passed"
+        }
+      ],
+      "actualCommonCaseLabelChanged": true,
+      "actualMeasuredInputsOrExistingF039EvidenceChanged": false
+    }
+  ]
+}

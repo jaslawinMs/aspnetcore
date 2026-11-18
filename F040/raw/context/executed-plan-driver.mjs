@@ -1,0 +1,163 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const session = path.dirname(fileURLToPath(import.meta.url));
+const root = String.raw`C:\src\aspnetcore`;
+const run = path.join(session, 'autoperf-runs', 'F040');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const hash = bytes => createHash('sha256').update(bytes).digest('hex').toUpperCase();
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const investigation = read(path.join(run, 'investigation.json'));
+const owner = path.join(root, ...investigation.actualAllSelectedPairs[0].file.split('/'));
+const ownerHash = hash(fs.readFileSync(owner));
+assert.equal(ownerHash, investigation.actualAllSelectedPairs[0].actualWorkingTreeRawSha256);
+assert.equal(investigation.actualAllSelectedPairs.length, 18);
+assert.equal(investigation.actualAllSelectedBaselineMatches, 18);
+assert.equal(investigation.actualBoundedOpenWorkChangesTargetOwner, false);
+assert.equal(investigation.actualExistingFriendProjects.length, 2);
+const git = args => {
+  const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+};
+assert.equal(git(['rev-parse', 'HEAD']), investigation.baseline);
+assert.equal(git(['branch', '--show-current']), 'autoperf/F040-tempdata-remove-lookup');
+assert.equal(git(['status', '--porcelain=v1', '--untracked-files=no']), '');
+assert.equal(fs.readdirSync(run).some(name => /^(?:measure|preparation|characterize)-/.test(name)), false);
+const plan = {
+  candidate: 'F040', actualAuthoredBeforeOwnerEdits: true, actualOriginalOwnerSha256: ownerHash,
+  actualAuthoredUtc: new Date().toISOString(), baseline: investigation.baseline,
+  actualComparedDefault: investigation.actualFreshDefault,
+  actualEighteenSelectedOwnerProducerInterfaceProjectAndTestFilesMatchDefault: true,
+  actualFullCurrentDefaultBuildOrDependencyMatrixClaimed: false,
+  scope: 'Only the condition in existing ICollection<KeyValuePair<string,object?>>.Remove; preserve its branch and final Remove(key). F039 Contains and all other shipping code remain unchanged.',
+  hypothesis: 'Replace ContainsKey plus non-consuming Peek with private Data.TryGetValue and the same stored-value-first object.Equals. Never use public IDictionary.TryGetValue, remove before equality, or bypass final retained-key maintenance and its returned Boolean.',
+  behaviorContract: [
+    'The real registered ITempData cascade during public RazorComponentResult execution must produce the source-built owner with its actual cookie-provider callback; no private constructor invocation, copied owner, new IVT or UnsafeAccessor.',
+    'The first cold Remove must invoke the actual cookie provider once; later operations must not reload.',
+    'Preserve present-null versus missing-null, case-insensitive keys, case-sensitive/asymmetric/throwing value equality, equality call direction/count and null-key exception.',
+    'Mismatched removal must not consume or delete a retained value. Successful removal must update both dictionaries and survive actual cookie-backed subsequent requests.',
+    'Preserve final Remove(key) result after value equality removes or replaces the entry reentrantly; a true equality result does not by itself guarantee a true removal result.',
+    'Every prepared benchmark call must return its declared result repeatedly and restore exactly the same nonempty cardinality; never time one removal followed by accidental misses.',
+  ],
+  workflow: {
+    sample: 'BlazorWebAppPerPage/Components/Pages/F040TempDataProbe.razor',
+    renderMode: 'Static SSR with actual full document navigations and real endpoint-invoker cookie persistence; no interactive claim.',
+    matrix: {
+      included: ['Windows x64 .NET12 loaded managed collection removal', 'Static SSR cookie-backed preservation/removal on actual following requests'],
+      excluded: ['InteractiveServer/WebAssembly/Auto state transfer', 'streaming-cookie persistence', 'session-storage provider', 'Mono/AOT performance', 'whole-app, transport, DOM or browser timing'],
+    },
+    originalChecks: ['canonical cookie-bearing sample before permanent tests or owner edits', '65 existing TempData rows', '73 rows including eight preservation cases', 'actual BDN public discovery and all original untimed semantic/lifecycle checks'],
+    permanentBoundary: {
+      behaviorOwner: 'Managed TempData conditional collection Remove and retained-key state',
+      producer: 'Real registered cascading factory/lazy provider for characterization; actual TempData constructor and first Data access for focused managed preservation tests',
+      observable: 'Returned/second removal Booleans, one load, expected values in Save, and actual value/null absence or preservation on following cookie-backed requests',
+      selectedSurface: 'Extend existing Endpoints TempDataTest after original sample succeeds; run existing nonquarantined TempDataCookieTest facts for adjacent persistence contracts',
+      lowerBoundaryFalsePassRisk: 'Boolean-only checks miss a consuming public TryGetValue or removal-before-equality; require unmatched-value Save assertions, reentrant characterization and real subsequent cookie requests.',
+    },
+    permanentNewCoverage: ['Eight-row first-access conditional-removal matrix including matched, mismatched, missing, null and case-sensitive/insensitive cases; second removal and exact saved-state preservation'],
+    newCoverageIsPreservationNotSemanticBugRedGreen: true,
+    knownExcludedExistingTest: 'TempDataCookieTest.TempDataPersistWithoutAccessing remains pre-quarantined by dotnet/aspnetcore#70085; never override it or count it as passed.',
+    cleanup: 'Archive and remove only the task-created page after selected tests pass; preserve four unrelated reports; stop only identity-checked owned helper PIDs.',
+  },
+  benchmarkDesign: {
+    primary: 'Match:12:8', counts: [0, 1, 8, 64], keyLengths: [12, 128],
+    workloads: ['Match', 'Different', 'Null', 'MissingNull', 'ControlRemoveKey'],
+    profiles: 40, warmupIterations: 3, resultIterations: 8, iterationTimeMilliseconds: 100,
+    runtime: '12.0.0-alpha.1.26562.105', sdk: '12.0.100-alpha.1.26557.102',
+    benchmarkDotNet: '0.13.0', langVersion: '13.0', serverGc: true, unrollFactor: 1,
+    outliers: 'DontRemove', powerPlanMode: 'Guid.Empty',
+    boundary: 'Prepared loaded real TempData RemoveAndRestore round trip: actual ICollection.Remove (or named unchanged string-key Remove control) then same target setter restoration for every nonempty profile. Restoration and its retained-key work are inside timing. Empty profiles are genuine misses and do not insert a value.',
+    actualSteadyStateRestorationIncludedInTiming: true,
+    noIsolatedRemoveNanosecondsOrApplicationSpeedupClaimed: true,
+    fixture: 'Public result/registered cascade creates the real owner outside timing. Direct memory-response execution does not invoke endpoint persistence; the separate canonical sample covers persistence.',
+    keyAndValueDetails: 'Actual string keys, precomputed case-variant queries, distinct equal string objects, null target, genuine missing-null query, and prepared restoration key/value. Setup, evidence, validation and disposal are outside timing.',
+    controls: 'All empty profiles plus unchanged public string-key RemoveAndRestore at each count/key length. Runtime string-hash seeding remains unchanged and may differ by native member.',
+    discovery: 'Public non-sealed fixture and all forty cases must be found using actual BenchmarkConverter.TypeToBenchmarks before any measurement authorization.',
+    lifecycle: 'At least sixteen repeated calls for each of forty profiles must each return the expected Boolean and retain the same declared cardinality; successful nonempty calls must not degrade into misses.',
+  },
+  sourceComparisons: {
+    maximumAttemptsIncludingFailures: 3,
+    order: [['original', 'candidate'], ['candidate', 'original'], ['original', 'candidate']],
+    clearPrimaryLessTimeAtLeast50PercentMayStopAfterOne: true,
+    otherwiseMaximumThreeThenConclude: true,
+    sameMeasuredHarnessDllAndPdb: true,
+    onlyExpectedMeasuredConsumerDelta: ['Microsoft.AspNetCore.Components.Endpoints.dll', 'Microsoft.AspNetCore.Components.Endpoints.pdb'],
+    settings: 'Observe and preserve initial process/thread priority and affinity in every native member/executor; never change VM power, OS, network, unrelated processes or measurement priority.',
+  },
+  compatibility: {
+    actualOnlySingleMethodBodyConditionChangePlanned: true,
+    actualNoPublicOrInternalShapeAnnotationDefaultInterfaceOrGeneratedSourceChanges: true,
+    actualSingleTargetFrameworkExpression: '$(DefaultNetCoreTargetFramework)',
+    actualIsPackableFalse: true, actualOwnerContainsNoPartialOrConditionalBranches: true,
+    actualUnbuiltMicrobenchmarkFriendAndGeneratedDynamicProxyFriendSignaturesPreserved: true,
+    actualApiBaselinesAndExistingFriendGrantsWillRemainUnchanged: true,
+  },
+  draftAcceptance: {
+    allApplicableSemanticSourceBuildManagedSampleAndSelectedPermanentChecksMustPass: true,
+    declaredPrimaryPositiveInEveryCompletedPair: true, declaredPrimaryMedianLessTimeAtLeastPercent: 5,
+    noStructuralAllocationSavingClaimWithoutSeparateEvidence: true,
+    allEmptyMissControlAllocationAndAdverseResultsMustBePublished: true,
+    anyMissOrControlMedianRegressionAtLeast5PercentRequiresExplicitTradeoffQualification: true,
+    productionFrequencyAndApplicationSpeedupNotEstablished: true,
+    noGainOrRejectedGetsTrackingIssueNotArtificialOptimizationPr: true,
+    forkOnlyDraftAndImmediateBrowserOpenAfterCreation: true,
+    finalProgressOnlyAfterImmutableAndFourFileReceiptRemoteVerification: true,
+  },
+};
+write(path.join(run, 'acceptance-plan.json'), plan);
+const context = { ...investigation, actualSelectedSourcePairs: investigation.actualAllSelectedPairs,
+  actualPreexistingQuarantineExcludedFromPlannedPassingCount: investigation.actualPreexistingQuarantineExcludedFromPassingCount };
+write(path.join(run, 'context.json'), context);
+fs.mkdirSync(path.join(run, 'context'));
+write(path.join(run, 'context', 'verified-source-and-contract-selection.json'), {
+  candidate: 'F040', actualInvestigationSha256: hash(fs.readFileSync(path.join(run, 'investigation.json'))),
+  actualAcceptancePlanSha256: hash(fs.readFileSync(path.join(run, 'acceptance-plan.json'))),
+  actualSelectedPairs: 18, actualSelectedBaselineMatches: 18,
+  actualNoF039ContainsSourceOrTestsInherited: true,
+});
+const derivations = [];
+for (const name of ['F039-validate.ps1', 'F039-native.ps1', 'F039-measure-pair.ps1', 'F039-readiness.ps1', 'F039-prepare.mjs']) {
+  const source = path.join(session, name);
+  let text = fs.readFileSync(source, 'utf8').replaceAll('F039', 'F040').replaceAll('f039', 'f040');
+  if (name.endsWith('prepare.mjs')) {
+    text = text.replaceAll('HarnessBuild-original-2', 'HarnessBuild-original-1')
+      .replaceAll('actualPassed, 74', 'actualPassed, 73')
+      .replaceAll('autoperf/F040-tempdata-contains-lookup', 'autoperf/F040-tempdata-remove-lookup')
+      .replace("const oldStatement = 'return ContainsKey(item.Key) && Equals(Peek(item.Key), item.Value);';",
+        "const oldStatement = 'if (ContainsKey(item.Key) && Equals(Peek(item.Key), item.Value))';")
+      .replace("const newStatement = 'return Data.TryGetValue(item.Key, out var value) && Equals(value, item.Value);';",
+        "const newStatement = 'if (Data.TryGetValue(item.Key, out var value) && Equals(value, item.Value))';");
+    assert.match(text, /const oldStatement = 'if \(ContainsKey/);
+    assert.match(text, /const newStatement = 'if \(Data\.TryGetValue/);
+    assert.doesNotMatch(text, /actualPassed, 74|HarnessBuild-original-2|tempdata-contains-lookup/);
+  }
+  const destination = path.join(session, name.replace('F039', 'F040'));
+  fs.writeFileSync(destination, text, { flag: 'wx' });
+  derivations.push({ source, sourceSha256: hash(fs.readFileSync(source)), destination, destinationSha256: hash(Buffer.from(text)) });
+}
+const harness = path.join(run, 'harness');
+fs.mkdirSync(harness, { recursive: true });
+assert.equal(fs.existsSync(path.join(harness, 'bin')), false);
+assert.equal(fs.existsSync(path.join(harness, 'obj')), false);
+for (const name of ['AutoPerf.Benchmarks.csproj', 'Program.cs', 'Evidence.cs', 'SettingsPreservingEmitToolchain.cs', 'TempDataScenario.cs']) {
+  const source = path.join(session, 'autoperf-runs', 'F039', 'harness-v2', name);
+  const text = fs.readFileSync(source, 'utf8').replaceAll('F039', 'F040').replaceAll('f039', 'f040')
+    .replaceAll('TempDataContainsBenchmarks', 'TempDataRemoveBenchmarks')
+    .replace('Prepared loaded real TempData collection Contains;',
+      'Prepared loaded real TempData RemoveAndRestore round trip, including same-key setter restoration for every nonempty profile;');
+  const destination = path.join(harness, name);
+  fs.writeFileSync(destination, text, { flag: 'wx' });
+  derivations.push({ source, sourceSha256: hash(fs.readFileSync(source)), destination, destinationSha256: hash(Buffer.from(text)) });
+}
+assert.equal(fs.readdirSync(harness).length, 7);
+write(path.join(run, 'context', 'driver-and-support-template-derivations.json'), derivations);
+fs.copyFileSync(fileURLToPath(import.meta.url), path.join(run, 'context', 'executed-plan-driver.mjs'), fs.constants.COPYFILE_EXCL);
+console.log(JSON.stringify({ candidate: 'F040', actualPreOwnerEditAcceptanceDefined: true,
+  actualOwnerSha256: ownerHash, actualPreparedProfiles: 40, actualMaximumComparisons: 3,
+  actualSteadyStateRestorationIncludedInTiming: true,
+  actualCorrectedPublicNonSealedBdnFixtureAndDiscoveryReused: true, actualSourceComparisonsStarted: 0 }, null, 2));

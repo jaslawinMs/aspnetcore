@@ -1,0 +1,79 @@
+@page "/autoperf-f040-tempdata"
+@using System.Security.Cryptography
+
+<PageTitle>F040 TempData conditional removal</PageTitle>
+
+<h1>F040 TempData conditional removal</h1>
+<p id="f040-mode">@(Mode ?? "idle")</p>
+<p id="f040-message">@_message</p>
+<p id="f040-removed">@_removed</p>
+<p id="f040-repeat">@_repeat</p>
+<p id="f040-null-present">@_nullPresent</p>
+<p id="f040-sibling">@_sibling</p>
+<p id="f040-count">@_count</p>
+<p id="f040-owner">@_owner</p>
+
+<a id="f040-seed" href="/autoperf-f040-tempdata?mode=seed" data-enhance-nav="false">Seed values</a>
+<a id="f040-mismatch" href="/autoperf-f040-tempdata?mode=mismatch" data-enhance-nav="false">Remove mismatched value</a>
+<a id="f040-peek" href="/autoperf-f040-tempdata?mode=peek" data-enhance-nav="false">Peek next request</a>
+<a id="f040-remove" href="/autoperf-f040-tempdata?mode=remove" data-enhance-nav="false">Remove matching value</a>
+<a id="f040-missing" href="/autoperf-f040-tempdata?mode=missing" data-enhance-nav="false">Remove missing null</a>
+<a id="f040-remove-null" href="/autoperf-f040-tempdata?mode=remove-null" data-enhance-nav="false">Remove present null</a>
+
+@code {
+    private const string Payload = "F040 persisted value";
+    private string _message = "(none)";
+    private bool? _removed;
+    private bool? _repeat;
+    private bool? _nullPresent;
+    private string _sibling = "(none)";
+    private int? _count;
+    private string _owner = "";
+
+    [CascadingParameter] public ITempData? TempData { get; set; }
+    [SupplyParameterFromQuery(Name = "mode")] public string? Mode { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var tempData = TempData ?? throw new InvalidOperationException("The real request TempData cascade is required.");
+        var collection = (ICollection<KeyValuePair<string, object?>>)tempData;
+        _owner = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(ITempData).Assembly.Location)));
+
+        switch (Mode)
+        {
+            case null:
+                return;
+            case "seed":
+                tempData.Clear();
+                tempData["Message"] = Payload;
+                tempData["Null"] = null;
+                tempData["Sibling"] = "neighbor";
+                _message = "seeded";
+                break;
+            case "mismatch":
+                _removed = collection.Remove(new("MESSAGE", "wrong value"));
+                _message = tempData.Peek("Message") as string ?? "(none)";
+                break;
+            case "peek":
+                _message = tempData.Peek("Message") as string ?? "(none)";
+                break;
+            case "remove":
+                _removed = collection.Remove(new("MESSAGE", Payload));
+                _repeat = collection.Remove(new("message", Payload));
+                _message = tempData.Peek("Message") as string ?? "(none)";
+                break;
+            case "missing":
+                _removed = collection.Remove(new("missing", null));
+                break;
+            case "remove-null":
+                _removed = collection.Remove(new("nUlL", null));
+                _repeat = collection.Remove(new("NULL", null));
+                break;
+            default:
+                throw new InvalidOperationException("Unexpected F040 probe mode.");
+        }
+        _nullPresent = tempData.ContainsKey("Null");
+        _sibling = tempData.Peek("Sibling") as string ?? "(none)";
+        _count = tempData.Count;
+    }
+}
