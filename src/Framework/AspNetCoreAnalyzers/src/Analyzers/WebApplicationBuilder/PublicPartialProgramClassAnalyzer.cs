@@ -41,6 +41,6 @@ public sealed class PublicPartialProgramClassAnalyzer : DiagnosticAnalyzer
             && modifiers is { Count: > 1 }
             && modifiers.Any(SyntaxKind.PublicKeyword)
             && modifiers.Any(SyntaxKind.PartialKeyword)
-            && parentNode.DescendantNodes().Count() > 1;
+            && parentNode.DescendantNodes().Skip(1).Any();
     }
 }
