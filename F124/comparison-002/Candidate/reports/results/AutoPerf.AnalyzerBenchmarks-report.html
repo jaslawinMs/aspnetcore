@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.AnalyzerBenchmarks-20261119-145739</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F124  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>        Method</th><th>  Profile</th><th>      Mean</th><th>     Error</th><th>    StdDev</th><th>    Median</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Predicate</td><td>EarlyGuard</td><td>274.41 ns</td><td>308.746 ns</td><td>161.480 ns</td><td>370.67 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>AnalyzeCompilation</td><td>EarlyGuard</td><td>3,819,186.90 ns</td><td>216,167.315 ns</td><td>113,059.686 ns</td><td>3,802,721.43 ns</td><td>-</td><td>-</td><td>-</td><td>104,368 B</td>
+</tr><tr><td>UnchangedGetLocation</td><td>EarlyGuard</td><td>49.93 ns</td><td>19.901 ns</td><td>10.409 ns</td><td>46.31 ns</td><td>-</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Predicate</td><td>LargeProgram</td><td>318.51 ns</td><td>9.000 ns</td><td>4.707 ns</td><td>317.28 ns</td><td>0.0032</td><td>-</td><td>-</td><td>168 B</td>
+</tr><tr><td>AnalyzeCompilation</td><td>LargeProgram</td><td>11,161,656.25 ns</td><td>2,078,800.941 ns</td><td>1,087,253.087 ns</td><td>10,961,237.50 ns</td><td>-</td><td>-</td><td>-</td><td>1,305,742 B</td>
+</tr><tr><td>UnchangedGetLocation</td><td>LargeProgram</td><td>35.98 ns</td><td>5.679 ns</td><td>2.970 ns</td><td>34.80 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Predicate</td><td>LoneDeclaration</td><td>431.56 ns</td><td>41.365 ns</td><td>21.635 ns</td><td>427.71 ns</td><td>0.0042</td><td>-</td><td>-</td><td>168 B</td>
+</tr><tr><td>AnalyzeCompilation</td><td>LoneDeclaration</td><td>1,210,088.50 ns</td><td>53,730.933 ns</td><td>28,102.317 ns</td><td>1,201,946.67 ns</td><td>-</td><td>-</td><td>-</td><td>86,867 B</td>
+</tr><tr><td>UnchangedGetLocation</td><td>LoneDeclaration</td><td>34.73 ns</td><td>3.498 ns</td><td>1.829 ns</td><td>34.86 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>Predicate</td><td>MinimalProgram</td><td>324.15 ns</td><td>10.156 ns</td><td>5.312 ns</td><td>325.66 ns</td><td>0.0032</td><td>-</td><td>-</td><td>168 B</td>
+</tr><tr><td>AnalyzeCompilation</td><td>MinimalProgram</td><td>1,295,136.58 ns</td><td>237,373.370 ns</td><td>124,150.862 ns</td><td>1,245,763.24 ns</td><td>-</td><td>-</td><td>-</td><td>105,259 B</td>
+</tr><tr><td>UnchangedGetLocation</td><td>MinimalProgram</td><td>32.66 ns</td><td>1.685 ns</td><td>0.881 ns</td><td>32.44 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr></tbody></table>
+</body>
+</html>

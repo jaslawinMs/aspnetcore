@@ -1,0 +1,75 @@
+Enabled the .NET Core environment. Execute 'deactivate' to exit.
+dotnet = C:\src\aspnetcore\.dotnet\dotnet.exe
+Test run for C:\src\aspnetcore\artifacts\bin\Microsoft.AspNetCore.App.Analyzers.Test\Release\net12.0\Microsoft.AspNetCore.App.Analyzers.Test.dll (.NETCoreApp,Version=v12.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.3+b1b99bdeb3 (64-bit .NET 12.0.0-alpha.1.26562.105)
+[xUnit.net 00:00:00.23]   Discovering: Microsoft.AspNetCore.App.Analyzers.Test
+[xUnit.net 00:00:00.36]   Discovered:  Microsoft.AspNetCore.App.Analyzers.Test
+[xUnit.net 00:00:00.40]   Starting:    Microsoft.AspNetCore.App.Analyzers.Test
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClassInNestedPattern(parentDefinition: "public class Foo") [7 s]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClassInNestedPattern(parentDefinition: "namespace Foo") [172 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNothingWhenNoDeclarationIsFound [153 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound(declarationStyle: "public partial class Program { \n // This is just "···) [582 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound(declarationStyle: "public partial class Program { }") [242 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound(declarationStyle: "public partial class Program { /* This is just for"···) [177 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound(declarationStyle: "public partial class Program;") [178 ms]
+[xUnit.net 00:00:10.12]       System.InvalidOperationException : Context: Diagnostics of test state
+[xUnit.net 00:00:10.12]       Mismatch between number of diagnostics returned, expected "0" actual "1"
+[xUnit.net 00:00:10.12]       
+[xUnit.net 00:00:10.12]       Diagnostics:
+[xUnit.net 00:00:10.12]       // /0/Test0.cs(1,1): error CS0267: The 'partial' modifier can only appear immediately before 'class', 'record', 'struct', 'interface', 'event', an instance constructor name, or a method or property return type.
+[xUnit.net 00:00:10.12]       DiagnosticResult.CompilerError("CS0267").WithSpan(1, 1, 1, 8),
+[xUnit.net 00:00:10.12]       
+[xUnit.net 00:00:10.12]       
+[xUnit.net 00:00:10.12]       Stack Trace:
+[xUnit.net 00:00:10.13]         /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/DefaultVerifier.cs(79,0): at Microsoft.CodeAnalysis.Testing.DefaultVerifier.Equal[T](T expected, T actual, String message)
+[xUnit.net 00:00:10.13]         /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs(546,0): at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.VerifyDiagnosticResults(IEnumerable`1 actualResults, ImmutableArray`1 analyzers, DiagnosticResult[] expectedResults, IVerifier verifier)
+[xUnit.net 00:00:10.13]         /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs(449,0): at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.VerifyDiagnosticsAsync(EvaluatedProjectState primaryProject, ImmutableArray`1 additionalProjects, DiagnosticResult[] expected, IVerifier verifier, CancellationToken cancellationToken)
+[xUnit.net 00:00:10.13]         /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.CodeFix.Testing/CodeFixTest`1.cs(311,0): at Microsoft.CodeAnalysis.Testing.CodeFixTest`1.RunImplAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:10.13]         /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs(172,0): at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.RunAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:10.13]            at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.RunAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:10.13]         C:\src\aspnetcore\src\Framework\AspNetCoreAnalyzers\test\Verifiers\CSharpCodeFixVerifier.cs(77,0): at Microsoft.AspNetCore.Analyzers.Verifiers.CSharpCodeFixVerifier`2.VerifyCodeFixAsync(String source, DiagnosticResult[] expected, String fixedSource, Nullable`1 expectedIterations, String usageSource, String codeActionEquivalenceKey)
+[xUnit.net 00:00:10.13]         C:\src\aspnetcore\src\Framework\AspNetCoreAnalyzers\test\WebApplicationBuilder\PublicPartialProgramClassTest.cs(292,0): at Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(String declarationStyle)
+[xUnit.net 00:00:10.13]         --- End of stack trace from previous location ---
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitInternalProgramClass [230 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(declarationStyle: "public partial class Program { }") [213 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(declarationStyle: "/* trivia */ public partial class Program { }") [180 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(declarationStyle: "public partial class Program;") [229 ms]
+  Failed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(declarationStyle: "partial public class Program { }") [139 ms]
+  Error Message:
+   System.InvalidOperationException : Context: Diagnostics of test state
+Mismatch between number of diagnostics returned, expected "0" actual "1"
+
+Diagnostics:
+// /0/Test0.cs(1,1): error CS0267: The 'partial' modifier can only appear immediately before 'class', 'record', 'struct', 'interface', 'event', an instance constructor name, or a method or property return type.
+DiagnosticResult.CompilerError("CS0267").WithSpan(1, 1, 1, 8),
+
+
+  Stack Trace:
+     at Microsoft.CodeAnalysis.Testing.DefaultVerifier.Equal[T](T expected, T actual, String message) in /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/DefaultVerifier.cs:line 79
+   at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.VerifyDiagnosticResults(IEnumerable`1 actualResults, ImmutableArray`1 analyzers, DiagnosticResult[] expectedResults, IVerifier verifier) in /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs:line 546
+   at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.VerifyDiagnosticsAsync(EvaluatedProjectState primaryProject, ImmutableArray`1 additionalProjects, DiagnosticResult[] expected, IVerifier verifier, CancellationToken cancellationToken) in /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs:line 449
+   at Microsoft.CodeAnalysis.Testing.CodeFixTest`1.RunImplAsync(CancellationToken cancellationToken) in /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.CodeFix.Testing/CodeFixTest`1.cs:line 311
+   at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.RunAsync(CancellationToken cancellationToken) in /_/src/Microsoft.CodeAnalysis.Testing/Microsoft.CodeAnalysis.Analyzer.Testing/AnalyzerTest`1.cs:line 172
+   at Microsoft.CodeAnalysis.Testing.AnalyzerTest`1.RunAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Analyzers.Verifiers.CSharpCodeFixVerifier`2.VerifyCodeFixAsync(String source, DiagnosticResult[] expected, String fixedSource, Nullable`1 expectedIterations, String usageSource, String codeActionEquivalenceKey) in C:\src\aspnetcore\src\Framework\AspNetCoreAnalyzers\test\Verifiers\CSharpCodeFixVerifier.cs:line 77
+   at Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ProgramDeclarationInSeparateFile(String declarationStyle) in C:\src\aspnetcore\src\Framework\AspNetCoreAnalyzers\test\WebApplicationBuilder\PublicPartialProgramClassTest.cs:line 292
+--- End of stack trace from previous location ---
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitInternalProgramType(type: "interface") [153 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitInternalProgramType(type: "struct") [185 ms]
+[xUnit.net 00:00:12.04]   Finished:    Microsoft.AspNetCore.App.Analyzers.Test
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClass_WithProperty(contents: "public int Number { get; set; }") [180 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClass_WithProperty(contents: "private int _foo = 2;") [162 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound_WithOneOtherNode(declarationStyle: "public partial class Program;") [196 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound_WithOneOtherNode(declarationStyle: "public partial class Program { }") [230 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClass_WithAttribute [169 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.RemovesDeclarationIfItIsFound_WithLeadingTrivia [168 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicProgramClass [172 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotGeneratesSource_IfProgramDeclaresExplicitInternalAccess [133 ms]
+  Passed Microsoft.AspNetCore.Analyzers.PublicPartialProgramClassTest.DoesNotFix_ExplicitPublicPartialProgramClass [140 ms]
+Results File: C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F124\validation\original-preservation-tests-001\test-results\results.trx
+
+Total tests: 23
+     Passed: 22
+     Failed: 1
+ Total time: 12.8522 Seconds

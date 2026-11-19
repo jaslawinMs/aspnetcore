@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26562.105</RuntimeFrameworkVersion>
+    <RollForward>Disable</RollForward>
+    <LangVersion>13.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <Optimize>true</Optimize>
+    <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
+    <BuildProjectReferences>false</BuildProjectReferences>
+    <BuildInParallel>false</BuildInParallel>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <AspNetCoreRoot Condition="'$(AspNetCoreRoot)' == ''">C:\src\aspnetcore</AspNetCoreRoot>
+    <TestBin>$(AspNetCoreRoot)\artifacts\bin\Microsoft.AspNetCore.App.Analyzers.Test\Release\net12.0</TestBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.11.0-1.26420.103" />
+    <ProjectReference Include="$(AspNetCoreRoot)\src\Framework\AspNetCoreAnalyzers\src\Analyzers\Microsoft.AspNetCore.App.Analyzers.csproj" />
+    <None Update="profile-definitions.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(TestBin)\Microsoft.AspNetCore*.dll;$(TestBin)\Microsoft.Extensions*.dll"
+      Exclude="$(TestBin)\*Test*.dll;$(TestBin)\*Analyzers*.dll;$(TestBin)\*CodeFixes*.dll;$(TestBin)\*SourceGenerators*.dll"
+      Link="reference-metadata\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="ValidateSourceInputs" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(TestBin)\Microsoft.AspNetCore.dll')" Text="First build the actual source-built managed analyzer test graph; no installed ASP.NET Core metadata substitution." />
+  </Target>
+</Project>
