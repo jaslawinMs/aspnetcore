@@ -281,4 +281,45 @@ internal {{type}} Program
 
         await VerifyCS.VerifyCodeFixAsync(source, source);
     }
+
+    [Theory]
+    [InlineData("public partial class Program { }")]
+    [InlineData("public partial class Program;")]
+    [InlineData("public partial class @Program { }")]
+    [InlineData("/* trivia */ public partial class Program { }")]
+    public async Task DoesNotFix_ProgramDeclarationInSeparateFile(string declarationStyle)
+    {
+        await VerifyCS.VerifyCodeFixAsync(
+            declarationStyle,
+            DiagnosticResult.EmptyDiagnosticResults,
+            declarationStyle,
+            usageSource: "System.Console.WriteLine(\"Hello\");");
+    }
+
+    [Theory]
+    [InlineData("public partial class Program { }")]
+    [InlineData("public partial class Program;")]
+    public async Task RemovesDeclarationIfItIsFound_WithOneOtherNode(string declarationStyle)
+    {
+        var source = $$"""
+class Companion { }
+
+{|#0:{{declarationStyle}}|}
+""";
+
+        var diagnostic = new DiagnosticResult(DiagnosticDescriptors.PublicPartialProgramClassNotRequired)
+            .WithLocation(0);
+
+        var fixedSource = """
+class Companion { }
+
+
+""";
+
+        await VerifyCS.VerifyCodeFixAsync(
+            source,
+            [diagnostic],
+            fixedSource,
+            usageSource: "System.Console.WriteLine(\"Hello\");");
+    }
 }
