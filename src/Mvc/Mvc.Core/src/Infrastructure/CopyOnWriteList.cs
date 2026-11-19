@@ -69,6 +69,16 @@ internal sealed class CopyOnWriteList<T> : IList<T>
 
     public void CopyTo(T[] array, int arrayIndex)
     {
+        if (_copy is not null)
+        {
+            foreach (var item in _copy)
+            {
+                array[arrayIndex++] = item;
+            }
+
+            return;
+        }
+
         foreach (var item in Readable)
         {
             array[arrayIndex++] = item;
