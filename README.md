@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 128/358 finalized**: 75 drafts, 24 no-gain, 23 rejected and 6 duplicates;
-230 findings remain unfinished.
+**Progress: 129/358 finalized**: 76 drafts, 24 no-gain, 23 rejected and 6 duplicates;
+229 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F124 | [Draft jaslawinMs/aspnetcore#169](https://github.com/jaslawinMs/aspnetcore/pull/169), [tracking jaslawinMs/aspnetcore#168](https://github.com/jaslawinMs/aspnetcore/issues/168); private-predicate timing trade-off only: 83.73% median less time but +56 B/op (112 -> 168), no demonstrated ordinary full-driver gain (median 1.79% slower), lone predicate 13.83% slower. Highly unstable unchanged EarlyGuard narrowly avoids the sealed rejection threshold; no neutrality claimed. Three closed pairs/576 samples, 63 passing XML executions and actual eight-input rebuild; not analyzer/build/IDE speedup or merge-ready | [Bounded Program predicate traversal](F124/README.md), [verified publication](F124/publication.json) |
 | F123 | No-gain; [tracking jaslawinMs/aspnetcore#167](https://github.com/jaslawinMs/aspnetcore/issues/167). Copied-five IndexOf median 53.66% more time; effects -56.51%/-53.66%/+81.23% less time and 0 B/op unchanged. Favorable third pair/shifted Original retained, not a repeatable gain. Three alternating-order comparisons/1,152 samples, 117 accepted XML executions and actual eight-input rebuild; equality/mutation/disposal and real HTTP -1/0/4 preserved. Diagnostic source only, no performance PR | [MVC copied-store IndexOf](F123/README.md), [verified publication](F123/publication.json) |
 | F122 | Rejected concrete-only enumerator pattern; [tracking jaslawinMs/aspnetcore#166](https://github.com/jaslawinMs/aspnetcore/issues/166). Actual IList properties and fourteen-module MVC cohorts establish no non-forwarding concrete caller. All 32 original cases/256 samples retain real interface allocations; 68 passing XML executions and actual eight-input rebuild. Shipping source unchanged, tests-only branch; no performance PR | [MVC concrete enumerator production fit](F122/README.md), [verified publication](F122/publication.json) |
 | F121 | No-gain; [tracking jaslawinMs/aspnetcore#165](https://github.com/jaslawinMs/aspnetcore/issues/165). Copied-five-factory CopyTo is 16.03%/5.06%/18.84% slower; 0 B/op unchanged. Three complete alternating-order comparisons/768 samples, 117 passing XML rows and actual eight-input rebuild; every favorable/adverse/control outcome retained. Diagnostic source only, no performance PR | [MVC copied-store CopyTo](F121/README.md), [verified publication](F121/publication.json) |
