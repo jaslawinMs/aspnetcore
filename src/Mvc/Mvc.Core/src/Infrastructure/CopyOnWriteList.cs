@@ -83,6 +83,21 @@ internal sealed class CopyOnWriteList<T> : IList<T>
     public int IndexOf(T item)
     {
         var i = 0;
+        if (_copy is not null)
+        {
+            foreach (var obj in _copy)
+            {
+                if (object.Equals(obj, item))
+                {
+                    return i;
+                }
+
+                i++;
+            }
+
+            return -1;
+        }
+
         foreach (var obj in Readable)
         {
             if (object.Equals(obj, item))
