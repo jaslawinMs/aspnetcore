@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 127/358 finalized**: 75 drafts, 23 no-gain, 23 rejected and 6 duplicates;
-231 findings remain unfinished.
+**Progress: 128/358 finalized**: 75 drafts, 24 no-gain, 23 rejected and 6 duplicates;
+230 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F123 | No-gain; [tracking jaslawinMs/aspnetcore#167](https://github.com/jaslawinMs/aspnetcore/issues/167). Copied-five IndexOf median 53.66% more time; effects -56.51%/-53.66%/+81.23% less time and 0 B/op unchanged. Favorable third pair/shifted Original retained, not a repeatable gain. Three alternating-order comparisons/1,152 samples, 117 accepted XML executions and actual eight-input rebuild; equality/mutation/disposal and real HTTP -1/0/4 preserved. Diagnostic source only, no performance PR | [MVC copied-store IndexOf](F123/README.md), [verified publication](F123/publication.json) |
 | F122 | Rejected concrete-only enumerator pattern; [tracking jaslawinMs/aspnetcore#166](https://github.com/jaslawinMs/aspnetcore/issues/166). Actual IList properties and fourteen-module MVC cohorts establish no non-forwarding concrete caller. All 32 original cases/256 samples retain real interface allocations; 68 passing XML executions and actual eight-input rebuild. Shipping source unchanged, tests-only branch; no performance PR | [MVC concrete enumerator production fit](F122/README.md), [verified publication](F122/publication.json) |
 | F121 | No-gain; [tracking jaslawinMs/aspnetcore#165](https://github.com/jaslawinMs/aspnetcore/issues/165). Copied-five-factory CopyTo is 16.03%/5.06%/18.84% slower; 0 B/op unchanged. Three complete alternating-order comparisons/768 samples, 117 passing XML rows and actual eight-input rebuild; every favorable/adverse/control outcome retained. Diagnostic source only, no performance PR | [MVC copied-store CopyTo](F121/README.md), [verified publication](F121/publication.json) |
 | F120 | No-gain; [tracking jaslawinMs/aspnetcore#164](https://github.com/jaslawinMs/aspnetcore/issues/164). Copied-five-factory miss54.37%/36.46%slower,0B/op unchanged; all favorable/adverse/control outcomes retained. Three consumed authorizations include one setup-only failure; two complete pairs/512samples,135passing XML rows and exact eight-input rebuild pass; diagnostic source only, no performance PR | [MVC copied-store Contains](F120/README.md) |
