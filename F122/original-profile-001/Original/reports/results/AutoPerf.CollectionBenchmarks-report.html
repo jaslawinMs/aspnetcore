@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.CollectionBenchmarks-20261119-125554</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F122  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>           Method</th><th>     Profile</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>EnumerateGeneric</td><td>CopiedDefault5</td><td>30.544 ns</td><td>2.0710 ns</td><td>1.0832 ns</td><td>0.0009</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>CopiedDefault5</td><td>30.027 ns</td><td>0.7799 ns</td><td>0.4079 ns</td><td>0.0010</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>CopiedDefault5</td><td>12.197 ns</td><td>0.4516 ns</td><td>0.2362 ns</td><td>0.0009</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedDefault5</td><td>10.653 ns</td><td>0.2112 ns</td><td>0.1105 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateGeneric</td><td>UnmodifiedDefault5</td><td>52.233 ns</td><td>5.4133 ns</td><td>2.8312 ns</td><td>0.0005</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>UnmodifiedDefault5</td><td>51.176 ns</td><td>0.7192 ns</td><td>0.3761 ns</td><td>0.0005</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>UnmodifiedDefault5</td><td>14.429 ns</td><td>2.0749 ns</td><td>1.0852 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>UnmodifiedDefault5</td><td>50.532 ns</td><td>5.3907 ns</td><td>2.8194 ns</td><td>0.0005</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>EnumerateGeneric</td><td>CopiedEmpty</td><td>6.491 ns</td><td>0.0569 ns</td><td>0.0297 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>CopiedEmpty</td><td>8.866 ns</td><td>0.2764 ns</td><td>0.1446 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>CopiedEmpty</td><td>4.539 ns</td><td>0.2029 ns</td><td>0.1061 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedEmpty</td><td>6.224 ns</td><td>0.1441 ns</td><td>0.0754 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateGeneric</td><td>UnmodifiedEmpty</td><td>13.190 ns</td><td>0.5649 ns</td><td>0.2954 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>UnmodifiedEmpty</td><td>15.227 ns</td><td>0.4755 ns</td><td>0.2487 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>UnmodifiedEmpty</td><td>7.192 ns</td><td>0.1674 ns</td><td>0.0876 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>UnchangedIndexOf</td><td>UnmodifiedEmpty</td><td>12.790 ns</td><td>0.5484 ns</td><td>0.2868 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateGeneric</td><td>CopiedOne</td><td>14.275 ns</td><td>0.6833 ns</td><td>0.3574 ns</td><td>0.0010</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>CopiedOne</td><td>16.436 ns</td><td>3.1989 ns</td><td>1.6731 ns</td><td>0.0010</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>CopiedOne</td><td>12.411 ns</td><td>0.2891 ns</td><td>0.1512 ns</td><td>0.0010</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedOne</td><td>3.824 ns</td><td>0.1396 ns</td><td>0.0730 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateGeneric</td><td>UnmodifiedOne</td><td>28.205 ns</td><td>1.9054 ns</td><td>0.9966 ns</td><td>0.0009</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>UnmodifiedOne</td><td>29.398 ns</td><td>1.1690 ns</td><td>0.6114 ns</td><td>0.0006</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>UnmodifiedOne</td><td>15.315 ns</td><td>1.8507 ns</td><td>0.9679 ns</td><td>0.0008</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>UnmodifiedOne</td><td>26.081 ns</td><td>1.7578 ns</td><td>0.9193 ns</td><td>0.0008</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>EnumerateGeneric</td><td>CopiedEight</td><td>39.992 ns</td><td>1.7256 ns</td><td>0.9025 ns</td><td>0.0008</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>CopiedEight</td><td>40.694 ns</td><td>1.1108 ns</td><td>0.5810 ns</td><td>0.0009</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>CopiedEight</td><td>12.794 ns</td><td>2.1621 ns</td><td>1.1308 ns</td><td>0.0009</td><td>-</td><td>-</td><td>40 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>CopiedEight</td><td>16.825 ns</td><td>0.3373 ns</td><td>0.1764 ns</td><td>-</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>EnumerateGeneric</td><td>UnmodifiedEight</td><td>71.684 ns</td><td>1.6738 ns</td><td>0.8754 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>EnumerateNonGeneric</td><td>UnmodifiedEight</td><td>69.171 ns</td><td>0.8667 ns</td><td>0.4533 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>RetainGenericEnumerator</td><td>UnmodifiedEight</td><td>14.248 ns</td><td>0.3512 ns</td><td>0.1837 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr><tr><td>UnchangedIndexOf</td><td>UnmodifiedEight</td><td>66.027 ns</td><td>1.5313 ns</td><td>0.8009 ns</td><td>0.0007</td><td>-</td><td>-</td><td>32 B</td>
+</tr></tbody></table>
+</body>
+</html>
