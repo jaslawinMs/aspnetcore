@@ -1,0 +1,108 @@
+{
+  "candidate": "F123",
+  "baseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualCurrentDefault": "f78194260f43c48ae2092675f55757f2a42dd63d",
+  "branch": "autoperf/F123-copy-on-write-indexof",
+  "actualSealedAt": "2026-11-19T21:24:50.340Z",
+  "actualShippingEditsAtSeal": 0,
+  "actualNewPermanentTestFilesAtSeal": 0,
+  "actualNewTestsExecutedAtSeal": 0,
+  "actualBenchmarkRunsAtSeal": 0,
+  "target": "Only IndexOf: specialize enumeration of the private exact List<T>; preserve the original source fallback, object.Equals and explanatory index counter.",
+  "originalFinding": {
+    "card_id": "custom-collection-interface-foreach-enumerator",
+    "file": "src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs",
+    "line_start": 86,
+    "line_end": 96,
+    "severity": "low",
+    "confidence": "high",
+    "classification": "confirmed",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "IndexOf enumerates the backing list through IReadOnlyList<T>.",
+    "explanation": "The interface-typed Readable property forces interface enumeration and can box the List<T> struct enumerator for each IndexOf scan.",
+    "snippet": "foreach (var obj in Readable)",
+    "suppressed": false
+  },
+  "actualNotConcreteEnumeratorPattern": "The existing IList<IValueProviderFactory>.IndexOf is publicly reachable through actual ControllerContext/PageContext properties. This is not the concrete-only GetEnumerator pattern rejected in F122. Do not infer normal framework call frequency.",
+  "actualPriorDiagnosticNotNewComparison": "The independently closed F122 IndexOf control reported 0 B/op for copied-five and 32 B/op for untouched-five. Syntax alone does not establish a boxing cost. These prior observations do not count as a new F123 source comparison or permit retargeting its copied-five primary.",
+  "actualProposedSmallestCandidate": "After var i = 0, add a private-copy non-null branch with foreach over the exact List<T>, the same object.Equals(obj, item), the same index increment and early return. Leave the existing Readable loop/fallback byte-for-byte unchanged. Never replace legacy object.Equals with List<T>.IndexOf/EqualityComparer<T>.Default.",
+  "benchmarkClass": "AutoPerf.CollectionBenchmarks",
+  "benchmarkMethod": "IndexOf",
+  "unchangedControlMethod": "UnchangedContains",
+  "primary": "CopiedDefault5",
+  "unchangedControl": "UnmodifiedDefault5",
+  "profileKeys": [
+    "CopiedDefault5",
+    "UnmodifiedDefault5",
+    "CopiedDefault5HitFirst",
+    "UnmodifiedDefault5HitFirst",
+    "CopiedDefault5HitLast",
+    "UnmodifiedDefault5HitLast",
+    "CopiedEmpty",
+    "UnmodifiedEmpty",
+    "CopiedOne",
+    "UnmodifiedOne",
+    "CopiedEight",
+    "UnmodifiedEight"
+  ],
+  "actualCasesPerSource": 24,
+  "actualRetainedSamplesPerCompleteComparison": 384,
+  "actualTimedBoundary": "One public IList.IndexOf call on an actual HTTP-produced collection. Missing/first/last probes are selected and independently validated before timing. Unchanged Contains consumes the same probe/collection. HTTP, setup, source creation, first write, reflection and validation stay outside timing.",
+  "actualProducer": "Real parameterless routed TestServer MVC controller, both EnableActionInvokers modes, no ValueProviderFactories assignment. Public Add/RemoveAt creates copy; second actual request proves source/request isolation. The action itself also executes the actual public IndexOf and exposes its expected -1/0/4 result in the HTTP response.",
+  "actualCorrectnessRequirements": [
+    "First-match indices, misses, empty/null/duplicate references and source/copy isolation.",
+    "Legacy object.Equals for both reference and value types even when IEquatable<T> deliberately differs.",
+    "Stored-left equality order and short-circuiting; never evaluate later entries or reverse the receiver.",
+    "Already-copied enumerator mutation detection, including return-before-next-MoveNext when equality matched.",
+    "Arbitrary supplied IReadOnlyList is enumerated without Count/indexer assumptions and disposed on match/completion.",
+    "Actual source enumerator disposal on Current/equality exceptions, with exact owning boundary reached.",
+    "Every selected individual XML row executes and passes without a skip; original/candidate checks preserve behavior, not a semantic-bug fix."
+  ],
+  "timingGate": "Median paired primary less-time at least 5%; at least two of three primary comparisons faster and at least two primary effects exceed the unchanged same-profile Contains movement. No unexplained ordinary-source adverse effect. Retain all control/short-circuit/adverse cases; no primary substitution.",
+  "allocationGate": "At least 32 reported primary managed B/op saved in at least two comparisons, distinct from unchanged Contains and ordinary-source controls. Reject allocation-only qualification if ordinary-source median slowdown is at least 5%, slower in two comparisons and worse than its control in two comparisons. Prior copied-primary allocation was already reported 0 B/op, so do not promise any saving.",
+  "maximumTimingAuthorizationsIncludingFailedOrPartial": 3,
+  "comparisonOrders": [
+    [
+      "Original",
+      "Candidate"
+    ],
+    [
+      "Candidate",
+      "Original"
+    ],
+    [
+      "Original",
+      "Candidate"
+    ]
+  ],
+  "actualNoRetuningOrHistoricalReplay": true,
+  "benchmarkDotNet": {
+    "version": "0.13.0",
+    "runtime": "12.0.0-alpha.1.26562.105",
+    "warmups": 3,
+    "retained": 8,
+    "requestedIterationMilliseconds": 100,
+    "unroll": 1,
+    "outlierMode": "DontRemove",
+    "settingsPreservingExecutor": true,
+    "powerPlanChangeRequested": false
+  },
+  "machine": "Shared non-isolated Windows box. Serialize builds and timing, max two MSBuild workers; no priority, affinity, power, firewall, URL ACL or OS setting changes.",
+  "actualPreviousFindingsPermanentlyClosed": [
+    "F120",
+    "F121",
+    "F122"
+  ],
+  "publication": "Fork-only independent baseline37 branch, exact tests/commands and connected immutable evidence. No performance PR without declared primary qualification. Open each justified new draft separately; no PR/browser launch for no-gain/rejection. Advance only F123 after remote verification, preserve the fixed report and continue the standing campaign.",
+  "excludedClaims": [
+    "complete static/dynamic caller census",
+    "normal request/application gain",
+    "representative call frequency",
+    "specific JIT cause",
+    "compiled-page/browser",
+    "AOT/trimming",
+    "packaging",
+    "merge readiness"
+  ]
+}
