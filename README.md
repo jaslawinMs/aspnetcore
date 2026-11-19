@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 126/358 finalized**: 75 drafts, 23 no-gain, 22 rejected and 6 duplicates;
-232 findings remain unfinished.
+**Progress: 127/358 finalized**: 75 drafts, 23 no-gain, 23 rejected and 6 duplicates;
+231 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F122 | Rejected concrete-only enumerator pattern; [tracking jaslawinMs/aspnetcore#166](https://github.com/jaslawinMs/aspnetcore/issues/166). Actual IList properties and fourteen-module MVC cohorts establish no non-forwarding concrete caller. All 32 original cases/256 samples retain real interface allocations; 68 passing XML executions and actual eight-input rebuild. Shipping source unchanged, tests-only branch; no performance PR | [MVC concrete enumerator production fit](F122/README.md), [verified publication](F122/publication.json) |
 | F121 | No-gain; [tracking jaslawinMs/aspnetcore#165](https://github.com/jaslawinMs/aspnetcore/issues/165). Copied-five-factory CopyTo is 16.03%/5.06%/18.84% slower; 0 B/op unchanged. Three complete alternating-order comparisons/768 samples, 117 passing XML rows and actual eight-input rebuild; every favorable/adverse/control outcome retained. Diagnostic source only, no performance PR | [MVC copied-store CopyTo](F121/README.md), [verified publication](F121/publication.json) |
 | F120 | No-gain; [tracking jaslawinMs/aspnetcore#164](https://github.com/jaslawinMs/aspnetcore/issues/164). Copied-five-factory miss54.37%/36.46%slower,0B/op unchanged; all favorable/adverse/control outcomes retained. Three consumed authorizations include one setup-only failure; two complete pairs/512samples,135passing XML rows and exact eight-input rebuild pass; diagnostic source only, no performance PR | [MVC copied-store Contains](F120/README.md) |
 | F047 | [Draft jaslawinMs/aspnetcore#163](https://github.com/jaslawinMs/aspnetcore/pull/163), [tracking jaslawinMs/aspnetcore#162](https://github.com/jaslawinMs/aspnetcore/issues/162); allocation-only trade-off: primary saves 56 B/op in every pair (1616 -> 1560), no demonstrated speedup, primary 2.48%/1.43% slower in later pairs. Unstable first baseline and every adverse/control result retained; 3 closed pairs/384 samples, 314 passing XML rows and independent eight-file rebuild pass; not latency-neutral or merge-ready | [SSR parameter-key allocation trade-off](F047/README.md) |
