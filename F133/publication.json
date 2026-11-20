@@ -1,0 +1,206 @@
+{
+  "findingId": "F133",
+  "disposition": "rejected",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/174",
+  "actualTrackingIssueNumber": 174,
+  "actualTrackingIssueTitle": "AutoPerf F133 (not pursued): custom union-metadata lookup remains unmeasured",
+  "actualTrackingIssueBody": "## Disposition\n\n**Not pursued as a justified optimization; no shipping change, source PR or timing.** Normal MVC metadata retains the PropertyInfo used at this seam, and a forwarding provider decorator still returns DefaultModelMetadata. The helper excludes non-Property and non-Value metadata before its fallback.\n\n**The original card already explicitly says non-default metadata. That custom extension scenario was not exercised or quantitatively refuted.** This rejection closes an unestablished optimization proposal, not measured no-gain, zero reflection, a literal no-op or proof that custom metadata is unreachable.\n\n## Connected artifacts\n\n| Artifact | Evidence |\n|---|---|\n| Guide and original card | [README](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/README.md), [sealed plan](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/plan.json), [seal](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/plan-seal.json) |\n| Actual source and guards | [Strategy](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/images/Original/source/src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs), [runtime-case visitor](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/images/Original/source/src/Mvc/Mvc.Core/src/ModelBinding/Validation/ValidationVisitor.cs) |\n| Runnable C#13 public-validator probe | [Exact project](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/harness/AutoPerf.UnionMetadata.csproj), [Program](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/harness/Program.cs) |\n| Real metadata and validation observations | [Original](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/validation/original-characterize-001/observations.json), [actual default](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/validation/default-characterize-001/observations.json) |\n| Existing correctness coverage | [All68 individual passing XML executions](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/all-existing-tests-audit.json), [exact commands and results](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/validation-commands.md) |\n| Independent fresh-project reconstruction | [Actual rebuild and both untimed roles](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/reconstruction-001/verified-reproduction.json) |\n| Owner provenance | [Original279-file inventory](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/images/Original/manifest.json), [actual-default279-file inventory and differences](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/images/Default/manifest.json) |\n| Decision and audit | [Narrow decision](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/decision.json), [live audit](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/audit-summary.json), [recorded-evidence verifier](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/F133-verify.mjs) |\n| Closed budget and immutable core | [Zero used, three unused authorizations closed](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/diagnostic-budget.json), [194 core files](https://github.com/jaslawinMs/aspnetcore/blob/72a1a47b647dd65ec204faa3bda83f7919ece2c4/F133/capsule-file-hashes.json), commit `72a1a47b647dd65ec204faa3bda83f7919ece2c4` |\n\n## Actual boundary and limits\n\nPublic AddMvcCore/AddDataAnnotations registration and IObjectModelValidator create the actual traversal, union getters and IValidatableObject calls. Seven fixed profiles under normal/decorated providers and two repetitions, over Original/default and two rebuilt consumers, produce112 observations, not112 distinct tests. Seventeen reflected properties yield one observed Value-name candidate. Exact model-state keys/messages, getter counts and cached metadata references agree.\n\nThe fallback-eligibility field is a source predicate over observed real root/property metadata, not instrumented GetProperty calls or a census of every internal visitor object. Other union reflection and synthetic metadata handling remain.\n\n24 selected source/PE/PDB associations and88 runtime assembly records accompany those four runs. Each complete consumer has279 files; the exact-two-input fresh rebuild changes only common harness DLL/PDB versus its corresponding base, preserving277 other files. Original/default are whole different owner/dependency graphs, not a two-file A/B performance isolation.\n\nThree NETSDK1004 preparation failures preceded their actual restores; the initial overbroad selected-source equality assumption and genuine supplemental default ModelMetadata.cs delta remain disclosed. No product fix or missing-test/red-green claim is made. A custom non-default metadata workload, its frequency and any caching gain remain unverified. No HTTP/browser, live metadata delta, trimming/AOT, complete compiler-input or whole-app claim.\n\nNo source branch publication, static cache, API, permanent test, source PR or browser launch. Fixed classified report unchanged. The immutable core predates the additive publication receipt and live campaign-index update.\n\nThe immutable evidence predates the additive [verified publication receipt](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F133/publication.json). All 194 core files remain unchanged. No shipping change or source PR.\n",
+  "actualTrackingIssueState": "closed",
+  "actualTrackingIssueStateReason": "not_planned",
+  "actualIssueTitleBodyAndStateVerified": true,
+  "actualImmutableEvidenceCommit": "72a1a47b647dd65ec204faa3bda83f7919ece2c4",
+  "actualImmutableCoreFiles": 194,
+  "actualEveryRemoteCoreBlobIdentityVerified": true,
+  "actualSourceBranchPublished": false,
+  "actualPerformancePrCreated": false,
+  "actualBrowserLaunchRequested": false,
+  "actualShippingSourceChanged": false,
+  "actualPermanentTestsAdded": false,
+  "actualCustomNonDefaultMetadataPerformanceUnmeasured": true,
+  "actualAudit": {
+    "actualAuditPassed": true,
+    "actualManagedCommands": 16,
+    "actualPublicValidationRows": 112,
+    "actualManyPropertyRows": 16,
+    "actualExistingXmlExecutions": 68,
+    "actualFailedOrSkippedXml": 0,
+    "actualSelectedSourcePePdbAssociations": 24,
+    "actualRuntimeAssemblyRecords": 88,
+    "actualSameCompiledCommonHarnessAcrossOriginalDefault": true,
+    "actualFreshCommonInputs": 2,
+    "actualConsumerFilesPerRole": 279,
+    "actualCorrespondingUnchangedConsumerFilesOnFreshRebuild": 277,
+    "actualNonDefaultModelMetadataProducerExercised": false,
+    "actualPropertyLookupCountsInstrumented": false,
+    "actualSourcePredicateFallbackEligibleMetadata": 0,
+    "actualTimingComparisons": 0,
+    "actualUnusedTimingAuthorizationsClosed": 3,
+    "actualLiveImagesVerified": true,
+    "actualPortableRecordedProvenanceBoundaryOnly": false
+  },
+  "actualReconstruction": {
+    "findingId": "F133",
+    "recordedAt": "2026-11-20T02:58:32.195Z",
+    "actualExactInputs": [
+      {
+        "file": "AutoPerf.UnionMetadata.csproj",
+        "bytes": 1076,
+        "sha256": "B4221E203840CE46CBA39A4EE40D73393F499E4C53F5A3826510BFF955FA7AF1"
+      },
+      {
+        "file": "Program.cs",
+        "bytes": 16699,
+        "sha256": "057874CC22B75C91644595B058FEF99214956510EE47D113258290D2D1147863"
+      }
+    ],
+    "actualGenuinelyFreshProject": true,
+    "actualExplicitReferenceOwnerRoot": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F133\\images\\Original\\bin",
+    "actualAdditionalTiming": 0,
+    "actualBudgetUnchangedSha256": "E32D91EFB983527CF5869292302FCA100EA71B674C869C52D69C064495B29D64",
+    "actualRoles": [
+      {
+        "role": "OriginalRebuilt",
+        "actualCorrespondingUnchangedFiles": 277,
+        "actualChanged": [
+          "AutoPerf.UnionMetadata.dll",
+          "AutoPerf.UnionMetadata.pdb"
+        ],
+        "actualConsumerFiles": 279,
+        "actualRows": 28,
+        "actualSelectedSourceAssociations": 6
+      },
+      {
+        "role": "DefaultRebuilt",
+        "actualCorrespondingUnchangedFiles": 277,
+        "actualChanged": [
+          "AutoPerf.UnionMetadata.dll",
+          "AutoPerf.UnionMetadata.pdb"
+        ],
+        "actualConsumerFiles": 279,
+        "actualRows": 28,
+        "actualSelectedSourceAssociations": 6
+      }
+    ],
+    "boundary": "Fresh exact-two-input common-project rebuild and both untimed consumers, not a reconstruction of every historical owner/compiler input."
+  },
+  "actualDecision": {
+    "findingId": "F133",
+    "disposition": "rejected",
+    "recordedAt": "2026-11-20T03:05:43.686Z",
+    "meaning": "Not pursued as a justified optimization proposal; no quantified refutation of the original explicit custom non-default metadata scenario, and not a measured no-gain.",
+    "actualOriginalCardAlreadySaysNonDefaultMetadata": true,
+    "actualNormalMetadataAlreadyRetainsPropertyInfo": true,
+    "actualHelperHasPropertyKindAndValueNameGuard": true,
+    "actualObservedDefaultAndForwardingDecoratorReturnDefaultModelMetadata": true,
+    "actualSourcePredicateOnlyNotInvocationInstrumentation": true,
+    "actualObservedRootPropertyMetadataNotEveryInternalVisitorObject": true,
+    "actualCustomNonDefaultMetadataProducerExercised": false,
+    "actualCustomMetadataPerformanceBenefitOrNoGainEstablished": false,
+    "actualOtherUnionReflectionRemains": true,
+    "actualGetPropertyInvocationCountInstrumented": false,
+    "actualNoCustomMetadataUnreachabilityClaim": true,
+    "actualSourceStrategyUnchangedOnObservedDefault": true,
+    "actualSupplementalModelMetadataDefaultSourceDeltaRetained": true,
+    "actualAudit": {
+      "actualAuditPassed": true,
+      "actualManagedCommands": 16,
+      "actualPublicValidationRows": 112,
+      "actualManyPropertyRows": 16,
+      "actualExistingXmlExecutions": 68,
+      "actualFailedOrSkippedXml": 0,
+      "actualSelectedSourcePePdbAssociations": 24,
+      "actualRuntimeAssemblyRecords": 88,
+      "actualSameCompiledCommonHarnessAcrossOriginalDefault": true,
+      "actualFreshCommonInputs": 2,
+      "actualConsumerFilesPerRole": 279,
+      "actualCorrespondingUnchangedConsumerFilesOnFreshRebuild": 277,
+      "actualNonDefaultModelMetadataProducerExercised": false,
+      "actualPropertyLookupCountsInstrumented": false,
+      "actualSourcePredicateFallbackEligibleMetadata": 0,
+      "actualTimingComparisons": 0,
+      "actualUnusedTimingAuthorizationsClosed": 3,
+      "actualLiveImagesVerified": true,
+      "actualPortableRecordedProvenanceBoundaryOnly": false
+    },
+    "actualIndependentReconstruction": {
+      "findingId": "F133",
+      "recordedAt": "2026-11-20T02:58:32.195Z",
+      "actualExactInputs": [
+        {
+          "file": "AutoPerf.UnionMetadata.csproj",
+          "bytes": 1076,
+          "sha256": "B4221E203840CE46CBA39A4EE40D73393F499E4C53F5A3826510BFF955FA7AF1"
+        },
+        {
+          "file": "Program.cs",
+          "bytes": 16699,
+          "sha256": "057874CC22B75C91644595B058FEF99214956510EE47D113258290D2D1147863"
+        }
+      ],
+      "actualGenuinelyFreshProject": true,
+      "actualExplicitReferenceOwnerRoot": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F133\\images\\Original\\bin",
+      "actualAdditionalTiming": 0,
+      "actualBudgetUnchangedSha256": "E32D91EFB983527CF5869292302FCA100EA71B674C869C52D69C064495B29D64",
+      "actualRoles": [
+        {
+          "role": "OriginalRebuilt",
+          "actualCorrespondingUnchangedFiles": 277,
+          "actualChanged": [
+            "AutoPerf.UnionMetadata.dll",
+            "AutoPerf.UnionMetadata.pdb"
+          ],
+          "actualConsumerFiles": 279,
+          "actualRows": 28,
+          "actualSelectedSourceAssociations": 6
+        },
+        {
+          "role": "DefaultRebuilt",
+          "actualCorrespondingUnchangedFiles": 277,
+          "actualChanged": [
+            "AutoPerf.UnionMetadata.dll",
+            "AutoPerf.UnionMetadata.pdb"
+          ],
+          "actualConsumerFiles": 279,
+          "actualRows": 28,
+          "actualSelectedSourceAssociations": 6
+        }
+      ],
+      "boundary": "Fresh exact-two-input common-project rebuild and both untimed consumers, not a reconstruction of every historical owner/compiler input."
+    },
+    "actualTimingComparisons": 0,
+    "actualClosedBudgetSha256": "0606101B828FD2243422F4E884C80E98C433D07136235C662C78B618EA955F67",
+    "actualUnusedAuthorizationsPermanentlyClosed": 3,
+    "actualNoFurtherTimingPermitted": true,
+    "actualShippingSourceChanged": false,
+    "actualPrototypeImplemented": false,
+    "actualSourceBranchPublished": false,
+    "actualPerformancePrCreated": false,
+    "actualBrowserLaunchRequested": false,
+    "actualPermanentTestsAdded": false,
+    "actualPublicApiOrProcessWideCacheAdded": false,
+    "preparationDisclosures": [
+      "Initial intake equality assumption stopped before plan seal/branch/runtime work on a real supplemental default ModelMetadata.cs delta; exact failed helper, partial snapshots and correction are preserved.",
+      "Three actual NETSDK1004 missing-assets attempts were each followed by a restore only after observed failure, then successful executions.",
+      "Common compilation002 preceded a pre-execution metadata-array-length guard. Accepted frozen source begins at compilation003; no earlier runtime observation or complete earlier binary/input reconstruction is claimed."
+    ],
+    "limits": "Actual public managed validation and default metadata below HTTP. Explicit custom non-default metadata workload/performance remains unmeasured, not unreachable. No GetProperty invocation counter, all-internal-metadata census, HTTP/browser, live metadata delta, AOT/trimming, complete compiler-input, global caller coverage or whole-app claim."
+  },
+  "actualTimingComparisons": 0,
+  "actualUnusedAuthorizationsPermanentlyClosed": 3,
+  "actualHistoricalCapsuleRewritten": false,
+  "actualAdditionalTimingDuringPublication": 0,
+  "actualSealedCapsuleAuditPassed": true,
+  "actualFixedReportBlob": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "campaignFinalizedAfterVerifiedReceipt": 133,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 225,
+  "campaignDispositionCounts": {
+    "drafted": 77,
+    "no-gain": 25,
+    "rejected": 25,
+    "duplicate": 6
+  },
+  "recordedAt": "2026-11-20T03:08:59.093Z"
+}
