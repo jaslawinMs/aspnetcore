@@ -1,0 +1,24 @@
+[
+  {
+    "id": "F216",
+    "finding": {
+      "card_id": "hashcode-xor-field-combiner",
+      "file": "src/Http/Headers/src/NameValueHeaderValue.cs",
+      "line_start": 116,
+      "line_end": 131,
+      "project": "Microsoft.Net.Http.Headers",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "moderate",
+      "tfm_sensitive": false,
+      "summary": "NameValueHeaderValue combines its order-significant identity fields using XOR only.",
+      "explanation": "GetHashCode XORs the name hash with the value hash, making the combination commutative and permitting equal component hashes to cancel. No in-repository hash-container use of NameValueHeaderValue was established, so the card requires an informational classification.",
+      "snippet": "return nameHashCode ^ StringSegmentComparer.OrdinalIgnoreCase.GetHashCode(_value);",
+      "suppressed": false
+    }
+  }
+]

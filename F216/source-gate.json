@@ -1,0 +1,62 @@
+{
+  "classificationAloneWasNotTheDisposition": true,
+  "subtype": "material-header-hash-table-workload-unestablished",
+  "reviewedDecision": "The XOR pattern is real, including public immediate composite hash consumers, but no material production hash-table use, frequency or representative collision data was established. Immediate default parameter equality uses nested list matching, not a hash lookup. Reject the unsupported performance candidate; do not claim an equality defect, zero runtime work, measured no gain or universal lack of benefit.",
+  "sourceIntelligenceScope": "Exact pinned owner and immediate composite/helper source review; earlier LSP no-reference result was not absence evidence, GitHub semantic404 and unrelated Azure scope prevent a complete resolved repository graph claim.",
+  "priorCorrectnessPreparation": "Accepted and preserved privately: parser/equality/hash invariants and normal private hash-table correctness. Not republished or substituted for a production materiality observation.",
+  "unknownBoundaries": [
+    "Material production or external hash-table consumer and invocation frequency.",
+    "Representative collision distribution and useful performance benefit.",
+    "Any candidate equivalence or measured allocation/throughput change.",
+    "Whole-repository resolved callers, arbitrary external users and universal runtime behavior."
+  ],
+  "sourceAssertions": [
+    {
+      "file": "source/NameValueHeaderValue.cs",
+      "contains": [
+        "return nameHashCode ^ _value.GetHashCode();",
+        "return nameHashCode ^ StringSegmentComparer.OrdinalIgnoreCase.GetHashCode(_value);",
+        "result = result ^ values[i].GetHashCode();"
+      ]
+    },
+    {
+      "file": "source/MediaTypeHeaderValue.cs",
+      "contains": [
+        "HeaderUtilities.AreEqualCollections(_parameters, other._parameters)",
+        "NameValueHeaderValue.GetHashCode(_parameters)"
+      ]
+    },
+    {
+      "file": "source/ContentDispositionHeaderValue.cs",
+      "contains": [
+        "HeaderUtilities.AreEqualCollections(_parameters, other._parameters)",
+        "NameValueHeaderValue.GetHashCode(_parameters)"
+      ]
+    },
+    {
+      "file": "source/HeaderUtilities.cs",
+      "from": "internal static bool AreEqualCollections<T>(ICollection<T>? x, ICollection<T>? y, IEqualityComparer<T>? comparer)",
+      "to": "internal static int GetNextNonEmptyOrWhitespaceIndex(",
+      "contains": [
+        "var alreadyFound = new bool[x.Count];",
+        "foreach (var xItem in x)",
+        "foreach (var yItem in y)",
+        "xItem.Equals(yItem)"
+      ],
+      "absent": [
+        ".GetHashCode("
+      ]
+    }
+  ],
+  "findings": [
+    "F216"
+  ],
+  "outcome": "rejected",
+  "sourceOnlyGate": true,
+  "performanceImprovementClaim": false,
+  "measuredNoGainClaim": false,
+  "zeroRuntimeCostClaim": false,
+  "actualCandidateWritten": false,
+  "actualNewFrameworkTestOrBenchmarkExecutions": 0,
+  "recordedAt": "2026-11-20T18:36:36.248Z"
+}
