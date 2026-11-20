@@ -1,0 +1,50 @@
+commit 52ea66758edf951e2dfd7f103d6868b8d8a0b73c
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon Aug 4 15:50:09 2025 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 4 15:50:09 2025 +0200
+
+    [Blazor] Support persisting component state on enhanced navigation (#62824)
+    
+    * [Blazor] Implement scenario-based persistent state filtering for Blazor
+    * Adds support for ignoring persisted values during prerendering
+    * Adds support for ignoring persisted values during resume
+    * Adds support for receiving value updates during enhanced navigation
+    
+    Fixes #51584, #62393, #62330, #62781
+    
+    * Disable AVX512 vectorization on the test pipeline until we pick up a new SDK
+
+diff --git a/src/Components/Components/src/ComponentSubscriptionKey.cs b/src/Components/Components/src/ComponentSubscriptionKey.cs
+new file mode 100644
+index 0000000000..010510f480
+--- /dev/null
++++ b/src/Components/Components/src/ComponentSubscriptionKey.cs
+@@ -0,0 +1,27 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Diagnostics;
++using Microsoft.AspNetCore.Components.Rendering;
++
++namespace Microsoft.AspNetCore.Components.Infrastructure;
++
++[DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
++internal readonly struct ComponentSubscriptionKey(ComponentState subscriber, string propertyName) : IEquatable<ComponentSubscriptionKey>
++{
++    public ComponentState Subscriber { get; } = subscriber;
++
++    public string PropertyName { get; } = propertyName;
++
++    public bool Equals(ComponentSubscriptionKey other)
++        => Subscriber == other.Subscriber && PropertyName == other.PropertyName;
++
++    public override bool Equals(object? obj)
++        => obj is ComponentSubscriptionKey other && Equals(other);
++
++    public override int GetHashCode()
++        => HashCode.Combine(Subscriber, PropertyName);
++
++    private string GetDebuggerDisplay()
++        => $"{Subscriber.Component.GetType().Name}.{PropertyName}";
++}

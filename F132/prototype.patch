@@ -1,0 +1,117 @@
+diff --git a/src/Components/Components/src/CascadingParameterInfo.cs b/src/Components/Components/src/CascadingParameterInfo.cs
+index 2d8493ff70..820100ce27 100644
+--- a/src/Components/Components/src/CascadingParameterInfo.cs
++++ b/src/Components/Components/src/CascadingParameterInfo.cs
+@@ -23,10 +23,13 @@ public readonly struct CascadingParameterInfo
+     /// </summary>
+     public Type PropertyType { get; }
+ 
++    internal int PropertyNameHashCode { get; }
++
+     internal CascadingParameterInfo(CascadingParameterAttributeBase attribute, string propertyName, Type propertyType)
+     {
+         Attribute = attribute;
+         PropertyName = propertyName;
++        PropertyNameHashCode = propertyName.GetHashCode();
+         PropertyType = propertyType;
+     }
+ }
+diff --git a/src/Components/Components/src/CascadingParameterValueProvider.cs b/src/Components/Components/src/CascadingParameterValueProvider.cs
+index b9251c9ae1..2c21bf0a97 100644
+--- a/src/Components/Components/src/CascadingParameterValueProvider.cs
++++ b/src/Components/Components/src/CascadingParameterValueProvider.cs
+@@ -24,7 +24,7 @@ internal class CascadingParameterValueProvider<TAttribute> : ICascadingValueSupp
+ 
+     public object? GetCurrentValue(object? key, in CascadingParameterInfo parameterInfo)
+     {
+-        var subscriptionKey = new ComponentSubscriptionKey((ComponentState)key!, parameterInfo.PropertyName);
++        var subscriptionKey = new ComponentSubscriptionKey((ComponentState)key!, parameterInfo);
+         if (_subscriptions.TryGetValue(subscriptionKey, out var subscription))
+         {
+             return subscription.GetCurrentValue();
+@@ -34,13 +34,13 @@ internal class CascadingParameterValueProvider<TAttribute> : ICascadingValueSupp
+ 
+     public void Subscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo)
+     {
+-        var key = new ComponentSubscriptionKey(subscriber, parameterInfo.PropertyName);
++        var key = new ComponentSubscriptionKey(subscriber, parameterInfo);
+         _subscriptions[key] = _subscribeFactory(subscriber, (TAttribute)parameterInfo.Attribute, parameterInfo);
+     }
+ 
+     public void Unsubscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo)
+     {
+-        var key = new ComponentSubscriptionKey(subscriber, parameterInfo.PropertyName);
++        var key = new ComponentSubscriptionKey(subscriber, parameterInfo);
+         if (_subscriptions.Remove(key, out var subscription))
+         {
+             subscription.Dispose();
+diff --git a/src/Components/Components/src/ComponentSubscriptionKey.cs b/src/Components/Components/src/ComponentSubscriptionKey.cs
+index 010510f480..bca2f448ae 100644
+--- a/src/Components/Components/src/ComponentSubscriptionKey.cs
++++ b/src/Components/Components/src/ComponentSubscriptionKey.cs
+@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Components.Rendering;
+ namespace Microsoft.AspNetCore.Components.Infrastructure;
+ 
+ [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
+-internal readonly struct ComponentSubscriptionKey(ComponentState subscriber, string propertyName) : IEquatable<ComponentSubscriptionKey>
++internal readonly struct ComponentSubscriptionKey(ComponentState subscriber, in CascadingParameterInfo parameterInfo) : IEquatable<ComponentSubscriptionKey>
+ {
++    private readonly int _propertyNameHashCode = parameterInfo.PropertyNameHashCode;
++
+     public ComponentState Subscriber { get; } = subscriber;
+ 
+-    public string PropertyName { get; } = propertyName;
++    public string PropertyName { get; } = parameterInfo.PropertyName;
+ 
+     public bool Equals(ComponentSubscriptionKey other)
+         => Subscriber == other.Subscriber && PropertyName == other.PropertyName;
+@@ -20,7 +22,7 @@ internal readonly struct ComponentSubscriptionKey(ComponentState subscriber, str
+         => obj is ComponentSubscriptionKey other && Equals(other);
+ 
+     public override int GetHashCode()
+-        => HashCode.Combine(Subscriber, PropertyName);
++        => HashCode.Combine(Subscriber, _propertyNameHashCode);
+ 
+     private string GetDebuggerDisplay()
+         => $"{Subscriber.Component.GetType().Name}.{PropertyName}";
+diff --git a/src/Components/Components/src/PersistentState/PersistentStateValueProvider.cs b/src/Components/Components/src/PersistentState/PersistentStateValueProvider.cs
+index a5e44d5ba0..16cf9bbbe8 100644
+--- a/src/Components/Components/src/PersistentState/PersistentStateValueProvider.cs
++++ b/src/Components/Components/src/PersistentState/PersistentStateValueProvider.cs
+@@ -30,7 +30,7 @@ internal sealed partial class PersistentStateValueProvider(PersistentComponentSt
+     {
+         var componentState = (ComponentState)key!;
+ 
+-        if (_subscriptions.TryGetValue(new(componentState, parameterInfo.PropertyName), out var subscription))
++        if (_subscriptions.TryGetValue(new(componentState, parameterInfo), out var subscription))
+         {
+             return subscription.GetOrComputeLastValue();
+         }
+@@ -49,8 +49,6 @@ internal sealed partial class PersistentStateValueProvider(PersistentComponentSt
+ 
+     private void Subscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo, bool preserveCurrentValue)
+     {
+-        var propertyName = parameterInfo.PropertyName;
+-
+         var componentSubscription = new PersistentValueProviderComponentSubscription(
+             state,
+             subscriber,
+@@ -65,15 +63,15 @@ internal sealed partial class PersistentStateValueProvider(PersistentComponentSt
+             componentSubscription.PreserveCurrentValue();
+         }
+ 
+-        _subscriptions.Add(new ComponentSubscriptionKey(subscriber, propertyName), componentSubscription);
++        _subscriptions.Add(new ComponentSubscriptionKey(subscriber, parameterInfo), componentSubscription);
+     }
+ 
+     public void Unsubscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo)
+     {
+-        if (_subscriptions.TryGetValue(new(subscriber, parameterInfo.PropertyName), out var subscription))
++        if (_subscriptions.TryGetValue(new(subscriber, parameterInfo), out var subscription))
+         {
+             subscription.Dispose();
+-            _subscriptions.Remove(new(subscriber, parameterInfo.PropertyName));
++            _subscriptions.Remove(new(subscriber, parameterInfo));
+         }
+     }
+ }

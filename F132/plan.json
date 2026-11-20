@@ -1,0 +1,99 @@
+{
+  "findingId": "F132",
+  "sealedAt": "2026-11-20T01:53:20.785Z",
+  "originalFinding": {
+    "card_id": "reused-strings-rehashed-in-hot-keys",
+    "file": "src/Components/Components/src/ComponentSubscriptionKey.cs",
+    "line_start": 22,
+    "line_end": 23,
+    "severity": "low",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "high",
+    "tfm_sensitive": false,
+    "summary": "Cascading-value subscription lookups rehash stable component property names.",
+    "explanation": "ComponentSubscriptionKey is used by subscription dictionaries and is reconstructed for get, subscribe, and unsubscribe operations. HashCode.Combine hashes PropertyName on every lookup even though component property-name strings are stable metadata reused across operations. A prehashed/canonical property-name representation could avoid that repeated string hashing, but the benefit is unmeasured.",
+    "snippet": "public override int GetHashCode()\n    => HashCode.Combine(Subscriber, PropertyName);",
+    "suppressed": false
+  },
+  "baselineCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualDefaultCommit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+  "docsCommit": "1f1f858829b6e63555546c1e30e5d7f3b9b57e47",
+  "sourceBranch": "autoperf/F132-evaluate-cached-cascading-name-hashes",
+  "scope": "Research and one throwaway metadata-prehash prototype; not an approved shipping implementation.",
+  "hypothesis": "Compute the ordinal name hash once in existing per-type cascading metadata and carry that int in the subscription key. Prehashing a freshly constructed lookup key alone would not amortize anything.",
+  "prototype": [
+    "Add only an internal cached PropertyNameHashCode to existing CascadingParameterInfo; compute it in its existing internal constructor.",
+    "ComponentSubscriptionKey keeps its existing subscriber/name equality, takes the existing in CascadingParameterInfo instead of a string, and hashes its cached name int.",
+    "Update only the dependent key constructions in CascadingParameterValueProvider and PersistentStateValueProvider. Preserve explanatory locals and branch structure.",
+    "Do not add a separate static cache, public API, IVT, UnsafeAccessor, new provider abstraction or altered lifetime."
+  ],
+  "changedShippingFiles": [
+    "src\\Components\\Components\\src\\ComponentSubscriptionKey.cs",
+    "src\\Components\\Components\\src\\CascadingParameterInfo.cs",
+    "src\\Components\\Components\\src\\CascadingParameterValueProvider.cs",
+    "src\\Components\\Components\\src\\PersistentState\\PersistentStateValueProvider.cs"
+  ],
+  "acceptance": [
+    "Run existing CascadingParameterTest, CascadingParameterStateTest and the three persistent-provider test classes on unchanged original and actual default before prototype edits; parse every individual XML result.",
+    "Use actual public TryAddCascadingValueSupplier registration and public HtmlRenderer: 64 retained child components, real reflection-produced cascading metadata, normal renderer-created subscriptions, changed direct Generation parameters and actual rendered HTML.",
+    "Never invoke a provider GetCurrentValue, subscription callback, framework render method or metadata-change event directly as producer-reachability proof.",
+    "Observe real subscription creation, every producer-owned GetCurrentValue call, retained component parameter values/HTML and actual renderer-driven unsubscribe/disposal; check exact counts, not merely nonzero.",
+    "Run RegisteredShort4, RegisteredLong4 and PlainShort4, each three untimed lifetime repetitions on original/default/candidate; same compiled C#13 harness in every image.",
+    "Use actual captured component/metadata inputs for additional direct key contract checks: equal different string references, ordinal case distinctions, different property/subscriber, default key and null-name default metadata. Distinguish those checks from render-producer proof.",
+    "Measure actual struct sizes, including the metadata, cascading-state and dictionary-key storage trade-offs; no claim that caching is free.",
+    "Preserve existing hash formula exactly within each process and all equality/disposal behavior. Existing focused tests also run on candidate and restored original if rejected.",
+    "Freeze source-built owners, complete consumer inventories, actual PE/PDB/source associations, common harness identity and protected files before timing. Only actual Components owner DLL/PDB may differ between original/candidate consumers.",
+    "Independently rebuild the exact common project and repeat untimed lifetime checks against the frozen owner images; no historical timing replay."
+  ],
+  "metadataRefresh": "CascadingParameterState already owns the per-type metadata cache and subscribes to HotReloadManager.ClearCache. Retained ComponentState rebuilds parameter bindings/subscriptions on metadata update. The new derived name int is created with each replacement metadata record, not a new independent cache. Existing refresh tests are diagnostic regression coverage, not live-delta proof.",
+  "validationBoundary": {
+    "owner": "Actual CascadingParameterValueProvider/ComponentSubscriptionKey and persistent-provider keys in Microsoft.AspNetCore.Components.",
+    "producer": "Public DI registration plus real HtmlRenderer component construction, reflected custom attributes and changed parent-to-child direct parameters.",
+    "observable": "Assigned cascading values, exact rendered HTML, exact get/subscribe/dispose counts and unchanged key equality/hash invariants.",
+    "shippingFollowupIfQualified": "Before retaining a shipping change, satisfy applicable sample/browser/permanent-test and architecture requirements and live-delta metadata validation. No performance qualification alone grants shipping readiness.",
+    "exclusions": "No browser/native DOM, Server/WASM/Auto, real Session/TempData I/O, persistence navigation, AOT/trimming, complete compiler-input provenance or whole-application performance claim."
+  },
+  "benchmark": {
+    "primary": "RegisteredShort4: four 10/11-character property names, 64 retained components, one changed direct generation per parent tick.",
+    "profiles": [
+      "RegisteredShort4",
+      "RegisteredLong4",
+      "PlainShort4"
+    ],
+    "unchangedMatchedControl": "PlainShort4: same public rendering/update shape and four ordinary CascadingParameter values through CascadingValueSource, without ComponentSubscriptionKey.",
+    "primaryOperation": "One synchronous parent tick delivering four cascading values to each of 64 retained children and completing their renders.",
+    "warmupBatches": 3,
+    "retainedBatches": 8,
+    "parentTicksPerBatch": 256,
+    "maximumAuthorizations": 3,
+    "beforeAfterRoleOrders": [
+      [
+        "Original",
+        "Candidate"
+      ],
+      [
+        "Candidate",
+        "Original"
+      ],
+      [
+        "Original",
+        "Candidate"
+      ]
+    ],
+    "failedOrPartialComparisonConsumesAuthorization": true,
+    "outliersRemoved": false,
+    "timing": "Stopwatch.GetTimestamp around the fixed synchronous dispatcher-owned loop; report raw elapsed ticks and per-parent-tick nanoseconds.",
+    "allocations": "GC.GetAllocatedBytesForCurrentThread around that same synchronous loop; report raw bytes and B/parent-tick.",
+    "processOverrides": {
+      "DOTNET_TieredCompilation": "0",
+      "DOTNET_TieredPGO": "0",
+      "DOTNET_ReadyToRun": "0"
+    },
+    "machineSettings": "No affinity, priority, power, firewall or machine-setting changes; shared-box limitations remain.",
+    "qualification": "Primary median less-time >=10%, faster in at least 2 of 3 completed pairs and greater than absolute same-pair matched-control movement in at least 2 pairs. Allocation-only qualification requires >=32 primary B/tick saved in at least 2 pairs with matched control savings at least32 B/tick smaller. No secondary-primary substitution.",
+    "adverseGuard": "No qualification if plain matched-control median slowdown>=10% in at least2 pairs, or equality, lifecycle, actual producer counts, original restoration or provenance checks fail.",
+    "noPostTimingTuning": true,
+    "noHistoricalReplay": true
+  }
+}

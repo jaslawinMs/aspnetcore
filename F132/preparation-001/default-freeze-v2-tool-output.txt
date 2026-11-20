@@ -1,0 +1,478 @@
+Activated harness-build-003; complete streams: C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F132\validation\harness-build-003
+{
+  "label": "harness-build-003",
+  "exitCode": 0,
+  "signal": null,
+  "launchError": null,
+  "startedAt": "2026-11-20T02:03:45.485Z",
+  "completedAt": "2026-11-20T02:03:49.132Z",
+  "protectedGlobalJsonBefore": "C3D6E7C29D94C34B6343D4A2EFE74164929F29BFA26FD84B5E2020A15091CD53",
+  "protectedGlobalJsonAfter": "C3D6E7C29D94C34B6343D4A2EFE74164929F29BFA26FD84B5E2020A15091CD53",
+  "actualCommandSha256": "4131468F4C69C1015FA89C2D69390BB95443170EC9F6BFFF1B97E277FDF0215A",
+  "stdoutSha256": "8FE0352044178B484431D817AF6DF2294B4985D4F7BC6380E6192D88079524BA",
+  "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+}
+stdout.txt final lines:
+Enabled the .NET Core environment. Execute 'deactivate' to exit.
+dotnet = C:\src\aspnetcore\.dotnet\dotnet.exe
+C:\src\aspnetcore\.dotnet\sdk\12.0.100-alpha.1.26557.102\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(385,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F132-common\AutoPerf.CascadingHashes.csproj]
+  AutoPerf.CascadingHashes -> C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F132-common\bin\Release\net12.0\AutoPerf.CascadingHashes.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.51
+{
+  "role": "Original",
+  "files": 25,
+  "selectedSources": 20,
+  "actualDifferencesFromOriginal": []
+}
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Unexpected selected source change: src\Components\Components\src\RenderTree\Renderer.cs
++ actual - expected
+... Skipped lines
+
+  '// Licensed to the .NET Foundation under one or more agreements.\n' +
+    '// The .NET Foundation licenses this file to you under the MIT license.\n' +
+    '\n' +
+    '#nullable disable warnings\n' +
+    '\n' +
+...
+    '    /// </summary>\n' +
++   '    protected internal virtual RendererInfo RendererInfo { '... 53213 more characters
+-   '    protected internal virtual RendererInfo RendererInfo { '... 52748 more characters
+
+    at file:///C:/Users/jaslawin/.copilot/session-state/a24edcfd-1bb9-4160-afce-6ba54b1b7f00/files/F132-freeze.mjs:76:16
+    at Array.map (<anonymous>)
+    at file:///C:/Users/jaslawin/.copilot/session-state/a24edcfd-1bb9-4160-afce-6ba54b1b7f00/files/F132-freeze.mjs:66:26
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '// Licensed to the .NET Foundation under one or more agreements.\n' +
+    '// The .NET Foundation licenses this file to you under the MIT license.\n' +
+    '\n' +
+    '#nullable disable warnings\n' +
+    '\n' +
+    'using System.Diagnostics;\n' +
+    'using System.Diagnostics.CodeAnalysis;\n' +
+    'using System.Linq;\n' +
+    'using Microsoft.AspNetCore.Components.HotReload;\n' +
+    'using Microsoft.AspNetCore.Components.Infrastructure;\n' +
+    'using Microsoft.AspNetCore.Components.Reflection;\n' +
+    'using Microsoft.AspNetCore.Components.Rendering;\n' +
+    'using Microsoft.AspNetCore.Components.Sections;\n' +
+    'using Microsoft.Extensions.DependencyInjection;\n' +
+    'using Microsoft.Extensions.Logging;\n' +
+    'using static Microsoft.AspNetCore.Internal.LinkerFlags;\n' +
+    '\n' +
+    'namespace Microsoft.AspNetCore.Components.RenderTree;\n' +
+    '\n' +
+    'using CategoryLink = Tuple<ActivityContext, KeyValuePair<string, object?>?>;\n' +
+    '\n' +
+    '/// <summary>\n' +
+    '/// Types in the Microsoft.AspNetCore.Components.RenderTree are not recommended for use outside\n' +
+    '/// of the Blazor framework. These types will change in a future release.\n' +
+    '/// </summary>\n' +
+    '//\n' +
+    '// Provides mechanisms for rendering hierarchies of <see cref="IComponent"/> instances,\n' +
+    '// dispatching events to them, and notifying when the user interface is being updated.\n' +
+    'public abstract partial class Renderer : IDisposable, IAsyncDisposable\n' +
+    '{\n' +
+    '    internal static readonly Task CanceledRenderTask = Task.FromCanceled(new CancellationToken(canceled: true));\n' +
+    '\n' +
+    '    private readonly object _lockObject = new();\n' +
+    '    private readonly IServiceProvider _serviceProvider;\n' +
+    '    private readonly Dictionary<int, ComponentState> _componentStateById = new Dictionary<int, ComponentState>();\n' +
+    '    private readonly Dictionary<IComponent, ComponentState> _componentStateByComponent = new Dictionary<IComponent, ComponentState>();\n' +
+    '    private readonly RenderBatchBuilder _batchBuilder = new RenderBatchBuilder();\n' +
+    '    private readonly Dictionary<ulong, (int RenderedByComponentId, EventCallback Callback, string? attributeName)> _eventBindings = new();\n' +
+    '    private readonly Dictionary<ulong, ulong> _eventHandlerIdReplacements = new Dictionary<ulong, ulong>();\n' +
+    '    private readonly ILogger _logger;\n' +
+    '    private readonly ILoggerFactory _loggerFactory;\n' +
+    '    private SectionRegistry? _sectionRegistry;\n' +
+    '    private readonly ComponentFactory _componentFactory;\n' +
+    '    private readonly ComponentsMetrics? _componentsMetrics;\n' +
+    '    private readonly ComponentsActivitySource? _componentsActivitySource;\n' +
+    '    private readonly object _activityLinksStore = new Dictionary<string, CategoryLink>(StringComparer.OrdinalIgnoreCase);\n' +
+    '    internal object ActivityLinksStore => _activityLinksStore;\n' +
+    '\n' +
+    '    private Dictionary<int, ParameterView>? _rootComponentsLatestParameters;\n' +
+    '    private Task? _ongoingQuiescenceTask;\n' +
+    '\n' +
+    '    private int _nextComponentId;\n' +
+    '    private bool _isBatchInProgress;\n' +
+    '    private ulong _lastEventHandlerId;\n' +
+    '    private List<Task>? _pendingTasks;\n' +
+    '    private Task? _disposeTask;\n' +
+    '    private bool _rendererIsDisposed;\n' +
+    '\n' +
+    '    private bool _hotReloadInitialized;\n' +
+    '    private HotReloadRenderHandler? _hotReloadRenderHandler;\n' +
+    '    private HashSet<int>? _hotReloadRenderedComponentIds;\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Allows the caller to handle exceptions from the SynchronizationContext when one is available.\n' +
+    '    /// </summary>\n' +
+    '    public event UnhandledExceptionEventHandler UnhandledSynchronizationException\n' +
+    '    {\n' +
+    '        add\n' +
+    '        {\n' +
+    '            Dispatcher.UnhandledException += value;\n' +
+    '        }\n' +
+    '        remove\n' +
+    '        {\n' +
+    '            Dispatcher.UnhandledException -= value;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Constructs an instance of <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> to be used when initializing components.</param>\n' +
+    '    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>\n' +
+    '    public Renderer(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)\n' +
+    '        : this(serviceProvider, loggerFactory, GetComponentActivatorOrDefault(serviceProvider))\n' +
+    '    {\n' +
+    '        // This overload is provided for back-compatibility\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Constructs an instance of <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> to be used when initializing components.</param>\n' +
+    '    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>\n' +
+    '    /// <param name="componentActivator">The <see cref="IComponentActivator"/>.</param>\n' +
+    '    public Renderer(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IComponentActivator componentActivator)\n' +
+    '    {\n' +
+    '        ArgumentNullException.ThrowIfNull(serviceProvider);\n' +
+    '        ArgumentNullException.ThrowIfNull(loggerFactory);\n' +
+    '        ArgumentNullException.ThrowIfNull(componentActivator);\n' +
+    '\n' +
+    '        _serviceProvider = serviceProvider;\n' +
+    '        // Would normally use ILogger<T> here to get the benefit of the string name being cached but this is a public ctor that\n' +
+    '        // has always taken ILoggerFactory so to avoid the per-instance string allocation of the logger name we just pass the\n' +
+    '        // logger name in here as a string literal.\n' +
+    '        _logger = loggerFactory.CreateLogger("Microsoft.AspNetCore.Components.RenderTree.Renderer");\n' +
+    '        _loggerFactory = loggerFactory;\n' +
+    '        _componentFactory = new ComponentFactory(componentActivator, GetComponentPropertyActivatorOrDefault(serviceProvider), this);\n' +
+    '        if (ComponentsMetrics.IsSupported)\n' +
+    '        {\n' +
+    '            _componentsMetrics = serviceProvider.GetService<ComponentsMetrics>();\n' +
+    '        }\n' +
+    '        if (ComponentsActivitySource.IsSupported)\n' +
+    '        {\n' +
+    '            _componentsActivitySource = serviceProvider.GetService<ComponentsActivitySource>();\n' +
+    '            _componentsActivitySource?.Init(new ComponentsActivityLinkStore(this));\n' +
+    '        }\n' +
+    '\n' +
+    '        ServiceProviderCascadingValueSuppliers = serviceProvider.GetService<ICascadingValueSupplier>() is null\n' +
+    '            ? Array.Empty<ICascadingValueSupplier>()\n' +
+    '            : serviceProvider.GetServices<ICascadingValueSupplier>().ToArray();\n' +
+    '    }\n' +
+    '\n' +
+    '    internal ComponentsMetrics? ComponentMetrics => _componentsMetrics;\n' +
+    '    internal ComponentsActivitySource? ComponentActivitySource => _componentsActivitySource;\n' +
+    '\n' +
+    '    internal SectionRegistry SectionRegistry => _sectionRegistry ??= new SectionRegistry(_loggerFactory);\n' +
+    '\n' +
+    '    internal ICascadingValueSupplier[] ServiceProviderCascadingValueSuppliers { get; }\n' +
+    '\n' +
+    '    internal HotReloadManager? HotReloadManager { get; set; } = HotReloadManager.IsSupported ? HotReloadManager.Default : null;\n' +
+    '\n' +
+    '    private static IComponentActivator GetComponentActivatorOrDefault(IServiceProvider serviceProvider)\n' +
+    '    {\n' +
+    '        return serviceProvider.GetService<IComponentActivator>()\n' +
+    '            ?? new DefaultComponentActivator(serviceProvider);\n' +
+    '    }\n' +
+    '\n' +
+    '    private static IComponentPropertyActivator GetComponentPropertyActivatorOrDefault(IServiceProvider serviceProvider)\n' +
+    '    {\n' +
+    '        return serviceProvider.GetService<IComponentPropertyActivator>()\n' +
+    '            ?? new DefaultComponentPropertyActivator();\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="Components.Dispatcher" /> associated with this <see cref="Renderer" />.\n' +
+    '    /// </summary>\n' +
+    '    public abstract Dispatcher Dispatcher { get; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets or sets the <see cref="Components.ElementReferenceContext"/> associated with this <see cref="Renderer"/>,\n' +
+    '    /// if it exists.\n' +
+    '    /// </summary>\n' +
+    '    protected internal ElementReferenceContext? ElementReferenceContext { get; protected set; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets a value that determines if the <see cref="Renderer"/> is triggering a render in response to a (metadata update) hot-reload change.\n' +
+    '    /// </summary>\n' +
+    '    internal bool IsRenderingOnMetadataUpdate { get; private set; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Returns <see langword="true"/> the first time the specified component requests a render during the current\n' +
+    '    /// metadata-update (hot-reload) pass, and <see langword="false"/> on every subsequent call within the same\n' +
+    '    /// pass. This allows <see cref="ComponentBase.StateHasChanged"/> to bypass <c>ShouldRender()</c> exactly once\n' +
+    '    /// per component so every component refreshes its UI while still letting <c>ShouldRender() == false</c>\n' +
+    '    /// break any synchronous re-render cycles that would otherwise run unboundedly.\n' +
+    '    /// </summary>\n' +
+    '    internal bool IsFirstHotReloadRender(int componentId)\n' +
+    '    {\n' +
+    '        _hotReloadRenderedComponentIds ??= new HashSet<int>();\n' +
+    '        return _hotReloadRenderedComponentIds.Add(componentId);\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets whether the renderer has been disposed.\n' +
+    '    /// </summary>\n' +
+    '    internal bool Disposed => _rendererIsDisposed;\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="ComponentState"/> associated with the specified component.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="componentId">The component ID</param>\n' +
+    '    /// <returns>The corresponding <see cref="ComponentState"/>.</returns>\n' +
+    '    protected ComponentState GetComponentState(int componentId)\n' +
+    '        => GetRequiredComponentState(componentId);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="IComponentRenderMode"/> for a given component if available.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="component">The component type</param>\n' +
+    '    /// <returns></returns>\n' +
+    '    protected internal virtual IComponentRenderMode? GetComponentRenderMode(IComponent component)\n' +
+    '        => null;\n' +
+    '\n' +
+    '    internal IComponentRenderMode? GetComponentRenderMode(int componentId)\n' +
+    '        => GetComponentRenderMode(GetRequiredComponentState(componentId).Component);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Resolves the component state for a given <see cref="IComponent"/> instance.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="component">The <see cref="IComponent"/> instance</param>\n' +
+    '    /// <returns></returns>\n' +
+    '    protected internal ComponentState GetComponentState(IComponent component)\n' +
+    '        => _componentStateByComponent.GetValueOrDefault(component);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="RendererInfo"/> associated with this <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    protected internal virtual RendererInfo RendererInfo { '... 53213 more characters,
+  expected: '// Licensed to the .NET Foundation under one or more agreements.\n' +
+    '// The .NET Foundation licenses this file to you under the MIT license.\n' +
+    '\n' +
+    '#nullable disable warnings\n' +
+    '\n' +
+    'using System.Diagnostics;\n' +
+    'using System.Diagnostics.CodeAnalysis;\n' +
+    'using System.Linq;\n' +
+    'using Microsoft.AspNetCore.Components.HotReload;\n' +
+    'using Microsoft.AspNetCore.Components.Infrastructure;\n' +
+    'using Microsoft.AspNetCore.Components.Reflection;\n' +
+    'using Microsoft.AspNetCore.Components.Rendering;\n' +
+    'using Microsoft.AspNetCore.Components.Sections;\n' +
+    'using Microsoft.Extensions.DependencyInjection;\n' +
+    'using Microsoft.Extensions.Logging;\n' +
+    'using static Microsoft.AspNetCore.Internal.LinkerFlags;\n' +
+    '\n' +
+    'namespace Microsoft.AspNetCore.Components.RenderTree;\n' +
+    '\n' +
+    'using CategoryLink = Tuple<ActivityContext, KeyValuePair<string, object?>?>;\n' +
+    '\n' +
+    '/// <summary>\n' +
+    '/// Types in the Microsoft.AspNetCore.Components.RenderTree are not recommended for use outside\n' +
+    '/// of the Blazor framework. These types will change in a future release.\n' +
+    '/// </summary>\n' +
+    '//\n' +
+    '// Provides mechanisms for rendering hierarchies of <see cref="IComponent"/> instances,\n' +
+    '// dispatching events to them, and notifying when the user interface is being updated.\n' +
+    'public abstract partial class Renderer : IDisposable, IAsyncDisposable\n' +
+    '{\n' +
+    '    internal static readonly Task CanceledRenderTask = Task.FromCanceled(new CancellationToken(canceled: true));\n' +
+    '\n' +
+    '    private readonly object _lockObject = new();\n' +
+    '    private readonly IServiceProvider _serviceProvider;\n' +
+    '    private readonly Dictionary<int, ComponentState> _componentStateById = new Dictionary<int, ComponentState>();\n' +
+    '    private readonly Dictionary<IComponent, ComponentState> _componentStateByComponent = new Dictionary<IComponent, ComponentState>();\n' +
+    '    private readonly RenderBatchBuilder _batchBuilder = new RenderBatchBuilder();\n' +
+    '    private readonly Dictionary<ulong, (int RenderedByComponentId, EventCallback Callback, string? attributeName)> _eventBindings = new();\n' +
+    '    private readonly Dictionary<ulong, ulong> _eventHandlerIdReplacements = new Dictionary<ulong, ulong>();\n' +
+    '    private readonly ILogger _logger;\n' +
+    '    private readonly ILoggerFactory _loggerFactory;\n' +
+    '    private SectionRegistry? _sectionRegistry;\n' +
+    '    private readonly ComponentFactory _componentFactory;\n' +
+    '    private readonly ComponentsMetrics? _componentsMetrics;\n' +
+    '    private readonly ComponentsActivitySource? _componentsActivitySource;\n' +
+    '    private readonly object _activityLinksStore = new Dictionary<string, CategoryLink>(StringComparer.OrdinalIgnoreCase);\n' +
+    '    internal object ActivityLinksStore => _activityLinksStore;\n' +
+    '\n' +
+    '    private Dictionary<int, ParameterView>? _rootComponentsLatestParameters;\n' +
+    '    private Task? _ongoingQuiescenceTask;\n' +
+    '\n' +
+    '    private int _nextComponentId;\n' +
+    '    private bool _isBatchInProgress;\n' +
+    '    private ulong _lastEventHandlerId;\n' +
+    '    private List<Task>? _pendingTasks;\n' +
+    '    private Task? _disposeTask;\n' +
+    '    private bool _rendererIsDisposed;\n' +
+    '\n' +
+    '    private bool _hotReloadInitialized;\n' +
+    '    private HotReloadRenderHandler? _hotReloadRenderHandler;\n' +
+    '    private HashSet<int>? _hotReloadRenderedComponentIds;\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Allows the caller to handle exceptions from the SynchronizationContext when one is available.\n' +
+    '    /// </summary>\n' +
+    '    public event UnhandledExceptionEventHandler UnhandledSynchronizationException\n' +
+    '    {\n' +
+    '        add\n' +
+    '        {\n' +
+    '            Dispatcher.UnhandledException += value;\n' +
+    '        }\n' +
+    '        remove\n' +
+    '        {\n' +
+    '            Dispatcher.UnhandledException -= value;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Constructs an instance of <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> to be used when initializing components.</param>\n' +
+    '    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>\n' +
+    '    public Renderer(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)\n' +
+    '        : this(serviceProvider, loggerFactory, GetComponentActivatorOrDefault(serviceProvider))\n' +
+    '    {\n' +
+    '        // This overload is provided for back-compatibility\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Constructs an instance of <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> to be used when initializing components.</param>\n' +
+    '    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>\n' +
+    '    /// <param name="componentActivator">The <see cref="IComponentActivator"/>.</param>\n' +
+    '    public Renderer(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IComponentActivator componentActivator)\n' +
+    '    {\n' +
+    '        ArgumentNullException.ThrowIfNull(serviceProvider);\n' +
+    '        ArgumentNullException.ThrowIfNull(loggerFactory);\n' +
+    '        ArgumentNullException.ThrowIfNull(componentActivator);\n' +
+    '\n' +
+    '        _serviceProvider = serviceProvider;\n' +
+    '        // Would normally use ILogger<T> here to get the benefit of the string name being cached but this is a public ctor that\n' +
+    '        // has always taken ILoggerFactory so to avoid the per-instance string allocation of the logger name we just pass the\n' +
+    '        // logger name in here as a string literal.\n' +
+    '        _logger = loggerFactory.CreateLogger("Microsoft.AspNetCore.Components.RenderTree.Renderer");\n' +
+    '        _loggerFactory = loggerFactory;\n' +
+    '        _componentFactory = new ComponentFactory(componentActivator, GetComponentPropertyActivatorOrDefault(serviceProvider), this);\n' +
+    '        if (ComponentsMetrics.IsSupported)\n' +
+    '        {\n' +
+    '            _componentsMetrics = serviceProvider.GetService<ComponentsMetrics>();\n' +
+    '        }\n' +
+    '        if (ComponentsActivitySource.IsSupported)\n' +
+    '        {\n' +
+    '            _componentsActivitySource = serviceProvider.GetService<ComponentsActivitySource>();\n' +
+    '            _componentsActivitySource?.Init(new ComponentsActivityLinkStore(this));\n' +
+    '        }\n' +
+    '\n' +
+    '        ServiceProviderCascadingValueSuppliers = serviceProvider.GetService<ICascadingValueSupplier>() is null\n' +
+    '            ? Array.Empty<ICascadingValueSupplier>()\n' +
+    '            : serviceProvider.GetServices<ICascadingValueSupplier>().ToArray();\n' +
+    '    }\n' +
+    '\n' +
+    '    internal ComponentsMetrics? ComponentMetrics => _componentsMetrics;\n' +
+    '    internal ComponentsActivitySource? ComponentActivitySource => _componentsActivitySource;\n' +
+    '\n' +
+    '    internal SectionRegistry SectionRegistry => _sectionRegistry ??= new SectionRegistry(_loggerFactory);\n' +
+    '\n' +
+    '    internal ICascadingValueSupplier[] ServiceProviderCascadingValueSuppliers { get; }\n' +
+    '\n' +
+    '    internal HotReloadManager? HotReloadManager { get; set; } = HotReloadManager.IsSupported ? HotReloadManager.Default : null;\n' +
+    '\n' +
+    '    private static IComponentActivator GetComponentActivatorOrDefault(IServiceProvider serviceProvider)\n' +
+    '    {\n' +
+    '        return serviceProvider.GetService<IComponentActivator>()\n' +
+    '            ?? new DefaultComponentActivator(serviceProvider);\n' +
+    '    }\n' +
+    '\n' +
+    '    private static IComponentPropertyActivator GetComponentPropertyActivatorOrDefault(IServiceProvider serviceProvider)\n' +
+    '    {\n' +
+    '        return serviceProvider.GetService<IComponentPropertyActivator>()\n' +
+    '            ?? new DefaultComponentPropertyActivator();\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="Components.Dispatcher" /> associated with this <see cref="Renderer" />.\n' +
+    '    /// </summary>\n' +
+    '    public abstract Dispatcher Dispatcher { get; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets or sets the <see cref="Components.ElementReferenceContext"/> associated with this <see cref="Renderer"/>,\n' +
+    '    /// if it exists.\n' +
+    '    /// </summary>\n' +
+    '    protected internal ElementReferenceContext? ElementReferenceContext { get; protected set; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets a value that determines if the <see cref="Renderer"/> is triggering a render in response to a (metadata update) hot-reload change.\n' +
+    '    /// </summary>\n' +
+    '    internal bool IsRenderingOnMetadataUpdate { get; private set; }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Returns <see langword="true"/> the first time the specified component requests a render during the current\n' +
+    '    /// metadata-update (hot-reload) pass, and <see langword="false"/> on every subsequent call within the same\n' +
+    '    /// pass. This allows <see cref="ComponentBase.StateHasChanged"/> to bypass <c>ShouldRender()</c> exactly once\n' +
+    '    /// per component so every component refreshes its UI while still letting <c>ShouldRender() == false</c>\n' +
+    '    /// break any synchronous re-render cycles that would otherwise run unboundedly.\n' +
+    '    /// </summary>\n' +
+    '    internal bool IsFirstHotReloadRender(int componentId)\n' +
+    '    {\n' +
+    '        _hotReloadRenderedComponentIds ??= new HashSet<int>();\n' +
+    '        return _hotReloadRenderedComponentIds.Add(componentId);\n' +
+    '    }\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets whether the renderer has been disposed.\n' +
+    '    /// </summary>\n' +
+    '    internal bool Disposed => _rendererIsDisposed;\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="ComponentState"/> associated with the specified component.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="componentId">The component ID</param>\n' +
+    '    /// <returns>The corresponding <see cref="ComponentState"/>.</returns>\n' +
+    '    protected ComponentState GetComponentState(int componentId)\n' +
+    '        => GetRequiredComponentState(componentId);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="IComponentRenderMode"/> for a given component if available.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="component">The component type</param>\n' +
+    '    /// <returns></returns>\n' +
+    '    protected internal virtual IComponentRenderMode? GetComponentRenderMode(IComponent component)\n' +
+    '        => null;\n' +
+    '\n' +
+    '    internal IComponentRenderMode? GetComponentRenderMode(int componentId)\n' +
+    '        => GetComponentRenderMode(GetRequiredComponentState(componentId).Component);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Resolves the component state for a given <see cref="IComponent"/> instance.\n' +
+    '    /// </summary>\n' +
+    '    /// <param name="component">The <see cref="IComponent"/> instance</param>\n' +
+    '    /// <returns></returns>\n' +
+    '    protected internal ComponentState GetComponentState(IComponent component)\n' +
+    '        => _componentStateByComponent.GetValueOrDefault(component);\n' +
+    '\n' +
+    '    /// <summary>\n' +
+    '    /// Gets the <see cref="RendererInfo"/> associated with this <see cref="Renderer"/>.\n' +
+    '    /// </summary>\n' +
+    '    protected internal virtual RendererInfo RendererInfo { '... 52748 more characters,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0

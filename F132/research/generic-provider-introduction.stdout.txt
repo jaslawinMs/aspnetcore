@@ -1,0 +1,109 @@
+commit 319e87fd950a99f3baae2aa79db3d4fb68783d85
+Author:     Daria Tiurina <dariatiurina@microsoft.com>
+AuthorDate: Fri Apr 17 23:17:18 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Apr 17 21:17:18 2026 +0000
+
+    SupplyParameterFromTempData support for Blazor (#65306)
+
+diff --git a/src/Components/Components/src/CascadingParameterValueProvider.cs b/src/Components/Components/src/CascadingParameterValueProvider.cs
+new file mode 100644
+index 0000000000..b9251c9ae1
+--- /dev/null
++++ b/src/Components/Components/src/CascadingParameterValueProvider.cs
+@@ -0,0 +1,49 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using Microsoft.AspNetCore.Components.Infrastructure;
++using Microsoft.AspNetCore.Components.Rendering;
++
++namespace Microsoft.AspNetCore.Components;
++
++internal class CascadingParameterValueProvider<TAttribute> : ICascadingValueSupplier
++    where TAttribute : CascadingParameterAttributeBase
++{
++    private readonly Dictionary<ComponentSubscriptionKey, CascadingParameterSubscription> _subscriptions = new();
++    private readonly Func<ComponentState, TAttribute, CascadingParameterInfo, CascadingParameterSubscription> _subscribeFactory;
++
++    public CascadingParameterValueProvider(Func<ComponentState, TAttribute, CascadingParameterInfo, CascadingParameterSubscription> subscribeFactory)
++    {
++        _subscribeFactory = subscribeFactory;
++    }
++
++    public bool IsFixed => false;
++
++    public bool CanSupplyValue(in CascadingParameterInfo parameterInfo)
++        => parameterInfo.Attribute is TAttribute;
++
++    public object? GetCurrentValue(object? key, in CascadingParameterInfo parameterInfo)
++    {
++        var subscriptionKey = new ComponentSubscriptionKey((ComponentState)key!, parameterInfo.PropertyName);
++        if (_subscriptions.TryGetValue(subscriptionKey, out var subscription))
++        {
++            return subscription.GetCurrentValue();
++        }
++        return null;
++    }
++
++    public void Subscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo)
++    {
++        var key = new ComponentSubscriptionKey(subscriber, parameterInfo.PropertyName);
++        _subscriptions[key] = _subscribeFactory(subscriber, (TAttribute)parameterInfo.Attribute, parameterInfo);
++    }
++
++    public void Unsubscribe(ComponentState subscriber, in CascadingParameterInfo parameterInfo)
++    {
++        var key = new ComponentSubscriptionKey(subscriber, parameterInfo.PropertyName);
++        if (_subscriptions.Remove(key, out var subscription))
++        {
++            subscription.Dispose();
++        }
++    }
++}
+diff --git a/src/Components/Components/src/CascadingValueServiceCollectionExtensions.cs b/src/Components/Components/src/CascadingValueServiceCollectionExtensions.cs
+index f4dc1ab0b8..02319245f3 100644
+--- a/src/Components/Components/src/CascadingValueServiceCollectionExtensions.cs
++++ b/src/Components/Components/src/CascadingValueServiceCollectionExtensions.cs
+@@ -2,6 +2,7 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.AspNetCore.Components;
++using Microsoft.AspNetCore.Components.Rendering;
+ using Microsoft.Extensions.DependencyInjection.Extensions;
+ 
+ namespace Microsoft.Extensions.DependencyInjection;
+@@ -52,6 +53,24 @@ public static class CascadingValueServiceCollectionExtensions
+         this IServiceCollection serviceCollection, Func<IServiceProvider, CascadingValueSource<TValue>> sourceFactory)
+         => serviceCollection.AddScoped<ICascadingValueSupplier>(sourceFactory);
+ 
++    /// <summary>
++    /// Adds a cascading value supplier to the <paramref name="serviceCollection"/>. This allows supplying cascading values based on custom attributes, which can be used to support multiple cascading values of the same type with different matching criteria.
++    /// </summary>
++    /// <typeparam name="TAttribute">The attribute type.</typeparam>
++    /// <param name="serviceCollection">The <see cref="IServiceCollection"/>.</param>
++    /// <param name="subscribeFactory">A callback that supplies a <see cref="CascadingParameterSubscription"/> that handles subscriptions for attribute.</param>
++    /// <returns>The <see cref="IServiceCollection"/>.</returns>
++    public static IServiceCollection TryAddCascadingValueSupplier<TAttribute>(
++        this IServiceCollection serviceCollection,
++        Func<IServiceProvider, Func<ComponentState, TAttribute, CascadingParameterInfo, CascadingParameterSubscription>> subscribeFactory)
++        where TAttribute : CascadingParameterAttributeBase
++    {
++        serviceCollection.TryAddEnumerable(
++           ServiceDescriptor.Scoped<ICascadingValueSupplier, CascadingParameterValueProvider<TAttribute>>(
++               sp => new CascadingParameterValueProvider<TAttribute>(subscribeFactory(sp))));
++        return serviceCollection;
++    }
++
+     /// <summary>
+     /// Adds a cascading value to the <paramref name="serviceCollection"/>, if none is already registered
+     /// with the value type. This is equivalent to having a fixed <see cref="CascadingValue{TValue}"/> at
+@@ -91,7 +110,7 @@ public static class CascadingValueServiceCollectionExtensions
+     /// Adds a cascading value to the <paramref name="serviceCollection"/>, if none is already registered
+     /// with the value type. This is equivalent to having a fixed <see cref="CascadingValue{TValue}"/> at
+     /// the root of the component hierarchy.
+-    /// 
++    ///
+     /// With this overload, you can supply a <see cref="CascadingValueSource{TValue}"/> which allows you
+     /// to notify about updates to the value later, causing recipients to re-render. This overload should
+     /// only be used if you plan to update the value dynamically.
