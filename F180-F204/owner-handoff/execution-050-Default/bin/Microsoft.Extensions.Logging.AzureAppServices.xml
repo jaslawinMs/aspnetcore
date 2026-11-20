@@ -1,0 +1,302 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Extensions.Logging.AzureAppServices</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServicesLoggerFactoryExtensions">
+            <summary>
+            Provides extension methods for adding Azure diagnostics logger.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServicesLoggerFactoryExtensions.AddAzureWebAppDiagnostics(Microsoft.Extensions.Logging.ILoggingBuilder)">
+            <summary>
+            Adds an Azure Web Apps diagnostics logger.
+            </summary>
+            <param name="builder">The extension method argument.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServicesLoggerFactoryExtensions.AddAzureWebAppDiagnostics(Microsoft.Extensions.Logging.ILoggingBuilder,System.Action{Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions})">
+            <summary>
+            Adds an Azure Web Apps diagnostics logger.
+            </summary>
+            <param name="builder">The extension method argument.</param>
+            <param name="configureBlobLoggerOptions">An Action to configure the <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext">
+            <summary>
+            Represents the context containing details for formatting the file name for the Azure blob logger.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext.#ctor(System.String,System.String,System.DateTimeOffset)">
+            <summary>
+            Creates a new <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext"/>.
+            </summary>
+            <param name="appName">The app name.</param>
+            <param name="identifier">The file identifier.</param>
+            <param name="timestamp">The timestamp.</param>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext.AppName">
+            <summary>
+            Gets the name of the application.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext.Identifier">
+            <summary>
+            Gets the identifier for the log. This value is set to "<see cref="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions.ApplicationInstanceId"/>_<see cref="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions.BlobName"/>".
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerContext.Timestamp">
+            <summary>
+            Gets the timestamp representing when the log was created.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions">
+            <summary>
+            Specifies options for Azure diagnostics blob logging.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions.BlobName">
+            <summary>
+            Gets or sets the last section of log blob name.
+            </summary>
+            <value>
+            The last section of the log blob name. The default is <c>"applicationLog.txt"</c>.
+            </value>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions.FileNameFormat">
+            <summary>
+            Gets or sets the format of the file name.
+            </summary>
+            <value>
+            The format of the file name. The default is "AppName/Year/Month/Day/Hour/Identifier".
+            </value>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions">
+            <summary>
+            Specifies options for Azure diagnostics file logging.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions.FileSizeLimit">
+            <summary>
+            Gets or sets a strictly positive value representing the maximum log size in bytes, or null for no limit.
+            </summary>
+            <value>
+            The maximum log size in bytes, or <see langword="null" /> for no limit.
+            The default is 10 MB.
+            </value>
+            <remarks>
+            Once the log is full, no more messages are appended.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions.RetainedFileCountLimit">
+            <summary>
+            Gets or sets a strictly positive value representing the maximum retained file count.
+            </summary>
+            <value>
+            The maximum retained file count, or <see langword="null" /> for no limit.
+            The default is 2.
+            </value>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions.FileName">
+            <summary>
+            Gets or sets the prefix of the file name used to store the logging information.
+            The current date, in the format YYYYMMDD, is added after this value.
+            </summary>
+            <value>
+            The prefix of the file name used to store the logging information.
+            The default is <c>diagnostics-</c>.
+            </value>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions">
+            <summary>
+            Specifies options for a logger that batches log messages.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions.FlushPeriod">
+            <summary>
+            Gets or sets the period after which logs will be flushed to the store.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions.BackgroundQueueSize">
+            <summary>
+            Gets or sets the maximum size of the background log message queue, or null for no limit.
+            </summary>
+            <value>
+            The maximum size of the background log message queue, or <see langword="null" /> for no limit. The default is 1000.
+            </value>
+            <remarks>
+            After the maximum queue size is reached, the log event sink starts blocking.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions.BatchSize">
+            <summary>
+            Gets or sets the maximum number of events to include in a single batch.
+            </summary>
+            <value>
+            The maximum number of events to include in a single batch, or <see langword="null" /> for no limit. The default is <see langword="null" />.
+            </value>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions.IsEnabled">
+            <summary>
+            Gets or sets a value indicating whether the logger accepts and queues writes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerOptions.IncludeScopes">
+            <summary>
+            Gets or sets a value indicating whether scopes should be included in the message.
+            </summary>
+            <value>
+            The default is <see langword="false" />.
+            </value>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider">
+            <summary>
+            Represents a provider of <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLogger"/> instances.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider.IsEnabled">
+            <summary>
+            Gets a value that indicates whether the queue is enabled.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider.IntervalAsync(System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Waits for the given <see cref="T:System.TimeSpan"/>.
+            </summary>
+            <param name="interval">The amount of time to wait.</param>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken"/> that can be used to cancel the delay.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> that completes when the <paramref name="interval"/> has passed or the <paramref name="cancellationToken"/> has been canceled.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider.CreateLogger(System.String)">
+            <summary>
+            Creates a <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLogger"/> with the given <paramref name="categoryName"/>.
+            </summary>
+            <param name="categoryName">The name of the category to create this logger with.</param>
+            <returns>The <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLogger"/> that was created.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider.Microsoft#Extensions#Logging#ISupportExternalScope#SetScopeProvider(Microsoft.Extensions.Logging.IExternalScopeProvider)">
+            <summary>
+            Sets the scope on this provider.
+            </summary>
+            <param name="scopeProvider">Provides the scope.</param>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.BlobAppendReferenceWrapper">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BlobAppendReferenceWrapper.AppendAsync(System.ArraySegment{System.Byte},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.BlobLoggerProvider">
+            <summary>
+            The <see cref="T:Microsoft.Extensions.Logging.ILoggerProvider"/> implementation that stores messages by appending them to Azure Blob in batches.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BlobLoggerProvider.#ctor(Microsoft.Extensions.Options.IOptionsMonitor{Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions})">
+            <summary>
+            Creates a new instance of <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BlobLoggerProvider"/>
+            </summary>
+            <param name="options">The options to use when creating a provider.</param>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.BlobLoggerProvider.#ctor(Microsoft.Extensions.Options.IOptionsMonitor{Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions},System.Func{System.String,Microsoft.Extensions.Logging.AzureAppServices.ICloudAppendBlob})">
+            <summary>
+            Creates a new instance of <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BlobLoggerProvider"/>
+            </summary>
+            <param name="blobReferenceFactory">The container to store logs to.</param>
+            <param name="options">Options to be used in creating a logger.</param>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.FileLoggerProvider">
+            <summary>
+            Represents a <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.BatchingLoggerProvider"/> that writes out to a file.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.FileLoggerProvider.#ctor(Microsoft.Extensions.Options.IOptionsMonitor{Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions})">
+            <summary>
+            Creates a new instance of <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.FileLoggerProvider"/>.
+            </summary>
+            <param name="options">The options to use when creating the provider.</param>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.ICloudAppendBlob">
+            <summary>
+            Represents an append blob, a type of blob where blocks of data are always committed to the end of the blob.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.AzureAppServices.ICloudAppendBlob.AppendAsync(System.ArraySegment{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Initiates an asynchronous operation to open a stream for writing to the blob.
+            </summary>
+            <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> object of type <see cref="T:System.IO.Stream" /> that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext">
+            <summary>
+            Represents an Azure WebApp context
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext.HomeFolder">
+            <summary>
+            Gets the path to the home folder if running in Azure WebApp
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext.SiteName">
+            <summary>
+            Gets the name of site if running in Azure WebApp
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext.SiteInstanceId">
+            <summary>
+            Gets the id of site if running in Azure WebApp
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext.IsRunningInAzureWebApp">
+            <summary>
+            Gets a value indicating whether or new we're in an Azure WebApp
+            </summary>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext">
+            <summary>
+            Represents the default implementation of <see cref="T:Microsoft.Extensions.Logging.AzureAppServices.IWebAppContext"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext.Default">
+            <summary>
+            Gets the default instance of the WebApp context.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext.HomeFolder">
+            <inheritdoc />
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext.SiteName">
+            <inheritdoc />
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext.SiteInstanceId">
+            <inheritdoc />
+        </member>
+        <member name="P:Microsoft.Extensions.Logging.AzureAppServices.WebAppContext.IsRunningInAzureWebApp">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentThrowHelper.ThrowIfNullOrEmpty(System.String,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentNullException"/> if <paramref name="argument"/> is null or an <see cref="T:System.ArgumentException"/> if it is empty.</summary>
+            <param name="argument">The reference type argument to validate as neither null nor empty.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentThrowHelper.ThrowIfNullOrWhiteSpace(System.String,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentNullException"/> if <paramref name="argument"/> is null or an <see cref="T:System.ArgumentException"/> if it is empty or whitespace.</summary>
+            <param name="argument">The reference type argument to validate as neither null nor empty nor whitespace.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNull(System.Object,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentNullException"/> if <paramref name="argument"/> is null.</summary>
+            <param name="argument">The reference type argument to validate as non-null.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNullOrEmpty(System.String,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentException"/> if <paramref name="argument"/> is null or empty.</summary>
+            <param name="argument">The <see cref="T:System.String"/> argument to validate as non-null and non-empty.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+    </members>
+</doc>
