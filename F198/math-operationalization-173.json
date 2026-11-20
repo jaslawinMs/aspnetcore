@@ -1,0 +1,18 @@
+{
+  "findingId": "F198",
+  "frozenPlanSha256": "448B26429F40AD582CB9C72F327549D24238974A82E8B060CA9C977CFDAB611F",
+  "definedBeforeAnyEngineWarmupOrCounters": true,
+  "doesNotChangeFrozenThresholdsScheduleOrBoundary": true,
+  "blockBaselineElapsed": "sqrt(BaselineBefore.Nanoseconds * BaselineAfter.Nanoseconds), computed as a geometric mean.",
+  "blockBaselineAllocation": "Geometric mean of BaselineBefore.Bytes and BaselineAfter.Bytes.",
+  "baselineElapsedControl": "abs(BaselineAfter.Nanoseconds - BaselineBefore.Nanoseconds) <= 0.1 * BaselineBefore.Nanoseconds, for every block and parameter.",
+  "aggregate": "Geometric mean of seven candidate/block-baseline ratios, separately per parameter and metric.",
+  "directionalBlock": "Candidate/block-baseline ratio strictly less than one for the same qualifying metric.",
+  "primary": "Parameter16: aggregate elapsed ratio <=0.95 and at least6 elapsed directional blocks, OR aggregate allocation ratio <=0.95 and at least6 allocation directional blocks.",
+  "nonregression": "Every parameter: aggregate elapsed ratio <=1.05 and aggregate allocation ratio <=1.01.",
+  "zeroAllocationDenominator": "Zero candidate and zero block baseline is neutral ratio1. Positive candidate over zero baseline is positive infinity and fails allocation nonregression. Zero candidate over positive baseline is ratio0.",
+  "undefinedMixedZeroAndInfinity": "Never silently average: comparison is infrastructure-inconclusive and no retry is permitted.",
+  "identityGeometricMean": "Exactly identical inputs retain their exact value, preventing floating-point artifacts from manufacturing directional improvement.",
+  "anyControlFailure": "Inconclusive even if other apparent reductions are material.",
+  "incompleteOrFailedExecution": "Infrastructure-inconclusive; retain every observation, close Original under the no-retry clause, and do not compare Default."
+}

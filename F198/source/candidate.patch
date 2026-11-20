@@ -1,0 +1,13 @@
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
+index 260132a41a..a3b7513f00 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
+@@ -65,7 +65,7 @@ internal sealed class TransportConnectionManager
+             }
+         }
+ 
+-        var allClosedTask = Task.WhenAll(closeTasks.ToArray());
++        var allClosedTask = Task.WhenAll(closeTasks);
+         return await Task.WhenAny(allClosedTask, CancellationTokenAsTask(token)).ConfigureAwait(false) == allClosedTask;
+     }
+ 

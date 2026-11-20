@@ -1,0 +1,100 @@
+{
+  "findingId": "F198",
+  "status": "FROZEN_BEFORE_F198_CANDIDATE_OR_COUNTERS",
+  "originalRevision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefaultRevision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+  "target": "src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\TransportConnectionManager.cs",
+  "targetGitBlobBothObservedRoles": "260132a41ad0eaa4032fc0dc2b2be39a3958d9ae",
+  "candidateScope": "Only remove the explicit closeTasks.ToArray clone in CloseAllConnectionsAsync; AbortAllConnectionsAsync is independent pending F199 and remains unchanged.",
+  "benchmark": "Microsoft.AspNetCore.Server.Kestrel.Microbenchmarks.TransportConnectionManagerBenchmark.GracefulDrain",
+  "parameterValues": [
+    0,
+    1,
+    16,
+    256
+  ],
+  "primaryParameter": 16,
+  "boundary": "Whole transport-manager graceful drain, actual registered KestrelConnection<T>.ExecuteAsync application release, transport disposal, manager removal and completion. Per listener stop/reconfiguration, not a per-request path, socket/HTTP throughput, production distribution or server-wide shutdown frequency claim.",
+  "requiredCompatibility": [
+    "Existing owning KestrelMetricsTests.Http1Connection_ServerShutdown_Graceful and Http1Connection_ServerShutdown_Abort each pass as actual native result rows on baseline and candidate.",
+    "Untimed common fixture cases 0,1,16,256 each assert exact close-request count, actual ExecutionTask completion, real delegate completion, empty real manager and true close result.",
+    "No directly injected private ExecutionTask, manually completed connection or bypassed transport disposal producer.",
+    "Actual loaded runtime/owner/fixture identities and all-file causal inventories are accepted before timing.",
+    "Actual custom toolchain IsSupported and full config validation pass untimed on all four selected cases; wrong GC, multiple invocations and stock executor negative controls reject, with zero executor calls.",
+    "IterationSetup prepares each real connection group exactly once; InvocationCount=1 and UnrollFactor=1 are mandatory."
+  ],
+  "benchmarkDotNet": {
+    "version": "0.13.0",
+    "dllSha256": "4560EE1128636D3913C3FA71B8419DD2317FB97FD331231A53AD5501D5BA5437",
+    "toolchain": "Private IToolchain with unchanged stock no-emit generator/builder and separately bound non-priority-changing executor. Support checks the real private descriptor/one-invocation contract, then stock runtime/environment validation on the identical job cloned only with the stock concrete toolchain tag. Full actual config validators are retained. The stock executor is never invoked.",
+    "strategy": "Throughput",
+    "launchCount": 1,
+    "warmupCount": 31,
+    "iterationCount": 501,
+    "invocationCount": 1,
+    "unrollFactor": 1,
+    "outlierMode": "DontRemove",
+    "serverGc": true,
+    "forceGc": false,
+    "tieredCompilation": false,
+    "memoryDiagnoser": true,
+    "powerPlan": "DoNotEnforce"
+  },
+  "schedule": {
+    "blocks": 7,
+    "freshProcessesPerBlock": 3,
+    "order": [
+      "BaselineBefore",
+      "Candidate",
+      "BaselineAfter"
+    ],
+    "baseline": "Geometric mean of bracketing identical baseline image process means, separately for elapsed and allocation.",
+    "allFourParametersInEachProcess": true,
+    "noExcludedRetriedOrDroppedSamples": true
+  },
+  "acceptance": {
+    "minimumPrimaryElapsedOrAllocationReductionPercent": 5,
+    "requiredPrimaryDirectionalBlocks": 6,
+    "maximumElapsedRegressionPercentAnyParameter": 5,
+    "maximumAllocationRegressionPercentAnyParameter": 1,
+    "maximumAbsoluteBaselineControlElapsedDriftPercentEveryBlockAndParameter": 10,
+    "requiredCompleteBlocks": 7,
+    "requiredWorkloadResultMeasurementsPerCase": 501,
+    "requiredOperationsPerMeasurement": 1,
+    "allocation": "MemoryDiagnoser whole real GracefulDrain invocation, not isolated ToArray allocation.",
+    "aggregation": "Geometric mean of seven candidate/block-baseline ratios separately by parameter and metric.",
+    "failedControlOrIncompleteExecution": "Inconclusive, not measured no gain or framework defect."
+  },
+  "execution": {
+    "maximumComparisonsIncludingFailedOrPartial": 3,
+    "oneComparisonPerSourceRole": true,
+    "sourceRoleOrder": [
+      "Original",
+      "ObservedDefault"
+    ],
+    "defaultOnlyAfterOriginalQualifies": true,
+    "originalRuntime": "12.0.0-alpha.1.26562.105",
+    "defaultRuntime": "12.0.0-alpha.1.26569.107",
+    "coordinatorOnly": true,
+    "maximumSimultaneousBenchmarksAllHosts": 1,
+    "samePhysicalHostAndExactRuntimeWithinEachComparison": true,
+    "requiresBeforeTiming": "Frozen plan, green compatibility and actual toolchain admission, accepted all-file causal image hashes, sealed approved driver/open budget, all owned local/remote native work quiescent and actual global gateway lease.",
+    "noPriorityAffinityPowerOrMachineConfigurationChanges": true,
+    "sharedHostLimitations": "No dedicated isolation or universal unrelated-process inactivity is claimed.",
+    "noRepairOrReopeningOfClosedF219": true
+  },
+  "frozenUtc": "2026-11-20T20:44:31.9821774Z",
+  "benchmarkSourceSha256": "CC7C2FE781011DD41DCEDCF1E95037A0D412FA5949B27D036A25D4F0EA4646B1",
+  "adapterSourceSha256": "16841FD20191A00BFD582360FBD514F9516AE50040A09485B576C88C717700EA",
+  "preCandidateCompatibility": {
+    "OriginalNativePassedRows": 2,
+    "OriginalRealProducerCases": 4,
+    "ObservedDefaultNativePassedRows": 2,
+    "ObservedDefaultRealProducerCases": 4,
+    "actualOriginalRuntime": "12.0.0-alpha.1.26562.105",
+    "actualObservedDefaultRuntime": "12.0.0-alpha.1.26569.107",
+    "actualOriginalCustomSupportAndFullConfigGreen": true,
+    "actualNoEngineOrCounters": true,
+    "defaultBinaryActuallyExecutedBeforeCandidate": true
+  }
+}
