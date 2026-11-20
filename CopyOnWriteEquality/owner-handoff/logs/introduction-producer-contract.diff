@@ -1,0 +1,175 @@
+diff --git a/src/Microsoft.AspNet.Mvc.Core/FilterActionInvoker.cs b/src/Microsoft.AspNet.Mvc.Core/FilterActionInvoker.cs
+index b928a72b63..ccf33a0487 100644
+--- a/src/Microsoft.AspNet.Mvc.Core/FilterActionInvoker.cs
++++ b/src/Microsoft.AspNet.Mvc.Core/FilterActionInvoker.cs
+@@ -7,6 +7,7 @@ using System.Diagnostics;
+ using System.Linq;
+ using System.Runtime.ExceptionServices;
+ using System.Threading.Tasks;
++using Microsoft.AspNet.Mvc.Internal;
+ using Microsoft.AspNet.Mvc.ModelBinding;
+ using Microsoft.AspNet.Mvc.ModelBinding.Validation;
+ using Microsoft.Framework.Internal;
+@@ -241,11 +242,11 @@ namespace Microsoft.AspNet.Mvc.Core
+ 
+             var context = new ResourceExecutingContext(ActionContext, _filters);
+ 
+-            context.InputFormatters = new List<IInputFormatter>(_inputFormatters);
+-            context.OutputFormatters = new List<IOutputFormatter>(_outputFormatters);
+-            context.ModelBinders = new List<IModelBinder>(_modelBinders);
+-            context.ValidatorProviders = new List<IModelValidatorProvider>(_modelValidatorProviders);
+-            context.ValueProviderFactories = new List<IValueProviderFactory>(_valueProviderFactories);
++            context.InputFormatters = new CopyOnWriteList<IInputFormatter>(_inputFormatters);
++            context.OutputFormatters = new CopyOnWriteList<IOutputFormatter>(_outputFormatters);
++            context.ModelBinders = new CopyOnWriteList<IModelBinder>(_modelBinders);
++            context.ValidatorProviders = new CopyOnWriteList<IModelValidatorProvider>(_modelValidatorProviders);
++            context.ValueProviderFactories = new CopyOnWriteList<IValueProviderFactory>(_valueProviderFactories);
+ 
+             _resourceExecutingContext = context;
+             await InvokeResourceFilterAsync();
+diff --git a/src/Microsoft.AspNet.Mvc.Core/Internal/CopyOnWriteList.cs b/src/Microsoft.AspNet.Mvc.Core/Internal/CopyOnWriteList.cs
+new file mode 100644
+index 0000000000..4c78e2157d
+--- /dev/null
++++ b/src/Microsoft.AspNet.Mvc.Core/Internal/CopyOnWriteList.cs
+@@ -0,0 +1,140 @@
++﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Collections;
++using System.Collections.Generic;
++
++namespace Microsoft.AspNet.Mvc.Internal
++{
++    public class CopyOnWriteList<T> : IList<T>
++    {
++        private readonly IReadOnlyList<T> _source;
++        private List<T> _copy;
++
++        public CopyOnWriteList(IReadOnlyList<T> source)
++        {
++            _source = source;
++        }
++
++        protected IReadOnlyList<T> Readable
++        {
++            get
++            {
++                return _copy ?? _source;
++            }
++        }
++
++        protected List<T> Writable
++        {
++            get
++            {
++                if (_copy == null)
++                {
++                    _copy = new List<T>(_source);
++                }
++
++                return _copy;
++            }
++        }
++
++        public T this[int index]
++        {
++            get
++            {
++                return Readable[index];
++            }
++            set
++            {
++                Writable[index] = value;
++            }
++        }
++
++        public int Count
++        {
++            get
++            {
++                return Readable.Count;
++            }
++        }
++
++        public bool IsReadOnly
++        {
++            get
++            {
++                return false;
++            }
++        }
++
++        public void Add(T item)
++        {
++            Writable.Add(item);
++        }
++
++        public void Clear()
++        {
++            Writable.Clear();
++        }
++
++        public bool Contains(T item)
++        {
++            foreach (var obj in Readable)
++            {
++                if (object.Equals(obj, item))
++                {
++                    return true;
++                }
++            }
++
++            return false;
++        }
++
++        public void CopyTo(T[] array, int arrayIndex)
++        {
++            foreach (var item in Readable)
++            {
++                array[arrayIndex++] = item;
++            }
++        }
++
++        public IEnumerator<T> GetEnumerator()
++        {
++            return Readable.GetEnumerator();
++        }
++
++        public int IndexOf(T item)
++        {
++            var i = 0;
++            foreach (var obj in Readable)
++            {
++                if (object.Equals(obj, item))
++                {
++                    return i;
++                }
++
++                i++;
++            }
++
++            return -1;
++        }
++
++        public void Insert(int index, T item)
++        {
++            Writable.Insert(index, item);
++        }
++
++        public bool Remove(T item)
++        {
++            return Writable.Remove(item);
++        }
++
++        public void RemoveAt(int index)
++        {
++            Writable.RemoveAt(index);
++        }
++
++        IEnumerator IEnumerable.GetEnumerator()
++        {
++            return GetEnumerator();
++        }
++    }
++}

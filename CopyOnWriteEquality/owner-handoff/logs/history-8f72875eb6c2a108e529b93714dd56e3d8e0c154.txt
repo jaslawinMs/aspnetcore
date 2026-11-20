@@ -1,0 +1,41 @@
+commit 8f72875eb6c2a108e529b93714dd56e3d8e0c154
+Author:     Jaro Slawinski <jaslawin@microsoft.com>
+AuthorDate: Thu Nov 19 13:56:57 2026 -0800
+Commit:     Jaro Slawinski <jaslawin@microsoft.com>
+CommitDate: Thu Nov 19 13:56:57 2026 -0800
+
+    Record F123 no-gain copied-store IndexOf experiment
+    
+    Retain the fifteen-line private copied-store specialization and twelve contract-preservation rows on an independent research branch. Three complete source comparisons fail the predeclared copied-five-factory IndexOf timing and allocation gates. All 1,152 samples and favorable/adverse/first-hit/last-hit/control profiles are retained. Preserve legacy object.Equals rather than silently switching to IEquatable<T>, actual copied-list mutation detection and arbitrary-source disposal. Diagnostic evidence only, not a merge recommendation or performance pull request.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    Copilot-Session: a24edcfd-1bb9-4160-afce-6ba54b1b7f00
+
+ src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+diff --git a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+index 0c33a107e4..130df7990e 100644
+--- a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
++++ b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+@@ -83,6 +83,21 @@ internal sealed class CopyOnWriteList<T> : IList<T>
+     public int IndexOf(T item)
+     {
+         var i = 0;
++        if (_copy is not null)
++        {
++            foreach (var obj in _copy)
++            {
++                if (object.Equals(obj, item))
++                {
++                    return i;
++                }
++
++                i++;
++            }
++
++            return -1;
++        }
++
+         foreach (var obj in Readable)
+         {
+             if (object.Equals(obj, item))

@@ -1,0 +1,39 @@
+commit 6cbee2d052c988b07d936ea8de489456beb22317
+Author:     Jaro Slawinski <jaslawin@microsoft.com>
+AuthorDate: Wed Nov 18 07:23:57 2026 -0800
+Commit:     Jaro Slawinski <jaslawin@microsoft.com>
+CommitDate: Wed Nov 18 07:23:57 2026 -0800
+
+    Record F120 no-gain copied-store Contains experiment
+    
+    Retain the private concrete-list enumeration candidate and seven contract-preservation cases on an independent research branch. Both completed source comparisons regress the declared copied-default primary with no allocation saving. The first authorization failed in common untimed setup before workloads; all three slots remain consumed. Diagnostic evidence only, not a merge recommendation or performance pull request.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    Copilot-Session: a24edcfd-1bb9-4160-afce-6ba54b1b7f00
+
+ src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+diff --git a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+index 0c33a107e4..6e511453e7 100644
+--- a/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
++++ b/src/Mvc/Mvc.Core/src/Infrastructure/CopyOnWriteList.cs
+@@ -56,6 +56,19 @@ internal sealed class CopyOnWriteList<T> : IList<T>
+ 
+     public bool Contains(T item)
+     {
++        if (_copy is not null)
++        {
++            foreach (var obj in _copy)
++            {
++                if (object.Equals(obj, item))
++                {
++                    return true;
++                }
++            }
++
++            return false;
++        }
++
+         foreach (var obj in Readable)
+         {
+             if (object.Equals(obj, item))

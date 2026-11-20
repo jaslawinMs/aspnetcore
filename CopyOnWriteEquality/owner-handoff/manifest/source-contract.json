@@ -1,0 +1,116 @@
+{
+  "findings": {
+    "F151": {
+      "method": "Contains(T)",
+      "equality_line": 61,
+      "observable": "Return whether any element satisfies static object.Equals(element, item).",
+      "separate_from_F152": true
+    },
+    "F152": {
+      "method": "IndexOf(T)",
+      "equality_line": 88,
+      "observable": "Return the first object.Equals match index, or -1.",
+      "separate_from_F151": true
+    }
+  },
+  "same_on_both_pins": {
+    "file": "src\\Mvc\\Mvc.Core\\src\\Infrastructure\\CopyOnWriteList.cs",
+    "git_blob": "0c33a107e4464129ce8eb5b6fda3f78cc9d889e7",
+    "evidence": "logs\\selected-original-default-path-diff.txt",
+    "branches": {
+      "before_mutation": "Readable returns the supplied IReadOnlyList<T>; Contains and IndexOf enumerate it and call static object.Equals.",
+      "first_mutation": "Writable constructs new List<T>(_source). Add, Clear, Insert, Remove, RemoveAt, or an indexer setter can trigger this.",
+      "after_mutation": "Readable returns _copy, but Contains and IndexOf still enumerate through IReadOnlyList<T> and still call static object.Equals.",
+      "existing_remove": "Remove delegates to List<T>.Remove, whose default typed equality is not a precedent for changing Contains/IndexOf."
+    }
+  },
+  "bounded_producers_on_each_pin": [
+    {
+      "file": "src\\Mvc\\Mvc.Core\\src\\Infrastructure\\ControllerActionInvokerProvider.cs",
+      "line": 75,
+      "closed_type": "CopyOnWriteList<IValueProviderFactory>",
+      "source": "Options ValueProviderFactories snapshotted with ToArray in the provider constructor."
+    },
+    {
+      "file": "src\\Mvc\\Mvc.Core\\src\\Routing\\ControllerRequestDelegateFactory.cs",
+      "line": 91,
+      "closed_type": "CopyOnWriteList<IValueProviderFactory>",
+      "source": "Options ValueProviderFactories snapshotted with ToArray in the factory constructor; request creates the collection."
+    },
+    {
+      "file": "src\\Mvc\\Mvc.RazorPages\\src\\Infrastructure\\PageActionInvokerProvider.cs",
+      "line": 90,
+      "closed_type": "CopyOnWriteList<IValueProviderFactory>",
+      "source": "Options ValueProviderFactories snapshotted with ToArray in the provider constructor."
+    },
+    {
+      "file": "src\\Mvc\\Mvc.RazorPages\\src\\Infrastructure\\PageRequestDelegateFactory.cs",
+      "line": 104,
+      "closed_type": "CopyOnWriteList<IValueProviderFactory>",
+      "source": "Options ValueProviderFactories snapshotted with ToArray in the factory constructor; request creates the collection."
+    }
+  ],
+  "consumer_contract": [
+    "MvcOptions.ValueProviderFactories is IList<IValueProviderFactory>, initialized as List<IValueProviderFactory>.",
+    "ControllerContext.ValueProviderFactories exposes IList<IValueProviderFactory> for the current request.",
+    "ControllerActionInvoker passes the same list into ResourceInvoker; ResourceInvoker constructs ResourceExecutingContext with that list.",
+    "ResourceExecutingContext exposes that same list to real resource filters; modifications are request-local.",
+    "CompositeValueProvider.CreateAsync consumes factories by Count/indexer and invokes CreateValueProviderAsync, not Contains/IndexOf.",
+    "A struct registered as an IValueProviderFactory is stored via an interface reference; it does not change the collection's generic argument to the struct type."
+  ],
+  "reference_inventory": {
+    "lsp": {
+      "queries": [
+        "findReferences(original CopyOnWriteList.cs:12:23, includeDeclaration=true)",
+        "findReferences(default CopyOnWriteList.cs:12:23, includeDeclaration=true)"
+      ],
+      "both_results": ["12:23", "17:12", "119:51", "11:27", "121:26"],
+      "coverage": "Only references in the queried file were returned; not a resolved project-wide inventory.",
+      "log_attempt": "read_agent(lsp-csharp) returned No agent found."
+    },
+    "fallback": "Pinned git grep for CopyOnWriteList in tracked src/**/*.cs, src/**/*.csproj, docs/**/*.md; see separate original/default logs.",
+    "direct_membership_search": "No literal ValueProviderFactories.Contains or ValueProviderFactories.IndexOf matches in tracked src/**/*.cs on either pin (git grep exit 1). Aliases and extension code are not excluded by this search.",
+    "limitations": [
+      "Bluebird is configured for unrelated msazure/One; indexed GitHub semantic search was reported unavailable (404) in task context and was not used.",
+      "Bounded lexical inventories do not establish absence of aliases, generated/unindexed code, reflection, friend-assembly consumers, or external extensions.",
+      "No material shipping producer with a value-type generic argument T has been established; this is not proof that all conceivable such uses are absent."
+    ]
+  },
+  "history": {
+    "introduced": {
+      "commit": "d74e81186bb35714566d751625c2f0ce609f81c0",
+      "historical_path": "src\\Microsoft.AspNet.Mvc.Core\\Internal\\CopyOnWriteList.cs",
+      "evidence": "logs\\introduction-producer-contract.diff",
+      "observation": "The original copy-on-write replacement served interface-typed MVC resource-filter collections and already used static object.Equals in both methods."
+    },
+    "last_upstream_file_change": {
+      "commit": "a020933a662680d4628bcbb087f6b1a19f037bd0",
+      "evidence": "logs\\last-upstream-file-change.diff",
+      "observation": "Debugger display/proxy changes; no Contains/IndexOf equality change."
+    },
+    "related_existing_work_not_reopened": [
+      {
+        "finding": "F120",
+        "commit": "6cbee2d052c988b07d936ea8de489456beb22317",
+        "issue": "https://github.com/jaslawinMs/aspnetcore/issues/164",
+        "state": "closed",
+        "exact_difference": "Adds a concrete _copy foreach branch to Contains; retains object.Equals. Not the EqualityComparer<T>.Default substitution behind F151."
+      },
+      {
+        "finding": "F123",
+        "commit": "8f72875eb6c2a108e529b93714dd56e3d8e0c154",
+        "issue": "https://github.com/jaslawinMs/aspnetcore/issues/167",
+        "state": "closed",
+        "exact_difference": "Adds a concrete _copy foreach branch to IndexOf; retains object.Equals. Not the EqualityComparer<T>.Default substitution behind F152."
+      }
+    ],
+    "work_search_limits": "Read-only GitHub searches capped at 30 CopyOnWriteList PRs/issues per upstream/fork repository, plus capped exact F151/F152 issue searches. Not a complete search of all PR diffs, branches, forks, or unindexed work."
+  },
+  "documentation": {
+    "url": "https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.equalitycomparer-1.default?view=net-10.0",
+    "section": "Remarks",
+    "contract": "Default checks whether the type T implements IEquatable<T>; if so it uses that implementation, otherwise it uses Object.Equals/Object.GetHashCode overrides.",
+    "consequence": "A concrete IEquatable<T> class or struct can differ from static object.Equals. A runtime factory implementing IEquatable of its concrete type does not make the generic interface IValueProviderFactory implement IEquatable<IValueProviderFactory>.",
+    "runtime_characterization_required": true
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "purpose": "Bounded untimed F151/F152 investigation and non-authoritative disposition recommendation; not a campaign verdict or ledger update.",
+  "status": "complete_with_explicit_canonical_default_runtime_limit",
+  "root": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F151-F152-005",
+  "physical_host": "CPC-jasla-LSEJU",
+  "source_pins": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "default": "ae89581dfd24c6277b4267a9779d05f7b9f047f1"
+  },
+  "live_default_final_read_exit": 0,
+  "live_default_final": {
+    "committer": "2026-11-20T00:07:38Z",
+    "sha": "ae89581dfd24c6277b4267a9779d05f7b9f047f1"
+  },
+  "acceptance": "acceptance.json",
+  "source_and_history_contract": "manifest\\source-contract.json",
+  "recommendations": [
+    {
+      "recommendation": "Do not admit a boxing optimization to timing on present evidence; retain only a conditional helper-level informational observation.",
+      "finding": "F151",
+      "reason": "The exercised MVC producer closes T over IValueProviderFactory, not a value type. No material shipping value-type T producer was established. Replacing object.Equals with EqualityComparer<T>.Default also changes helper equality for divergent IEquatable<T> types in both storage states.",
+      "method": "CopyOnWriteList<T>.Contains"
+    },
+    {
+      "recommendation": "Do not admit a boxing optimization to timing on present evidence; retain only a conditional helper-level informational observation.",
+      "finding": "F152",
+      "reason": "The same unestablished value-type T precondition applies, but this is a distinct first-index/-1 contract, independently exercised before and after copying. It is not a duplicate method or a replay of F123.",
+      "method": "CopyOnWriteList<T>.IndexOf"
+    }
+  ],
+  "faithful_producer_boundary": {
+    "mechanism": "Real MVC service registration, options, application-part/controller discovery, endpoint routing and resource-filter invocation; no injected CopyOnWriteList for producer cases.",
+    "generic_argument_observed": "IValueProviderFactory (IsValueType=false), including when a real options entry is an application-defined struct already stored through the interface.",
+    "modes": [
+      "default ControllerRequestDelegateFactory",
+      "EnableActionInvokers=true -> ActionEndpointFactory -> ControllerActionInvokerProvider"
+    ],
+    "source_owner_loading": "Private AssemblyLoadContext prevents framework pruning/default-context unification from replacing the selected source-built owner. Owner hash, PE/PDB GUID, and four physical-source/PDB checksums passed on each pin.",
+    "material_observable": "The resource filter observes membership/index results and request-local collection changes without modifying configured MVC options or the next request.",
+    "per_mode": "Two requests; membership and first-index semantics before and after real Add-triggered copy; removal, options isolation, fresh-request isolation, and retained boxed interface-factory identity."
+  },
+  "producer_results": [
+    {
+      "version": "original",
+      "real_MVC_assertions_passed": 136,
+      "helper_only_assertions_passed": 36,
+      "ownership_runtime_assertions_passed": 11,
+      "requests": 4,
+      "actual_runtime": ".NET 12.0.0-alpha.1.26557.102",
+      "owner_sha256": "7812F515C4DDFE409E1B395D4CFCB5FD3E9377906FFF820DB9B0555A83BAB379",
+      "pdb_sha256": "CDA7F867F2644310D11D76456A0EBE0BEA8258193A58BADE8572BF7EA371775B",
+      "codeview_and_pdb_guid": "7a905ea9-1c64-4379-986e-d79aad152431",
+      "exact_assertions_and_associations": "outputs\\original\\resume02-producer-characterization.json",
+      "exact_loaded_dependency_paths_and_hashes": "outputs\\original\\resume02-producer-characterization.json.loader.json"
+    },
+    {
+      "version": "default",
+      "real_MVC_assertions_passed": 136,
+      "helper_only_assertions_passed": 36,
+      "ownership_runtime_assertions_passed": 11,
+      "requests": 4,
+      "actual_runtime": ".NET 12.0.0-alpha.1.26557.102",
+      "owner_sha256": "5D7628E0E23C9378BC8A264C81AB04C65F7A44AA3495792881202B95157DBEF8",
+      "pdb_sha256": "FD9FA4B4BE5D9C55AE4551D3033AD402418D9D744FBCA8B8FEDCFA62CB6C0CA4",
+      "codeview_and_pdb_guid": "0f7e11a1-7b81-4151-b73b-9e04508a7f49",
+      "exact_assertions_and_associations": "outputs\\default\\resume02-producer-characterization.json",
+      "exact_loaded_dependency_paths_and_hashes": "outputs\\default\\resume02-producer-characterization.json.loader.json"
+    }
+  ],
+  "helper_only_boundary": "Manually closed CopyOnWriteList<FactoryValue> and CopyOnWriteList<FactoryReference>; intentionally divergent typed/object equality. These demonstrate helper semantic incompatibility, not shipping value-type-generic reachability.",
+  "helper_observations": [
+    "In both read-only and copied states, Contains/IndexOf reject typed-equal-only probes and accept object-equal-only probes.",
+    "EqualityComparer<T>.Default gives the opposite results for the same deliberately divergent concrete IEquatable<T> probes.",
+    "Existing Remove delegates to List<T>.Remove and uses typed equality; that existing difference was observed, not changed or generalized into a cleanup proposal."
+  ],
+  "existing_tests": "manifest\\existing-test-results.json",
+  "existing_test_summary": "Original canonical: 3/3 passed on requested/actual 12.0.0-alpha.1.26562.105. Default canonical: no tests reached due to missing 12.0.0-alpha.1.26568.110. Explicit fallback: the same 3/3 passed on requested/actual 12.0.0-alpha.1.26557.102, RollForward=Disable.",
+  "failed_preparations_preserved": [
+    {
+      "evidence": "outputs\\default\\failed-preparation-003",
+      "producer_executed": false,
+      "cause": "Framework-pruned project reference loaded installed owner; SHA256 guard failed.",
+      "label": "default/003-producer-probe-run"
+    },
+    {
+      "evidence": "outputs\\default\\failed-preparation-resume01",
+      "producer_executed": false,
+      "cause": "Default-context LoadFromAssemblyPath still unified to installed owner; explicit source hash guard failed.",
+      "label": "default/resume01-producer-run"
+    },
+    {
+      "tests_reached": 0,
+      "evidence": "outputs\\default\\failed-canonical-existing-tests",
+      "cause": "Missing requested canonical runtime.",
+      "label": "default/resume02-existing-mvc-tests"
+    }
+  ],
+  "other_failed_lookups": [
+    "Initial gh searches embedded quoted repo qualifiers incorrectly; failure stderr retained and corrected --repo searches retained.",
+    "LSP returned only five in-file references per pin; read_agent(lsp-csharp) could not find a log agent. Inventory is not complete.",
+    "ResourceExecutingContext was first looked up under Mvc.Core; the actual Mvc.Abstractions path was resolved/read.",
+    "Documentation pagination at offset 15000 returned no more content; the authoritative Remarks were subsequently read at offset 12000."
+  ],
+  "performance_preparation": {
+    "benchmark_project_created": false,
+    "primary": null,
+    "artifact_patch_created": false,
+    "existing_F120_F123_work": "Source diffs inspected only: concrete copied-list enumeration retaining object.Equals, distinct from these boxing findings. Closed work was not reopened or replayed.",
+    "gain_gate": null,
+    "no_measurements_or_allocation_counters_used": true,
+    "admitted_candidate": false,
+    "reason": "No justified optimization remains under the observed producer/equality contracts. An artificial value-type helper benchmark would substitute an unproven workload."
+  },
+  "limitations": [
+    "No complete reference inventory: aliases, generated/unindexed code, reflection, friend-assembly consumers, and external extensions remain outside the bounded search.",
+    "No material value-type T shipping producer was established; this is not proof that every conceivable such producer is absent.",
+    "Controller MVC paths were exercised; Razor Pages producers were inspected in source only.",
+    "Source-owned collection/producer code ran on exact installed 12.0.0-alpha.1.26557.102. Canonical default test-runtime 12.0.0-alpha.1.26568.110 remains unvalidated.",
+    "Supporting assemblies came from each retained source graph where available, otherwise the exact installed ASP.NET Core transport. Full per-run paths/hashes are retained; this was not a byte-identical entire-framework comparison.",
+    "Resource filters intentionally short-circuit with EmptyResult; factory execution/model-binding output, network hosting and arbitrary custom-source-list behavior were not asserted."
+  ],
+  "reproduction": {
+    "working_directory": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F151-F152-005",
+    "canonical_default_command": "logs\\default\\resume02-existing-mvc-tests.command.json",
+    "command": "& .\\scripts\\Resume-Characterization.ps1 -RunId repro001 -UseInstalledRuntimeForDefaultExistingTests",
+    "future_hold_guard": "Invoke-RecordedDotNet.ps1 refuses new dotnet processes while this private manifest\\hold.json has hold_active=true.",
+    "exact_invocations_and_streams": "logs\\<original|default>\\*.command.json, *.stdout.txt, *.stderr.txt, *.lifecycle.json",
+    "prerequisites": "Retained detached worktrees, exact SDK junctions, generated build files/restored assets, and the recorded installed runtimes. Use a fresh RunId; existing invocation logs are never overwritten.",
+    "explicit_fallback_command": "logs\\default\\resume03-existing-tests-explicit-runtime.command.json"
+  },
+  "safety_and_completion": {
+    "all_source_worktrees_clean_and_detached": true,
+    "shared_campaign_policy_budget_verdict_ledger_writes": false,
+    "machine_wide_installation": false,
+    "process_lifecycle": "manifest\\final-process-lifecycle.json",
+    "github_writes_or_publication": false,
+    "source_and_PDB_manifest": "manifest\\selected-sources-final.json",
+    "shipping_changes": false,
+    "related_live_processes": 0,
+    "recorded_native_dotnet_roots_terminal": 14,
+    "source_status": "manifest\\final-source-status.json",
+    "remote_helpers_used": false
+  }
+}
