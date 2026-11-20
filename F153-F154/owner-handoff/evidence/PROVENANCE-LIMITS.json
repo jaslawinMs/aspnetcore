@@ -1,0 +1,54 @@
+{
+  "findings": ["F153", "F154"],
+  "status": "PENDING",
+  "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "entryObservedMain": "c97a797f19154e97f9723634a8033ef8325cb277",
+  "subsequentObservedMain": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+  "entryObservationEvidence": "Tool shell 2733: Get-Date printed 2026-11-20T01:35:14.2189793-08:00, followed by git ls-remote https://github.com/dotnet/aspnetcore.git refs/heads/main. The timestamp precedes the query, not an exact query completion timestamp.",
+  "secondObservationEvidence": "evidence\\fresh-upstream.txt; newer pin has a separate work\\f checkout and catalogs.",
+  "bootstrapCommands": [
+    "git clone --quiet --shared --no-checkout C:\\src\\aspnetcore <root>\\work\\repo",
+    "git -C <root>\\work\\repo fetch --quiet https://github.com/dotnet/aspnetcore.git c97a797f19154e97f9723634a8033ef8325cb277",
+    "git -C <root>\\work\\repo worktree add --quiet --detach <root>\\work\\original 37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "git -C <root>\\work\\repo worktree add --quiet --detach <root>\\work\\default c97a797f19154e97f9723634a8033ef8325cb277",
+    "git -C <root>\\work\\repo config core.longpaths true",
+    "git -C <root>\\work\\original -c core.longpaths=true reset --hard HEAD",
+    "git -C <root>\\work\\default -c core.longpaths=true reset --hard HEAD",
+    "git -C <root>\\work\\repo -c core.longpaths=true worktree add --quiet --detach <root>\\work\\o 37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "git -C <root>\\work\\repo -c core.longpaths=true worktree add --quiet --detach <root>\\work\\d c97a797f19154e97f9723634a8033ef8325cb277",
+    "git -C <root>\\work\\repo fetch --quiet https://github.com/dotnet/aspnetcore.git 90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+    "git -C <root>\\work\\repo -c core.longpaths=true worktree add --quiet --detach <root>\\work\\f 90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d"
+  ],
+  "bootstrapFailures": "First two worktree materializations exit 128 on long paths and leave no usable Git worktree. Recovery reset attempts also exit 128 because those worktrees do not exist. Corrected new o/d worktrees use isolated-repository core.longpaths and succeed. Raw failed logs are retained.",
+  "bootstrapPidAttestation": false,
+  "metadataCollectorPidAttestation": false,
+  "nativeCommandEvidence": "Every native dotnet invocation uses tools\\Invoke-Evidence.ps1, activates that exact checkout from its root and retains controlled environment, full arguments, actual parent PID, sampled children, drained stdout/stderr and exit. Sampling is not exhaustive.",
+  "nativeTraceAdditionalEnvironment": {
+    "native-focused-tests": {
+      "DOTNET_HOST_TRACE": "1",
+      "DOTNET_HOST_TRACEFILE": "<root>\\payload\\evidence\\native-hosttrace.txt"
+    },
+    "native-focused-confirmation": {
+      "DOTNET_HOST_TRACE": "1",
+      "DOTNET_HOST_TRACEFILE": "<root>\\payload\\evidence\\native-confirmation-hosttrace.txt"
+    }
+  },
+  "pathPlaceholderRoot": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F153-F154-010",
+  "sourceCatalogBoundaries": "Metadata catalogs use raw bytes plus a byte-wise CRLF-to-LF model. That is not Git-attribute-aware canonicalization for every binary/filter and is not whole-tree materialization attestation. Two gitlinks are external. Selected C# raw and LF identities are explicit.",
+  "compilerInputAttestation": false,
+  "nativeDefaultRuntimeOrOwnerSubstitution": false,
+  "lateAdditiveReassessment": {
+    "cacheChanged": "Package directories appeared after initial NU1102 failures. Their presence is time-bound metadata, not proof of cache contents at the earlier attempts.",
+    "freshestDefaultGeneration": "Retried with unchanged dependency versions and existing-cache source; exit 0.",
+    "freshestDefaultOwner": "Actual no-restore build fails NETSDK1004. Cache-only restore then fails NU1102 for Microsoft.Extensions.HostFactoryResolver.Sources >=12.0.0-alpha.1.26569.107; nearest cached 26568.110. No owner DLL built.",
+    "requiredRuntime": "Fresh source transport version is 12.0.0-alpha.1.26569.107. Explicit dotnet exec --fx-version request exits -2147450730 before common verifier load; expected output file does not exist. Root runtime69 absent; no runtime installation or fallback.",
+    "nativeEvidence": [
+      "evidence\\freshest-default-generate-reassessment.receipt.json",
+      "evidence\\fresh-owner-no-assets.receipt.json",
+      "evidence\\fresh-owner-restore.receipt.json",
+      "evidence\\fresh-required-runtime69-prerequisite.receipt.json"
+    ]
+  },
+  "causalPerformancePair": false,
+  "permanentOrShippingChanges": false
+}

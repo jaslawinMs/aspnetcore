@@ -1,0 +1,35 @@
+commit 620c673705bb17b33cbc5ff32872d85a5fbf82b9
+Author: David Fowler <davidfowl@gmail.com>
+Date:   Sun Jun 2 13:53:36 2019 -0700
+
+    Noop on the request body stream in TestServer (#10738)
+    
+    * Noop on the request body stream in TestServer
+    - Disposable should not be observable on the client side if the server disposes the body. This is similar to how Kestrel noops on dispose to avoid common usages like StreamReader disposing the underlying stream.
+
+diff --git a/src/Hosting/TestHost/src/AsyncStreamWrapper.cs b/src/Hosting/TestHost/src/AsyncStreamWrapper.cs
+index 4766f8fcf1..705d5a7a0e 100644
+--- a/src/Hosting/TestHost/src/AsyncStreamWrapper.cs
++++ b/src/Hosting/TestHost/src/AsyncStreamWrapper.cs
+@@ -116,17 +116,18 @@ namespace Microsoft.AspNetCore.TestHost
+ 
+         public override void Close()
+         {
+-            _inner.Close();
++            // Don't dispose the inner stream, we don't want to impact the client stream
+         }
+ 
+         protected override void Dispose(bool disposing)
+         {
+-            _inner.Dispose();
++            // Don't dispose the inner stream, we don't want to impact the client stream
+         }
+ 
+         public override ValueTask DisposeAsync()
+         {
+-            return _inner.DisposeAsync();
++            // Don't dispose the inner stream, we don't want to impact the client stream
++            return default;
+         }
+     }
+ }

@@ -1,0 +1,194 @@
+commit 1f892d798d3163b4bd9d3c4e900f6bb5c2310f9c
+Author: Chris Ross <Tratcher@Outlook.com>
+Date:   Tue Jan 15 11:48:17 2019 -0800
+
+    Add AllowSynchronousIO to TestServer and IIS, fix tests (#6404)
+
+diff --git a/src/Hosting/TestHost/src/AsyncStreamWrapper.cs b/src/Hosting/TestHost/src/AsyncStreamWrapper.cs
+new file mode 100644
+index 0000000000..32f1548d35
+--- /dev/null
++++ b/src/Hosting/TestHost/src/AsyncStreamWrapper.cs
+@@ -0,0 +1,128 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.IO;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace Microsoft.AspNetCore.TestHost
++{
++    internal class AsyncStreamWrapper : Stream
++    {
++        private Stream _inner;
++        private Func<bool> _allowSynchronousIO;
++
++        internal AsyncStreamWrapper(Stream inner, Func<bool> allowSynchronousIO)
++        {
++            _inner = inner;
++            _allowSynchronousIO = allowSynchronousIO;
++        }
++
++        public override bool CanRead => _inner.CanRead;
++
++        public override bool CanSeek => _inner.CanSeek;
++
++        public override bool CanWrite => _inner.CanWrite;
++
++        public override long Length => _inner.Length;
++
++        public override long Position { get => _inner.Position; set => _inner.Position = value; }
++
++        public override void Flush()
++        {
++            // Not blocking Flush because things like StreamWriter.Dispose() always call it.
++            _inner.Flush();
++        }
++
++        public override Task FlushAsync(CancellationToken cancellationToken)
++        {
++            return _inner.FlushAsync(cancellationToken);
++        }
++
++        public override int Read(byte[] buffer, int offset, int count)
++        {
++            if (!_allowSynchronousIO())
++            {
++                throw new InvalidOperationException("Synchronous operations are disallowed. Call ReadAsync or set AllowSynchronousIO to true.");
++            }
++
++            return _inner.Read(buffer, offset, count);
++        }
++
++        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
++        {
++            return _inner.ReadAsync(buffer, offset, count, cancellationToken);
++        }
++
++        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
++        {
++            return _inner.ReadAsync(buffer, cancellationToken);
++        }
++
++        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
++        {
++            return _inner.BeginRead(buffer, offset, count, callback, state);
++        }
++
++        public override int EndRead(IAsyncResult asyncResult)
++        {
++            return _inner.EndRead(asyncResult);
++        }
++
++        public override long Seek(long offset, SeekOrigin origin)
++        {
++            return _inner.Seek(offset, origin);
++        }
++
++        public override void SetLength(long value)
++        {
++            _inner.SetLength(value);
++        }
++
++        public override void Write(byte[] buffer, int offset, int count)
++        {
++            if (!_allowSynchronousIO())
++            {
++                throw new InvalidOperationException("Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true.");
++            }
++
++            _inner.Write(buffer, offset, count);
++        }
++
++        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
++        {
++            return _inner.BeginWrite(buffer, offset, count, callback, state);
++        }
++
++        public override void EndWrite(IAsyncResult asyncResult)
++        {
++            _inner.EndWrite(asyncResult);
++        }
++
++        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
++        {
++            return _inner.WriteAsync(buffer, offset, count, cancellationToken);
++        }
++
++        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
++        {
++            return _inner.WriteAsync(buffer, cancellationToken);
++        }
++
++        public override void Close()
++        {
++            _inner.Close();
++        }
++
++        protected override void Dispose(bool disposing)
++        {
++            _inner.Dispose();
++        }
++
++        public override ValueTask DisposeAsync()
++        {
++            return _inner.DisposeAsync();
++        }
++    }
++}
+diff --git a/src/Hosting/TestHost/src/TestServer.cs b/src/Hosting/TestHost/src/TestServer.cs
+index 6c45c0b21b..c5668185ac 100644
+--- a/src/Hosting/TestHost/src/TestServer.cs
++++ b/src/Hosting/TestHost/src/TestServer.cs
+@@ -77,6 +77,14 @@ namespace Microsoft.AspNetCore.TestHost
+ 
+         public IFeatureCollection Features { get; }
+ 
++        /// <summary>
++        /// Gets or sets a value that controls whether synchronous IO is allowed for the <see cref="HttpContext.Request"/> and <see cref="HttpContext.Response"/>
++        /// </summary>
++        /// <remarks>
++        /// Defaults to true.
++        /// </remarks>
++        public bool AllowSynchronousIO { get; set; } = true;
++
+         private IHttpApplication<Context> Application
+         {
+             get => _application ?? throw new InvalidOperationException("The server has not been started or no web application was configured.");
+@@ -85,7 +93,7 @@ namespace Microsoft.AspNetCore.TestHost
+         public HttpMessageHandler CreateHandler()
+         {
+             var pathBase = BaseAddress == null ? PathString.Empty : PathString.FromUriComponent(BaseAddress);
+-            return new ClientHandler(pathBase, Application);
++            return new ClientHandler(pathBase, Application) { AllowSynchronousIO = AllowSynchronousIO };
+         }
+ 
+         public HttpClient CreateClient()
+@@ -96,7 +104,7 @@ namespace Microsoft.AspNetCore.TestHost
+         public WebSocketClient CreateWebSocketClient()
+         {
+             var pathBase = BaseAddress == null ? PathString.Empty : PathString.FromUriComponent(BaseAddress);
+-            return new WebSocketClient(pathBase, Application);
++            return new WebSocketClient(pathBase, Application) { AllowSynchronousIO = AllowSynchronousIO };
+         }
+ 
+         /// <summary>
+@@ -120,7 +128,7 @@ namespace Microsoft.AspNetCore.TestHost
+                 throw new ArgumentNullException(nameof(configureContext));
+             }
+ 
+-            var builder = new HttpContextBuilder(Application);
++            var builder = new HttpContextBuilder(Application, AllowSynchronousIO);
+             builder.Configure(context =>
+             {
+                 var request = context.Request;
+@@ -138,6 +146,7 @@ namespace Microsoft.AspNetCore.TestHost
+                 request.PathBase = pathBase;
+             });
+             builder.Configure(configureContext);
++            // TODO: Wrap the request body if any?
+             return await builder.SendAsync(cancellationToken).ConfigureAwait(false);
+         }
+ 
