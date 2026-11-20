@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseAppHost>false</UseAppHost>
+    <RollForward>Disable</RollForward>
+    <RuntimeFrameworkVersion>12.0.0-alpha.1.26557.102</RuntimeFrameworkVersion>
+    <GraphOutput>$(MSBuildThisFileDirectory)..\original\artifacts\bin\Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test\Debug\net12.0</GraphOutput>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="contexts\**\*.cs" />
+    <Reference Include="$(GraphOutput)\*.dll" Private="false" />
+    <ProjectReference Include="contexts\portable\F139.PortableContext.csproj" />
+    <ProjectReference Include="contexts\none\F139.NoPdbContext.csproj" />
+  </ItemGroup>
+</Project>
