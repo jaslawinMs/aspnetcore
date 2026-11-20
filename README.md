@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 202/358 finalized**: 78 drafts, 29 no-gain, 70 rejected and 25 duplicates;
-156 findings remain unfinished.
+**Progress: 205/358 finalized**: 78 drafts, 29 no-gain, 73 rejected and 25 duplicates;
+153 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F187 | **Rejected:** nonshipping missing-result test helper; material fixture workload unestablished. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
+| F188 | **Rejected:** nonshipping missing-result test helper; material fixture workload unestablished. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
+| F189 | **Rejected:** actual owning fixture excludes nested controller; target allocation not reached. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
 | F180 | **Rejected:** non-production diagnostic sample; native request/environment/logging contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#201](https://github.com/jaslawinMs/aspnetcore/issues/201) | [Sample evidence](F180-F204/README.md), [verified publication](F180-F204/publication.json) |
 | F204 | **Rejected:** non-production diagnostic sample; native request/environment/logging contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#201](https://github.com/jaslawinMs/aspnetcore/issues/201) | [Sample evidence](F180-F204/README.md), [verified publication](F180-F204/publication.json) |
 | F194 | **Rejected:** nonshipping manifest `TestEntry` materialization; real producer/snapshot/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#200](https://github.com/jaslawinMs/aspnetcore/issues/200) | [Manifest helper evidence](F194-F195/README.md), [verified publication](F194-F195/publication.json) |
