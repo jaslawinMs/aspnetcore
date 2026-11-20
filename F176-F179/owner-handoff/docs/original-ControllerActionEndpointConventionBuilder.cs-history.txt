@@ -1,0 +1,143 @@
+commit c283d05ce0e49941c7df3eeea6143ca58e2d0b3b
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: 2024-06-15T22:58:52+02:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2024-06-15T22:58:52+02:00
+
+    [Blazor] Consume fingerprinted assets in MVC and Blazor (#56045)
+    
+    * Adds support for using fingerprinted assets in Blazor and MVC.
+    * Fingerprinted assets are registered as additional endpoints to the system.
+    * Static Assets exposes the descriptors so that they can be consumed and used by Blazor and MVC/Razor pages.
+    * Helper methods `WithStaticAssets` map specific MapControllers/RazorPages/RazorComponents invocations to a given `MapStaticAsset` invocation and expose a `ResourceAssetCollection` as endpoint metadata that can be later on used by the system to change the way markup is rendered.
+    * There's built-in support in all MVC Tag helpers (URLTagHelper, ImageTagHelper, LinkTagHelper, ScriptTagHelper).
+    * There's support for JavaScript import maps in the ScriptTagHelper to render a JavaScript import map that maps JS modules to their fingerprinted URLs.
+    * `ComponentBase` exposes an `Assets` property that lets Blazor components consume the fingerprinted names of a given asset.
+    * When webassembly is in use, an additional couple of endpoints is registered exposing the mapping to webassembly as an additional JS Module that webassembly apps can use to consume the mapping from client code.
+    * Caching is disabled during development for all assets to avoid issues and can be re-enabled through a configuration property.
+    * Similarly, integrity is not exposed during development to avoid issues where users change a file on the fly while the app is running.
+
+diff --git a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+index d231cac8c3..8a59a8b120 100644
+--- a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
++++ b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+@@ -23,6 +23,8 @@ public sealed class ControllerActionEndpointConventionBuilder : IEndpointConvent
+         _finallyConventions = finallyConventions;
+     }
+ 
++    internal Dictionary<string, object> Items { get; set; } = [];
++
+     /// <summary>
+     /// Adds the specified convention to the builder. Conventions are used to customize <see cref="EndpointBuilder"/> instances.
+     /// </summary>
+
+commit e8a7ee5612b4e94dbdbb85f9c28a50b58ed45e8c
+Author:     github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+AuthorDate: 2024-03-12T20:44:18+08:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2024-03-12T20:44:18+08:00
+
+    Update .NET SDK to 9.0.100-preview.3.24161.2 (#54483)
+    
+    Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+    Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+    Co-authored-by: James Newton-King <james@newtonking.com>
+
+diff --git a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+index 58fbea9616..d231cac8c3 100644
+--- a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
++++ b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+@@ -42,7 +42,7 @@ public sealed class ControllerActionEndpointConventionBuilder : IEndpointConvent
+     /// <inheritdoc />
+     public void Finally(Action<EndpointBuilder> finalConvention)
+     {
+-        ArgumentNullException.ThrowIfNull(nameof(finalConvention));
++        ArgumentNullException.ThrowIfNull(finalConvention);
+ 
+         lock (_lock)
+         {
+
+commit c096dbbbe652f03be926502d790eb499682eea13
+Author:     James Newton-King <james@newtonking.com>
+AuthorDate: 2023-01-10T08:52:44+08:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2023-01-10T08:52:44+08:00
+
+    Enable throw helper analyzers (#45954)
+
+diff --git a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+index 20e4a9818e..58fbea9616 100644
+--- a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
++++ b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+@@ -29,10 +29,7 @@ public sealed class ControllerActionEndpointConventionBuilder : IEndpointConvent
+     /// <param name="convention">The convention to add to the builder.</param>
+     public void Add(Action<EndpointBuilder> convention)
+     {
+-        if (convention == null)
+-        {
+-            throw new ArgumentNullException(nameof(convention));
+-        }
++        ArgumentNullException.ThrowIfNull(convention);
+ 
+         // The lock is shared with the data source. We want to lock here
+         // to avoid mutating this list while its read in the data source.
+
+commit 006d96f68140e57ae0e4f9ceade8a26a4ee4acd4
+Author:     Safia Abdalla <safia@microsoft.com>
+AuthorDate: 2022-08-18T17:07:30-05:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2022-08-18T15:07:30-07:00
+
+    [release/7.0-rc1] Add support for running final conventions during build (#43225)
+    
+    * Add support for running final conventions during build
+    
+    * Fix typo and use stack for backing store
+    
+    * Update application order and address feedback
+    
+    - Fix ordering of group and entry-specific conventions in parameter list
+    - Update to use FIFO ordering within finally conventions of the same level
+    - Add tests for WithOpenApi on group and endpoint
+    - Revert to using List instead of Stack for convention
+    - Fix ordering of outer and inner group in RouteGroups
+    
+    * Add new test
+    
+    * Update tests
+
+diff --git a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+index 1ad4fa09ad..20e4a9818e 100644
+--- a/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
++++ b/src/Mvc/Mvc.Core/src/Builder/ControllerActionEndpointConventionBuilder.cs
+@@ -14,11 +14,13 @@ public sealed class ControllerActionEndpointConventionBuilder : IEndpointConvent
+     // The lock is shared with the data source.
+     private readonly object _lock;
+     private readonly List<Action<EndpointBuilder>> _conventions;
++    private readonly List<Action<EndpointBuilder>> _finallyConventions;
+ 
+-    internal ControllerActionEndpointConventionBuilder(object @lock, List<Action<EndpointBuilder>> conventions)
++    internal ControllerActionEndpointConventionBuilder(object @lock, List<Action<EndpointBuilder>> conventions, List<Action<EndpointBuilder>> finallyConventions)
+     {
+         _lock = @lock;
+         _conventions = conventions;
++        _finallyConventions = finallyConventions;
+     }
+ 
+     /// <summary>
+@@ -39,4 +41,15 @@ public sealed class ControllerActionEndpointConventionBuilder : IEndpointConvent
+             _conventions.Add(convention);
+         }
+     }
++
++    /// <inheritdoc />
++    public void Finally(Action<EndpointBuilder> finalConvention)
++    {
++        ArgumentNullException.ThrowIfNull(nameof(finalConvention));
++
++        lock (_lock)
++        {
++            _finallyConventions.Add(finalConvention);
++        };
++    }
+ }

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "F176",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+      "line_start": 34,
+      "line_end": 36,
+      "project": "Microsoft.AspNetCore.Mvc.Core",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "MapControllers probes the endpoint-builder item dictionary twice when registering the route builder.",
+      "explanation": "The startup route-registration method checks ContainsKey and then writes the same key through the indexer on the missing path. This repeats hashing and bucket probing, but it occurs during endpoint configuration, so the occurrence is informational.",
+      "snippet": "if (!result.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    result.Items[EndpointRouteBuilderKey] = endpoints;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F177",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+      "line_start": 57,
+      "line_end": 59,
+      "project": "Microsoft.AspNetCore.Mvc.Core",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "MapDefaultControllerRoute double-probes the endpoint-builder item dictionary on registration.",
+      "explanation": "The startup route-registration method performs ContainsKey and a same-key indexer write for one logical add-if-missing operation. The structural match is retained, but its configuration-only path makes it informational.",
+      "snippet": "if (!dataSource.DefaultBuilder.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    dataSource.DefaultBuilder.Items[EndpointRouteBuilderKey] = endpoints;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F178",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+      "line_start": 106,
+      "line_end": 108,
+      "project": "Microsoft.AspNetCore.Mvc.Core",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "MapControllerRoute double-probes the endpoint-builder item dictionary on registration.",
+      "explanation": "The method checks ContainsKey and then writes the same key via the indexer on the missing path. Because route mapping is a startup/configuration operation, the otherwise direct repeated-probe match is classified informational.",
+      "snippet": "if (!dataSource.DefaultBuilder.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    dataSource.DefaultBuilder.Items[EndpointRouteBuilderKey] = endpoints;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F179",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Mvc/Mvc.Razor/src/Compilation/DefaultViewCompiler.cs",
+      "line_start": 60,
+      "line_end": 64,
+      "project": "Microsoft.AspNetCore.Mvc.Razor",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Compiled-view initialization probes the same dictionary key before TryAdd.",
+      "explanation": "For each compiled view, the plain Dictionary first performs ContainsKey and then TryAdd with the same RelativePath, causing two hash-table probes for every newly retained view. This runs during compiler initialization, so it is classified as informational.",
+      "snippet": "if (!compiledViews.ContainsKey(compiledView.RelativePath))\n{\n    compiledViews.TryAdd(compiledView.RelativePath, Task.FromResult(compiledView));\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

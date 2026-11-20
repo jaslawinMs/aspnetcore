@@ -1,0 +1,6 @@
+{
+  "phase": "Read-only offline audit",
+  "outcome": "Failed closed on exact raw native UTC identity absent from closing collector index",
+  "diagnosis": "PowerShell ConvertFrom-Json implicitly converted six-fraction UTC strings to DateTime; [string] parameter binding then formatted them to culture-specific seconds. Native Run-Native receipts themselves preserve exact UTC strings.",
+  "repair": "Preserve prior collector and all outputs; use ConvertFrom-Json -DateKind String, rerun only read-only closing/reobservation, keep strict offline identity equality. Historical HOLD ack remains immutable and gets an explicit exact-identity derivation from its original recorded PID absence/live-creation observations and original raw receipt hashes, not a retroactive process observation."
+}

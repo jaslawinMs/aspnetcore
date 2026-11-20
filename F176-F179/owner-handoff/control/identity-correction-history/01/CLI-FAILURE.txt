@@ -1,0 +1,39 @@
+Retained tool-console transcript, not independently redirected raw streams.
+Command: node Correct-Hold-Identity.cjs
+Tool session: F176-correct-historical-hold-identities
+Actual exit: 1. No output correction file was written.
+No separately recorded native PID/creation receipt exists for this failed offline helper.
+
+node:internal/assert/utils:146
+  throw error;
+  ^
+
+AssertionError [ERR_ASSERTION]: Unambiguous original raw UTC identity for every historical recorded PID observation
+
+2 !== 1
+
+    at Object.<anonymous> (Correct-Hold-Identity.cjs:28:10)
+    at Module._compile (node:internal/modules/cjs/loader:1968:14)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0
+
+Diagnosis: actual PID 42972 was observed twice by original-core-build:
+2026-11-20T12:30:20.184810Z and 2026-11-20T12:28:33.368504Z.
+Historical expected timestamp for the first observation was "11/20/2026 12:30:20".
+Repair: require the retained expected UTC second as well as PID and full label set.
+Do not collapse reuse or guess missing fractional seconds; select the one exact raw
+identity from the unchanged, originally hashed receipt. All 591 historical records
+must map uniquely and every exact raw identity must be accounted for.

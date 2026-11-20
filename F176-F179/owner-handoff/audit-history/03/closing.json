@@ -1,0 +1,390 @@
+{
+  "observedAtUtc": "2026-11-20T13:18:44.6029043Z",
+  "upstreamRepository": {
+    "default_branch": "main",
+    "pushed_at": "2026-11-20T13:04:03Z",
+    "updated_at": "2026-11-20T07:05:12Z"
+  },
+  "lsRemote": "83d976704fa0f9aa4361327d1f9d929c93bd9256\trefs/heads/main",
+  "buildDefaultCommit": "adf2e9d22addd1461c6c25e8a8f411be28b81100",
+  "freshnessBoundary": "Normal whole source graph built/tested at the exact independently observed entry Default. This closing observation never relabels or retargets the built tree.",
+  "coordinatorHead": "24875ef5dabb55567870b39f6eb0002170435e2f",
+  "coordinatorBranch": "autoperf/F145-hoist-large-response-utf8-encoding",
+  "coordinatorTrackedStatus": [],
+  "coordinatorIndexBoundary": "Read-only Git with GIT_OPTIONAL_LOCKS=0. No initial all-file/index-byte inventory exists; none is claimed. Task made no coordinator/donor/source/config writes.",
+  "privateGraphs": [
+    {
+      "role": "original",
+      "checkout": "C:\\src\\ap-F176-o022",
+      "head": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "trackedStatus": [],
+      "alternatesExist": false,
+      "objectStore": "C:\\src\\ap-F176-o022\\.git\\objects",
+      "independentObjectStoreCreationProof": "graph-creation.json"
+    },
+    {
+      "role": "default",
+      "checkout": "C:\\src\\ap-F176-d022",
+      "head": "adf2e9d22addd1461c6c25e8a8f411be28b81100",
+      "trackedStatus": [],
+      "alternatesExist": false,
+      "objectStore": "C:\\src\\ap-F176-d022\\.git\\objects",
+      "independentObjectStoreCreationProof": "graph-creation.json"
+    }
+  ],
+  "donors": [
+    {
+      "path": "C:\\src\\ap-F173-o013",
+      "head": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "trackedStatus": []
+    },
+    {
+      "path": "C:\\src\\ap-F155-d010",
+      "head": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+      "trackedStatus": []
+    }
+  ],
+  "donorBoundary": "Final read-only tracked-source observations. SDK/runtime selected byte hashes are retained; no complete entry-vs-exit donor/distribution inventory or toolchain attestation is claimed.",
+  "candidates": [
+    {
+      "id": "F176",
+      "finding": {
+        "card_id": "dictionary-containskey-before-indexer",
+        "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+        "line_start": 34,
+        "line_end": 36,
+        "project": "Microsoft.AspNetCore.Mvc.Core",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "MapControllers probes the endpoint-builder item dictionary twice when registering the route builder.",
+        "explanation": "The startup route-registration method checks ContainsKey and then writes the same key through the indexer on the missing path. This repeats hashing and bucket probing, but it occurs during endpoint configuration, so the occurrence is informational.",
+        "snippet": "if (!result.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    result.Items[EndpointRouteBuilderKey] = endpoints;",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F177",
+      "finding": {
+        "card_id": "dictionary-containskey-before-indexer",
+        "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+        "line_start": 57,
+        "line_end": 59,
+        "project": "Microsoft.AspNetCore.Mvc.Core",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "MapDefaultControllerRoute double-probes the endpoint-builder item dictionary on registration.",
+        "explanation": "The startup route-registration method performs ContainsKey and a same-key indexer write for one logical add-if-missing operation. The structural match is retained, but its configuration-only path makes it informational.",
+        "snippet": "if (!dataSource.DefaultBuilder.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    dataSource.DefaultBuilder.Items[EndpointRouteBuilderKey] = endpoints;",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F178",
+      "finding": {
+        "card_id": "dictionary-containskey-before-indexer",
+        "file": "src/Mvc/Mvc.Core/src/Builder/ControllerEndpointRouteBuilderExtensions.cs",
+        "line_start": 106,
+        "line_end": 108,
+        "project": "Microsoft.AspNetCore.Mvc.Core",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "MapControllerRoute double-probes the endpoint-builder item dictionary on registration.",
+        "explanation": "The method checks ContainsKey and then writes the same key via the indexer on the missing path. Because route mapping is a startup/configuration operation, the otherwise direct repeated-probe match is classified informational.",
+        "snippet": "if (!dataSource.DefaultBuilder.Items.ContainsKey(EndpointRouteBuilderKey))\n{\n    dataSource.DefaultBuilder.Items[EndpointRouteBuilderKey] = endpoints;",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F179",
+      "finding": {
+        "card_id": "dictionary-containskey-before-indexer",
+        "file": "src/Mvc/Mvc.Razor/src/Compilation/DefaultViewCompiler.cs",
+        "line_start": 60,
+        "line_end": 64,
+        "project": "Microsoft.AspNetCore.Mvc.Razor",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "Compiled-view initialization probes the same dictionary key before TryAdd.",
+        "explanation": "For each compiled view, the plain Dictionary first performs ContainsKey and then TryAdd with the same RelativePath, causing two hash-table probes for every newly retained view. This runs during compiler initialization, so it is classified as informational.",
+        "snippet": "if (!compiledViews.ContainsKey(compiledView.RelativePath))\n{\n    compiledViews.TryAdd(compiledView.RelativePath, Task.FromResult(compiledView));\n}",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    }
+  ],
+  "policyObserved": {
+    "sha256": "2B81748CD9A7EC277CC47038D3DA9DE3663430D6AAC94ECCE7B1CB05EC0634E5",
+    "workersMayBuildOrTest": true,
+    "actualWorkerBuildHoldActive": false,
+    "mutation": false
+  },
+  "commands": [
+    {
+      "label": "closing-upstream-repository",
+      "executable": "gh",
+      "arguments": [
+        "api",
+        "repos/dotnet/aspnetcore",
+        "--jq",
+        "{default_branch,pushed_at,updated_at}"
+      ],
+      "processId": 46156,
+      "creationUtc": "2026-11-20T13:18:44.623672Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:45.3172548Z"
+    },
+    {
+      "label": "closing-ls-remote",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "ls-remote",
+        "https://github.com/dotnet/aspnetcore.git",
+        "refs/heads/main"
+      ],
+      "processId": 23956,
+      "creationUtc": "2026-11-20T13:18:45.326164Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:46.2769178Z"
+    },
+    {
+      "label": "closing-coordinator-head",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\aspnetcore",
+        "rev-parse",
+        "HEAD"
+      ],
+      "processId": 47044,
+      "creationUtc": "2026-11-20T13:18:46.279867Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:46.4034898Z"
+    },
+    {
+      "label": "closing-coordinator-branch",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\aspnetcore",
+        "branch",
+        "--show-current"
+      ],
+      "processId": 27216,
+      "creationUtc": "2026-11-20T13:18:46.406357Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:46.5254187Z"
+    },
+    {
+      "label": "closing-coordinator-status",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\aspnetcore",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "processId": 46836,
+      "creationUtc": "2026-11-20T13:18:46.528306Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:47.2097179Z"
+    },
+    {
+      "label": "closing-original-head",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F176-o022",
+        "rev-parse",
+        "HEAD"
+      ],
+      "processId": 16340,
+      "creationUtc": "2026-11-20T13:18:47.214919Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:47.3421223Z"
+    },
+    {
+      "label": "closing-original-status",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F176-o022",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "processId": 44744,
+      "creationUtc": "2026-11-20T13:18:47.347459Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:47.7895897Z"
+    },
+    {
+      "label": "closing-default-head",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F176-d022",
+        "rev-parse",
+        "HEAD"
+      ],
+      "processId": 43624,
+      "creationUtc": "2026-11-20T13:18:47.813557Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:47.9404222Z"
+    },
+    {
+      "label": "closing-default-status",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F176-d022",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "processId": 46780,
+      "creationUtc": "2026-11-20T13:18:47.943141Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:48.4330322Z"
+    },
+    {
+      "label": "closing-donor-ap-F173-o013-head",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F173-o013",
+        "rev-parse",
+        "HEAD"
+      ],
+      "processId": 36580,
+      "creationUtc": "2026-11-20T13:18:48.442993Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:48.5655754Z"
+    },
+    {
+      "label": "closing-donor-ap-F173-o013-status",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F173-o013",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "processId": 46128,
+      "creationUtc": "2026-11-20T13:18:48.568360Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:48.9133675Z"
+    },
+    {
+      "label": "closing-donor-ap-F155-d010-head",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F155-d010",
+        "rev-parse",
+        "HEAD"
+      ],
+      "processId": 36804,
+      "creationUtc": "2026-11-20T13:18:48.918445Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:49.0491327Z"
+    },
+    {
+      "label": "closing-donor-ap-F155-d010-status",
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\ap-F155-d010",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=no"
+      ],
+      "processId": 43312,
+      "creationUtc": "2026-11-20T13:18:49.051840Z",
+      "exitCode": 0,
+      "exited": true,
+      "bothStreamsDrained": true,
+      "completedAtUtc": "2026-11-20T13:18:49.6180512Z"
+    }
+  ]
+}
