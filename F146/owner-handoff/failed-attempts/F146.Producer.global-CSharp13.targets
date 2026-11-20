@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <Compile Include="$(MSBuildThisFileDirectory)F146ManagedProducerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)$(F146SourceRole)\F146SampleHandler.cs" />
+  </ItemGroup>
+  <Target Name="F146ValidateProducerRole"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <Error Condition="'$(F146SourceRole)' != 'Original' AND '$(F146SourceRole)' != 'ObservedDefault'"
+           Text="Only untuned Original/ObservedDefault characterization is prepared. No candidate execution is authorized." />
+    <Error Condition="'$(LangVersion)' != '13.0'"
+           Text="F146 artifact characterization requires explicit C# 13.0." />
+  </Target>
+</Project>

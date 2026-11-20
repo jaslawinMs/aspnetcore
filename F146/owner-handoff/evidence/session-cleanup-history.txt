@@ -1,0 +1,28 @@
+commit 03c314bbe77aa36fffe1c97e56edd8e548d3017c
+Author:     Brennan <brecon@microsoft.com>
+AuthorDate: Tue Oct 13 10:21:49 2026 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Oct 13 10:21:49 2026 -0700
+
+    Fix WebTransport session cleanup (#69708)
+
+diff --git a/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs b/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
+index 04d93e2dd5..ffff669043 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/WebTransport/WebTransportSession.cs
+@@ -86,6 +86,7 @@ internal sealed class WebTransportSession : IWebTransportSession
+         }
+ 
+         _pendingStreams.Writer.Complete();
++        _connection.RemoveWebTransportSession(this);
+     }
+ 
+     internal void Abort(ConnectionAbortedException exception, Http3ErrorCode error)
+@@ -117,6 +118,7 @@ internal sealed class WebTransportSession : IWebTransportSession
+         }
+ 
+         _pendingStreams.Writer.Complete();
++        _connection.RemoveWebTransportSession(this);
+     }
+ 
+     public async ValueTask<ConnectionContext?> OpenUnidirectionalStreamAsync(CancellationToken cancellationToken)
