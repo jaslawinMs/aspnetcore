@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 166/358 finalized**: 78 drafts, 28 no-gain, 35 rejected and 25 duplicates;
-192 findings remain unfinished.
+**Progress: 171/358 finalized**: 78 drafts, 28 no-gain, 40 rejected and 25 duplicates;
+187 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,11 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F155 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
+| F156 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml_WithNoErrors uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
+| F157 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml_WithEmptyErrorsElement uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
+| F158 | Not admitted: WriteXml_WritesValidXml uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
+| F159 | Not admitted: WriteXml_WithNoValidationErrors uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
 | F148 | Not admitted: bidirectional 4 KB scratch is reused per handler; material stream-churn/pooling benefit and equivalent rental lifetime unestablished. [Tracking jaslawinMs/aspnetcore#188](https://github.com/jaslawinMs/aspnetcore/issues/188) | [Compiled producer/lifetime assessment](F148/README.md), [verified publication](F148/publication.json) |
 | F147 | Measured inconclusive: observed 32.72% fewer allocated bytes; unchanged-control elapsed drift 13.67% failed frozen gate. Closed1of3, no default timing/PR. [Tracking jaslawinMs/aspnetcore#187](https://github.com/jaslawinMs/aspnetcore/issues/187) | [Paired study](F147-F149/README.md), [verified publication](F147-F149/publication.json) |
 | F149 | Measured inconclusive: observed 25.05% fewer allocated bytes; unchanged-control elapsed drift 29.94% failed frozen gate. Closed1of3, no default timing/PR. [Tracking jaslawinMs/aspnetcore#187](https://github.com/jaslawinMs/aspnetcore/issues/187) | [Paired study](F147-F149/README.md), [verified publication](F147-F149/publication.json) |
