@@ -1,0 +1,38 @@
+{
+  "boundary": "These initial tool-level control observations preceded Record.ps1. Tool shell IDs are NOT native PIDs. No native build/test had started. Their actual native root/child PID provenance was not captured; this limitation is not substituted with later receipts.",
+  "observations": [
+    {
+      "toolShellId": "2936",
+      "toolExitCode": 0,
+      "nativePid": null,
+      "observedAt": "2026-11-20T02:23:16.8274874-08:00",
+      "cwd": "C:\\src\\aspnetcore",
+      "commands": [
+        "Get-Date -Format o",
+        "git --no-pager status --short",
+        "git branch --show-current",
+        "git rev-parse HEAD",
+        "gh api repos/dotnet/aspnetcore/branches/main --jq '.commit.sha'",
+        "git ls-remote https://github.com/dotnet/aspnetcore.git refs/heads/main"
+      ],
+      "actualCoordinatorBranch": "autoperf/F145-hoist-large-response-utf8-encoding",
+      "actualCoordinatorHead": "24875ef5dabb55567870b39f6eb0002170435e2f",
+      "actualGhAndGitMain": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+      "trackedChanges": []
+    },
+    {
+      "toolShellId": "2944",
+      "toolExitCode": 128,
+      "nativePid": null,
+      "cwd": "C:\\src\\aspnetcore",
+      "purpose": "Create new private root; inspect installed SDK/runtime directories; test local object availability before private fetch.",
+      "nativeCommands": [
+        "git cat-file -t 37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "git cat-file -t 90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d"
+      ],
+      "stdout": "commit\n",
+      "stderr": "fatal: git cat-file: could not get object info\n",
+      "meaning": "Original object present, observed actual main object absent locally. Subsequent recorded private fetch obtained the observed commit; coordinator branch was not changed."
+    }
+  ]
+}

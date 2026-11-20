@@ -1,0 +1,95 @@
+{
+  "state": "PENDING",
+  "findingIds": ["F163", "F164", "F165"],
+  "scope": "Unchanged producer/correctness preparation; no performance finding outcome.",
+  "F163": {
+    "behaviorOwner": "MemberAssignment enumeration consumed by ComponentProperties.WritersForType.",
+    "productionProducer": "ComponentBase.SetParametersAsync -> ParameterView.SetParameterProperties -> ComponentProperties.SetProperties -> per-Type cache miss -> WritersForType -> GetCandidateBindableProperties -> GetPropertiesIncludingInherited. DefaultComponentPropertyActivator and persistent-services metadata are additional source-visible consumers, not an exercised workload.",
+    "metadataContracts": [
+      "MemberAssignment's collision dictionary uses exact StringComparer.Ordinal, unlike the parameter-writer dictionary's StringComparer.OrdinalIgnoreCase.",
+      "Derived-to-base traversal uses DeclaredOnly properties. Getter GetBaseDefinition identity suppresses an override; distinct shadowed properties are retained, first as PropertyInfo then a List<PropertyInfo>.",
+      "Existing tests call real public parameter assignment, not MemberAssignment via reflection. Native assertions establish assigned values and exact duplicate-parameter exception text for selected cases.",
+      "Cache is ConcurrentDictionary<Type,WritersForType>. The metadata enumerator is not run for every cached assignment or assumed to run once per render.",
+      "Source has existing HotReloadManager MetadataUpdateHandler UpdateApplication -> OnDeltaApplied -> ComponentProperties.ClearCache wiring when supported. No live delta, cache-refresh behavior, retained-renderer refresh or Hot Reload defect is claimed."
+    ],
+    "nativeFactsPerRole": [
+      "IncomingParameterMatchesAnnotatedPrivateProperty_SetsValue",
+      "IncomingParameterMatchesDeclaredParameterCaseInsensitively_SetsValue",
+      "IncomingParameterMatchesInheritedDeclaredParameter_SetsValue",
+      "IncomingParameterMatchesOverriddenParameter_ThatDoesNotHaveAttribute",
+      "DeclaredParametersVaryOnlyByCase_Throws",
+      "DeclaredParameterClashesWithInheritedParameter_Throws"
+    ],
+    "finalObservable": "Concrete assigned component-property values/object identity or exact existing exception message, not merely metadata enumeration.",
+    "unverified": ["Actual runtime metadata delta application", "Three-level collision-list growth/override combinations", "Native AOT, browser and WebAssembly execution", "Cache hit/miss frequency or performance effect"]
+  },
+  "F164": {
+    "behaviorOwner": "ResourceAssetCollection constructor, mapping indexer, enumeration and content-specific URL membership.",
+    "productionProducer": "MapStaticAssets manifest descriptors -> ResourceCollectionResolver skips selector variants, copies selected label/integrity/preload properties, sorts resources by URL with StringComparison.Ordinal -> new ResourceAssetCollection -> ResourceCollectionConvention attaches endpoint metadata.",
+    "nativeFactsPerRole": [
+      "CanCreateResourceCollection",
+      "CanResolveFingerprintedResources",
+      "ResolvingNoFingerprintedResourcesReturnsSameUrl",
+      "ResolvingNonExistentResourceReturnsSameUrl",
+      "CanDetermineContentSpecificUrls",
+      "Nine existing WithStaticAssets endpoint-convention Facts with real manifest/default/group registration."
+    ],
+    "supplementalChecksPerRole": [
+      "First case-insensitive duplicate label aborts construction before a later collision: exact diagnostic The static asset 'app.JS' is already mapped to first.hash.js.",
+      "Repeated identical label within one resource: exact diagnostic The static asset 'same.js' is already mapped to same.hash.js.",
+      "Collection enumeration preserves z.css,a.hash.js input order; null resource properties accepted."
+    ],
+    "sourceContracts": [
+      "Property name matching and staging label mappings/content-specific set use OrdinalIgnoreCase.",
+      "Diagnostic interpolates the currently encountered property.Value and the previously recorded ResourceAsset.Url.",
+      "_resources retains the supplied IReadOnlyList; constructor itself does not sort or clone it.",
+      "Frozen collections are materialized by the existing ToFrozenDictionary/ToFrozenSet calls without changing source. Mixed-case final frozen lookup behavior is not separately asserted by these cases."
+    ],
+    "finalObservable": "Actual resolved URL/content-specific booleans/list entries, endpoint resource metadata, or exact constructor exception message.",
+    "unverified": ["Duplicate labels supplied through a real manifest", "Multi-resource resolver sort at runtime", "All casing/culture combinations for final frozen lookups", "Browser asset loading or initialization frequency"]
+  },
+  "F165": {
+    "behaviorOwner": "ImportMapDefinition.Combine and its serialized public map.",
+    "productionProducer": "RazorComponentEndpointDataSource lazily creates/refreshes endpoints. ResourceCollectionConvention combines FromResourceCollection output and optional resource-collection endpoint import map for interactive WebAssembly/Auto, attaching the result as endpoint metadata. ImportMap consumes explicit definition or endpoint metadata and emits script/importmap render-tree markup.",
+    "criticalReachabilityBoundary": "Both source-visible internal convention inputs have null Scopes. That internal caller does not establish reachability of the retained scoped-entry collision branch. Existing CanCombine_ImportMaps and supplemental three-map case reach that branch through the real public Combine API; no repeated application workload is invented.",
+    "nativeFactsPerRole": [
+      "Five ImportMapDefinitionTest Facts, including exact entire JSON assertion for two-map scope/import/integrity collisions and ordering.",
+      "Four ImportMapTest Facts exercising actual managed rendering, explicit/HttpContext metadata selection, changed-map rerender and unchanged-map behavior. These are render-tree, not browser DOM, assertions."
+    ],
+    "supplementalChecksPerRole": [
+      "Zero sources and valid null sections serialize as {}.",
+      "Empty collections remain present as empty imports/scopes/integrity sections in that order.",
+      "Three scoped maps preserve x,X,y,z insertion ordering, keep case-distinct keys, take the last x value, and leave the first input's actual dictionary unchanged.",
+      "Null source array and null entry throw NullReferenceException without a custom diagnostic; this records unchanged invalid-input behavior, not a new supported-input promise."
+    ],
+    "sourceContracts": [
+      "Imports, outer scopes, inner scope keys and integrity use default string dictionary equality, not the resource label's OrdinalIgnoreCase staging comparer.",
+      "Entries are applied in source order: later values replace earlier values without moving existing keys; absent keys append.",
+      "Existing scope dictionaries are owned Dictionary<string,string> instances created by Combine. Constructor clones caller dictionaries.",
+      "ToJson caches the JSON string. Exact native output is asserted by existing tests; no diagnostic is emitted for valid merge collisions."
+    ],
+    "unverified": ["Browser import-map application/module loading", "A framework producer of colliding nonempty scoped maps", "Null scope values supplied contrary to annotations", "Production call frequency or performance benefit of any edit"]
+  },
+  "validation": {
+    "nativeDistinctMethodsPerRole": 29,
+    "nativeExecutedPassesAcrossRoles": 58,
+    "nativeFailedOrSkippedExecutedCases": 0,
+    "nativeInitialDefaultRuntimeAbortCases": 0,
+    "supplementalCompositeChecksPerRole": 7,
+    "supplementalExecutedPassesAcrossRoles": 14,
+    "successfulCommonCSharpCompilations": 1,
+    "permanentTestsAdded": false,
+    "browserRequiredForTheseBoundedClaims": false,
+    "scopeOfSourceReceipts": "Source/assertion ownership descriptions are saved receipts, not runtime value dumps or proof of unexecuted producer paths."
+  },
+  "environmentLimitations": [
+    "Shared Windows host; no dedicated-idleness claim.",
+    "After observed JS-asset failure BuildNodeJS=false; after observed static-web-assets manifest failure StaticWebAssetsEnabled=false. UseIisNativeAssets=false follows Components instructions. Those packaging/native surfaces are excluded.",
+    "Initial default VSTest aborted for missing exact runtime69. Exact public runtime69 then staged privately from the actual ref-package public feed. No runtime68 override, machine-wide installation or copied Original output graph.",
+    "Actual Python launch failed; Node standard-library parser used instead. First inline Node parser command had a PowerShell quoting syntax error; saved-file parser passed. All attempts retained.",
+    "Initial descendant receipt comparison used exact timestamp strings; later recorder compares creation identities within one millisecond, and closing snapshot revisits all observed descendants. No exhaustive historical process census.",
+    "Initial tool-level control probes preceded the recorder and lack actual native PID capture; pre-recorder-attempts.json keeps the available command/output facts. All native build/test attempts were recorded.",
+    "Recorded root startUtc/exitUtc are launcher timestamps surrounding Process.Start and completed waits/streams, not OS event timestamps. Hook processStartUtc and CIM child creationDate are actual observed process-start identities.",
+    "Initial final-closing snapshot encountered a process-exit/start-time-read race after the copied preview audit passed. Failure and original script retained. Narrow repair captures start time once, rechecks a vanished PID, and refuses completion if an unreadable-identity PID remains present."
+  ]
+}
