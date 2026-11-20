@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 179/358 finalized**: 78 drafts, 28 no-gain, 48 rejected and 25 duplicates;
-179 findings remain unfinished.
+**Progress: 181/358 finalized**: 78 drafts, 28 no-gain, 50 rejected and 25 duplicates;
+177 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F169 | Not admitted: private test-helper one-probe cleanup; existing native tests never take the present-key increment branch. [Tracking jaslawinMs/aspnetcore#193](https://github.com/jaslawinMs/aspnetcore/issues/193) | [Real conditional-pipeline study](F169-F170/README.md), [verified publication](F169-F170/publication.json) |
+| F170 | Not admitted: private test-helper one-probe cleanup; eight source-derived assertion-reader calls, no material suite benefit established. [Tracking jaslawinMs/aspnetcore#193](https://github.com/jaslawinMs/aspnetcore/issues/193) | [Real conditional-pipeline study](F169-F170/README.md), [verified publication](F169-F170/publication.json) |
 | F160 | Not admitted: already consumes TryGetValue result for first-candidate diagnostics. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
 | F161 | Not admitted: membership-only dictionary admits a plausible set simplification, but material compiler benefit is unestablished. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
 | F162 | Not admitted: membership-only dictionary admits a plausible set simplification, but material compiler benefit is unestablished. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
