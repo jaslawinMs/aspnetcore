@@ -1,0 +1,31 @@
+{
+  "id": "051-preseal-metadata-and-rows",
+  "executable": "C:\\Program Files\\Microsoft SDKs\\Azure\\CLI2\\python.exe",
+  "arguments": [
+    "-c",
+    "import ast,collections,json,pathlib,sys,xml.etree.ElementTree as ET\np=pathlib.Path.cwd()\nsys.path.insert(0,str(p))\nfrom audit_capsule import pe_metadata,pdb_metadata\nfor name in (\"audit_capsule.py\",\"Collect-Facts.py\",\"Seal-Facts.py\"):\n    ast.parse((p/name).read_text())\nreport={}\nfor role in (\"baseline\",\"default\"):\n    directory=p/role/\"artifacts\"/\"bin\"/\"Microsoft.AspNetCore.OpenApi.Tests\"/\"Debug\"/\"net12.0\"\n    mvid,cv=pe_metadata(directory/\"Microsoft.AspNetCore.OpenApi.dll\")\n    ident,docs=pdb_metadata(directory/\"Microsoft.AspNetCore.OpenApi.pdb\")\n    assert any((e[\"guid\"],e[\"stamp\"])==ident for e in cv)\n    rows=json.loads((p/\"results\"/f\"{role}-producer\"/\"assertions.json\").read_text())\n    assert len(rows)==29 and all(row[\"pass\"] for row in rows)\n    assert sum(row[\"name\"]==\"isolated-public-metadata-multiple-control\" for row in rows)==1\n    xml=ET.parse(p/\"results\"/f\"{role}-existing\"/f\"{role}.trx\")\n    outcomes=dict(collections.Counter(row.attrib[\"outcome\"] for row in xml.getroot().iter(\"{http://microsoft.com/schemas/VisualStudio/TeamTest/2010}UnitTestResult\")))\n    assert outcomes=={\"Passed\":105,\"NotExecuted\":2}\n    report[role]={\"mvid\":mvid,\"portablePdbDocuments\":len(docs),\"characterizationAssertions\":len(rows),\"isolatedGuardControls\":1,\"existingRows\":outcomes}\nsource=json.loads((p/\"handoff\"/\"source-catalog.json\").read_text())\nassert len(source)==66 and all(row[\"normalizedWorkingBytesMatchGitBlob\"] for row in source)\nprint(json.dumps({\"pass\":True,\"roleChecks\":report,\"selectedGitLfRows\":len(source),\"artifactPythonSyntax\":\"passed\"},indent=2))"
+  ],
+  "cwd": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F138-009",
+  "environment": {
+    "DOTNET_ROOT": null,
+    "DOTNET_ROOT(x86)": null,
+    "DOTNET_ROLL_FORWARD": null,
+    "DOTNET_ROLL_FORWARD_TO_PRERELEASE": null,
+    "DOTNET_MULTILEVEL_LOOKUP": null,
+    "DOTNET_GENERATE_ASPNET_CERTIFICATE": null,
+    "DOTNET_ADD_GLOBAL_TOOLS_TO_PATH": null,
+    "MSBUILDDISABLENODEREUSE": null,
+    "DOTNET_HOST_TRACE": null,
+    "DOTNET_HOST_TRACEFILE": null,
+    "COREHOST_TRACE": null,
+    "COREHOST_TRACEFILE": null,
+    "NUGET_PACKAGES": "C:\\.tools\\.nuget\\packages\\",
+    "PATH": "C:\\Program Files\\PowerShell\\7;C:\\Program Files\\Microsoft SDKs\\Azure\\CLI2\\wbin;C:\\.Tools\\agency\\CurrentVersion;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program Files\\Azure Dev CLI;C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\Microsoft VS Code\\bin;C:\\.tools\\dotnet;C:\\.tools\\.npm-global;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files (x86)\\Microsoft SQL Server\\160\\DTS\\Binn\\;C:\\Users\\vmadmin\\AppData\\Local\\Microsoft\\WindowsApps;c:\\nvm;C:\\Program Files\\nodejs;C:\\ES.DevProd\\SpringBoard\\SBCli\\SpringBoardCli;C:\\Program Files\\GVFS;C:\\ES.DevProd\\VMSetupScripts;C:\\ProgramData\\global-npm;C:\\Windows\\system32\\config\\systemprofile\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Microsoft Dev Box Agent\\Scripts;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\;C:\\Program Files\\Microsoft VS Code\\bin\\copilot-shim;C:\\Program Files\\nodejs\\;C:\\Program Files\\PowerShell\\7\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\GitHub CLI\\;C:\\Users\\jaslawin\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\jaslawin\\.dotnet\\tools;C:\\Users\\jaslawin\\AppData\\Local\\Microsoft\\WinGet\\Links;;C:\\Users\\jaslawin\\AppData\\Local\\copilot\\pkg\\win32-x64\\1.0.111\\ripgrep\\bin\\win32-x64"
+  },
+  "wrapperPid": 26944,
+  "startedUtc": "2026-11-20T08:59:22.9026325Z",
+  "pid": 30836,
+  "exitCode": 0,
+  "terminal": true,
+  "finishedUtc": "2026-11-20T08:59:23.1483727Z"
+}
