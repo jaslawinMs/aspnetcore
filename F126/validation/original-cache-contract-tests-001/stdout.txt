@@ -1,0 +1,43 @@
+Enabled the .NET Core environment. Execute 'deactivate' to exit.
+dotnet = C:\src\aspnetcore\.dotnet\dotnet.exe
+Test run for C:\src\aspnetcore\artifacts\bin\AuthSamples.FunctionalTests\Release\net12.0\AuthSamples.FunctionalTests.dll (.NETCoreApp,Version=v12.0)
+A total of 1 test files matched the specified pattern.
+  Failed AuthSamples.FunctionalTests.CustomPolicyProviderTests.MinimumAgePolicyIsCachedBetweenRequests(policyName: "MinimumAge10") [152 ms]
+  Error Message:
+   Moq.MockException : 
+Expected invocation on the mock once, but was 2 times: p => p.GetPolicyAsync("MinimumAge10")
+
+Performed invocations:
+
+   Mock<IAuthorizationPolicyProvider:1> (p):
+
+      IAuthorizationPolicyProvider.AllowsCachingPolicies
+      IAuthorizationPolicyProvider.GetPolicyAsync("MinimumAge10")
+      IAuthorizationPolicyProvider.GetPolicyAsync("MinimumAge10")
+
+  Stack Trace:
+     at Moq.Mock.Verify(Mock mock, LambdaExpression expression, Times times, String failMessage) in /_/src/Moq/Mock.cs:line 332
+   at Moq.Mock`1.Verify[TResult](Expression`1 expression, Func`1 times) in /_/src/Moq/Mock`1.cs:line 840
+   at AuthSamples.FunctionalTests.CustomPolicyProviderTests.MinimumAgePolicyIsCachedBetweenRequests(String policyName) in C:\src\aspnetcore\src\Security\test\AuthSamples.FunctionalTests\CustomPolicyProviderTests.cs:line 158
+--- End of stack trace from previous location ---
+  Failed AuthSamples.FunctionalTests.CustomPolicyProviderTests.MinimumAgePolicyIsCachedBetweenRequests(policyName: "MinimumAge50") [27 ms]
+  Error Message:
+   Moq.MockException : 
+Expected invocation on the mock once, but was 2 times: p => p.GetPolicyAsync("MinimumAge50")
+
+Performed invocations:
+
+   Mock<IAuthorizationPolicyProvider:2> (p):
+
+      IAuthorizationPolicyProvider.AllowsCachingPolicies
+      IAuthorizationPolicyProvider.GetPolicyAsync("MinimumAge50")
+      IAuthorizationPolicyProvider.GetPolicyAsync("MinimumAge50")
+
+  Stack Trace:
+     at Moq.Mock.Verify(Mock mock, LambdaExpression expression, Times times, String failMessage) in /_/src/Moq/Mock.cs:line 332
+   at Moq.Mock`1.Verify[TResult](Expression`1 expression, Func`1 times) in /_/src/Moq/Mock`1.cs:line 840
+   at AuthSamples.FunctionalTests.CustomPolicyProviderTests.MinimumAgePolicyIsCachedBetweenRequests(String policyName) in C:\src\aspnetcore\src\Security\test\AuthSamples.FunctionalTests\CustomPolicyProviderTests.cs:line 158
+--- End of stack trace from previous location ---
+Results File: C:\Users\jaslawin\.copilot\session-state\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\files\autoperf-runs\F126\validation\original-cache-contract-tests-001\test-results\results.trx
+
+Failed!  - Failed:     2, Passed:     7, Skipped:     0, Total:     9, Duration: 1 s - AuthSamples.FunctionalTests.dll (net12.0)

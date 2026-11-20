@@ -1,0 +1,80 @@
+{
+  "candidate": "F126",
+  "actualRecentOwnerHistory": "a450cb69b5e4549f5515cdb057a68771f56cefd7 2021-11-06T00:52:08Z Use file scoped namespaces (#38076)\nc7867ddd43404040bb84ce0a06796b41e37efca7 2021-07-22T15:54:56-07:00 Use Visual Studio fix to add missing license headers\n0425808b7090f2f0ba7aa1bf12b56eb3777b7e68 2019-05-14T12:42:34-07:00 RequiredPolicy reborn and less demanding as FallbackPolicy (#9759)\n47ae9d92992e3e4361e14e569f166417c65eae2e 2019-04-17T21:58:38-07:00 Remove RequiredPolicy (#9399)\nf18c892bfbd6c08ee1ea189d74342ec6828d9f93 2018-11-19T12:12:53-08:00 Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/AuthSamples/tree/8f471bf65bbc6a5de4425da64a64ee262aafbadb\n2becec387b1302bbb0c7555238cc3c5e0d4328b0 2018-11-19T11:44:35-08:00 Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/AuthSamples/tree/7383e532c9bbfaf843a137d627ba824694529507\n906f316d2bef72ae9142dff54e41e7970a623822 2018-11-09T10:54:43+13:00 React to AuthorizationMiddleware (#66)\n8d0f84ea464ed3c0f9ec0a28d9f5f7ecd02617c0 2018-04-26T13:25:07-07:00 Add IAuthorizationPolicyProvider sample (#31)",
+  "actualProviderSubstringHistory": "8d0f84ea464ed3c0f9ec0a28d9f5f7ecd02617c0 2018-04-26T13:25:07-07:00 Add IAuthorizationPolicyProvider sample (#31)",
+  "actualInterfaceCacheFlagHistory": "63fb7a86b560452a4ba8291f0234aef47cf2843f 2022-08-23T11:31:17-07:00 CanCachePolicy=>AllowsCachingPolicies (#43479)",
+  "actualBoundedIssueMatches": [
+    {
+      "number": 17493,
+      "state": "closed",
+      "title": "Auth Policy Provider Problem - Multiple Providers",
+      "url": "https://github.com/dotnet/aspnetcore/issues/17493"
+    }
+  ],
+  "actualBoundedOwnerPrMatches": [],
+  "actualBoundedCacheFlagPrMatches": [
+    {
+      "number": 69189,
+      "state": "merged",
+      "title": "Improve SignalR hot paths and add regression benchmarks",
+      "url": "https://github.com/dotnet/aspnetcore/pull/69189"
+    },
+    {
+      "number": 68066,
+      "state": "merged",
+      "title": "Add serving of .well-known/passkey-endpoints to Identity",
+      "url": "https://github.com/dotnet/aspnetcore/pull/68066"
+    },
+    {
+      "number": 43479,
+      "state": "merged",
+      "title": "CanCachePolicy=>AllowsCachingPolicies",
+      "url": "https://github.com/dotnet/aspnetcore/pull/43479"
+    },
+    {
+      "number": 43469,
+      "state": "closed",
+      "title": "CanCachePolicy->AllowsCachingPolicies",
+      "url": "https://github.com/dotnet/aspnetcore/pull/43469"
+    },
+    {
+      "number": 43468,
+      "state": "closed",
+      "title": "AuthZ CanCachePolicy=>AllowsCachingPolicies",
+      "url": "https://github.com/dotnet/aspnetcore/pull/43468"
+    }
+  ],
+  "actualRelatedLedgerEntries": [
+    {
+      "id": "F126",
+      "finding": {
+        "card_id": "repeated-parsing-without-cache",
+        "file": "src/Security/samples/CustomPolicyProvider/Authorization/MinimumAgePolicyProvider.cs",
+        "line_start": 41,
+        "line_end": 46,
+        "project": "CustomPolicyProvider",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "low",
+        "confidence": "high",
+        "classification": "confirmed",
+        "hot_path": "moderate",
+        "tfm_sensitive": false,
+        "summary": "The sample policy provider reparses and rebuilds recurring named policies.",
+        "explanation": "For every matching GetPolicyAsync call, the provider allocates a suffix with Substring, parses the same endpoint policy age, creates a new AuthorizationPolicyBuilder and requirement, and builds a new policy. The assigned IAuthorizationPolicyProvider uses a default AllowsCachingPolicies value of false, so AuthorizationMiddleware does not enable its endpoint policy cache for this provider. Repeated requests for a bounded policy name therefore repeat the parsing and construction work.",
+        "snippet": "int.TryParse(policyName.Substring(POLICY_PREFIX.Length), out var age)\n...\nvar policy = new AuthorizationPolicyBuilder();\npolicy.AddRequirements(new MinimumAgeRequirement(age));\nreturn Task.FromResult(policy.Build());",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    }
+  ],
+  "actualNoCompleteRelatedWorkClaim": true,
+  "actualRemoteSemanticLookupUnavailable": "GitHub indexed semantic tool returned HTTP 404 for dotnet/aspnetcore; configured ADO code intelligence covers unrelated msazure/One.",
+  "actualLspBoundary": "Current-file document symbols available. Interface definition lookup returned no definition; workspace-symbol lookup returned no symbols. References returned only declaration/constructor, not the actual Startup producer. No global resolved caller census is claimed.",
+  "actualOwningProducerRead": "Actual sample Startup registers this singleton, UseRouting/UseAuthentication/UseAuthorization and MVC controller endpoints. AuthorizationMiddleware reads the actual AllowsCachingPolicies flag; MVC endpoint-routing branch delegates to that middleware. Cache belongs to framework endpoint data source and its change-token lifetime."
+}

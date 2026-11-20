@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AutoPerf.PolicyBenchmarks-20261119-163219</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.0, OS=Windows 10.0.26300
+Unknown processor
+.NET SDK=12.0.100-alpha.1.26557.102
+  [Host] : .NET 12.0.0 (12.0.26.56305), X64 RyuJIT
+</code></pre>
+<pre><code>Job=SettingsPreserving-F126  OutlierMode=DontRemove  PowerPlanMode=00000000-0000-0000-0000-000000000000  
+Toolchain=SettingsPreservingEmitToolchain  IterationCount=8  IterationTime=100.0000 ms  
+RunStrategy=Throughput  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>          Method</th><th>Profile</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>WarmRequest</td><td>MinimumAge10</td><td>154,519.9 ns</td><td>9,449.72 ns</td><td>4,942.38 ns</td><td>-</td><td>-</td><td>-</td><td>14,294 B</td>
+</tr><tr><td>CachingDisabledRequest</td><td>MinimumAge10</td><td>106,660.5 ns</td><td>20,089.29 ns</td><td>10,507.09 ns</td><td>-</td><td>-</td><td>-</td><td>16,166 B</td>
+</tr><tr><td>DirectGetPolicy</td><td>MinimumAge10</td><td>145.3 ns</td><td>30.75 ns</td><td>16.09 ns</td><td>0.0129</td><td>-</td><td>-</td><td>520 B</td>
+</tr><tr><td>WarmRequest</td><td>MinimumAge50</td><td>38,743.5 ns</td><td>2,291.27 ns</td><td>1,198.38 ns</td><td>0.3701</td><td>-</td><td>-</td><td>14,328 B</td>
+</tr><tr><td>CachingDisabledRequest</td><td>MinimumAge50</td><td>41,394.3 ns</td><td>4,637.66 ns</td><td>2,425.58 ns</td><td>0.3814</td><td>-</td><td>-</td><td>15,647 B</td>
+</tr><tr><td>DirectGetPolicy</td><td>MinimumAge50</td><td>138.6 ns</td><td>13.70 ns</td><td>7.16 ns</td><td>0.0132</td><td>-</td><td>-</td><td>520 B</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "candidate": "F126",
+  "primary": {
+    "method": "WarmRequest",
+    "profile": "MinimumAge10",
+    "matchedControl": "CachingDisabledRequest"
+  },
+  "profiles": [
+    { "Name": "MinimumAge10", "Path": "/Home/MinimumAge10", "PolicyName": "MinimumAge10", "ExpectedAge": 10 },
+    { "Name": "MinimumAge50", "Path": "/Home/MinimumAge50", "PolicyName": "MinimumAge50", "ExpectedAge": 50 }
+  ],
+  "boundary": "Actual source-built sample Startup, MVC endpoints, authorization middleware and cookie challenge through TestServer; no sockets or network-throughput claim.",
+  "matchedControl": "Actual hosted request; harness decorator forces AllowsCachingPolicies=false in both source variants, not an unmodified application.",
+  "directControl": "Actual uncached GetPolicyAsync call outside the endpoint policy cache.",
+  "observer": "A lightweight forwarding provider counts actual named lookups with Interlocked.Increment; timing includes this harness-only observer.",
+  "logging": "No providers, LogLevel.None.",
+  "dataProtection": "Test-local ephemeral provider; no persistent key ring.",
+  "setup": "Async warm requests completed in Program.Main before BDN; synchronous GlobalSetup only selects already-prepared scenarios.",
+  "methods": ["WarmRequest", "CachingDisabledRequest", "DirectGetPolicy"]
+}
