@@ -1,0 +1,166 @@
+{
+  "findingId": "F129",
+  "disposition": "rejected",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/172",
+  "actualTrackingIssueNumber": 172,
+  "actualTrackingIssueTitle": "AutoPerf F129 (rejected): preserve FileDownload attribute snapshot semantics",
+  "actualTrackingIssueBody": "## Disposition\n\n**Rejected only the unbuffered replacement. No shipping change, source PR or measured performance claim.** The original href-present dictionary copy also snapshots attribute pairs before actual object-value conversion. This is preservation of observed behavior, not a documented snapshot guarantee or a claim that every buffered alternative is impossible.\n\n## Connected artifacts\n\n| Artifact | Evidence |\n|---|---|\n| Guide and explanation | [F129 README](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/README.md) |\n| Actual original source | [Untouched FileDownload](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/images/Original/source/src/Components/Media/src/FileDownload.cs) |\n| Rejected source | [Actually compiled throwaway prototype](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/images/Prototype/source/src/Components/Media/src/FileDownload.cs) |\n| Sealed acceptance | [Plan](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/plan.json), [baseline](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/baseline-completed.json) |\n| All controls and observations | [Every profile](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/semantic-results.md), [raw matrix](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/semantic-matrix.json) |\n| Runnable real-renderer probe | [C# 13 project](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/harness/AutoPerf.Characterization.csproj), [source](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/harness/Program.cs) |\n| Existing correctness coverage | [Exact commands and results](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/validation-commands.md): 28 individually passing XML executions, none failed or skipped |\n| Independent fresh-project reconstruction | [Verified original and prototype roles](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/reconstruction-001/verified-reproduction.json), [derived PDB-size correction](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/reconstruction-001/manifest-size-correction.json) |\n| Audit and closed budget | [162 actual component renders, 72 runtime records and 30 source associations](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/audit-summary.json), [portable verifier](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/F129-verify.mjs), [zero timing comparisons](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/diagnostic-budget.json) |\n| Immutable evidence | [All 276 core files](https://github.com/jaslawinMs/aspnetcore/blob/a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34/F129/capsule-file-hashes.json), commit `a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34` |\n\n## Actual difference\n\nThe probe supplies a normal object-valued attribute through actual FileDownload parameters. Actual RenderTreeBuilder.AddAttribute(object) invokes its ToString, which updates a later entry in the supplied dictionary. The original's eager copy renders data-after=\"before\"; the lazy-filter prototype renders \"after\". If the same conversion adds a source key, the original still renders its copy and the prototype throws InvalidOperationException. Both differences recur in all three repetitions, including a fresh exact-two-input rebuild.\n\nThe nearest-opposite no-href controls and custom ChildContent remain unchanged. The seven existing tests pass with either implementation and do not by themselves establish equivalence. The original source and all 30 original compiled consumer files were restored byte for byte; there is no retained product edit or new permanent test.\n\n## Scope and limits\n\nActual default ae89581dfd24c6277b4267a9779d05f7b9f047f1; independent source baseline 37e809ead5824bc753a1c3d56f11615bdb1296c5. Nine profiles, three repetitions and six executions produce 162 render rows, not 162 distinct tests. Both prototype executions deliberately fail the same preservation assertions.\n\nThis is the managed HTML/exception boundary, not a browser/download, JS, application-frequency, latency, throughput, memory-savings, complete compiler-provenance or whole-caller-census claim. The deliberate reentrant value establishes a concrete difference, not its prevalence. Buffered list/array/pooling/constructor designs remain unestablished. All three unused timing authorizations are permanently closed; no speculative PR or browser launch.\n\nThe immutable core predates the additive publication receipt and live campaign-index update. The fixed classified report remains unchanged.\n\nThe immutable evidence predates the additive [verified publication receipt](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F129/publication.json). All 276 sealed core files remain unchanged. No shipping change or source PR.\n",
+  "actualTrackingIssueState": "closed",
+  "actualTrackingIssueStateReason": "not_planned",
+  "actualIssueTitleBodyAndStateVerified": true,
+  "actualImmutableEvidenceCommit": "a621cda4810e68e5b7fb03027cf4d1dbe8ed2d34",
+  "actualImmutableCoreFiles": 276,
+  "actualEveryRemoteCoreBlobIdentityVerified": true,
+  "actualSourceBranchPublished": false,
+  "actualPerformancePrCreated": false,
+  "actualBrowserLaunchRequested": false,
+  "actualShippingSourceChanged": false,
+  "actualPermanentTestsAdded": false,
+  "actualSourceRestoredByteExactly": true,
+  "actualAll30OriginalCompiledConsumerFilesRestored": true,
+  "actualAudit": {
+    "findingId": "F129",
+    "disposition": "rejected",
+    "reason": "Unbuffered href filtering changes observable snapshot semantics",
+    "actualManagedCommandsChecked": 19,
+    "actualIndividualXmlExecutions": 28,
+    "actualXmlFailed": 0,
+    "actualXmlSkipped": 0,
+    "actualRealRendererRows": 162,
+    "actualRuntimeAssemblyRecordsChecked": 72,
+    "actualSourcePePdbAssociationsRecordedAndSnapshotHashesChecked": 30,
+    "actualIndependentFreshProjectRoles": 2,
+    "actualChangedProfilesPerPrototype": [
+      "ReplaceValueWithHref",
+      "AddKeyWithHref"
+    ],
+    "actualExpectedContractFailureRows": 12,
+    "actualOriginalDefaultRestoredAndFreshStableObservationsAgree": true,
+    "actualOriginalPrototypeImageFilesEach": 30,
+    "actualOriginalPrototypeChangedFiles": [
+      "Microsoft.AspNetCore.Components.Media.dll",
+      "Microsoft.AspNetCore.Components.Media.pdb"
+    ],
+    "actualOriginalPrototypeUnchangedFilesIncludingCommonHarness": 28,
+    "actualTimingComparisons": 0,
+    "actualClosedUnusedTimingAuthorizations": 3,
+    "actualCurrentDefault": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+    "actualLiveCompiledImageBytesChecked": true,
+    "actualSealedFilesChecked": null,
+    "limitation": "Managed HTML/exception boundary and one lazy-filter prototype only. No browser/download, performance, complete compiler-provenance, global caller census or impossibility-of-buffered-alternatives claim."
+  },
+  "actualReconstruction": {
+    "findingId": "F129",
+    "recordedAt": "2026-11-20T01:26:04.691Z",
+    "actualCopiedInputs": [
+      {
+        "path": "AutoPerf.Characterization.csproj",
+        "bytes": 1658,
+        "sha256": "AEDEDFC5BFD1CDC80A97EA81CBB6EDD7DC30905C0119D75CAB5EBDD7B87ABE3D"
+      },
+      {
+        "path": "Program.cs",
+        "bytes": 13524,
+        "sha256": "67AE065C9AD09E344B204950A6484A12E557510296693402F23EAFEBE05336A0"
+      }
+    ],
+    "actualNoRestoreAttemptPreserved": "validation/reconstruction-build-001",
+    "actualRestoreCommand": "validation/reconstruction-restore-001",
+    "actualSuccessfulBuild": "validation/reconstruction-build-002",
+    "actualHarnessBuildWarnings": 0,
+    "actualRebuiltRoles": [
+      {
+        "role": "OriginalRebuilt",
+        "sourceImage": "Original",
+        "actualRows": 27,
+        "actualContractFailureRows": 0,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Characterization.dll",
+          "AutoPerf.Characterization.pdb"
+        ],
+        "actualOtherPreservedFiles": 28,
+        "actualStableObservationsAgree": true,
+        "actualExecutionExitCode": 0,
+        "actualLoadedOwnerAndRuntimeHashesAgree": true
+      },
+      {
+        "role": "PrototypeRebuilt",
+        "sourceImage": "Prototype",
+        "actualRows": 27,
+        "actualContractFailureRows": 6,
+        "actualOnlyChangedFiles": [
+          "AutoPerf.Characterization.dll",
+          "AutoPerf.Characterization.pdb"
+        ],
+        "actualOtherPreservedFiles": 28,
+        "actualStableObservationsAgree": true,
+        "actualExecutionExitCode": 2,
+        "actualLoadedOwnerAndRuntimeHashesAgree": true
+      }
+    ],
+    "actualRealRendererRows": 54,
+    "actualOnlyCommonHarnessDllPdbChangedInEachConsumer": true,
+    "actualSourceOwnersAndRuntimeAssembliesPreserved": true,
+    "actualNoAdditionalTimingOrAllocationMeasurement": true
+  },
+  "actualDecision": {
+    "findingId": "F129",
+    "disposition": "rejected",
+    "mergeReady": false,
+    "reasonCode": "unbuffered-filter-breaks-observable-attribute-snapshot",
+    "reason": "Actual object-valued attributes are converted by RenderTreeBuilder.AddAttribute(object). Application-owned ToString can update or add entries in the supplied dictionary. The original href-present branch finishes its copy before conversion; the lazy prototype interleaves conversion with source enumeration, changing actual HTML or throwing.",
+    "actualOriginalDefaultAndRestoredPreservationChecksGreen": true,
+    "actualSameAssertionsRedOnPrototypeProfiles": [
+      "ReplaceValueWithHref",
+      "AddKeyWithHref"
+    ],
+    "actualThreeRepetitionsPerProfilePerRole": true,
+    "actualFreshTwoInputBuildReproducedBothRoles": true,
+    "actualExistingUnitTestsDidNotDetectTheProposedDifference": true,
+    "actualHistoricalExistingXmlExecutions": 28,
+    "actualExistingXmlFailuresOrSkips": 0,
+    "actualRealComponentRendererExecutions": 162,
+    "actualExpectedPrototypeContractFailureRows": 12,
+    "actualShippingSourceChanged": false,
+    "actualPermanentTestsAdded": false,
+    "actualSourceBranchPublished": false,
+    "actualPerformancePrWarranted": false,
+    "actualTimingComparisons": 0,
+    "actualUnusedTimingAuthorizationsPermanentlyClosed": 3,
+    "actualNoNumericalNoGainVerdict": true,
+    "actualPlanSha256": "CABC91B3D9B0967B5EC66905CAB5028CBBE00BBAF7B072D42D7BD21118D8A029",
+    "actualClosedBudgetSha256": "B31855CCC08D174ED720BF2DBE1146BE7D4E2B3BC6CB86940AED0E3F23F7A011",
+    "actualDefaultCommit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+    "actualSourceRestoredByteExactly": true,
+    "actualOriginalCompiledConsumerReproducedAll30Files": true,
+    "actualNoUniversalOptimizationImpossibilityClaim": true,
+    "unverified": [
+      "Browser/download/JS behavior",
+      "Representative frequency of supplied href plus reentrant object values",
+      "Performance or allocation improvement",
+      "Alternative buffered/list/array/pooling/constructor designs",
+      "Server/WebAssembly/Auto lifecycle",
+      "Full repository build, AOT/trimming and packaging",
+      "Complete compiler provenance or global caller census"
+    ],
+    "recordedAt": "2026-11-20T01:29:54.804Z"
+  },
+  "actualTimingComparisons": 0,
+  "actualUnusedTimingAuthorizationsPermanentlyClosed": 3,
+  "actualHistoricalCapsuleRewritten": false,
+  "actualAdditionalTimingDuringPublication": 0,
+  "actualSealedCapsuleAuditPassed": true,
+  "actualFixedReportBlob": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "campaignFinalizedAfterVerifiedReceipt": 131,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 227,
+  "campaignDispositionCounts": {
+    "drafted": 77,
+    "no-gain": 24,
+    "rejected": 24,
+    "duplicate": 6
+  },
+  "recordedAt": "2026-11-20T01:39:56.690Z"
+}
