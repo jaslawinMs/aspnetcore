@@ -7,7 +7,11 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace AuthSamples.FunctionalTests;
@@ -116,6 +120,42 @@ public class CustomPolicyProviderTests : IClassFixture<WebApplicationFactory<Cus
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("http://localhost/account/signin?ReturnUrl=%2FHome%2FMinimumAge50", response.RequestMessage.RequestUri.ToString());
+    }
+
+    [Theory]
+    [InlineData("MinimumAge10")]
+    [InlineData("MinimumAge50")]
+    public async Task MinimumAgePolicyIsCachedBetweenRequests(string policyName)
+    {
+        using var rootFactory = new WebApplicationFactory<CustomPolicyProvider.Startup>();
+        using var factory = rootFactory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            var registration = Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IAuthorizationPolicyProvider));
+            var providerType = Assert.IsAssignableFrom<Type>(registration.ImplementationType);
+            services.Remove(registration);
+            services.AddSingleton(serviceProvider =>
+            {
+                var actualProvider = (IAuthorizationPolicyProvider)ActivatorUtilities.CreateInstance(serviceProvider, providerType);
+                var provider = new Mock<IAuthorizationPolicyProvider>(MockBehavior.Strict);
+                provider.SetupGet(p => p.AllowsCachingPolicies).Returns(() => actualProvider.AllowsCachingPolicies);
+                provider.Setup(p => p.GetPolicyAsync(It.IsAny<string>())).Returns((string name) => actualProvider.GetPolicyAsync(name));
+                provider.Setup(p => p.GetDefaultPolicyAsync()).Returns(actualProvider.GetDefaultPolicyAsync);
+                provider.Setup(p => p.GetFallbackPolicyAsync()).Returns(actualProvider.GetFallbackPolicyAsync);
+                return provider.Object;
+            });
+        }));
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        for (var i = 0; i < 2; i++)
+        {
+            using var response = await client.GetAsync($"/Home/{policyName}");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.NotNull(response.Headers.Location);
+            Assert.Equal($"http://localhost/account/signin?ReturnUrl=%2FHome%2F{policyName}", response.Headers.Location.OriginalString);
+        }
+
+        var provider = Mock.Get(factory.Services.GetRequiredService<IAuthorizationPolicyProvider>());
+        provider.Verify(p => p.GetPolicyAsync(policyName), Times.Once);
     }
 
     internal static async Task<HttpResponseMessage> SignIn(HttpClient client, string userName, string dob)
