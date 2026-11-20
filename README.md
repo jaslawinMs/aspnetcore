@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 234/358 finalized**: 78 drafts, 31 no-gain, 77 rejected and 48 duplicates;
-124 findings remain unfinished.
+**Progress: 236/358 finalized**: 78 drafts, 31 no-gain, 77 rejected and 50 duplicates;
+122 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F202 | Duplicate generated helper | [jaslawinMs/aspnetcore#209](https://github.com/jaslawinMs/aspnetcore/issues/209): same emitted JSON helper as still-pending F201; no separate fix or performance claim. [Evidence](F201-F203-aliases/README.md) |
+| F203 | Duplicate generated helper | [jaslawinMs/aspnetcore#209](https://github.com/jaslawinMs/aspnetcore/issues/209): same emitted JSON helper as still-pending F201; no separate fix or performance claim. [Evidence](F201-F203-aliases/README.md) |
 | F198 | No qualified gain: inconclusive | [jaslawinMs/aspnetcore#208](https://github.com/jaslawinMs/aspnetcore/issues/208): completed 7-block study failed baseline drift controls; 1/3 permanently closed, no retry, Default comparison or PR. [Evidence](F198/README.md) |
 | F219 | No qualified gain: inconclusive | [jaslawinMs/aspnetcore#207](https://github.com/jaslawinMs/aspnetcore/issues/207): private toolchain rejected before warmup; 1/3 permanently closed, no performance result or PR. [Evidence](F219/README.md) |
 | F216 | **Rejected:** material header hash-table workload unestablished; real hash calls are not measured benefit. [Tracking jaslawinMs/aspnetcore#206](https://github.com/jaslawinMs/aspnetcore/issues/206) | [Source gate](F216/README.md), [verified publication](F216/publication.json) |
