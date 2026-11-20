@@ -1,0 +1,36 @@
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 325)                 ? controllerActionDescriptor.MethodInfo
+b128b9a6c7 (Copilot          2026-08-19 12:12:37 +0200 326)                 : global::System.Linq.Enumerable.SingleOrDefault(global::System.Linq.Enumerable.OfType<global::System.Reflection.MethodInfo>(context.Description.ActionDescriptor.EndpointMetadata));
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 327) 
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 328)             if (methodInfo is null)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 329)             {
+b128b9a6c7 (Copilot          2026-08-19 12:12:37 +0200 330)                 return global::System.Threading.Tasks.Task.CompletedTask;
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 331)             }
+84cd99ae97 (Copilot          2025-07-14 21:40:25 +0000 332)             if (XmlCommentCache.Cache.TryGetValue(DocumentationCommentIdHelper.NormalizeDocId(methodInfo.CreateDocumentationId()), out var methodComment))
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 333)             {
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 334)                 if (methodComment.Summary is { } summary)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 335)                 {
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 336)                     operation.Summary = summary;
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 337)                 }
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 338)                 if (methodComment.Description is { } description)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 339)                 {
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 340)                     operation.Description = description;
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 341)                 }
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 342)                 if (methodComment.Remarks is { } remarks)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 343)                 {
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 344)                     operation.Description = remarks;
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 345)                 }
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 346)                 if (methodComment.Parameters is { Count: > 0})
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 347)                 {
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 348)                     foreach (var parameterComment in methodComment.Parameters)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 349)                     {
+b128b9a6c7 (Copilot          2026-08-19 12:12:37 +0200 350)                         var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodInfo.GetParameters(), info => info.Name == parameterComment.Name);
+a1c5f7c64c (Kristian Hellang 2026-07-23 09:35:19 +0200 351)                         var modelName = GetModelName(parameterInfo, parameterComment.Name);
+a1c5f7c64c (Kristian Hellang 2026-07-23 09:35:19 +0200 352)                         var operationParameter = GetOperationParameter(operation, modelName);
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 353)                         if (operationParameter is not null)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 354)                         {
+bc1b3b2d80 (Safia Abdalla    2025-04-24 12:04:38 -0700 355)                             var targetOperationParameter = UnwrapOpenApiParameter(operationParameter);
+58ac2f7d4f (Safia Abdalla    2025-02-14 15:10:28 -0800 356)                             targetOperationParameter.Description = parameterComment.Description;
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 357)                             if (parameterComment.Example is { } jsonString)
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 358)                             {
+58ac2f7d4f (Safia Abdalla    2025-02-14 15:10:28 -0800 359)                                 targetOperationParameter.Example = jsonString.Parse();
+0b520c3fd8 (Safia Abdalla    2025-02-14 11:39:20 -0800 360)                             }

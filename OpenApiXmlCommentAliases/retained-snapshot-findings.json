@@ -1,0 +1,1109 @@
+[
+  {
+    "id": "F142",
+    "finding": {
+      "card_id": "all-items-snapshot-scanned-for-keyed-lookup",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 333,
+      "line_end": 333,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Each XML parameter comment snapshots every MethodInfo parameter and scans by name.",
+      "explanation": "Inside the loop over methodComment.Parameters, GetParameters creates the complete parameter array and SingleOrDefault linearly searches it for one name. The metadata is stable for the method and the snapshot/search repeats once per comment. The generated code runs during OpenAPI document construction and is stored as a test snapshot, so it is informational.",
+      "snippet": "var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodInfo.GetParameters(), info => info.Name == parameterComment.Name);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F143",
+    "finding": {
+      "card_id": "all-items-snapshot-scanned-for-keyed-lookup",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 333,
+      "line_end": 333,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Each XML parameter comment snapshots every MethodInfo parameter and scans by name.",
+      "explanation": "Inside the loop over methodComment.Parameters, GetParameters creates the complete parameter array and SingleOrDefault linearly searches it for one name. The metadata is stable for the method and the snapshot/search repeats once per comment. The generated code runs during OpenAPI document construction and is stored as a test snapshot, so it is informational.",
+      "snippet": "var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodInfo.GetParameters(), info => info.Name == parameterComment.Name);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F144",
+    "finding": {
+      "card_id": "all-items-snapshot-scanned-for-keyed-lookup",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 341,
+      "line_end": 341,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Each XML parameter comment snapshots every MethodInfo parameter and scans by name.",
+      "explanation": "Inside the loop over methodComment.Parameters, GetParameters creates the complete parameter array and SingleOrDefault linearly searches it for one name. The metadata is stable for the method and the snapshot/search repeats once per comment. The generated code runs during OpenAPI document construction and is stored as a test snapshot, so it is informational.",
+      "snippet": "var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodInfo.GetParameters(), info => info.Name == parameterComment.Name);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F201",
+    "finding": {
+      "card_id": "exception-driven-control-flow",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 629,
+      "line_end": 643,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Plain-text XML examples are detected by throwing and catching JsonException.",
+      "explanation": "JsonNodeExtensions.Parse first attempts JsonNode.Parse and treats JsonException as the expected signal to retry the same input wrapped as a JSON string; a second JsonException is also swallowed. XML documentation examples can legitimately be plain text, so this fallback can enter exception machinery during normal document generation. The occurrence is generated test snapshot code and is informational.",
+      "snippet": "try\n{\n    return global::System.Text.Json.Nodes.JsonNode.Parse(json);\n}\ncatch (global::System.Text.Json.JsonException)\n{\n    try\n    {\n        return global::System.Text.Json.Nodes.JsonNode.Parse($\"\\\"{json.Replace(\"\\\"\", \"\\\\\\\"\")}\\\"\");\n    }\n    catch (global::System.Text.Json.JsonException)\n    {\n        return null;\n    }\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F202",
+    "finding": {
+      "card_id": "exception-driven-control-flow",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 629,
+      "line_end": 643,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Plain-text XML examples are detected by throwing and catching JsonException.",
+      "explanation": "JsonNodeExtensions.Parse first attempts JsonNode.Parse and treats JsonException as the expected signal to retry the same input wrapped as a JSON string; a second JsonException is also swallowed. XML documentation examples can legitimately be plain text, so this fallback can enter exception machinery during normal document generation. The occurrence is generated test snapshot code and is informational.",
+      "snippet": "try\n{\n    return global::System.Text.Json.Nodes.JsonNode.Parse(json);\n}\ncatch (global::System.Text.Json.JsonException)\n{\n    try\n    {\n        return global::System.Text.Json.Nodes.JsonNode.Parse($\"\\\"{json.Replace(\"\\\"\", \"\\\\\\\"\")}\\\"\");\n    }\n    catch (global::System.Text.Json.JsonException)\n    {\n        return null;\n    }\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F203",
+    "finding": {
+      "card_id": "exception-driven-control-flow",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 637,
+      "line_end": 651,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Plain-text XML examples are detected by throwing and catching JsonException.",
+      "explanation": "JsonNodeExtensions.Parse first attempts JsonNode.Parse and treats JsonException as the expected signal to retry the same input wrapped as a JSON string; a second JsonException is also swallowed. XML documentation examples can legitimately be plain text, so this fallback can enter exception machinery during normal document generation. The occurrence is generated test snapshot code and is informational.",
+      "snippet": "try\n{\n    return global::System.Text.Json.Nodes.JsonNode.Parse(json);\n}\ncatch (global::System.Text.Json.JsonException)\n{\n    try\n    {\n        return global::System.Text.Json.Nodes.JsonNode.Parse($\"\\\"{json.Replace(\"\\\"\", \"\\\\\\\"\")}\\\"\");\n    }\n    catch (global::System.Text.Json.JsonException)\n    {\n        return null;\n    }\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F243",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 335,
+      "line_end": 335,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every XML parameter comment.",
+      "explanation": "The enclosing loop visits each method parameter comment, and GetOperationParameter walks the retained operation.Parameters collection until it finds the matching name. This produces O(comments x operation parameters) work during generated document construction; because the file is a generated test snapshot, the finding is informational.",
+      "snippet": "var operationParameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F244",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 349,
+      "line_end": 349,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Request-body parameter descriptions are linearly searched for each unmatched XML parameter comment.",
+      "explanation": "Within the loop over methodComment.Parameters, IsRequestBodyParameter(context, modelName) walks context.Description.ParameterDescriptions to find a matching body/form parameter. When several comments miss operation.Parameters, the retained description collection is re-scanned once per comment. This is generated test snapshot code on document construction and is informational.",
+      "snippet": "else if (IsRequestBodyParameter(context, modelName))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F245",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 382,
+      "line_end": 382,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "XML response comments are linearly searched for every OpenAPI response.",
+      "explanation": "The foreach over operation.Responses calls SingleOrDefault on the retained methodComment.Responses list for each response key, producing a nested O(responses x comments) lookup. The generated test snapshot executes this only while building OpenAPI documents, so it is informational.",
+      "snippet": "var responseComment = global::System.Linq.Enumerable.SingleOrDefault(methodComment.Responses, xmlResponse => xmlResponse.Code == response.Key);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F246",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 406,
+      "line_end": 406,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every API parameter description.",
+      "explanation": "The enclosing loop visits context.Description.ParameterDescriptions, and GetOperationParameter walks operation.Parameters by name for each description. This is a second distinct nested lookup site in generated OpenAPI document construction; the snapshot/test location makes it informational.",
+      "snippet": "var parameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F247",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 335,
+      "line_end": 335,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every XML parameter comment.",
+      "explanation": "The enclosing loop visits each method parameter comment, and GetOperationParameter walks the retained operation.Parameters collection until it finds the matching name. This produces O(comments x operation parameters) work during generated document construction; because the file is a generated test snapshot, the finding is informational.",
+      "snippet": "var operationParameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F248",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 349,
+      "line_end": 349,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Request-body parameter descriptions are linearly searched for each unmatched XML parameter comment.",
+      "explanation": "Within the loop over methodComment.Parameters, IsRequestBodyParameter(context, modelName) walks context.Description.ParameterDescriptions to find a matching body or form parameter. When several comments miss operation.Parameters, the retained description collection is re-scanned once per comment. This is generated test snapshot code on document construction and is informational.",
+      "snippet": "else if (IsRequestBodyParameter(context, modelName))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F249",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 382,
+      "line_end": 382,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "XML response comments are linearly searched for every OpenAPI response.",
+      "explanation": "The foreach over operation.Responses calls SingleOrDefault on the retained methodComment.Responses list for each response key, producing a nested O(responses x comments) lookup. The generated test snapshot executes this only while building OpenAPI documents, so it is informational.",
+      "snippet": "var responseComment = global::System.Linq.Enumerable.SingleOrDefault(methodComment.Responses, xmlResponse => xmlResponse.Code == response.Key);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F250",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 406,
+      "line_end": 406,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every API parameter description.",
+      "explanation": "The enclosing loop visits context.Description.ParameterDescriptions, and GetOperationParameter walks operation.Parameters by name for each description. This is a second distinct nested lookup site in generated OpenAPI document construction; the snapshot/test location makes it informational.",
+      "snippet": "var parameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F251",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 343,
+      "line_end": 343,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every XML parameter comment.",
+      "explanation": "The enclosing loop visits each method parameter comment, and GetOperationParameter walks the retained operation.Parameters collection until it finds the matching name. This produces O(comments x operation parameters) work during generated document construction; because the file is a generated test snapshot, the finding is informational.",
+      "snippet": "var operationParameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F252",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 357,
+      "line_end": 357,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Request-body parameter descriptions are linearly searched for each unmatched XML parameter comment.",
+      "explanation": "Within the loop over methodComment.Parameters, IsRequestBodyParameter(context, modelName) walks context.Description.ParameterDescriptions to find a matching body or form parameter. When several comments miss operation.Parameters, the retained description collection is re-scanned once per comment. This is generated test snapshot code on document construction and is informational.",
+      "snippet": "else if (IsRequestBodyParameter(context, modelName))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F253",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 390,
+      "line_end": 390,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "XML response comments are linearly searched for every OpenAPI response.",
+      "explanation": "The foreach over operation.Responses calls SingleOrDefault on the retained methodComment.Responses list for each response key, producing a nested O(responses x comments) lookup. The generated test snapshot executes this only while building OpenAPI documents, so it is informational.",
+      "snippet": "var responseComment = global::System.Linq.Enumerable.SingleOrDefault(methodComment.Responses, xmlResponse => xmlResponse.Code == response.Key);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F254",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 414,
+      "line_end": 414,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Operation parameters are linearly searched for every API parameter description.",
+      "explanation": "The enclosing loop visits context.Description.ParameterDescriptions, and GetOperationParameter walks operation.Parameters by name for each description. This is a second distinct nested lookup site in generated OpenAPI document construction; the snapshot/test location makes it informational.",
+      "snippet": "var parameter = GetOperationParameter(operation, modelName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F303",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 157,
+      "line_end": 157,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The generated helper appends generic arity with AppendFormat and the trivial literal format \"{0}\" even though StringBuilder can append the integer directly. This runs during generated OpenAPI metadata construction and is represented only in a test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F304",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 244,
+      "line_end": 244,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Type documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The recursive generated helper appends generic arity using AppendFormat with the simple \"{0}\" format rather than appending the integer directly. The path is OpenAPI document construction in a generated test snapshot, so the structurally matching occurrence is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", arity);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F305",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 157,
+      "line_end": 157,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The generated helper appends generic arity with AppendFormat and the trivial literal format \"{0}\" even though StringBuilder can append the integer directly. This runs during generated OpenAPI metadata construction and is represented only in a test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F306",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 246,
+      "line_end": 246,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Type documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The recursive generated helper appends generic arity using AppendFormat with the simple \"{0}\" format rather than appending the integer directly. The path is OpenAPI document construction in a generated test snapshot, so the structurally matching occurrence is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", arity);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F307",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 165,
+      "line_end": 165,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The generated helper appends generic arity with AppendFormat and the trivial literal format \"{0}\" even though StringBuilder can append the integer directly. This runs during generated OpenAPI metadata construction and is represented only in a test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F308",
+    "finding": {
+      "card_id": "string-format-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 254,
+      "line_end": 254,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Type documentation ID generation uses composite formatting for a single integer.",
+      "explanation": "The recursive generated helper appends generic arity using AppendFormat with the simple \"{0}\" format rather than appending the integer directly. The path is OpenAPI document construction in a generated test snapshot, so the structurally matching occurrence is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", arity);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F325",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 103,
+      "line_end": 103,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property documentation ID generation re-queries indexer metadata for each property.",
+      "explanation": "CreateDocumentationId(PropertyInfo) calls GetIndexParameters each time a property documentation ID is built, allocating/refetching reflection metadata without a cache. The generated transformer performs this during OpenAPI document generation, and this file is a generated test snapshot, so the occurrence is informational.",
+      "snippet": "var indexParams = property.GetIndexParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F326",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 154,
+      "line_end": 162,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation repeatedly retrieves generic and parameter metadata.",
+      "explanation": "Each CreateDocumentationId(MethodInfo) call invokes GetGenericArguments and GetParameters without retaining metadata for the MethodInfo. The helper is used once per generated OpenAPI operation rather than on the steady-state request path, and the occurrence is in a generated test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);\n...\nvar parameters = method.GetParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F327",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 219,
+      "line_end": 251,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Recursive type documentation ID generation repeatedly retrieves generic type metadata.",
+      "explanation": "GetTypeDocId recursively processes reflected types and calls GetGenericTypeDefinition and GetGenericArguments for each generic type without caching by Type. Although repeated across parameters and properties during document generation, the work is startup-oriented generated code captured in a test snapshot, so it is informational.",
+      "snippet": "global::System.Type genericDef = type.GetGenericTypeDefinition();\n...\nint arity = genericDef.GetGenericArguments().Length;\n...\nvar typeArgs = type.GetGenericArguments();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F328",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 511,
+      "line_end": 511,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property metadata is rediscovered for every OpenAPI parameter description.",
+      "explanation": "GetPropertyInfo walks the container type hierarchy and calls Type.GetProperty on each level. It is invoked from the loop over parameter descriptions and does not cache the PropertyInfo by container type and property name. The path is generated startup/document work represented by a test snapshot, so the finding is informational.",
+      "snippet": "var propertyInfo = type.GetProperty(propertyName, global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.DeclaredOnly);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F329",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 525,
+      "line_end": 525,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Model-name resolution repeatedly materializes and scans custom attributes.",
+      "explanation": "GetModelName calls GetCustomAttributes(inherit: true) and scans all returned attributes every time it resolves a method parameter or property name. The reflected member metadata is stable and is revisited throughout document generation without caching. This is generated test snapshot code, so it is informational.",
+      "snippet": "foreach (var attribute in attributeProvider.GetCustomAttributes(inherit: true))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F330",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsParametersWithCustomNamesFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 510,
+      "line_end": 518,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Generated OpenAPI snapshot repeats property reflection while walking base types.",
+      "explanation": "GetPropertyInfo performs Type.GetProperty for each level of the container hierarchy on every helper invocation without a cross-call metadata cache. The helper is represented in a generated test snapshot and runs during document/schema generation, so it is informational.",
+      "snippet": "for (var type = containerType; type is not null; type = type.BaseType)\n{\n    var propertyInfo = type.GetProperty(propertyName, ...);\n    if (propertyInfo is not null)\n    {\n        return propertyInfo;\n    }\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F331",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsParametersWithCustomNamesFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 522,
+      "line_end": 532,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Generated OpenAPI snapshot enumerates custom attributes on each model-name lookup.",
+      "explanation": "GetModelName calls ICustomAttributeProvider.GetCustomAttributes and scans the returned attributes on every invocation, with no cache by provider/member. The assigned file is a generated test snapshot and the work occurs during OpenAPI generation, so it is informational.",
+      "snippet": "foreach (var attribute in attributeProvider.GetCustomAttributes(inherit: true))\n{\n    if (attribute is global::Microsoft.AspNetCore.Mvc.ModelBinding.IModelNameProvider modelNameProvider ...)",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F332",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 103,
+      "line_end": 103,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property documentation ID generation re-queries indexer metadata for each property.",
+      "explanation": "CreateDocumentationId(PropertyInfo) calls GetIndexParameters each time a property documentation ID is built, allocating or refetching stable reflection metadata without a cache. The generated transformer performs this during OpenAPI document generation, and the assigned file is a generated test snapshot, so the occurrence is informational.",
+      "snippet": "var indexParams = property.GetIndexParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F333",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 154,
+      "line_end": 162,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation repeatedly retrieves generic and parameter metadata.",
+      "explanation": "Each CreateDocumentationId(MethodInfo) call invokes GetGenericArguments and GetParameters without retaining metadata for the MethodInfo. The helper is used during generated OpenAPI document construction rather than on the steady-state request path, and the occurrence is in a generated test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);\n...\nvar parameters = method.GetParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F334",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 219,
+      "line_end": 251,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Recursive type documentation ID generation repeatedly retrieves generic type metadata.",
+      "explanation": "GetTypeDocId recursively processes reflected types and calls GetGenericTypeDefinition and GetGenericArguments for each generic type without caching by Type. Although repeated across parameters and properties during document generation, the work is startup-oriented generated code captured in a test snapshot, so it is informational.",
+      "snippet": "global::System.Type genericDef = type.GetGenericTypeDefinition();\n...\nint arity = genericDef.GetGenericArguments().Length;\n...\nvar typeArgs = type.GetGenericArguments();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F335",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 511,
+      "line_end": 511,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property metadata is rediscovered for every OpenAPI parameter description.",
+      "explanation": "GetPropertyInfo walks the container type hierarchy and calls Type.GetProperty on each level. It is invoked from the loop over parameter descriptions and does not cache the PropertyInfo by container type and property name. The path is generated startup/document work represented by a test snapshot, so the finding is informational.",
+      "snippet": "var propertyInfo = type.GetProperty(propertyName, global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.DeclaredOnly);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F336",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 525,
+      "line_end": 525,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Model-name resolution repeatedly materializes and scans custom attributes.",
+      "explanation": "GetModelName calls GetCustomAttributes(inherit: true) and scans all returned attributes every time it resolves a method parameter or property name. The reflected member metadata is stable and is revisited throughout document generation without caching. This is generated test snapshot code, so it is informational.",
+      "snippet": "foreach (var attribute in attributeProvider.GetCustomAttributes(inherit: true))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F337",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 111,
+      "line_end": 111,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property documentation ID generation re-queries indexer metadata for each property.",
+      "explanation": "CreateDocumentationId(PropertyInfo) calls GetIndexParameters each time a property documentation ID is built, allocating or refetching stable reflection metadata without a cache. The generated transformer performs this during OpenAPI document generation, and the assigned file is a generated test snapshot, so the occurrence is informational.",
+      "snippet": "var indexParams = property.GetIndexParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F338",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 162,
+      "line_end": 170,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Method documentation ID generation repeatedly retrieves generic and parameter metadata.",
+      "explanation": "Each CreateDocumentationId(MethodInfo) call invokes GetGenericArguments and GetParameters without retaining metadata for the MethodInfo. The helper is used during generated OpenAPI document construction rather than on the steady-state request path, and the occurrence is in a generated test snapshot, so it is informational.",
+      "snippet": "sb.AppendFormat(global::System.Globalization.CultureInfo.InvariantCulture, \"{0}\", method.GetGenericArguments().Length);\n...\nvar parameters = method.GetParameters();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F339",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 227,
+      "line_end": 259,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Recursive type documentation ID generation repeatedly retrieves generic type metadata.",
+      "explanation": "GetTypeDocId recursively processes reflected types and calls GetGenericTypeDefinition and GetGenericArguments for each generic type without caching by Type. Although repeated across parameters and properties during document generation, the work is startup-oriented generated code captured in a test snapshot, so it is informational.",
+      "snippet": "global::System.Type genericDef = type.GetGenericTypeDefinition();\n...\nint arity = genericDef.GetGenericArguments().Length;\n...\nvar typeArgs = type.GetGenericArguments();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F340",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 519,
+      "line_end": 519,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Property metadata is rediscovered for every OpenAPI parameter description.",
+      "explanation": "GetPropertyInfo walks the container type hierarchy and calls Type.GetProperty on each level. It is invoked from the loop over parameter descriptions and does not cache the PropertyInfo by container type and property name. The path is generated startup/document work represented by a test snapshot, so the finding is informational.",
+      "snippet": "var propertyInfo = type.GetProperty(propertyName, global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.DeclaredOnly);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F341",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/SchemaTests.XmlCommentsOnPropertiesShouldApplyToSchemaReferences#OpenApiXmlCommentSupport.generated.verified.cs",
+      "line_start": 533,
+      "line_end": 533,
+      "project": "Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Model-name resolution repeatedly materializes and scans custom attributes.",
+      "explanation": "GetModelName calls GetCustomAttributes(inherit: true) and scans all returned attributes every time it resolves a method parameter or property name. The reflected member metadata is stable and is revisited throughout document generation without caching. This is generated test snapshot code, so it is informational.",
+      "snippet": "foreach (var attribute in attributeProvider.GetCustomAttributes(inherit: true))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]
