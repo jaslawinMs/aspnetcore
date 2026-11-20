@@ -1,0 +1,223 @@
+{
+  "findingId": "F132",
+  "disposition": "no-gain",
+  "mergeReady": false,
+  "actualTrackingIssueUrl": "https://github.com/jaslawinMs/aspnetcore/issues/173",
+  "actualTrackingIssueNumber": 173,
+  "actualTrackingIssueTitle": "AutoPerf F132 (no qualified gain): cascading-name hash cache costs versus workload",
+  "actualTrackingIssueBody": "## Disposition\n\n**No qualified gain, not literally zero numerical improvement. No shipping change or optimization PR.** The short-name primary improved 1.97%, 2.82%, 4.49% across the only three authorized comparisons: median 2.8162% is below the predeclared 10% gate. It saved 0 B/parent tick. The intentionally long-name secondary improved 17.33%, 16.89%, 19.18%, but cannot replace the primary after timing.\n\nThe candidate grows actual CascadingParameterInfo 24->32 bytes, ComponentSubscriptionKey 16->24 and CascadingParameterState 40->48. These are struct layout costs, not a complete retained-heap measurement. The memory/workload trade-off and the long-name secondary result are preserved, not hidden.\n\n## Connected artifacts\n\n| Artifact | Evidence |\n|---|---|\n| Guide and narrow explanation | [F132 README](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/README.md) |\n| Sealed acceptance | [Plan](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/plan.json), [pre-edit baseline proof](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/baseline-completed.json) |\n| Actual measured source | [Exact four-file prototype](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/prototype.patch); source snapshots are in each image |\n| Runnable C# 13 benchmark/probe | [Project](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/harness/AutoPerf.CascadingHashes.csproj), [Program](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/harness/Program.cs) |\n| Three comparisons and primary/control/secondary | [All raw-derived analysis](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/measurement-analysis.json), [raw samples and exact command links](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/README.md#measurements) |\n| Actual managed producers | [Original](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/validation/original-characterize-002/observations.json), [default](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/validation/default-characterize-001/observations.json), [candidate](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/validation/candidate-characterize-001/observations.json), [genuinely restored original](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/validation/restored-characterize-001/observations.json) |\n| Existing correctness coverage | [Exact commands and actual exits](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/validation-commands.md), [all 330 individual XML executions](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/all-existing-tests-audit.json) |\n| Independent fresh-project reconstruction | [Actual rebuild and both untimed roles](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/reconstruction-001/verified-reproduction.json) |\n| Audit and final decision | [Live audit](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/audit-summary.json), [portable verifier](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/F132-verify.mjs), [decision](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/decision.json) |\n| Closed budget and immutable core | [Three used authorizations, no retries](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/diagnostic-budget.json), [495 core files](https://github.com/jaslawinMs/aspnetcore/blob/d31c871e0643b8907972843252d888560d8cdaed/F132/capsule-file-hashes.json), commit `d31c871e0643b8907972843252d888560d8cdaed` |\n\n## Actual boundary and preservation\n\nReal public custom-attribute registration, reflected properties, HtmlRenderer activation, retained components, normal parent parameter updates and the actual generic provider create/read/dispose subscriptions. The ordinary CascadingValueSource matched control uses a different path. The probe does not inject framework callbacks as reachability proof.\n\n54 accepted untimed lifetimes and 18 timed profile lifetimes exercise three profiles, not 72 distinct tests. Across all retained executions: 378 direct key-invariant rows, 116 selected source/PE/PDB associations and 123 actual assembly records. All 330 XML executions pass: 264 accepted original/default/candidate/restored executions plus 66 separately retained stale-owner first-restoration executions. Two equal display names represent distinct executionIds and are preserved.\n\nAll four shipping source files and all 25 original consumer files are restored byte exactly. The first incremental restore consumed the exact candidate DLL because copied source mtimes were older; the equality guard stopped it. A genuine explicit owner Rebuild and repeated tests then restored the owner. The earlier probe's six terminal-disposal assertion failures, missing-assets attempts and default snapshot/auditor corrections remain disclosed. No product disposal defect is asserted.\n\n## Limits\n\nShared-box, warmed managed custom-provider rendering with four cascading properties and 64 retained children; no real Session/TempData I/O, persistence navigation, native browser, Server/WASM/Auto lifecycle, trimming/AOT, cold-start, complete compiler-input or whole-app claim. Existing refresh tests are not real live metadata-delta evidence. The two-input reconstruction is not an owner-graph rebuild.\n\nNo separate cache/public API, retained product/permanent-test change, published source branch, source PR or browser launch. The fixed classified report remains unchanged. This immutable core predates the additive publication receipt and live campaign-index update.\n\nThe immutable evidence predates the additive [verified publication receipt](https://github.com/jaslawinMs/aspnetcore/blob/autoperf-results/F132/publication.json). All 495 core files remain unchanged. No shipping change or source PR.\n",
+  "actualTrackingIssueState": "closed",
+  "actualTrackingIssueStateReason": "not_planned",
+  "actualIssueTitleBodyAndStateVerified": true,
+  "actualImmutableEvidenceCommit": "d31c871e0643b8907972843252d888560d8cdaed",
+  "actualImmutableCoreFiles": 495,
+  "actualEveryRemoteCoreBlobIdentityVerified": true,
+  "actualSourceBranchPublished": false,
+  "actualPerformancePrCreated": false,
+  "actualBrowserLaunchRequested": false,
+  "actualShippingSourceChanged": false,
+  "actualPermanentTestsAdded": false,
+  "actualSourceRestoredByteExactly": true,
+  "actualAll25OriginalCompiledConsumerFilesRestored": true,
+  "actualAudit": {
+    "actualAuditPassed": true,
+    "managedCommands": 22,
+    "actualComparisonRoles": 6,
+    "actualAcceptedUntimedLifetimes": 54,
+    "actualAllUntimedLifetimesIncludingV1": 63,
+    "actualTimedProfileLifetimes": 18,
+    "actualRetainedHistoricalFailedRows": 6,
+    "actualExistingXmlExecutions": 330,
+    "actualAcceptedOriginalDefaultCandidateRestoredXmlExecutions": 264,
+    "actualStaleRestorationXmlExecutionsRetainedSeparately": 66,
+    "actualKeyContractRows": 378,
+    "actualRecordedSourcePePdbAssociations": 116,
+    "actualRuntimeAssemblyRecords": 123,
+    "actualRestoredConsumerByteIdentical": true,
+    "actualBudgetClosedAtThree": true,
+    "actualLiveImagesVerified": true,
+    "actualPortableRecordedAssociationBoundaryOnly": false
+  },
+  "actualReconstruction": {
+    "findingId": "F132",
+    "actualIndependentFreshProjectBuildSucceeded": true,
+    "actualInputFileCount": 2,
+    "actualInputFiles": [
+      {
+        "file": "AutoPerf.CascadingHashes.csproj",
+        "bytes": 1534,
+        "sha256": "F09FFB983524563EE741E04EF4CCA5FB43F06423A50609832A35FD954CBCAB97"
+      },
+      {
+        "file": "Program.cs",
+        "bytes": 25019,
+        "sha256": "6383D2FCF9568033F00C2DD715810B1779940BC02EFCC36CB85CDF47844FA367"
+      }
+    ],
+    "actualReferenceRootExplicitlyFrozenOriginal": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F132\\images-v2\\Original\\bin",
+    "actualZeroWarningErrorBuild": true,
+    "actualPreparatoryMissingAssetsFailurePreserved": true,
+    "actualFreshCommonHarnessIdenticalAcrossRoles": true,
+    "actualReexecutions": [
+      {
+        "role": "OriginalRebuilt",
+        "actualLifetimes": 9,
+        "actualKeyContractRows": 42,
+        "actualCommonHarnessSha256": "5FAEFCA9896C617B862C01680F2099001E1353314005DF4FFCD95C0D366155D4",
+        "actualObservationSha256": "ACB6048C87A2013E02F489A0818D154A841EA4140585153EC46D8C6245FBF2BD",
+        "actualOnlyFreshHarnessDllAndPdbDiffer": true,
+        "actualOther23ConsumerFilesPreserved": true,
+        "actualManifestSha256": "936CCBE1CBB64C0F4A88264D6FF475BE9F36627908414860781D0C6C624C0673"
+      },
+      {
+        "role": "CandidateRebuilt",
+        "actualLifetimes": 9,
+        "actualKeyContractRows": 42,
+        "actualCommonHarnessSha256": "5FAEFCA9896C617B862C01680F2099001E1353314005DF4FFCD95C0D366155D4",
+        "actualObservationSha256": "143D8C820E9EC7590D7481EF991F1591A11B9EFCDA00B4E12E5AFC7B505E7084",
+        "actualOnlyFreshHarnessDllAndPdbDiffer": true,
+        "actualOther23ConsumerFilesPreserved": true,
+        "actualManifestSha256": "DEF4FE348B94FDD75DEA207FB4BBBA57FD1051160FD20450F7A16CF72F5142D2"
+      }
+    ],
+    "actualAdditionalTiming": 0,
+    "actualClosedBudgetUnchangedSha256": "1768FB792D4F2AAE48336508F62DD5F8D50664A683D843E4CCB0A07272E251DE",
+    "recordedAt": "2026-11-20T02:12:44.939Z",
+    "limitation": "Rebuilds exactly the common source project against frozen source-built owners; does not rebuild every historical compiler input or owner graph."
+  },
+  "actualDecision": {
+    "findingId": "F132",
+    "disposition": "no-gain",
+    "recordedAt": "2026-11-20T02:20:37.003Z",
+    "meaning": "Did not meet the sealed useful-gain gate; this is not a claim that the observed numerical effect was exactly zero.",
+    "primary": "RegisteredShort4; four 10/11-character names and 64 retained components receiving real normal parameter delivery/rendering.",
+    "actualPrimaryMedianLessTimePercent": 2.816198675745128,
+    "actualPrimaryEffectsPercent": [
+      1.9704635376694213,
+      2.816198675745128,
+      4.489867035468098
+    ],
+    "actualLongNameSecondaryMedianLessTimePercent": 17.328076031289015,
+    "actualLongNameSecondaryNotPromotedToPrimary": true,
+    "actualPrimaryAllocationSavingsBytesPerParentTick": 0,
+    "actualRequiredPrimaryLessTimePercent": 10,
+    "actualStorageTradeoff": {
+      "metadataBytes": [
+        24,
+        32
+      ],
+      "keyBytes": [
+        16,
+        24
+      ],
+      "cascadingStateBytes": [
+        40,
+        48
+      ]
+    },
+    "actualComparisons": 3,
+    "actualClosedBudgetSha256": "1768FB792D4F2AAE48336508F62DD5F8D50664A683D843E4CCB0A07272E251DE",
+    "actualNoFurtherTimingPermitted": true,
+    "actualPrototypeTunedAfterTiming": false,
+    "actualPublicSignaturesOrIndependentCacheAdded": false,
+    "actualShippingChangeRetained": false,
+    "actualSourceBranchPublished": false,
+    "actualPerformancePrCreated": false,
+    "actualBrowserLaunchRequested": false,
+    "actualPermanentTestsAdded": false,
+    "actualAllFourSourcesRestoredByteExactly": true,
+    "actualAll25OriginalConsumerFilesRestoredByteExactly": true,
+    "actualForcedSourceOwnerRebuildBeforeAcceptedRestoration": true,
+    "actualIndependentReconstruction": {
+      "findingId": "F132",
+      "actualIndependentFreshProjectBuildSucceeded": true,
+      "actualInputFileCount": 2,
+      "actualInputFiles": [
+        {
+          "file": "AutoPerf.CascadingHashes.csproj",
+          "bytes": 1534,
+          "sha256": "F09FFB983524563EE741E04EF4CCA5FB43F06423A50609832A35FD954CBCAB97"
+        },
+        {
+          "file": "Program.cs",
+          "bytes": 25019,
+          "sha256": "6383D2FCF9568033F00C2DD715810B1779940BC02EFCC36CB85CDF47844FA367"
+        }
+      ],
+      "actualReferenceRootExplicitlyFrozenOriginal": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F132\\images-v2\\Original\\bin",
+      "actualZeroWarningErrorBuild": true,
+      "actualPreparatoryMissingAssetsFailurePreserved": true,
+      "actualFreshCommonHarnessIdenticalAcrossRoles": true,
+      "actualReexecutions": [
+        {
+          "role": "OriginalRebuilt",
+          "actualLifetimes": 9,
+          "actualKeyContractRows": 42,
+          "actualCommonHarnessSha256": "5FAEFCA9896C617B862C01680F2099001E1353314005DF4FFCD95C0D366155D4",
+          "actualObservationSha256": "ACB6048C87A2013E02F489A0818D154A841EA4140585153EC46D8C6245FBF2BD",
+          "actualOnlyFreshHarnessDllAndPdbDiffer": true,
+          "actualOther23ConsumerFilesPreserved": true,
+          "actualManifestSha256": "936CCBE1CBB64C0F4A88264D6FF475BE9F36627908414860781D0C6C624C0673"
+        },
+        {
+          "role": "CandidateRebuilt",
+          "actualLifetimes": 9,
+          "actualKeyContractRows": 42,
+          "actualCommonHarnessSha256": "5FAEFCA9896C617B862C01680F2099001E1353314005DF4FFCD95C0D366155D4",
+          "actualObservationSha256": "143D8C820E9EC7590D7481EF991F1591A11B9EFCDA00B4E12E5AFC7B505E7084",
+          "actualOnlyFreshHarnessDllAndPdbDiffer": true,
+          "actualOther23ConsumerFilesPreserved": true,
+          "actualManifestSha256": "DEF4FE348B94FDD75DEA207FB4BBBA57FD1051160FD20450F7A16CF72F5142D2"
+        }
+      ],
+      "actualAdditionalTiming": 0,
+      "actualClosedBudgetUnchangedSha256": "1768FB792D4F2AAE48336508F62DD5F8D50664A683D843E4CCB0A07272E251DE",
+      "recordedAt": "2026-11-20T02:12:44.939Z",
+      "limitation": "Rebuilds exactly the common source project against frozen source-built owners; does not rebuild every historical compiler input or owner graph."
+    },
+    "actualAudit": {
+      "actualAuditPassed": true,
+      "managedCommands": 22,
+      "actualComparisonRoles": 6,
+      "actualAcceptedUntimedLifetimes": 54,
+      "actualAllUntimedLifetimesIncludingV1": 63,
+      "actualTimedProfileLifetimes": 18,
+      "actualRetainedHistoricalFailedRows": 6,
+      "actualExistingXmlExecutions": 330,
+      "actualAcceptedOriginalDefaultCandidateRestoredXmlExecutions": 264,
+      "actualStaleRestorationXmlExecutionsRetainedSeparately": 66,
+      "actualKeyContractRows": 378,
+      "actualRecordedSourcePePdbAssociations": 116,
+      "actualRuntimeAssemblyRecords": 123,
+      "actualRestoredConsumerByteIdentical": true,
+      "actualBudgetClosedAtThree": true,
+      "actualLiveImagesVerified": true,
+      "actualPortableRecordedAssociationBoundaryOnly": false
+    },
+    "preparationDisclosures": [
+      "Three actual missing-assets attempts were followed by restores only after NETSDK1004.",
+      "Initial V1 probe incorrectly equated whole-renderer disposal with render-batch child removal; six terminal assertions failed. Source trace corrected the probe before timing. V1 code, images, rows and failures remain.",
+      "Two MemberData rows have the same display name/testId but different executionId values; auditor now preserves all66 executions, including both rows.",
+      "Supplemental twentieth Renderer source differs on actual default in unrelated event/error routing. Default snapshots are validated against Default, not Original. The original19 inputs remain Git-text identical.",
+      "The first byte restoration copied older mtimes, so incremental tests still consumed the exact candidate owner. Those66 passing executions are retained separately, not called original verification. An explicit real-owner Rebuild and repeated tests then restored every original consumer byte."
+    ],
+    "limits": "Managed custom-attribute registration/rendering and direct hash invariants only. Long-name stress gain does not establish common workloads. No real Session/TempData I/O, native browser, persistence-navigation, Server/WASM/Auto, AOT/trimming, complete compiler-input or whole-app claim. Existing refresh tests are not live metadata-delta proof. Common-project reconstruction is not an owner-graph rebuild."
+  },
+  "actualTimingComparisons": 3,
+  "actualAuthorizationsPermanentlyClosed": 3,
+  "actualHistoricalCapsuleRewritten": false,
+  "actualAdditionalTimingDuringPublication": 0,
+  "actualSealedCapsuleAuditPassed": true,
+  "actualFixedReportBlob": "73abf142464b1f81676e03a1eebc766c279cb47b",
+  "actualReportRemainsFixed118FinalizedSnapshot": true,
+  "campaignFinalizedAfterVerifiedReceipt": 132,
+  "campaignTotal": 358,
+  "campaignUnfinishedAfterVerifiedReceipt": 226,
+  "campaignDispositionCounts": {
+    "drafted": 77,
+    "no-gain": 25,
+    "rejected": 24,
+    "duplicate": 6
+  },
+  "recordedAt": "2026-11-20T02:23:15.871Z"
+}

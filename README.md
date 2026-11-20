@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 131/358 finalized**: 77 drafts, 24 no-gain, 24 rejected and 6 duplicates;
-227 findings remain unfinished.
+**Progress: 132/358 finalized**: 77 drafts, 25 no-gain, 24 rejected and 6 duplicates;
+226 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F132 | No qualified gain: primary 2.82% below 10%, 0 B/tick saved; long-name secondary 17.33% and +8-byte struct costs retained. [Tracking jaslawinMs/aspnetcore#173](https://github.com/jaslawinMs/aspnetcore/issues/173); 54 accepted lifetimes, three closed comparisons, original source/image restored. No source PR | [Cascading-name hash trade-off](F132/README.md), [verified publication](F132/publication.json) |
 | F129 | Rejected unbuffered FileDownload attribute filtering; [tracking jaslawinMs/aspnetcore#172](https://github.com/jaslawinMs/aspnetcore/issues/172). Actual conversion changes snapshot HTML or throws; 162 render rows, 28 passing existing XML executions, fresh exact-input rebuild. Original source/image restored; no timing or source PR | [Attribute snapshot semantics](F129/README.md), [verified publication](F129/publication.json) |
 | F126 | [Draft jaslawinMs/aspnetcore#171](https://github.com/jaslawinMs/aspnetcore/pull/171), [tracking jaslawinMs/aspnetcore#170](https://github.com/jaslawinMs/aspnetcore/issues/170); internal sample allocation-only: primary saves 1246/1258/1269 reported B/op (median 1258); matched-control adjustment passes all three pairs. No reliable speedup: primary +0.97/+5.71/-0.04% versus large unchanged-control movement. Direct age50 median 4.63% slower retained. Three closed pairs/288 observations, 30 passing + two individually expected-red XML executions, real no-restart Hot Reload and exact eight-input rebuild; not general framework throughput or merge-ready | [Deterministic sample endpoint policy reuse](F126/README.md), [verified publication](F126/publication.json) |
 | F124 | [Draft jaslawinMs/aspnetcore#169](https://github.com/jaslawinMs/aspnetcore/pull/169), [tracking jaslawinMs/aspnetcore#168](https://github.com/jaslawinMs/aspnetcore/issues/168); private-predicate timing trade-off only: 83.73% median less time but +56 B/op (112 -> 168), no demonstrated ordinary full-driver gain (median 1.79% slower), lone predicate 13.83% slower. Highly unstable unchanged EarlyGuard narrowly avoids the sealed rejection threshold; no neutrality claimed. Three closed pairs/576 samples, 63 passing XML executions and actual eight-input rebuild; not analyzer/build/IDE speedup or merge-ready | [Bounded Program predicate traversal](F124/README.md), [verified publication](F124/publication.json) |
