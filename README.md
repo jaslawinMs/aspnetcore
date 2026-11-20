@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 163/358 finalized**: 78 drafts, 26 no-gain, 34 rejected and 25 duplicates;
-195 findings remain unfinished.
+**Progress: 165/358 finalized**: 78 drafts, 28 no-gain, 34 rejected and 25 duplicates;
+193 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F147 | Measured inconclusive: observed 32.72% fewer allocated bytes; unchanged-control elapsed drift 13.67% failed frozen gate. Closed1of3, no default timing/PR. [Tracking jaslawinMs/aspnetcore#187](https://github.com/jaslawinMs/aspnetcore/issues/187) | [Paired study](F147-F149/README.md), [verified publication](F147-F149/publication.json) |
+| F149 | Measured inconclusive: observed 25.05% fewer allocated bytes; unchanged-control elapsed drift 29.94% failed frozen gate. Closed1of3, no default timing/PR. [Tracking jaslawinMs/aspnetcore#187](https://github.com/jaslawinMs/aspnetcore/issues/187) | [Paired study](F147-F149/README.md), [verified publication](F147-F149/publication.json) |
 | F139 | Not admitted: real Razor emit/copies, but material benefit and loader-equivalent replacement unestablished;26 native+26 material checks per pin, explicit pragma/language/closure limits,0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#186](https://github.com/jaslawinMs/aspnetcore/issues/186) | [Real compiler study](F139/README.md), [verified publication](F139/publication.json) |
 | F138 | Not admitted: real uniqueness query in short OpenAPI document metadata; Any/SingleOrDefault are not equivalent and material one-pass benefit is unmeasured.105 native passes+2 named pre-existing skips and28 producer+1 isolated control per pin;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#185](https://github.com/jaslawinMs/aspnetcore/issues/185) | [Body-selection study](F138/README.md), [verified publication](F138/publication.json) |
 | F136 | Not admitted: conditional trigger replacement in test scaffolding; actual endpoint fixture read files, not Watch, and no material repeated-watch workload established.5 native+5 untimed cases per pin;292 image entries/107 differences reject causal pairing;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#184](https://github.com/jaslawinMs/aspnetcore/issues/184) | [Provider study](F136/README.md), [verified publication](F136/publication.json) |
