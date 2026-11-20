@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 152/358 finalized**: 77 drafts, 25 no-gain, 25 rejected and 25 duplicates;
-206 findings remain unfinished.
+**Progress: 153/358 finalized**: 77 drafts, 26 no-gain, 25 rejected and 25 duplicates;
+205 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,7 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
-|19 generated XML-comment aliases | Source-verified duplicate emissions;10 canonical studies remain pending.0 new fixes/gains or timing. [Tracking jaslawinMs/aspnetcore#175](https://github.com/jaslawinMs/aspnetcore/issues/175); no source PR | [All19 original IDs, owner map and evidence](OpenApiXmlCommentAliases/README.md), [verified publication](OpenApiXmlCommentAliases/publication.json) |
+| F142 | Inconclusive, no performance PR: numerical168B/op(7.394%) difference but common measurement DLL/PDB differ; frozen image-identity gate fails. Three closed pairs/630 samples,42 serialized children;25/25 existing tests per source and14-row fresh untimed rebuild do not repair historical timing. [Tracking jaslawinMs/aspnetcore#176](https://github.com/jaslawinMs/aspnetcore/issues/176) | [Parameter-array measurement isolation](F142/README.md), [final identity adjudication](F142/final-qualification.json), [verified publication](F142/publication.json) |
+|19 generated XML-comment aliases | Source-verified duplicate emissions;9 canonical studies remain pending; F142 finalized inconclusive.0 new fixes/gains or timing. [Tracking jaslawinMs/aspnetcore#175](https://github.com/jaslawinMs/aspnetcore/issues/175); no source PR | [All19 original IDs, owner map and evidence](OpenApiXmlCommentAliases/README.md), [verified publication](OpenApiXmlCommentAliases/publication.json) |
 | F133 | Not pursued: normal/decorated default metadata retains PropertyInfo; the card's custom non-default workload remains unmeasured.112 public validations,68 passing XML executions,0 timing. [Tracking jaslawinMs/aspnetcore#174](https://github.com/jaslawinMs/aspnetcore/issues/174); no source PR | [Union-metadata producer boundary](F133/README.md), [verified publication](F133/publication.json) |
 | F132 | No qualified gain: primary 2.82% below 10%, 0 B/tick saved; long-name secondary 17.33% and +8-byte struct costs retained. [Tracking jaslawinMs/aspnetcore#173](https://github.com/jaslawinMs/aspnetcore/issues/173); 54 accepted lifetimes, three closed comparisons, original source/image restored. No source PR | [Cascading-name hash trade-off](F132/README.md), [verified publication](F132/publication.json) |
 | F129 | Rejected unbuffered FileDownload attribute filtering; [tracking jaslawinMs/aspnetcore#172](https://github.com/jaslawinMs/aspnetcore/issues/172). Actual conversion changes snapshot HTML or throws; 162 render rows, 28 passing existing XML executions, fresh exact-input rebuild. Original source/image restored; no timing or source PR | [Attribute snapshot semantics](F129/README.md), [verified publication](F129/publication.json) |
