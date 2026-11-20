@@ -1,0 +1,409 @@
+commit 983ca23811fe46ffaadf6af786ac9b411aa600d9
+Author: Martin Costello
+Date: 2022-11-01T09:02:30+08:00
+Subject: Enable CA1854 (#44799)
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index a4e8fd125d..6d161a062f 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -70,9 +70,9 @@ public class TestFileProvider : IFileProvider
+ 
+     public virtual IFileInfo GetFileInfo(string subpath)
+     {
+-        if (_lookup.ContainsKey(subpath))
++        if (_lookup.TryGetValue(subpath, out var fileInfo))
+         {
+-            return _lookup[subpath];
++            return fileInfo;
+         }
+         else
+         {
+commit 3ea008c80d5cc63de7f90ddfd6823b7b006251ff
+Author: Brennan
+Date: 2022-05-05T09:26:05-07:00
+Subject: Add rule to seal internal and private types (#41457)
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index 1849d55487..a4e8fd125d 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -121,7 +121,7 @@ public class TestFileProvider : IFileProvider
+         return filePath;
+     }
+ 
+-    private class NotFoundFileInfo : IFileInfo
++    private sealed class NotFoundFileInfo : IFileInfo
+     {
+         public bool Exists
+         {
+commit c85baf8db0c72ae8e68643029d514b2e737c9fae
+Author: Shreyas Jejurkar
+Date: 2022-01-02T06:39:22-08:00
+Subject: chore : Remove unwanted `using` statement (#39176)
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index 8b8a0e4afa..1849d55487 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -1,9 +1,6 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+-using System;
+-using System.Collections.Generic;
+-using System.IO;
+ using Microsoft.Extensions.Primitives;
+ 
+ namespace Microsoft.Extensions.FileProviders;
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author: Pranav K
+Date: 2021-11-06T00:52:08Z
+Subject: Use file scoped namespaces (#38076)
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index cd8ca24ae1..8b8a0e4afa 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -6,178 +6,177 @@ using System.Collections.Generic;
+ using System.IO;
+ using Microsoft.Extensions.Primitives;
+ 
+-namespace Microsoft.Extensions.FileProviders
++namespace Microsoft.Extensions.FileProviders;
++
++public class TestFileProvider : IFileProvider
+ {
+-    public class TestFileProvider : IFileProvider
++    private readonly Dictionary<string, IFileInfo> _lookup =
++        new Dictionary<string, IFileInfo>(StringComparer.Ordinal);
++    private readonly Dictionary<string, IDirectoryContents> _directoryContentsLookup =
++        new Dictionary<string, IDirectoryContents>();
++
++    private readonly Dictionary<string, TestFileChangeToken> _fileTriggers =
++        new Dictionary<string, TestFileChangeToken>(StringComparer.Ordinal);
++
++    public TestFileProvider() : this(string.Empty)
+     {
+-        private readonly Dictionary<string, IFileInfo> _lookup =
+-            new Dictionary<string, IFileInfo>(StringComparer.Ordinal);
+-        private readonly Dictionary<string, IDirectoryContents> _directoryContentsLookup =
+-            new Dictionary<string, IDirectoryContents>();
++    }
+ 
+-        private readonly Dictionary<string, TestFileChangeToken> _fileTriggers =
+-            new Dictionary<string, TestFileChangeToken>(StringComparer.Ordinal);
++    public TestFileProvider(string root)
++    {
++        Root = root;
++    }
+ 
+-        public TestFileProvider() : this(string.Empty)
+-        {
+-        }
++    public string Root { get; }
+ 
+-        public TestFileProvider(string root)
++    public virtual IDirectoryContents GetDirectoryContents(string subpath)
++    {
++        if (_directoryContentsLookup.TryGetValue(subpath, out var value))
+         {
+-            Root = root;
++            return value;
+         }
+ 
+-        public string Root { get; }
++        return new NotFoundDirectoryContents();
++    }
+ 
+-        public virtual IDirectoryContents GetDirectoryContents(string subpath)
++    public TestFileInfo AddFile(string path, string contents)
++    {
++        var fileInfo = new TestFileInfo
+         {
+-            if (_directoryContentsLookup.TryGetValue(subpath, out var value))
+-            {
+-                return value;
+-            }
++            Content = contents,
++            PhysicalPath = Path.Combine(Root, NormalizeAndEnsureValidPhysicalPath(path)),
++            Name = Path.GetFileName(path),
++            LastModified = DateTime.UtcNow,
++        };
+ 
+-            return new NotFoundDirectoryContents();
+-        }
++        AddFile(path, fileInfo);
+ 
+-        public TestFileInfo AddFile(string path, string contents)
+-        {
+-            var fileInfo = new TestFileInfo
+-            {
+-                Content = contents,
+-                PhysicalPath = Path.Combine(Root, NormalizeAndEnsureValidPhysicalPath(path)),
+-                Name = Path.GetFileName(path),
+-                LastModified = DateTime.UtcNow,
+-            };
++        return fileInfo;
++    }
+ 
+-            AddFile(path, fileInfo);
++    public TestDirectoryContent AddDirectoryContent(string path, IEnumerable<IFileInfo> files)
++    {
++        var directoryContent = new TestDirectoryContent(Path.GetFileName(path), files);
++        _directoryContentsLookup[path] = directoryContent;
++        return directoryContent;
++    }
+ 
+-            return fileInfo;
+-        }
++    public void AddFile(string path, IFileInfo contents)
++    {
++        _lookup[path] = contents;
++    }
+ 
+-        public TestDirectoryContent AddDirectoryContent(string path, IEnumerable<IFileInfo> files)
+-        {
+-            var directoryContent = new TestDirectoryContent(Path.GetFileName(path), files);
+-            _directoryContentsLookup[path] = directoryContent;
+-            return directoryContent;
+-        }
++    public void DeleteFile(string path)
++    {
++        _lookup.Remove(path);
++    }
+ 
+-        public void AddFile(string path, IFileInfo contents)
++    public virtual IFileInfo GetFileInfo(string subpath)
++    {
++        if (_lookup.ContainsKey(subpath))
+         {
+-            _lookup[path] = contents;
++            return _lookup[subpath];
+         }
+-
+-        public void DeleteFile(string path)
++        else
+         {
+-            _lookup.Remove(path);
++            return new NotFoundFileInfo();
+         }
++    }
+ 
+-        public virtual IFileInfo GetFileInfo(string subpath)
+-        {
+-            if (_lookup.ContainsKey(subpath))
+-            {
+-                return _lookup[subpath];
+-            }
+-            else
+-            {
+-                return new NotFoundFileInfo();
+-            }
+-        }
++    public virtual TestFileChangeToken AddChangeToken(string filter)
++    {
++        var changeToken = new TestFileChangeToken(filter);
++        _fileTriggers[filter] = changeToken;
++
++        return changeToken;
++    }
+ 
+-        public virtual TestFileChangeToken AddChangeToken(string filter)
++    public virtual IChangeToken Watch(string filter)
++    {
++        if (!_fileTriggers.TryGetValue(filter, out var changeToken) || changeToken.HasChanged)
+         {
+-            var changeToken = new TestFileChangeToken(filter);
++            changeToken = new TestFileChangeToken(filter);
+             _fileTriggers[filter] = changeToken;
+-
+-            return changeToken;
+         }
+ 
+-        public virtual IChangeToken Watch(string filter)
+-        {
+-            if (!_fileTriggers.TryGetValue(filter, out var changeToken) || changeToken.HasChanged)
+-            {
+-                changeToken = new TestFileChangeToken(filter);
+-                _fileTriggers[filter] = changeToken;
+-            }
++        return changeToken;
++    }
+ 
+-            return changeToken;
+-        }
++    public TestFileChangeToken GetChangeToken(string filter)
++    {
++        return _fileTriggers[filter];
++    }
+ 
+-        public TestFileChangeToken GetChangeToken(string filter)
++    private static string NormalizeAndEnsureValidPhysicalPath(string filePath)
++    {
++        if (string.IsNullOrEmpty(filePath))
+         {
+-            return _fileTriggers[filter];
++            return filePath;
+         }
+ 
+-        private static string NormalizeAndEnsureValidPhysicalPath(string filePath)
++        filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
++
++        if (filePath[0] == Path.DirectorySeparatorChar)
+         {
+-            if (string.IsNullOrEmpty(filePath))
+-            {
+-                return filePath;
+-            }
++            filePath = filePath.Substring(1);
++        }
+ 
+-            filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
++        return filePath;
++    }
+ 
+-            if (filePath[0] == Path.DirectorySeparatorChar)
++    private class NotFoundFileInfo : IFileInfo
++    {
++        public bool Exists
++        {
++            get
+             {
+-                filePath = filePath.Substring(1);
++                return false;
+             }
+-
+-            return filePath;
+         }
+ 
+-        private class NotFoundFileInfo : IFileInfo
++        public bool IsDirectory
+         {
+-            public bool Exists
++            get
+             {
+-                get
+-                {
+-                    return false;
+-                }
+-            }
+-
+-            public bool IsDirectory
+-            {
+-                get
+-                {
+-                    throw new NotImplementedException();
+-                }
+-            }
+-
+-            public DateTimeOffset LastModified
+-            {
+-                get
+-                {
+-                    throw new NotImplementedException();
+-                }
++                throw new NotImplementedException();
+             }
++        }
+ 
+-            public long Length
++        public DateTimeOffset LastModified
++        {
++            get
+             {
+-                get
+-                {
+-                    throw new NotImplementedException();
+-                }
++                throw new NotImplementedException();
+             }
++        }
+ 
+-            public string Name
++        public long Length
++        {
++            get
+             {
+-                get
+-                {
+-                    throw new NotImplementedException();
+-                }
++                throw new NotImplementedException();
+             }
++        }
+ 
+-            public string PhysicalPath
++        public string Name
++        {
++            get
+             {
+-                get
+-                {
+-                    throw new NotImplementedException();
+-                }
++                throw new NotImplementedException();
+             }
++        }
+ 
+-            public Stream CreateReadStream()
++        public string PhysicalPath
++        {
++            get
+             {
+                 throw new NotImplementedException();
+             }
+         }
++
++        public Stream CreateReadStream()
++        {
++            throw new NotImplementedException();
++        }
+     }
+-}
+\ No newline at end of file
++}
+commit 9da42b9fab4c61fe46627ac0c6877905ec845d5a
+Author: Kevin Pilch
+Date: 2021-07-22T15:54:29-07:00
+Subject: Find and Replace Apache License -> MIT
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index e54d2c770c..cd8ca24ae1 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -1,5 +1,5 @@
+-// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System;
+ using System.Collections.Generic;
+commit 4cceccd5689ebf7712c03789df536cbb4cfc2efc
+Author: Ajay Bhargav Baaskaran
+Date: 2019-02-13T10:53:39-08:00
+Subject: Make Mvc repo folder layout consistent (#7518)
+
+diff --git a/src/Mvc/test/Microsoft.AspNetCore.Mvc.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.TestCommon/TestFileProvider.cs
+similarity index 100%
+rename from src/Mvc/test/Microsoft.AspNetCore.Mvc.TestCommon/TestFileProvider.cs
+rename to src/Mvc/shared/Mvc.TestCommon/TestFileProvider.cs
+commit a6b473dc2c88da724e697452f8c906e9e16f8af5
+Author: Ryan Brandenburg
+Date: 2018-11-27T15:36:38-08:00
+Subject: Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/Mvc/tree/c9887e027a97b07a3ae7699112b9a2620a36e553
+
+diff --git a/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs
+similarity index 100%
+rename from test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs
+rename to src/Mvc/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs
+commit b659c82df64b20e6c68d6356869da22e6d4a1249
+Author: Ryan Brandenburg
+Date: 2018-11-27T12:09:17-08:00
+Subject: Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/Mvc/tree/a6199bbfbab05583f987bae322fb04566841aaea
+
+diff --git a/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs
+similarity index 100%
+rename from test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs
+rename to src/Mvc/test/Microsoft.AspNetCore.Mvc.Views.TestCommon/TestFileProvider.cs

@@ -1,0 +1,707 @@
+commit c790ed58ce44f7ba42669429025d7f991aa2d4c8
+Author: Brennan
+Date: 2024-07-01T20:34:52-07:00
+Subject: Add logging to MVC tests (#55592)
+
+diff --git a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+index 0c41e6d053..47f7715b0d 100644
+--- a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
++++ b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+@@ -3,17 +3,29 @@
+ 
+ using System.Net;
+ using System.Net.Http;
++using System.Reflection;
++using Microsoft.AspNetCore.InternalTesting;
++using Xunit.Abstractions;
+ 
+ namespace Microsoft.AspNetCore.Mvc.FunctionalTests;
+ 
+-public class ControllerFromServicesTest : IClassFixture<MvcTestFixture<ControllersFromServicesWebSite.Startup>>
++public class ControllerFromServicesTest : LoggedTest
+ {
+-    public ControllerFromServicesTest(MvcTestFixture<ControllersFromServicesWebSite.Startup> fixture)
++    protected override void Initialize(TestContext context, MethodInfo methodInfo, object[] testMethodArguments, ITestOutputHelper testOutputHelper)
+     {
+-        Client = fixture.CreateDefaultClient();
++        base.Initialize(context, methodInfo, testMethodArguments, testOutputHelper);
++        Factory = new MvcTestFixture<ControllersFromServicesWebSite.Startup>(LoggerFactory);
++        Client = Factory.CreateDefaultClient();
+     }
+ 
+-    public HttpClient Client { get; }
++    public override void Dispose()
++    {
++        Factory.Dispose();
++        base.Dispose();
++    }
++
++    public MvcTestFixture<ControllersFromServicesWebSite.Startup> Factory { get; private set; }
++    public HttpClient Client { get; private set; }
+ 
+     [Fact]
+     public async Task ControllersWithConstructorInjectionAreCreatedAndActivated()
+commit c85baf8db0c72ae8e68643029d514b2e737c9fae
+Author: Shreyas Jejurkar
+Date: 2022-01-02T06:39:22-08:00
+Subject: chore : Remove unwanted `using` statement (#39176)
+
+diff --git a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+index 3957c75fed..979e34d514 100644
+--- a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
++++ b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+@@ -1,8 +1,6 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+-using System;
+-using System.Collections.Generic;
+ using System.Linq;
+ using System.Reflection;
+ using Microsoft.AspNetCore.Mvc.ApplicationParts;
+diff --git a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+index 0ae066673e..0c41e6d053 100644
+--- a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
++++ b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+@@ -3,8 +3,6 @@
+ 
+ using System.Net;
+ using System.Net.Http;
+-using System.Threading.Tasks;
+-using Xunit;
+ 
+ namespace Microsoft.AspNetCore.Mvc.FunctionalTests;
+ 
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author: Pranav K
+Date: 2021-11-06T00:52:08Z
+Subject: Use file scoped namespaces (#38076)
+
+diff --git a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+index 749a7fecb7..3957c75fed 100644
+--- a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
++++ b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+@@ -7,73 +7,72 @@ using System.Linq;
+ using System.Reflection;
+ using Microsoft.AspNetCore.Mvc.ApplicationParts;
+ 
+-namespace Microsoft.AspNetCore.Mvc.Controllers
++namespace Microsoft.AspNetCore.Mvc.Controllers;
++
++/// <summary>
++/// Discovers controllers from a list of <see cref="ApplicationPart"/> instances.
++/// </summary>
++public class ControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+ {
+-    /// <summary>
+-    /// Discovers controllers from a list of <see cref="ApplicationPart"/> instances.
+-    /// </summary>
+-    public class ControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+-    {
+-        private const string ControllerTypeNameSuffix = "Controller";
++    private const string ControllerTypeNameSuffix = "Controller";
+ 
+-        /// <inheritdoc />
+-        public void PopulateFeature(
+-            IEnumerable<ApplicationPart> parts,
+-            ControllerFeature feature)
++    /// <inheritdoc />
++    public void PopulateFeature(
++        IEnumerable<ApplicationPart> parts,
++        ControllerFeature feature)
++    {
++        foreach (var part in parts.OfType<IApplicationPartTypeProvider>())
+         {
+-            foreach (var part in parts.OfType<IApplicationPartTypeProvider>())
++            foreach (var type in part.Types)
+             {
+-                foreach (var type in part.Types)
++                if (IsController(type) && !feature.Controllers.Contains(type))
+                 {
+-                    if (IsController(type) && !feature.Controllers.Contains(type))
+-                    {
+-                        feature.Controllers.Add(type);
+-                    }
++                    feature.Controllers.Add(type);
+                 }
+             }
+         }
++    }
+ 
+-        /// <summary>
+-        /// Determines if a given <paramref name="typeInfo"/> is a controller.
+-        /// </summary>
+-        /// <param name="typeInfo">The <see cref="TypeInfo"/> candidate.</param>
+-        /// <returns><see langword="true" /> if the type is a controller; otherwise <see langword="false" />.</returns>
+-        protected virtual bool IsController(TypeInfo typeInfo)
++    /// <summary>
++    /// Determines if a given <paramref name="typeInfo"/> is a controller.
++    /// </summary>
++    /// <param name="typeInfo">The <see cref="TypeInfo"/> candidate.</param>
++    /// <returns><see langword="true" /> if the type is a controller; otherwise <see langword="false" />.</returns>
++    protected virtual bool IsController(TypeInfo typeInfo)
++    {
++        if (!typeInfo.IsClass)
+         {
+-            if (!typeInfo.IsClass)
+-            {
+-                return false;
+-            }
+-
+-            if (typeInfo.IsAbstract)
+-            {
+-                return false;
+-            }
++            return false;
++        }
+ 
+-            // We only consider public top-level classes as controllers. IsPublic returns false for nested
+-            // classes, regardless of visibility modifiers
+-            if (!typeInfo.IsPublic)
+-            {
+-                return false;
+-            }
++        if (typeInfo.IsAbstract)
++        {
++            return false;
++        }
+ 
+-            if (typeInfo.ContainsGenericParameters)
+-            {
+-                return false;
+-            }
++        // We only consider public top-level classes as controllers. IsPublic returns false for nested
++        // classes, regardless of visibility modifiers
++        if (!typeInfo.IsPublic)
++        {
++            return false;
++        }
+ 
+-            if (typeInfo.IsDefined(typeof(NonControllerAttribute)))
+-            {
+-                return false;
+-            }
++        if (typeInfo.ContainsGenericParameters)
++        {
++            return false;
++        }
+ 
+-            if (!typeInfo.Name.EndsWith(ControllerTypeNameSuffix, StringComparison.OrdinalIgnoreCase) &&
+-                !typeInfo.IsDefined(typeof(ControllerAttribute)))
+-            {
+-                return false;
+-            }
++        if (typeInfo.IsDefined(typeof(NonControllerAttribute)))
++        {
++            return false;
++        }
+ 
+-            return true;
++        if (!typeInfo.Name.EndsWith(ControllerTypeNameSuffix, StringComparison.OrdinalIgnoreCase) &&
++            !typeInfo.IsDefined(typeof(ControllerAttribute)))
++        {
++            return false;
+         }
++
++        return true;
+     }
+ }
+diff --git a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+index 1fb995310b..0ae066673e 100644
+--- a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
++++ b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+@@ -6,116 +6,115 @@ using System.Net.Http;
+ using System.Threading.Tasks;
+ using Xunit;
+ 
+-namespace Microsoft.AspNetCore.Mvc.FunctionalTests
++namespace Microsoft.AspNetCore.Mvc.FunctionalTests;
++
++public class ControllerFromServicesTest : IClassFixture<MvcTestFixture<ControllersFromServicesWebSite.Startup>>
+ {
+-    public class ControllerFromServicesTest : IClassFixture<MvcTestFixture<ControllersFromServicesWebSite.Startup>>
++    public ControllerFromServicesTest(MvcTestFixture<ControllersFromServicesWebSite.Startup> fixture)
++    {
++        Client = fixture.CreateDefaultClient();
++    }
++
++    public HttpClient Client { get; }
++
++    [Fact]
++    public async Task ControllersWithConstructorInjectionAreCreatedAndActivated()
++    {
++        // Arrange
++        var expected = "/constructorinjection 14 test-header-value";
++        var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/constructorinjection?value=14");
++        request.Headers.TryAddWithoutValidation("Test-Header", "test-header-value");
++
++        // Act
++        var response = await Client.SendAsync(request);
++        var responseText = await response.Content.ReadAsStringAsync();
++
++        // Assert
++        Assert.Equal(expected, responseText);
++    }
++
++    [Fact]
++    public async Task TypesDerivingFromControllerAreRegistered()
++    {
++        // Arrange
++        var expected = "No schedules available for 23";
++
++        // Act
++        var response = await Client.GetStringAsync("http://localhost/schedule/23");
++
++        // Assert
++        Assert.Equal(expected, response);
++    }
++
++    [Fact]
++    public async Task TypesDerivingFromTypesWithControllerAttributeAreRegistered()
++    {
++        // Arrange
++        var expected = "4";
++
++        // Act
++        var response = await Client.GetStringAsync("http://localhost/inventory/");
++
++        // Assert
++        Assert.Equal(expected, response);
++    }
++
++    [Fact]
++    public async Task TypesWithControllerSuffixAreRegistered()
++    {
++        // Arrange
++        var expected = "Updated record employee303";
++
++        // Act
++        var response = await Client.PutAsync(
++            "http://localhost/employee/update_records?recordId=employee303",
++            new StringContent(string.Empty));
++
++        // Assert
++        response.EnsureSuccessStatusCode();
++        Assert.Equal(expected, await response.Content.ReadAsStringAsync());
++    }
++
++    [Fact]
++    public async Task TypesWithControllerSuffixAreConventionalRouted()
++    {
++        // Arrange
++        var expected = "Saved record employee #211";
++
++        // Act
++        var response = await Client.PostAsync(
++            "http://localhost/employeerecords/save/211",
++            new StringContent(string.Empty));
++
++        // Assert
++        response.EnsureSuccessStatusCode();
++        Assert.Equal(expected, await response.Content.ReadAsStringAsync());
++    }
++
++    [Theory]
++    [InlineData("not-discovered/generic")]
++    [InlineData("not-discovered/nested")]
++    [InlineData("not-discovered/not-in-services")]
++    [InlineData("ClientUIStub/GetClientContent/5")]
++    public async Task AddControllersFromServices_UsesControllerDiscoveryContentions(string action)
+     {
+-        public ControllerFromServicesTest(MvcTestFixture<ControllersFromServicesWebSite.Startup> fixture)
+-        {
+-            Client = fixture.CreateDefaultClient();
+-        }
+-
+-        public HttpClient Client { get; }
+-
+-        [Fact]
+-        public async Task ControllersWithConstructorInjectionAreCreatedAndActivated()
+-        {
+-            // Arrange
+-            var expected = "/constructorinjection 14 test-header-value";
+-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/constructorinjection?value=14");
+-            request.Headers.TryAddWithoutValidation("Test-Header", "test-header-value");
+-
+-            // Act
+-            var response = await Client.SendAsync(request);
+-            var responseText = await response.Content.ReadAsStringAsync();
+-
+-            // Assert
+-            Assert.Equal(expected, responseText);
+-        }
+-
+-        [Fact]
+-        public async Task TypesDerivingFromControllerAreRegistered()
+-        {
+-            // Arrange
+-            var expected = "No schedules available for 23";
+-
+-            // Act
+-            var response = await Client.GetStringAsync("http://localhost/schedule/23");
+-
+-            // Assert
+-            Assert.Equal(expected, response);
+-        }
+-
+-        [Fact]
+-        public async Task TypesDerivingFromTypesWithControllerAttributeAreRegistered()
+-        {
+-            // Arrange
+-            var expected = "4";
+-
+-            // Act
+-            var response = await Client.GetStringAsync("http://localhost/inventory/");
+-
+-            // Assert
+-            Assert.Equal(expected, response);
+-        }
+-
+-        [Fact]
+-        public async Task TypesWithControllerSuffixAreRegistered()
+-        {
+-            // Arrange
+-            var expected = "Updated record employee303";
+-
+-            // Act
+-            var response = await Client.PutAsync(
+-                "http://localhost/employee/update_records?recordId=employee303",
+-                new StringContent(string.Empty));
+-
+-            // Assert
+-            response.EnsureSuccessStatusCode();
+-            Assert.Equal(expected, await response.Content.ReadAsStringAsync());
+-        }
+-
+-        [Fact]
+-        public async Task TypesWithControllerSuffixAreConventionalRouted()
+-        {
+-            // Arrange
+-            var expected = "Saved record employee #211";
+-
+-            // Act
+-            var response = await Client.PostAsync(
+-                "http://localhost/employeerecords/save/211",
+-                new StringContent(string.Empty));
+-
+-            // Assert
+-            response.EnsureSuccessStatusCode();
+-            Assert.Equal(expected, await response.Content.ReadAsStringAsync());
+-        }
+-
+-        [Theory]
+-        [InlineData("not-discovered/generic")]
+-        [InlineData("not-discovered/nested")]
+-        [InlineData("not-discovered/not-in-services")]
+-        [InlineData("ClientUIStub/GetClientContent/5")]
+-        public async Task AddControllersFromServices_UsesControllerDiscoveryContentions(string action)
+-        {
+-            // Arrange & Act
+-            var response = await Client.GetAsync("http://localhost/" + action);
+-
+-            // Assert
+-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+-        }
+-
+-        [Fact]
+-        public async Task AddControllersAsServices_MultipleCalls_DoesNotReplacePreviousProvider()
+-        {
+-            // Arrange
+-            var expected = "1";
+-
+-            // Act
+-            var response = await Client.GetStringAsync("http://localhost/another/");
+-
+-            // Assert
+-            Assert.Equal(expected, response);
+-        }
++        // Arrange & Act
++        var response = await Client.GetAsync("http://localhost/" + action);
++
++        // Assert
++        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
++    }
++
++    [Fact]
++    public async Task AddControllersAsServices_MultipleCalls_DoesNotReplacePreviousProvider()
++    {
++        // Arrange
++        var expected = "1";
++
++        // Act
++        var response = await Client.GetStringAsync("http://localhost/another/");
++
++        // Assert
++        Assert.Equal(expected, response);
+     }
+ }
+commit 9da42b9fab4c61fe46627ac0c6877905ec845d5a
+Author: Kevin Pilch
+Date: 2021-07-22T15:54:29-07:00
+Subject: Find and Replace Apache License -> MIT
+
+diff --git a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+index caff2fc22b..749a7fecb7 100644
+--- a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
++++ b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+@@ -1,5 +1,5 @@
+-// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System;
+ using System.Collections.Generic;
+diff --git a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+index 01fb7c83b7..1fb995310b 100644
+--- a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
++++ b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+@@ -1,5 +1,5 @@
+-// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Net;
+ using System.Net.Http;
+commit 5ff9ed68d1cf6c89d72d27a69b00ed0ecd34daed
+Author: Eddy Nakamura
+Date: 2019-12-11T11:47:38-08:00
+Subject: updating inline <code> to <c> (#17611)
+
+diff --git a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+index 6b5a3616d2..caff2fc22b 100644
+--- a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
++++ b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+@@ -1,4 +1,4 @@
+-﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+ using System;
+@@ -37,7 +37,7 @@ namespace Microsoft.AspNetCore.Mvc.Controllers
+         /// Determines if a given <paramref name="typeInfo"/> is a controller.
+         /// </summary>
+         /// <param name="typeInfo">The <see cref="TypeInfo"/> candidate.</param>
+-        /// <returns><code>true</code> if the type is a controller; otherwise <code>false</code>.</returns>
++        /// <returns><see langword="true" /> if the type is a controller; otherwise <see langword="false" />.</returns>
+         protected virtual bool IsController(TypeInfo typeInfo)
+         {
+             if (!typeInfo.IsClass)
+commit 4cceccd5689ebf7712c03789df536cbb4cfc2efc
+Author: Ajay Bhargav Baaskaran
+Date: 2019-02-13T10:53:39-08:00
+Subject: Make Mvc repo folder layout consistent (#7518)
+
+diff --git a/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+new file mode 100644
+index 0000000000..6b5a3616d2
+--- /dev/null
++++ b/src/Mvc/Mvc.Core/src/Controllers/ControllerFeatureProvider.cs
+@@ -0,0 +1,79 @@
++﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Reflection;
++using Microsoft.AspNetCore.Mvc.ApplicationParts;
++
++namespace Microsoft.AspNetCore.Mvc.Controllers
++{
++    /// <summary>
++    /// Discovers controllers from a list of <see cref="ApplicationPart"/> instances.
++    /// </summary>
++    public class ControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
++    {
++        private const string ControllerTypeNameSuffix = "Controller";
++
++        /// <inheritdoc />
++        public void PopulateFeature(
++            IEnumerable<ApplicationPart> parts,
++            ControllerFeature feature)
++        {
++            foreach (var part in parts.OfType<IApplicationPartTypeProvider>())
++            {
++                foreach (var type in part.Types)
++                {
++                    if (IsController(type) && !feature.Controllers.Contains(type))
++                    {
++                        feature.Controllers.Add(type);
++                    }
++                }
++            }
++        }
++
++        /// <summary>
++        /// Determines if a given <paramref name="typeInfo"/> is a controller.
++        /// </summary>
++        /// <param name="typeInfo">The <see cref="TypeInfo"/> candidate.</param>
++        /// <returns><code>true</code> if the type is a controller; otherwise <code>false</code>.</returns>
++        protected virtual bool IsController(TypeInfo typeInfo)
++        {
++            if (!typeInfo.IsClass)
++            {
++                return false;
++            }
++
++            if (typeInfo.IsAbstract)
++            {
++                return false;
++            }
++
++            // We only consider public top-level classes as controllers. IsPublic returns false for nested
++            // classes, regardless of visibility modifiers
++            if (!typeInfo.IsPublic)
++            {
++                return false;
++            }
++
++            if (typeInfo.ContainsGenericParameters)
++            {
++                return false;
++            }
++
++            if (typeInfo.IsDefined(typeof(NonControllerAttribute)))
++            {
++                return false;
++            }
++
++            if (!typeInfo.Name.EndsWith(ControllerTypeNameSuffix, StringComparison.OrdinalIgnoreCase) &&
++                !typeInfo.IsDefined(typeof(ControllerAttribute)))
++            {
++                return false;
++            }
++
++            return true;
++        }
++    }
++}
+diff --git a/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+new file mode 100644
+index 0000000000..01fb7c83b7
+--- /dev/null
++++ b/src/Mvc/test/Mvc.FunctionalTests/ControllerFromServicesTests.cs
+@@ -0,0 +1,121 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Net;
++using System.Net.Http;
++using System.Threading.Tasks;
++using Xunit;
++
++namespace Microsoft.AspNetCore.Mvc.FunctionalTests
++{
++    public class ControllerFromServicesTest : IClassFixture<MvcTestFixture<ControllersFromServicesWebSite.Startup>>
++    {
++        public ControllerFromServicesTest(MvcTestFixture<ControllersFromServicesWebSite.Startup> fixture)
++        {
++            Client = fixture.CreateDefaultClient();
++        }
++
++        public HttpClient Client { get; }
++
++        [Fact]
++        public async Task ControllersWithConstructorInjectionAreCreatedAndActivated()
++        {
++            // Arrange
++            var expected = "/constructorinjection 14 test-header-value";
++            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/constructorinjection?value=14");
++            request.Headers.TryAddWithoutValidation("Test-Header", "test-header-value");
++
++            // Act
++            var response = await Client.SendAsync(request);
++            var responseText = await response.Content.ReadAsStringAsync();
++
++            // Assert
++            Assert.Equal(expected, responseText);
++        }
++
++        [Fact]
++        public async Task TypesDerivingFromControllerAreRegistered()
++        {
++            // Arrange
++            var expected = "No schedules available for 23";
++
++            // Act
++            var response = await Client.GetStringAsync("http://localhost/schedule/23");
++
++            // Assert
++            Assert.Equal(expected, response);
++        }
++
++        [Fact]
++        public async Task TypesDerivingFromTypesWithControllerAttributeAreRegistered()
++        {
++            // Arrange
++            var expected = "4";
++
++            // Act
++            var response = await Client.GetStringAsync("http://localhost/inventory/");
++
++            // Assert
++            Assert.Equal(expected, response);
++        }
++
++        [Fact]
++        public async Task TypesWithControllerSuffixAreRegistered()
++        {
++            // Arrange
++            var expected = "Updated record employee303";
++
++            // Act
++            var response = await Client.PutAsync(
++                "http://localhost/employee/update_records?recordId=employee303",
++                new StringContent(string.Empty));
++
++            // Assert
++            response.EnsureSuccessStatusCode();
++            Assert.Equal(expected, await response.Content.ReadAsStringAsync());
++        }
++
++        [Fact]
++        public async Task TypesWithControllerSuffixAreConventionalRouted()
++        {
++            // Arrange
++            var expected = "Saved record employee #211";
++
++            // Act
++            var response = await Client.PostAsync(
++                "http://localhost/employeerecords/save/211",
++                new StringContent(string.Empty));
++
++            // Assert
++            response.EnsureSuccessStatusCode();
++            Assert.Equal(expected, await response.Content.ReadAsStringAsync());
++        }
++
++        [Theory]
++        [InlineData("not-discovered/generic")]
++        [InlineData("not-discovered/nested")]
++        [InlineData("not-discovered/not-in-services")]
++        [InlineData("ClientUIStub/GetClientContent/5")]
++        public async Task AddControllersFromServices_UsesControllerDiscoveryContentions(string action)
++        {
++            // Arrange & Act
++            var response = await Client.GetAsync("http://localhost/" + action);
++
++            // Assert
++            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
++        }
++
++        [Fact]
++        public async Task AddControllersAsServices_MultipleCalls_DoesNotReplacePreviousProvider()
++        {
++            // Arrange
++            var expected = "1";
++
++            // Act
++            var response = await Client.GetStringAsync("http://localhost/another/");
++
++            // Assert
++            Assert.Equal(expected, response);
++        }
++    }
++}

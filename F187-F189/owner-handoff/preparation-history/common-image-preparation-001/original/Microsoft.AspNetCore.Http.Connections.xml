@@ -1,0 +1,1029 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AspNetCore.Http.Connections</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.AuthenticationRefreshMetadata">
+            <summary>
+            Metadata to identify the /refresh endpoint for HTTP connections, used to refresh
+            authentication on an existing connection without reconnecting.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.ConnectionOptions">
+            <summary>
+            Options used to change behavior of how connections are handled.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.ConnectionOptions.DisconnectTimeout">
+            <summary>
+            Gets or sets the interval used by the server to timeout idle connections.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.ConnectionOptionsSetup">
+            <summary>
+            Sets up <see cref="T:Microsoft.AspNetCore.Http.Connections.ConnectionOptions"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AspNetCore.Http.Connections.ConnectionOptionsSetup.DefaultDisconectTimeout">
+            <summary>
+            Default timeout value for disconnecting idle connections.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.ConnectionOptionsSetup.Configure(Microsoft.AspNetCore.Http.Connections.ConnectionOptions)">
+            <summary>
+            Sets default values for options if they have not been set yet.
+            </summary>
+            <param name="options">The <see cref="T:Microsoft.AspNetCore.Http.Connections.ConnectionOptions"/>.</param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.Features.IHttpContextFeature">
+            <summary>
+            Feature set on the <see cref="T:Microsoft.AspNetCore.Connections.ConnectionContext"/> that provides access to the underlying <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/>
+            associated with the connection if there is one.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.Features.IHttpContextFeature.HttpContext">
+            <summary>
+            The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the connection if available.
+            </summary>
+            <remarks>
+            Connections can run on top of HTTP transports like WebSockets or Long Polling, or other non-HTTP transports. As a result,
+            this API can sometimes return <see langword="null"/> depending on the configuration of your application.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.Features.IHttpTransportFeature">
+            <summary>
+            Feature set on the <see cref="T:Microsoft.AspNetCore.Connections.ConnectionContext"/> that exposes the <see cref="T:Microsoft.AspNetCore.Http.Connections.HttpTransportType"/>
+            the connection is using.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.Features.IHttpTransportFeature.TransportType">
+            <summary>
+            The <see cref="T:Microsoft.AspNetCore.Http.Connections.HttpTransportType"/> the connection is using.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.HttpConnectionContextExtensions">
+            <summary>
+            Extension method to get the underlying <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> of the connection if there is one.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.HttpConnectionContextExtensions.GetHttpContext(Microsoft.AspNetCore.Connections.ConnectionContext)">
+            <summary>
+            Gets the <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the connection, if there is one.
+            </summary>
+            <param name="connection">The <see cref="T:Microsoft.AspNetCore.Connections.ConnectionContext"/> representing the connection.</param>
+            <returns>The <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> associated with the connection, or <see langword="null"/> if the connection is not HTTP-based.</returns>
+            <remarks>
+            SignalR connections can run on top of HTTP transports like WebSockets or Long Polling, or other non-HTTP transports. As a result,
+            this method can sometimes return <see langword="null"/> depending on the configuration of your application.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions">
+            <summary>
+            Options used to configure the HTTP connection dispatcher.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions"/> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AuthorizationData">
+            <summary>
+            Gets a collection of <see cref="T:Microsoft.AspNetCore.Authorization.IAuthorizeData"/> used during HTTP connection pipeline.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.Transports">
+            <summary>
+            Gets or sets a bitmask combining one or more <see cref="T:Microsoft.AspNetCore.Http.Connections.HttpTransportType"/> values that specify what transports the server should use to receive HTTP requests.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.WebSockets">
+            <summary>
+            Gets the <see cref="T:Microsoft.AspNetCore.Http.Connections.WebSocketOptions"/> used by the web sockets transport.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.LongPolling">
+            <summary>
+            Gets the <see cref="T:Microsoft.AspNetCore.Http.Connections.LongPollingOptions"/> used by the long polling transport.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportMaxBufferSize">
+            <summary>
+            Gets or sets the maximum buffer size for data read by the application before backpressure is applied.
+            </summary>
+            <remarks>
+            The default value is 65KB.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.ApplicationMaxBufferSize">
+            <summary>
+            Gets or sets the maximum buffer size for data written by the application before backpressure is applied.
+            </summary>
+            <remarks>
+            The default value is 65KB.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.MinimumProtocolVersion">
+            <summary>
+            Gets or sets the minimum protocol version supported by the server.
+            The default value is 0, the lowest possible protocol version.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportSendTimeout">
+            <summary>
+            Gets or sets the amount of time the transport will wait for a send to complete. If a single send exceeds this timeout
+            the connection is closed.
+            </summary>
+            <remarks>
+            The default timeout is 10 seconds.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.CloseOnAuthenticationExpiration">
+            <summary>
+            Authenticated connections whose token sets the <see cref="P:Microsoft.AspNetCore.Authentication.AuthenticationProperties.ExpiresUtc"/> value will be closed
+            and allowed to reconnect when the token expires.
+            </summary>
+            <remarks>
+            Closed connections will miss messages sent while closed.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AllowStatefulReconnects">
+            <summary>
+            Set to allow connections to reconnect with the same <see cref="P:Microsoft.AspNetCore.Connections.BaseConnectionContext.ConnectionId"/>.
+            </summary>
+            <remarks>
+            Client still has to negotiate this option.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.EnableAuthenticationRefresh">
+            <summary>
+            When set to <c>true</c>, enables the <c>/refresh</c> endpoint that allows clients to refresh their
+            authentication token without disconnecting. The server will re-authenticate the request and update
+            the connection's <see cref="T:System.Security.Claims.ClaimsPrincipal"/>.
+            </summary>
+            <remarks>
+            It is recommended to also enable <see cref="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.CloseOnAuthenticationExpiration"/> so that the connection
+            is closed if authentication is not refreshed before it expires.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.OnAuthenticationRefresh">
+            <summary>
+            An optional callback invoked when the <c>/refresh</c> endpoint has successfully re-authenticated
+            the request but before the connection's user is replaced. Return <c>true</c> to accept the new
+            principal, or <c>false</c> to reject the refresh. When rejected, the endpoint responds with
+            HTTP 403 and the connection's current user remains in place.
+            </summary>
+            <remarks>
+            This callback is an additional policy applied on top of the connection's default identity
+            association check (or an application-provided
+            <see cref="P:Microsoft.AspNetCore.Connections.Features.IConnectionAuthenticationRefreshFeature.OnAuthenticationRefresh"/>
+            override): both must accept the refresh for it to be applied. It cannot be used to bypass that
+            underlying identity check.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.MaximumAuthenticationExpiration">
+            <summary>
+            Gets or sets the maximum amount of time, relative to now, that a refreshed authentication
+            expiration is allowed to advance to, regardless of the expiration reported by the authentication
+            ticket. Set to <see langword="null"/> to leave the ticket's own expiration (or lack of one) unmodified.
+            When set, the value must be greater than <see cref="F:System.TimeSpan.Zero"/>.
+            </summary>
+            <remarks>
+            This applies whenever <see cref="P:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.EnableAuthenticationRefresh"/> is <c>true</c>, including when the
+            authentication ticket does not itself set an expiration. It does not affect the safety behavior for
+            Windows authentication, whose expiration is never tracked or refreshed by this feature.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.#ctor(System.String,System.String,Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.Internal.MetricsContext,System.IO.Pipelines.IDuplexPipe,System.IO.Pipelines.IDuplexPipe,Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions,System.Boolean,System.Security.Claims.ClaimsPrincipal,System.Boolean)">
+            <summary>
+            Creates the DefaultConnectionContext without Pipes to avoid upfront allocations.
+            The caller is expected to set the <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Transport"/> and <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Application"/> pipes manually.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.UpdateUserAsync(System.Security.Claims.ClaimsPrincipal,System.DateTimeOffset,Microsoft.AspNetCore.Http.HttpContext,System.Func{Microsoft.AspNetCore.Connections.Features.AuthenticationRefreshContext,System.Threading.Tasks.Task{System.Boolean}},Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Updates the User/ClaimsPrincipal on this connection and refreshes the authentication expiration.
+            </summary>
+            <param name="user">The refreshed principal to apply to the connection.</param>
+            <param name="authenticationExpiration">The expiration of the refreshed authentication.</param>
+            <param name="userRefreshHttpContext">The request context exposed to <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.OnAuthenticationRefresh"/> while validating the refreshed principal.</param>
+            <param name="additionalAuthenticationRefresh">An optional additional policy invoked after <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.OnAuthenticationRefresh"/> accepts the refresh.</param>
+            <param name="replacementHttpContext">The request context to associate with the connection when publishing the refreshed principal.</param>
+            <remarks>
+            This uses a two-phase validate-then-publish strategy: <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.OnAuthenticationRefresh"/> is awaited
+            without holding <see cref="F:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext._userLock"/> (it may run arbitrary, possibly slow, application code), and the
+            staleness/identity checks are then re-validated atomically with the swap under the lock. This prevents a
+            concurrent refresh (for example the /refresh endpoint racing a long-polling poll) that already published
+            a newer or different identity while the callback was running from being rolled back by this update.
+            The update is skipped as <see cref="F:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.UserUpdateResult.Stale"/> if <paramref name="authenticationExpiration"/>
+            is older than the currently applied <see cref="P:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.AuthenticationExpiration"/>, or if the connection's user
+            advanced past the snapshot this update's acceptance decision was based on.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.CloneUserIfNeeded(System.Security.Claims.ClaimsPrincipal,System.Boolean@)">
+            <summary>
+            Retains <paramref name="user"/> for longer than the request that produced it. Ordinary principals are
+            returned as-is; only <see cref="T:System.Security.Principal.WindowsIdentity"/> instances are cloned, because their SafeHandles are
+            disposed when the request ends. <paramref name="ownsIdentities"/> is <see langword="true"/> when the
+            caller is responsible for disposing the returned principal's identities.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.DisposingConnection(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Disposing connection {TransportConnectionId}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.WaitingForApplication(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Waiting for application to complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.ApplicationComplete(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Application complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.WaitingForTransport(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> Waiting for {TransportType} transport to complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.TransportComplete(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> {TransportType} transport complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.ShuttingDownTransportAndApplication(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> Shutting down both the application and the {TransportType} transport.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.WaitingForTransportAndApplication(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> Waiting for both the application and {TransportType} transport to complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.TransportAndApplicationComplete(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> The application and {TransportType} transport are both complete.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.TransportSendTimeout(Microsoft.Extensions.Logging.ILogger,System.TimeSpan,System.String)">
+            <summary>
+            <para><b>Message:</b> {Timeout}ms elapsed attempting to send a message to the transport. Closing connection {TransportConnectionId}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.UserRefreshedCallbackFailed(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> An IConnectionAuthenticationRefreshFeature.OnAuthenticationRefreshed callback threw an exception.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionContext.Log.UserRefreshingCallbackFailed(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> The IConnectionAuthenticationRefreshFeature.OnAuthenticationRefresh callback threw an exception. The user update was rejected.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ConnectionDisposed(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} was disposed.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ConnectionAlreadyActive(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} is already active via {RequestId}.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.PollCanceled(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Previous poll canceled for {TransportConnectionId} on {RequestId}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.EstablishedConnection(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Establishing new connection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ResumingConnection(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Resuming existing connection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ReceivedBytes(Microsoft.Extensions.Logging.ILogger,System.Int64)">
+            <summary>
+            <para><b>Message:</b> Received {Count} bytes.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.TransportNotSupported(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> {TransportType} transport not supported by this connection handler.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.CannotChangeTransport(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> Cannot change transports mid-connection; currently using {TransportType}, requesting {RequestedTransport}.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.PostNotAllowedForWebSockets(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> POST requests are not allowed for websocket connections.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.NegotiationRequest(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Sending negotiation response.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ReceivedDeleteRequestForUnsupportedTransport(Microsoft.Extensions.Logging.ILogger,Microsoft.AspNetCore.Http.Connections.HttpTransportType)">
+            <summary>
+            <para><b>Message:</b> Received DELETE request for unsupported transport: {TransportType}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.TerminatingConnection(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Terminating Long Polling connection due to a DELETE request.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.ConnectionDisposedWhileWriteInProgress(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} was disposed while a write was in progress.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.FailedToReadHttpRequestBody(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} failed to read the HTTP request body.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.NegotiateProtocolVersionMismatch(Microsoft.Extensions.Logging.ILogger,System.Int32)">
+            <summary>
+            <para><b>Message:</b> The client requested version &apos;{clientProtocolVersion}&apos;, but the server does not support this version.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.InvalidNegotiateProtocolVersion(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> The client requested an invalid protocol version &apos;{queryStringVersionValue}&apos;</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.NotifyOnReconnectError(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Exception from IStatefulReconnectFeature.NotifyOnReconnect callback.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.AuthenticationRefreshRejectedByCallback(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Authentication refresh for connection &apos;{ConnectionId}&apos; was rejected by OnAuthenticationRefresh callback.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionDispatcher.Log.UserNameChangedRejectedInternal(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            <para><b>Message:</b> Rejecting the request because the name of the user changed from &apos;{PreviousUserName}&apos; to &apos;{CurrentUserName}&apos; for an existing connection.</para>
+            <para><b>Level:</b> Warning</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.CreateConnection(Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions,System.Int32,System.Boolean,Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionEndpointMetadata)">
+            <summary>
+            Creates a connection without Pipes setup to allow saving allocations until Pipes are needed.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.CreatedNewConnection(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> New connection {TransportConnectionId} created.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.RemovedConnection(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Removing connection {TransportConnectionId} from the list of connections.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.FailedDispose(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Failed disposing connection {TransportConnectionId}.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.ConnectionTimedOut(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} timed out.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.ConnectionReset(Microsoft.Extensions.Logging.ILogger,System.String,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} was reset.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.ScanningConnectionsFailed(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Scanning connections failed.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.HeartBeatStarted(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Starting connection heartbeat.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.HeartBeatEnded(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Ending connection heartbeat.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.HttpConnectionManager.Log.AuthenticationExpired(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Connection {TransportConnectionId} closing because the authentication token has expired.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.IHttpTransport.ProcessRequestAsync(Microsoft.AspNetCore.Http.HttpContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes the transport
+            </summary>
+            <param name="context"></param>
+            <param name="token"></param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> that completes when the transport has finished processing</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.LongPollingServerTransport.Log.LongPolling204(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Terminating Long Polling connection by sending 204 response.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.LongPollingServerTransport.Log.PollTimedOut(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Poll request timed out. Sending 200 response to connection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.LongPollingServerTransport.Log.LongPollingWritingMessage(Microsoft.Extensions.Logging.ILogger,System.Int64)">
+            <summary>
+            <para><b>Message:</b> Writing a {Count} byte message to connection.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.LongPollingServerTransport.Log.LongPollingDisconnected(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Client disconnected from Long Polling endpoint for connection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.LongPollingServerTransport.Log.LongPollingTerminated(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Long Polling transport was terminated due to an error on connection.</para>
+            <para><b>Level:</b> Error</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.ServerSentEventsServerTransport.Log.SSEWritingMessage(Microsoft.Extensions.Logging.ILogger,System.Int64)">
+            <summary>
+            <para><b>Message:</b> Writing a {Count} byte message.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.SocketOpened(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            <para><b>Message:</b> Socket opened using Sub-Protocol: &apos;{SubProtocol}&apos;.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.SocketClosed(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Socket closed.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.ClientClosed(Microsoft.Extensions.Logging.ILogger,System.Nullable{System.Net.WebSockets.WebSocketCloseStatus},System.String)">
+            <summary>
+            <para><b>Message:</b> Client closed connection with status code &apos;{Status}&apos; ({Description}). Signaling end-of-input to application.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.WaitingForSend(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Waiting for the application to finish sending data.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.FailedSending(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Application failed during sending. Sending InternalServerError close frame.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.FinishedSending(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Application finished sending. Sending close frame.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.WaitingForClose(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Waiting for the client to close the socket.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.CloseTimedOut(Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            <para><b>Message:</b> Timed out waiting for client to send the close frame, aborting the connection.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.MessageReceived(Microsoft.Extensions.Logging.ILogger,System.Net.WebSockets.WebSocketMessageType,System.Int32,System.Boolean)">
+            <summary>
+            <para><b>Message:</b> Message received. Type: {MessageType}, size: {Size}, EndOfMessage: {EndOfMessage}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.MessageToApplication(Microsoft.Extensions.Logging.ILogger,System.Int32)">
+            <summary>
+            <para><b>Message:</b> Passing message to application. Payload size: {Size}.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.SendPayload(Microsoft.Extensions.Logging.ILogger,System.Int64)">
+            <summary>
+            <para><b>Message:</b> Sending payload: {Size} bytes.</para>
+            <para><b>Level:</b> Trace</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.ErrorWritingFrame(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Error writing frame.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.ClosedPrematurely(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Socket connection closed prematurely.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.ClosingWebSocketFailed(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Closing webSocket failed.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.Transports.WebSocketsServerTransport.Log.SendErrored(Microsoft.Extensions.Logging.ILogger,System.Exception)">
+            <summary>
+            <para><b>Message:</b> Send loop errored.</para>
+            <para><b>Level:</b> Debug</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot">
+            <summary>
+            An immutable snapshot of a principal's identity, used to decide whether a later request belongs to the
+            same user as the one that negotiated a connection.
+            </summary>
+            <remarks>
+            <para>
+            The snapshot is captured eagerly from a live <see cref="T:System.Security.Claims.ClaimsPrincipal"/>. This matters because a
+            <see cref="T:System.Security.Claims.ClaimsIdentity"/> subclass may decide <see cref="P:System.Security.Claims.ClaimsIdentity.IsAuthenticated"/> for itself -
+            <see cref="T:System.Security.Principal.GenericIdentity"/> is authenticated whenever it has a name, even
+            though its <see cref="P:System.Security.Claims.ClaimsIdentity.AuthenticationType"/> is empty. Rebuilding such an identity as a base
+            <see cref="T:System.Security.Claims.ClaimsIdentity"/> would silently make it unauthenticated and discard its identity claims.
+            </para>
+            <para>
+            Extraction follows the precedence used by antiforgery's <c>DefaultClaimUidExtractor</c>: the first
+            authenticated identity carrying <c>sub</c>, <see cref="F:System.Security.Claims.ClaimTypes.NameIdentifier"/>, or
+            <see cref="F:System.Security.Claims.ClaimTypes.Upn"/> wins. When no identity carries one of those, every authenticated claim is used
+            instead, ordered so that claim ordering does not affect the result. When there are no authenticated claims,
+            extraction follows <c>DefaultAntiforgeryTokenGenerator</c> and falls back to the first authenticated
+            identity's nonempty <see cref="P:System.Security.Claims.ClaimsIdentity.Name"/>.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot.Capture(System.Security.Claims.ClaimsPrincipal)">
+            <summary>
+            Captures <paramref name="user"/>'s identity, or <see langword="null"/> when the principal has no
+            authenticated claims or name to identify it by.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot.GetUserIdentityKey(System.Security.Claims.ClaimsPrincipal)">
+            <summary>
+            Returns the preferred identity claim for <paramref name="user"/>, or <see langword="null"/> when no
+            authenticated identity carries one.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot.Matches(Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot,Microsoft.AspNetCore.Http.Connections.Internal.UserIdentitySnapshot)">
+            <summary>
+            Determines whether two captured identities refer to the same user. Two principals that both lack an
+            identifiable authenticated identity are considered to match, because neither is bound to a user.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.LongPollingOptions">
+            <summary>
+            Options used to configure the long polling transport.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.LongPollingOptions.PollTimeout">
+            <summary>
+            Gets or sets the poll timeout.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.NegotiateMetadata">
+            <summary>
+            Metadata to identify the /negotiate endpoint for HTTP connections
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Http.Connections.ServerSentEventsMessageFormatter.GetLastSegment(System.Buffers.ReadOnlySequence{System.Byte}@,System.Int64@)">
+            <summary>
+            Gets the last memory segment in a sequence.
+            </summary>
+            <param name="source">Source sequence.</param>
+            <param name="offset">The offset the segment starts at.</param>
+            <returns>The last memory segment in a sequence.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Http.Connections.WebSocketOptions">
+            <summary>
+            Options used by the WebSockets transport to modify the transports behavior.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.WebSocketOptions.CloseTimeout">
+            <summary>
+            Gets or sets the amount of time the WebSocket transport will wait for a graceful close before starting an ungraceful close.
+            </summary>
+            <value>Defaults to 5 seconds</value>
+        </member>
+        <member name="P:Microsoft.AspNetCore.Http.Connections.WebSocketOptions.SubProtocolSelector">
+            <summary>
+            Gets or sets a delegate that will be called when a new WebSocket is established to select the value
+            for the 'Sec-WebSocket-Protocol' response header. The delegate will be called with a list of the protocols provided
+            by the client in the 'Sec-WebSocket-Protocol' request header.
+            </summary>
+            <remarks>
+            See RFC 6455 section 1.3 for more details on the WebSocket handshake: <see href="https://tools.ietf.org/html/rfc6455#section-1.3"/>
+            </remarks>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder">
+            <summary>
+            Builds conventions that will be used for customization of Connection <see cref="T:Microsoft.AspNetCore.Builder.EndpointBuilder"/> instances.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder.Add(System.Action{Microsoft.AspNetCore.Builder.EndpointBuilder})">
+            <summary>
+            Adds the specified convention to the builder. Conventions are used to customize <see cref="T:Microsoft.AspNetCore.Builder.EndpointBuilder"/> instances.
+            </summary>
+            <param name="convention">The convention to add to the builder.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder.Finally(System.Action{Microsoft.AspNetCore.Builder.EndpointBuilder})">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilderExtensions">
+            <summary>
+            Extension methods on <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> that add routes for <see cref="T:Microsoft.AspNetCore.Connections.ConnectionHandler"/>s.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilderExtensions.MapConnections(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder,System.String,System.Action{Microsoft.AspNetCore.Connections.IConnectionBuilder})">
+            <summary>
+            Maps incoming requests with the specified path to the provided connection pipeline.
+            </summary>
+            <param name="endpoints">The <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> to add the route to.</param>
+            <param name="pattern">The route pattern.</param>
+            <param name="configure">A callback to configure the connection.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder"/> for endpoints associated with the connections.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilderExtensions.MapConnectionHandler``1(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder,System.String)">
+            <summary>
+            Maps incoming requests with the specified path to the provided connection pipeline.
+            </summary>
+            <typeparam name="TConnectionHandler">The <see cref="T:Microsoft.AspNetCore.Connections.ConnectionHandler"/> type.</typeparam>
+            <param name="endpoints">The <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> to add the route to.</param>
+            <param name="pattern">The route pattern.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder"/> for endpoints associated with the connections.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilderExtensions.MapConnectionHandler``1(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder,System.String,System.Action{Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions})">
+            <summary>
+            Maps incoming requests with the specified path to the provided connection pipeline.
+            </summary>
+            <typeparam name="TConnectionHandler">The <see cref="T:Microsoft.AspNetCore.Connections.ConnectionHandler"/> type.</typeparam>
+            <param name="endpoints">The <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> to add the route to.</param>
+            <param name="pattern">The route pattern.</param>
+            <param name="configureOptions">A callback to configure dispatcher options.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder"/> for endpoints associated with the connections.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilderExtensions.MapConnections(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder,System.String,Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions,System.Action{Microsoft.AspNetCore.Connections.IConnectionBuilder})">
+            <summary>
+            Maps incoming requests with the specified path to the provided connection pipeline.
+            </summary>
+            <param name="endpoints">The <see cref="T:Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"/> to add the route to.</param>
+            <param name="pattern">The route pattern.</param>
+            <param name="options">Options used to configure the connection.</param>
+            <param name="configure">A callback to configure the connection.</param>
+            <returns>An <see cref="T:Microsoft.AspNetCore.Builder.ConnectionEndpointRouteBuilder"/> for endpoints associated with the connections.</returns>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Internal.MemoryBufferWriter.WrittenBuffers">
+            <summary>
+            Holds the written segments from a MemoryBufferWriter and is no longer attached to a MemoryBufferWriter.
+            You are now responsible for calling Dispose on this type to return the memory to the pool.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AspNetCore.Internal.MemoryBufferWriter.CompletedBuffer">
+            <summary>
+            Holds a byte[] from the pool and a size value. Basically a Memory but guaranteed to be backed by an ArrayPool byte[], so that we know we can return it.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNull(System.Object,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentNullException"/> if <paramref name="argument"/> is null.</summary>
+            <param name="argument">The reference type argument to validate as non-null.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentNullThrowHelper.ThrowIfNullOrEmpty(System.String,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentException"/> if <paramref name="argument"/> is null or empty.</summary>
+            <param name="argument">The <see cref="T:System.String"/> argument to validate as non-null and non-empty.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfZero(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is zero.</summary>
+            <param name="value">The argument to validate as non-zero.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegative(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative.</summary>
+            <param name="value">The argument to validate as non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegative(System.Int64,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative.</summary>
+            <param name="value">The argument to validate as non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfNegativeOrZero(System.Int32,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is negative or zero.</summary>
+            <param name="value">The argument to validate as non-zero or non-negative.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfGreaterThan``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is greater than <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as less or equal than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfGreaterThanOrEqual``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is greater than or equal <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as less than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfLessThan``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is less than <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as greatar than or equal than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ArgumentOutOfRangeThrowHelper.ThrowIfLessThanOrEqual``1(``0,``0,System.String)">
+            <summary>Throws an <see cref="T:System.ArgumentOutOfRangeException"/> if <paramref name="value"/> is less than or equal <paramref name="other"/>.</summary>
+            <param name="value">The argument to validate as greatar than than <paramref name="other"/>.</param>
+            <param name="other">The value to compare with <paramref name="value"/>.</param>
+            <param name="paramName">The name of the parameter with which <paramref name="value"/> corresponds.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ConnectionEndpointTags.AddConnectionEndpointTags``1(``0@,Microsoft.AspNetCore.Http.Features.IFeatureCollection)">
+            <summary>
+            Adds connection endpoint tags to a collection of tags, such as a <see cref="T:System.Diagnostics.TagList"/>, using <see cref="T:Microsoft.AspNetCore.Connections.Features.IConnectionEndPointFeature"/>.
+            </summary>
+            <param name="tags">The tags to add to.</param>
+            <param name="features">The feature collection to get endpoint information from.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.Shared.ConnectionEndpointTags.AddConnectionEndpointTags``1(``0@,Microsoft.AspNetCore.Connections.BaseConnectionContext)">
+            <summary>
+            Adds connection endpoint tags to a collection of tags, such as a <see cref="T:System.Diagnostics.TagList"/>, using <see cref="T:Microsoft.AspNetCore.Connections.Features.IConnectionEndPointFeature"/>,
+            with a fallback to the <see cref="T:Microsoft.AspNetCore.Connections.BaseConnectionContext"/> endpoint properties.
+            </summary>
+            <param name="tags">The tags to add to.</param>
+            <param name="connectionContext">The connection context to get endpoint information from.</param>
+        </member>
+        <member name="T:Microsoft.Extensions.DependencyInjection.ConnectionsDependencyInjectionExtensions">
+            <summary>
+            Extension methods for <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.ConnectionsDependencyInjectionExtensions.AddConnections(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Adds required services for ASP.NET Core Connection Handlers to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
+            <returns>The same instance of the <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> for chaining.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.DependencyInjection.ConnectionsDependencyInjectionExtensions.AddConnections(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Microsoft.AspNetCore.Http.Connections.ConnectionOptions})">
+            <summary>
+            Adds required services for ASP.NET Core Connection Handlers to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
+            <param name="options">A callback to configure  <see cref="T:Microsoft.AspNetCore.Http.Connections.ConnectionOptions" /></param>
+            <returns>The same instance of the <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> for chaining.</returns>
+        </member>
+        <member name="T:Microsoft.Extensions.Internal.SecurityHelper">
+            <summary>
+            Helper code used when implementing authentication middleware
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.SecurityHelper.MergeUserPrincipal(System.Security.Claims.ClaimsPrincipal,System.Security.Claims.ClaimsPrincipal)">
+            <summary>
+            Add all ClaimsIdentities from an additional ClaimPrincipal to the ClaimsPrincipal
+            Merges a new claims principal, placing all new identities first, and eliminating
+            any empty unauthenticated identities from context.User
+            </summary>
+            <param name="existingPrincipal">The <see cref="T:System.Security.Claims.ClaimsPrincipal"/> containing existing <see cref="T:System.Security.Claims.ClaimsIdentity"/>.</param>
+            <param name="additionalPrincipal">The <see cref="T:System.Security.Claims.ClaimsPrincipal"/> containing <see cref="T:System.Security.Claims.ClaimsIdentity"/> to be added.</param>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.SecurityHelper.IsAuthenticated(System.Security.Claims.ClaimsPrincipal)">
+            <summary>
+            Determines whether the <paramref name="user"/> is authenticated.
+            Uses the same aggregate semantics as authorization's
+            <c>DenyAnonymousAuthorizationRequirement</c>: the principal is authenticated when it has an
+            identity and at least one of its identities is authenticated (not only the primary identity).
+            </summary>
+            <param name="user">The <see cref="T:System.Security.Claims.ClaimsPrincipal"/> to inspect.</param>
+            <returns><see langword="true"/> if the principal is authenticated; otherwise <see langword="false"/>.</returns>
+        </member>
+        <member name="T:Microsoft.Extensions.Internal.WebEncoders">
+            <summary>
+            Contains utility APIs to assist with common encoding and decoding operations.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Extensions.Internal.WebEncoders.s_base64vsBase64UrlDifferentiators">
+            <summary>SearchValues for the two Base64 and two Base64Url chars that differ from each other.</summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String)">
+            <summary>
+            Decodes a base64url-encoded string.
+            </summary>
+            <param name="input">The base64url-encoded input to decode.</param>
+            <returns>The base64url-decoded form of the input.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Int32)">
+            <summary>
+            Decodes a base64url-encoded substring of a given string.
+            </summary>
+            <param name="input">A string containing the base64url-encoded input to decode.</param>
+            <param name="offset">The position in <paramref name="input"/> at which decoding should begin.</param>
+            <param name="count">The number of characters in <paramref name="input"/> to decode.</param>
+            <returns>The base64url-decoded form of the input.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Decodes a base64url-encoded <paramref name="input"/> into a <c>byte[]</c>.
+            </summary>
+            <param name="input">A string containing the base64url-encoded input to decode.</param>
+            <param name="offset">The position in <paramref name="input"/> at which decoding should begin.</param>
+            <param name="buffer">
+            Scratch buffer to hold the <see cref="T:System.Char"/>s to decode. Array must be large enough to hold
+            <paramref name="bufferOffset"/> and <paramref name="count"/> characters as well as Base64 padding
+            characters. Content is not preserved.
+            </param>
+            <param name="bufferOffset">
+            The offset into <paramref name="buffer"/> at which to begin writing the <see cref="T:System.Char"/>s to decode.
+            </param>
+            <param name="count">The number of characters in <paramref name="input"/> to decode.</param>
+            <returns>The base64url-decoded form of the <paramref name="input"/>.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Span{System.Byte})">
+            <summary>
+            Decodes a base64url-encoded <paramref name="input"/> into <paramref name="output"/>.
+            </summary>
+            <param name="input">The base64url-encoded input to decode.</param>
+            <param name="output">The buffer to receive the decoded bytes.</param>
+            <returns>The number of bytes written to <paramref name="output"/>.</returns>
+            <remarks>
+            The input must not contain any whitespace or padding characters.
+            Throws <see cref="T:System.FormatException"/> if the input is malformed.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.GetArraySizeRequiredToDecode(System.Int32)">
+            <summary>
+            Gets the minimum <c>char[]</c> size required for decoding of <paramref name="count"/> characters
+            with the <see cref="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlDecode(System.String,System.Int32,System.Char[],System.Int32,System.Int32)"/> method.
+            </summary>
+            <param name="count">The number of characters to decode.</param>
+            <returns>
+            The minimum <c>char[]</c> size required for decoding  of <paramref name="count"/> characters.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[])">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="offset">The offset into <paramref name="input"/> at which to begin encoding.</param>
+            <param name="count">The number of bytes from <paramref name="input"/> to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Char[],System.Int32,System.Int32)">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="offset">The offset into <paramref name="input"/> at which to begin encoding.</param>
+            <param name="output">
+            Buffer to receive the base64url-encoded form of <paramref name="input"/>. Array must be large enough to
+            hold <paramref name="outputOffset"/> characters and the full base64-encoded form of
+            <paramref name="input"/>, including padding characters.
+            </param>
+            <param name="outputOffset">
+            The offset into <paramref name="output"/> at which to begin writing the base64url-encoded form of
+            <paramref name="input"/>.
+            </param>
+            <param name="count">The number of <c>byte</c>s from <paramref name="input"/> to encode.</param>
+            <returns>
+            The number of characters written to <paramref name="output"/>, less any padding characters.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.GetArraySizeRequiredToEncode(System.Int32)">
+            <summary>
+            Get the minimum output <c>char[]</c> size required for encoding <paramref name="count"/>
+            <see cref="T:System.Byte"/>s with the <see cref="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.Byte[],System.Int32,System.Char[],System.Int32,System.Int32)"/> method.
+            </summary>
+            <param name="count">The number of characters to encode.</param>
+            <returns>
+            The minimum output <c>char[]</c> size required for encoding <paramref name="count"/> <see cref="T:System.Byte"/>s.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <returns>The base64url-encoded form of <paramref name="input"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Extensions.Internal.WebEncoders.Base64UrlEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char})">
+            <summary>
+            Encodes <paramref name="input"/> using base64url encoding.
+            </summary>
+            <param name="input">The binary input to encode.</param>
+            <param name="output">The buffer to place the result in.</param>
+            <returns></returns>
+        </member>
+        <member name="F:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.WebEncoders_InvalidCountOffsetOrLength">
+            <summary>
+            Invalid {0}, {1} or {2} length.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.WebEncoders_MalformedInput">
+            <summary>
+            Malformed input: {0} is an invalid input length.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.FormatWebEncoders_InvalidCountOffsetOrLength(System.Object,System.Object,System.Object)">
+            <summary>
+            Invalid {0}, {1} or {2} length.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.WebEncoders.Sources.EncoderResources.FormatWebEncoders_MalformedInput(System.Object)">
+            <summary>
+            Malformed input: {0} is an invalid input length.
+            </summary>
+        </member>
+    </members>
+</doc>

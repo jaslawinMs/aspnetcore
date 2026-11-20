@@ -1,0 +1,130 @@
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author: Pranav K
+Date: 2021-11-06T00:52:08Z
+Subject: Use file scoped namespaces (#38076)
+
+diff --git a/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+index 54c78d619e..a5f2b296c4 100644
+--- a/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
++++ b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+@@ -3,17 +3,16 @@
+ 
+ using Microsoft.AspNetCore.Mvc;
+ 
+-namespace ControllersFromServicesClassLibrary
++namespace ControllersFromServicesClassLibrary;
++
++public class NestedControllerOwner
+ {
+-    public class NestedControllerOwner
++    public class NestedController : Controller
+     {
+-        public class NestedController : Controller
++        [HttpGet("/not-discovered/nested")]
++        public IActionResult Index()
+         {
+-            [HttpGet("/not-discovered/nested")]
+-            public IActionResult Index()
+-            {
+-                return new EmptyResult();
+-            }
++            return new EmptyResult();
+         }
+     }
+ }
+commit 9da42b9fab4c61fe46627ac0c6877905ec845d5a
+Author: Kevin Pilch
+Date: 2021-07-22T15:54:29-07:00
+Subject: Find and Replace Apache License -> MIT
+
+diff --git a/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+index 0ece0dc75c..54c78d619e 100644
+--- a/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
++++ b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+@@ -1,5 +1,5 @@
+-// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.AspNetCore.Mvc;
+ 
+commit a6b473dc2c88da724e697452f8c906e9e16f8af5
+Author: Ryan Brandenburg
+Date: 2018-11-27T15:36:38-08:00
+Subject: Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/Mvc/tree/c9887e027a97b07a3ae7699112b9a2620a36e553
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+similarity index 100%
+rename from test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+rename to src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+commit b659c82df64b20e6c68d6356869da22e6d4a1249
+Author: Ryan Brandenburg
+Date: 2018-11-27T12:09:17-08:00
+Subject: Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/Mvc/tree/a6199bbfbab05583f987bae322fb04566841aaea
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+similarity index 100%
+rename from test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+rename to src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+commit f4578f127cdf4c2af4401abe240dc1b92676a513
+Author: Ryan Brandenburg
+Date: 2018-11-27T10:43:55-08:00
+Subject: Reorganize source code in preparation to move into aspnet/AspNetCore Prior to reorganization, this source code was found in https://github.com/aspnet/Mvc/tree/5a4fd3e792e75619e3b1de069fabdf87d2cd0983
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+similarity index 100%
+rename from test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+rename to src/Mvc/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+commit 3be7fbdf9f0c66a1930d4014fc604e150aa3515a
+Author: N. Taylor Mullen
+Date: 2016-01-22T12:18:33-08:00
+Subject: Rename AspNet 5 file contents.
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+index 6a4ccfcd85..0ece0dc75c 100644
+--- a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
++++ b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+@@ -1,7 +1,7 @@
+ // Copyright (c) .NET Foundation. All rights reserved.
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+-using Microsoft.AspNet.Mvc;
++using Microsoft.AspNetCore.Mvc;
+ 
+ namespace ControllersFromServicesClassLibrary
+ {
+commit 046cb976b3e899052a95387b72ea4bee6987bff0
+Author: Ryan Nowak
+Date: 2015-09-16T21:42:31-07:00
+Subject: Move ActionResult classes back to main namespace
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+index ab9fa522e7..6a4ccfcd85 100644
+--- a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
++++ b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+@@ -2,7 +2,6 @@
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+ using Microsoft.AspNet.Mvc;
+-using Microsoft.AspNet.Mvc.ActionResults;
+ 
+ namespace ControllersFromServicesClassLibrary
+ {
+commit 229724c4eab3bf4fc8390deca9af7e451e5caee7
+Author: Ryan Nowak
+Date: 2015-09-01T22:28:33-07:00
+Subject: Reorganize MVC namespaces
+
+diff --git a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+index 6a4ccfcd85..ab9fa522e7 100644
+--- a/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
++++ b/test/WebSites/ControllersFromServicesClassLibrary/NestedControllerOwner.cs
+@@ -2,6 +2,7 @@
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+ using Microsoft.AspNet.Mvc;
++using Microsoft.AspNet.Mvc.ActionResults;
+ 
+ namespace ControllersFromServicesClassLibrary
+ {
