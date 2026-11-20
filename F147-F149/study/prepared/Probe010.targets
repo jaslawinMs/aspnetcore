@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <Compile Include="$(MSBuildThisFileDirectory)CompiledSampleProducerTests.cs" />
+  </ItemGroup>
+  <Target Name="SetArtifactLanguage010"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'InMemory.FunctionalTests'">
+    <PropertyGroup>
+      <LangVersion>13.0</LangVersion>
+    </PropertyGroup>
+    <Error Condition="'$(LangVersion)' != '13.0'" Text="New probe source requires C# 13." />
+  </Target>
+</Project>

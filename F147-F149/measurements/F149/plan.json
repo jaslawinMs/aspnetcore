@@ -1,0 +1,106 @@
+{
+  "definedAt": "2026-11-20T10:30:40.926Z",
+  "findingId": "F149",
+  "acceptanceFile": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F147-F149-implementation-011\\acceptance.json",
+  "acceptanceSha256": "ADCCCE55C334C43B59C9FD44ABE51483094F724BD6307AD32F287B70607ABE48",
+  "acceptanceDefinedBeforeCandidatesOrCounters": true,
+  "protocol": {
+    "implementationMayProceedBeforeTiming": true,
+    "frozenBeforeAnyWarmupOrCounter": true,
+    "measurementFramework": "Custom allocation/Stopwatch workload in the actual native InMemory.FunctionalTests fixture, not BenchmarkDotNet.",
+    "primaryMetric": "GC.GetTotalAllocatedBytes(precise:true) delta for 128 completed 65536-byte operations on an already established actual sample stream",
+    "secondaryMetric": "Stopwatch elapsed for exactly the same completed operations",
+    "payload": "65536 ASCII bytes with the fixed repeating printable pattern used by the accepted real-read producer",
+    "operationsPerObservation": 128,
+    "warmupOperationsPerCasePerFreshVariantProcess": 16,
+    "pairedObservationsPerSourceRole": 7,
+    "freshVariantProcessPerObservation": true,
+    "variantOrder": "Alternate baseline/candidate order by observation index",
+    "F147Primary": "Unidirectional real read, decode, console-string receipt and exact consumer comparison",
+    "F147UnchangedControl": "Bidirectional real read, decode/ordinary command, reversal, awaited echo and exact byte comparison",
+    "F149Primary": "Bidirectional real read, decode/ordinary command, reversal, awaited echo and exact byte comparison",
+    "F149UnchangedControl": "Unidirectional real read, decode, console-string receipt and exact consumer comparison",
+    "caseOrderWithinProcess": "Primary then control on even observations; control then primary on odd observations",
+    "primaryAllocationGeomeanMaximumRatio": 0.95,
+    "primaryAllocationMinimumFavorablePairs": 6,
+    "minimumMeanAbsoluteAllocatedBytesSavedPerObservation": 7549747,
+    "absoluteSavingExplanation": "At least 90 percent of the 8388608-byte payload copied by ToArray over 128 operations; excludes array headers from the minimum.",
+    "primaryElapsedGeomeanMaximumRatio": 1.1,
+    "unchangedControlAllocationGeomeanRatioRange": [
+      0.95,
+      1.05
+    ],
+    "unchangedControlElapsedGeomeanRatioRange": [
+      0.9,
+      1.1
+    ],
+    "bothSourceRolesMustIndependentlyQualify": true,
+    "noSourceRolePooling": true,
+    "wholeProcessAllocationCounterIncludesFrameworkBackgroundWork": true,
+    "noTimingOrAllocationClaimForNativeQuicTlsBrowserPhysicalConsole": true,
+    "noPayloadIterationThresholdPrimaryOrDriverTuningAfterResults": true,
+    "noResultDrivenRetry": true,
+    "noHistoricalReplay": true
+  },
+  "sourceRoles": {
+    "Original": {
+      "sourceCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "sourceGraph": "C:\\src\\autoperf-f147-original-011",
+      "globalJsonSha256": "C3D6E7C29D94C34B6343D4A2EFE74164929F29BFA26FD84B5E2020A15091CD53",
+      "roleLabel": "Original"
+    },
+    "CurrentDefault": {
+      "sourceCommit": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+      "sourceGraph": "C:\\src\\autoperf-f147-default-011",
+      "globalJsonSha256": "511135CE261E4DD95A05C680E61F4273D48B19E7A112B543DBE01E22756D3684",
+      "roleLabel": "CurrentDefaultSampleOwner"
+    }
+  },
+  "sourceAndRuntimeBoundary": {
+    "sampleOwners": "Each independently source-built Original or observed-default sample owner with its own source/reference/restore graph.",
+    "commonProducer": "One independently rebuilt Original37 InMemory.FunctionalTests fixture/Kestrel producer closure, compiled once and identical for all variants.",
+    "runtime": "12.0.0-alpha.1.26557.102",
+    "rollForward": "Disable",
+    "explicitRuntimeFrameworkVersionOverride": "12.0.0-alpha.1.26557.102",
+    "defaultLabelMeans": "Current-default sample owner under the frozen common Original Kestrel/runtime57 producer; NOT a whole current-default framework/runtime validation.",
+    "samePhysicalMachineForBothVariants": true,
+    "remoteBenchmarksAuthorized": false
+  },
+  "admission": {
+    "budgetMaximumAuthorizationsPerFindingIncludingFailedOrPartial": 3,
+    "plannedAuthorizationsPerFinding": 2,
+    "plannedRoles": [
+      "Original",
+      "CurrentDefaultSampleOwner"
+    ],
+    "unusedThirdAuthorization": "Permanently close unused; not a retry or tuning entitlement.",
+    "eachRolePairOnlyOwnerDllAndPdbMayDiffer": true,
+    "allOtherImageFilesMustBeEnumeratedAndComparedWithoutPrefixExceptions": true,
+    "commonFixtureDllPdbDepsRuntimeconfigMustBeIdentical": true,
+    "selectedPePdbAndRawDocumentChecksRequired": true,
+    "actualCurrentPreparationOwnersMustExplicitlyAcknowledgeHold": true,
+    "coordinatorNativeSourceIoAndBuildWorkMustBeQuiescent": true,
+    "globalGatewayAndPersistentExclusiveLeaseRequired": true,
+    "oneBenchmarkGloballyAcrossAllHosts": true,
+    "noBenchmarkAuthorizedByThisPlanAlone": true,
+    "noSourceCommitOrDraftUntilFunctionalAndPerformanceAcceptanceGreen": true,
+    "publication": "Fork-only independent drafts; each genuinely new justified draft gets its own visible new Edge window."
+  },
+  "intentionalExclusions": [
+    "Native QUIC/MsQuic, TLS, physical network, browser, routing and full sample startup/certificate setup",
+    "Stateful UTF8 decoding or repairing existing split-sequence behavior",
+    "General EOF/cancellation/fault/lifecycle changes",
+    "Pooling the separate once-per-handler buffer (F146/F148)",
+    "Changing public API, package/SDK manifests or machine settings"
+  ],
+  "candidate": "Only Encoding.Default.GetString(outputMemory.ToArray()) becomes Encoding.Default.GetString(outputMemory.Span).",
+  "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "powershellSha256": "E94166ED9F376559C1359BAFB08BC49E463A494C330F67644EC1D9F1FFEB5EE5",
+  "expectedMachine": "CPC-jasla-LSEJU",
+  "driver": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\F147-F149-compare-011.mjs",
+  "driverSha256": "5F39DE625FC5DED9F9C0002690D0CDB51D3306874116F126E8B94353DDB8440B",
+  "runner": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\F147-F149-run-variant-011.ps1",
+  "runnerSha256": "1505E54AAEA96BB05FE6A2F885B041A138900B74B393ECA89DCA18F376B89382",
+  "actualSameHostAndExactRuntimeWithinEachPairRequired": true,
+  "actualNoWholeDefaultFrameworkOrNativeTransportPerformanceClaim": true
+}
