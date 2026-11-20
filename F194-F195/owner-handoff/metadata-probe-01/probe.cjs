@@ -1,0 +1,8 @@
+const fs=require('node:fs');const path=require('node:path');const root=process.argv[2];const m=require(path.join(root,'Metadata.cjs'));
+for(const [role,base] of [['Original',String.raw`C:\src\ap-F194-o042\artifacts\bin\Microsoft.Extensions.FileProviders.Embedded.Tests\Release\net12.0`],['Default',String.raw`C:\src\ap-F194-d042\artifacts\bin\Microsoft.Extensions.FileProviders.Embedded.Tests\Release\net12.0`],['Consumer',path.join(root,'consumer','bin','Release','net12.0')]]){
+ for(const name of role==='Consumer'?['F194ContractConsumer']:['Microsoft.Extensions.FileProviders.Embedded.Tests','Microsoft.Extensions.FileProviders.Embedded']){
+  const image=fs.readFileSync(path.join(base,name+'.dll'));const symbols=fs.readFileSync(path.join(base,name+'.pdb'));const parsed=m.associate(image,symbols);
+  console.log(JSON.stringify({role,name,mvid:parsed.image.managed.mvid,codeView:parsed.image.debug.filter(x=>x.type===2),pdbId:parsed.symbols.contentId,documents:parsed.symbols.documents.map(d=>({row:d.row,name:d.name,checksum:d.checksum,algorithm:d.algorithm,embeddedBytes:d.embedded?.length??null}))}));
+ }
+}
+for(const role of ['original','default']){const dir=path.join(root,'native',role,'identity');for(const file of fs.readdirSync(dir).filter(x=>x.endsWith('-exit.json'))){const d=JSON.parse(fs.readFileSync(path.join(dir,file),'utf8'));const t=d.managed.find(x=>x.name?.startsWith('Microsoft.Extensions.FileProviders.Embedded.Tests,'));if(t)console.log(JSON.stringify({nativeRole:role,receipt:file,pid:d.pid,creationUtc:d.creationUtc,framework:d.framework,managed:d.managed.filter(x=>/^(Microsoft.Extensions.FileProviders.Embedded|xunit|Moq|F194|System.Private.CoreLib|System.Linq,|System.Xml.XDocument)/.test(x.name)),native:d.sampledNative}));}}

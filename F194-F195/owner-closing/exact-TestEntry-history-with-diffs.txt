@@ -1,0 +1,155 @@
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/FileProviders/Embedded/test/Manifest/TestEntry.cs b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+index 8a5547b7ae..178e2f54d4 100644
+--- a/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
++++ b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+@@ -5,37 +5,36 @@ using System.Collections.Generic;
+ using System.Linq;
+ using System.Xml.Linq;
+ 
+-namespace Microsoft.Extensions.FileProviders.Embedded.Manifest
++namespace Microsoft.Extensions.FileProviders.Embedded.Manifest;
++
++class TestEntry
+ {
+-    class TestEntry
+-    {
+-        public bool IsFile => ResourcePath != null;
+-        public string Name { get; set; }
+-        public TestEntry[] Children { get; set; }
+-        public string ResourcePath { get; set; }
++    public bool IsFile => ResourcePath != null;
++    public string Name { get; set; }
++    public TestEntry[] Children { get; set; }
++    public string ResourcePath { get; set; }
+ 
+-        public static TestEntry Directory(string name, params TestEntry[] entries) =>
+-            new TestEntry() { Name = name, Children = entries };
++    public static TestEntry Directory(string name, params TestEntry[] entries) =>
++        new TestEntry() { Name = name, Children = entries };
+ 
+-        public static TestEntry File(string name, string path = null) =>
+-            new TestEntry() { Name = name, ResourcePath = path ?? name };
++    public static TestEntry File(string name, string path = null) =>
++        new TestEntry() { Name = name, ResourcePath = path ?? name };
+ 
+-        public XElement ToXElement() => IsFile ?
+-            new XElement("File", new XAttribute("Name", Name), new XElement("ResourcePath", ResourcePath)) :
+-            new XElement("Directory", new XAttribute("Name", Name), Children.Select(c => c.ToXElement()));
++    public XElement ToXElement() => IsFile ?
++        new XElement("File", new XAttribute("Name", Name), new XElement("ResourcePath", ResourcePath)) :
++        new XElement("Directory", new XAttribute("Name", Name), Children.Select(c => c.ToXElement()));
+ 
+-        public IEnumerable<TestEntry> GetFiles()
++    public IEnumerable<TestEntry> GetFiles()
++    {
++        if (IsFile)
+         {
+-            if (IsFile)
+-            {
+-                return Enumerable.Empty<TestEntry>();
+-            }
+-
+-            var files = Children.Where(c => c.IsFile).ToArray();
+-            var otherFiles = Children.Where(c => !c.IsFile).SelectMany(d => d.GetFiles()).ToArray();
+-
+-            return files.Concat(otherFiles).ToArray();
++            return Enumerable.Empty<TestEntry>();
+         }
+ 
++        var files = Children.Where(c => c.IsFile).ToArray();
++        var otherFiles = Children.Where(c => !c.IsFile).SelectMany(d => d.GetFiles()).ToArray();
++
++        return files.Concat(otherFiles).ToArray();
+     }
++
+ }
+
+commit 9da42b9fab4c61fe46627ac0c6877905ec845d5a
+Author:     Kevin Pilch <kevinpi@microsoft.com>
+AuthorDate: Tue Jul 20 13:29:55 2021 -0700
+Commit:     Kevin Pilch <kevinpi@microsoft.com>
+CommitDate: Thu Jul 22 15:54:29 2021 -0700
+
+    Find and Replace Apache License -> MIT
+
+diff --git a/src/FileProviders/Embedded/test/Manifest/TestEntry.cs b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+index aaaf881469..8a5547b7ae 100644
+--- a/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
++++ b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+@@ -1,5 +1,5 @@
+-﻿// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++﻿// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Collections.Generic;
+ using System.Linq;
+
+commit 574a034ddd13f71c06586615b3a5b57884bb2afc
+Author:     Nate McMaster <nate.mcmaster@microsoft.com>
+AuthorDate: Fri Nov 2 03:25:45 2018 -0700
+Commit:     Nate McMaster <nate.mcmaster@microsoft.com>
+CommitDate: Fri Nov 2 03:25:45 2018 -0700
+
+    Reorganize source code in preparation to move into aspnet/Extensions
+    
+    Prior to reorganization, this source code was found in https://github.com/aspnet/FileSystem/tree/dotnet/extensions@baebb8b0c672ab37bac72d7196da1b919d362cc5
+    \n\nCommit migrated from https://github.com/dotnet/extensions/commit/c087cadf1dfdbd2b8785ef764e5ef58a1a7e5ed0
+
+diff --git a/src/FileProviders/Embedded/test/Manifest/TestEntry.cs b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+new file mode 100644
+index 0000000000..aaaf881469
+--- /dev/null
++++ b/src/FileProviders/Embedded/test/Manifest/TestEntry.cs
+@@ -0,0 +1,41 @@
++﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Collections.Generic;
++using System.Linq;
++using System.Xml.Linq;
++
++namespace Microsoft.Extensions.FileProviders.Embedded.Manifest
++{
++    class TestEntry
++    {
++        public bool IsFile => ResourcePath != null;
++        public string Name { get; set; }
++        public TestEntry[] Children { get; set; }
++        public string ResourcePath { get; set; }
++
++        public static TestEntry Directory(string name, params TestEntry[] entries) =>
++            new TestEntry() { Name = name, Children = entries };
++
++        public static TestEntry File(string name, string path = null) =>
++            new TestEntry() { Name = name, ResourcePath = path ?? name };
++
++        public XElement ToXElement() => IsFile ?
++            new XElement("File", new XAttribute("Name", Name), new XElement("ResourcePath", ResourcePath)) :
++            new XElement("Directory", new XAttribute("Name", Name), Children.Select(c => c.ToXElement()));
++
++        public IEnumerable<TestEntry> GetFiles()
++        {
++            if (IsFile)
++            {
++                return Enumerable.Empty<TestEntry>();
++            }
++
++            var files = Children.Where(c => c.IsFile).ToArray();
++            var otherFiles = Children.Where(c => !c.IsFile).SelectMany(d => d.GetFiles()).ToArray();
++
++            return files.Concat(otherFiles).ToArray();
++        }
++
++    }
++}

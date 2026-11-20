@@ -1,0 +1,48 @@
+[
+  {
+    "id": "F194",
+    "finding": {
+      "card_id": "enumerable-materialized-before-single-use",
+      "file": "src/FileProviders/Embedded/test/Manifest/TestEntry.cs",
+      "line_start": 34,
+      "line_end": 34,
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Filtered file children are materialized before one concatenation",
+      "explanation": "The filtered Children sequence is converted to an array, then consumed exactly once by Concat before the combined result is materialized. The intermediate array is avoidable, but this is test-only recursive manifest setup.",
+      "snippet": "var files = Children.Where(c => c.IsFile).ToArray();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F195",
+    "finding": {
+      "card_id": "enumerable-materialized-before-single-use",
+      "file": "src/FileProviders/Embedded/test/Manifest/TestEntry.cs",
+      "line_start": 35,
+      "line_end": 35,
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Recursive directory results are materialized before one concatenation",
+      "explanation": "The SelectMany result is converted to an array and then consumed exactly once by Concat before the final result is materialized, creating a distinct avoidable intermediate array in test-only manifest setup.",
+      "snippet": "var otherFiles = Children.Where(c => !c.IsFile).SelectMany(d => d.GetFiles()).ToArray();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]
