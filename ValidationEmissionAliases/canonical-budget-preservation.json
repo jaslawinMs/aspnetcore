@@ -1,0 +1,108 @@
+{
+  "actualCanonicalRecords": [
+    {
+      "id": "F343",
+      "finding": {
+        "card_id": "uncached-reflection-in-hot-path",
+        "file": "src/Validation/gen/Templates/RuntimeValidatableParameterInfoResolver.cs",
+        "line_start": 18,
+        "line_end": 61,
+        "project": "Microsoft.Extensions.Validation.ValidationsGenerator",
+        "target_frameworks": [
+          "netstandard2.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "The emitted runtime parameter resolver repeats attribute reflection for each resolution.",
+        "explanation": "TryGetValidatableParameterInfo performs multiple GetCustomAttribute/GetCustomAttributes lookups and materializes validation attributes each time, with no cache in the resolver or ValidationOptions. Parameter metadata resolution is normally endpoint construction/startup work rather than per-request validation, so the uncached reflection is retained as informational.",
+        "snippet": "var validationAttributes = Enumerable.ToArray(CustomAttributeExtensions.GetCustomAttributes<ValidationAttribute>(parameterInfo));",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F344",
+      "finding": {
+        "card_id": "uncached-reflection-in-hot-path",
+        "file": "src/Validation/test/Microsoft.Extensions.Validation.GeneratorTests/snapshots/ValidationsGeneratorDisplayNameTests.RecordPropertyDisplayName_LiteralOnConstructorParameter#ValidatableInfoResolver.g.verified.cs",
+        "line_start": 714,
+        "line_end": 714,
+        "project": "Microsoft.Extensions.Validation.GeneratorTests",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "high",
+        "tfm_sensitive": false,
+        "summary": "Generated type metadata re-runs GetInterfaces when resolver results are reconstructed.",
+        "explanation": "The snapshot shows each GeneratedValidatableTypeInfo constructor calling Type.GetInterfaces. The generated resolver creates new type-info instances for successful lookups, so recursive/per-value validation can repeat this reflection. The assigned file is a generator golden snapshot rather than compiled product code, so the emitted hot-path shape is informational.",
+        "snippet": "_implementedInterfaces = type.GetInterfaces();",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F345",
+      "finding": {
+        "card_id": "uncached-reflection-in-hot-path",
+        "file": "src/Validation/test/Microsoft.Extensions.Validation.GeneratorTests/snapshots/ValidationsGeneratorDisplayNameTests.RecordPropertyDisplayName_LiteralOnConstructorParameter#ValidatableInfoResolver.g.verified.cs",
+        "line_start": 1123,
+        "line_end": 1123,
+        "project": "Microsoft.Extensions.Validation.GeneratorTests",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "high",
+        "tfm_sensitive": false,
+        "summary": "Generated property validation rediscovers PropertyInfo on every value access.",
+        "explanation": "The generated Property accessor calls DeclaringType.GetProperty each time validation reads a property and then uses reflective GetValue. Property validation runs per member and recursively for collection elements, and this PropertyInfo is not cached. The file is a generator golden snapshot, so the occurrence is informational.",
+        "snippet": "private PropertyInfo Property => DeclaringType.GetProperty(Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    }
+  ],
+  "actualKnownCanonicalBudgetPathsBefore": [
+    {
+      "findingId": "F343",
+      "actualKnownPrivateBudgetPath": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F343\\diagnostic-budget.json",
+      "actualExistedBefore": false,
+      "actualSha256Before": null
+    },
+    {
+      "findingId": "F344",
+      "actualKnownPrivateBudgetPath": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F344\\diagnostic-budget.json",
+      "actualExistedBefore": false,
+      "actualSha256Before": null
+    },
+    {
+      "findingId": "F345",
+      "actualKnownPrivateBudgetPath": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F345\\diagnostic-budget.json",
+      "actualExistedBefore": false,
+      "actualSha256Before": null
+    }
+  ],
+  "actualNoCanonicalBudgetCreatedOrModified": true,
+  "actualThisOperationClosesOnlyThe23PredeclaredAliasBudgets": true,
+  "actualExpectedCanonicalRecordsUnchangedThroughPublication": true
+}
