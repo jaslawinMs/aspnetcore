@@ -1,0 +1,179 @@
+<Project>
+  <PropertyGroup>
+    <!-- Workaround while there is no SDK available that understands the TFM; suppress unsupported version errors. -->
+    <NETCoreAppMaximumVersion>99.9</NETCoreAppMaximumVersion>
+
+    <UpdateAspNetCoreKnownFramework
+      Condition=" '$(UpdateAspNetCoreKnownFramework)' == '' ">true</UpdateAspNetCoreKnownFramework>
+  </PropertyGroup>
+
+  <!-- Workaround when there is no vNext SDK available; copy known apphost/framework reference info from 11.0. -->
+  <ItemGroup>
+    <KnownAppHostPack
+      Include="@(KnownAppHostPack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownAppHostPack->Count())' != '0' AND
+        !(@(KnownAppHostPack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownRuntimePack
+      Include="@(KnownRuntimePack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownRuntimePack->Count())' != '0' AND
+        !(@(KnownRuntimePack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownFrameworkReference
+      Include="@(KnownFrameworkReference->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownFrameworkReference->Count())' != '0' AND
+        !(@(KnownFrameworkReference->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownILLinkPack
+      Include="@(KnownILLinkPack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownILLinkPack->Count())' != '0' AND
+        !(@(KnownILLinkPack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownILCompilerPack
+      Include="@(KnownILCompilerPack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownILCompilerPack->Count())' != '0' AND
+        !(@(KnownILCompilerPack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownWebAssemblySdkPack
+      Include="@(KnownWebAssemblySdkPack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownWebAssemblySdkPack->Count())' != '0' AND
+        !(@(KnownWebAssemblySdkPack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownAspNetCorePack
+      Include="@(KnownAspNetCorePack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownAspNetCorePack->Count())' != '0' AND
+        !(@(KnownAspNetCorePack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+    <KnownCrossgen2Pack
+      Include="@(KnownCrossgen2Pack->WithMetadataValue('TargetFramework', 'net11.0'))"
+      TargetFramework="net12.0"
+      Condition="'@(KnownCrossgen2Pack->Count())' != '0' AND
+        !(@(KnownCrossgen2Pack->AnyHaveMetadataValue('TargetFramework', 'net12.0')))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Reference base shared framework at incoming dependency flow version, not bundled sdk version.
+      Apply this to all projects that target the default tfm (e.g. net12.0) or a rid-based variant of it (e.g. net12.0-windows)
+    -->
+    <FrameworkReference
+      Update="Microsoft.NETCore.App"
+      Condition=" (('$(ProjectTargetFrameworkIdentifier)' == 'net12.0') AND 'net12.0' == '$(ProjectTargetFrameworkVersion)') AND '$(TargetLatestDotNetRuntime)' != 'false' "
+      RuntimeFrameworkVersion="12.0.0-alpha.1.26569.107"
+      TargetingPackVersion="12.0.0-alpha.1.26569.107" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Use the same NETCore shared framework as repo built against except when building product code in servicing. -->
+    <!-- We cannot use live shims when building tool packs in the .NET product mode as only packages for the current arch are available. -->
+    <KnownFrameworkReference Update="Microsoft.NETCore.App" Condition=" '$(DotNetBuild)' != 'true' OR '$(PackAsToolShimRuntimeIdentifiers)' == '' ">
+      <LatestRuntimeFrameworkVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</LatestRuntimeFrameworkVersion>
+      <TargetingPackVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' and '$(TargetLatestDotNetRuntime)' != 'false' ">12.0.0-alpha.1.26569.107</TargetingPackVersion>
+      <!--
+        Change the default shared framework version only when _not_ servicing. Avoid bumping version used in most
+        projects. When servicing, projects (Microsoft.AspNetCore.App.Runtime in particular) can use
+        $(TargetLatestRuntimePatch) to explicitly control whether assemblies build against default (false) or
+        latest (true). When that property is not set, SDK uses default metadata in most cases but published apps
+        e.g. tool projects (again, property not set) use latest.
+        On the other hand, $(TargetLatestDotNetRuntime) is specific to this repo and controls only the update below.
+      -->
+      <DefaultRuntimeFrameworkVersion Condition=" '$(IsServicingBuild)' != 'true' AND
+          '%(TargetFramework)' == 'net12.0' AND
+          '$(TargetLatestDotNetRuntime)' != 'false' ">12.0.0-alpha.1.26569.107</DefaultRuntimeFrameworkVersion>
+      <RuntimePackRuntimeIdentifiers Condition="'$(DotNetBuild)' == 'true'">%(RuntimePackRuntimeIdentifiers);$(TargetRuntimeIdentifier)</RuntimePackRuntimeIdentifiers>
+    </KnownFrameworkReference>
+
+    <!-- We cannot use live shims when building tool packs in .NET product build mode as only packages for the current arch are available. -->
+    <KnownAppHostPack Update="Microsoft.NETCore.App" Condition=" '$(DotNetBuild)' != 'true' OR '$(PackAsToolShimRuntimeIdentifiers)' == '' ">
+      <AppHostPackVersion
+        Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</AppHostPackVersion>
+      <AppHostRuntimeIdentifiers Condition=" '$(DotNetBuildSourceOnly)' == 'true' ">$(TargetRuntimeIdentifier)</AppHostRuntimeIdentifiers>
+    </KnownAppHostPack>
+
+    <KnownRuntimePack Update="Microsoft.NETCore.App">
+      <LatestRuntimeFrameworkVersion
+        Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</LatestRuntimeFrameworkVersion>
+      <AppHostRuntimeIdentifiers Condition=" '$(DotNetBuildSourceOnly)' == 'true' ">$(TargetRuntimeIdentifier)</AppHostRuntimeIdentifiers>
+    </KnownRuntimePack>
+
+    <KnownWebAssemblySdkPack Update="Microsoft.NET.Sdk.WebAssembly.Pack">
+      <WebAssemblySdkPackVersion
+        Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</WebAssemblySdkPackVersion>
+    </KnownWebAssemblySdkPack>
+
+    <KnownAspNetCorePack Update="Microsoft.AspNetCore.App.Internal.Assets">
+      <AspNetCorePackVersion
+        Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-dev</AspNetCorePackVersion>
+    </KnownAspNetCorePack>
+
+    <KnownCrossgen2Pack Update="Microsoft.NETCore.App.Crossgen2">
+      <Crossgen2PackVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</Crossgen2PackVersion>
+      <Crossgen2RuntimeIdentifiers Condition="'$(DotNetBuild)' == 'true'">%(Crossgen2RuntimeIdentifiers);$(NETCoreSdkRuntimeIdentifier);$(TargetRuntimeIdentifier)</Crossgen2RuntimeIdentifiers>
+    </KnownCrossgen2Pack>
+
+    <KnownILLinkPack Update="Microsoft.NET.ILLink.Tasks" Condition=" '$(DotNetBuildSourceOnly)' == 'true' ">
+      <ILLinkPackVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-alpha.1.26569.107</ILLinkPackVersion>
+    </KnownILLinkPack>
+
+    <KnownILCompilerPack Update="Microsoft.DotNet.ILCompiler">
+      <ILCompilerPackVersion
+        Condition="'%(TargetFramework)' == 'net12.0'">12.0.0-alpha.1.26569.107</ILCompilerPackVersion>
+    </KnownILCompilerPack>
+
+    <!-- Use the just-built ASP.NET Core shared framework if available except when building product code in servicing. -->
+    <KnownFrameworkReference Update="Microsoft.AspNetCore.App" Condition=" $(UpdateAspNetCoreKnownFramework) ">
+      <LatestRuntimeFrameworkVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' ">12.0.0-dev</LatestRuntimeFrameworkVersion>
+      <RuntimePackRuntimeIdentifiers
+          Condition=" '%(TargetFramework)' == 'net12.0' ">win-x64;win-x86;win-arm;win-arm64;osx-x64;osx-arm64;linux-musl-x64;linux-musl-arm;linux-musl-arm64;linux-x64;linux-arm;linux-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64;openharmony-x64;openharmony-arm64;freebsd-x64;freebsd-arm64;openbsd-x64;openbsd-arm64;illumos-x64;solaris-x64;haiku-x64;</RuntimePackRuntimeIdentifiers>
+      <!-- Do not update %(TargetingPackVersion) until X.Y.0 versions have been released. -->
+      <TargetingPackVersion
+          Condition=" '%(TargetFramework)' == 'net12.0' AND '0' != '1' ">12.0.0-dev</TargetingPackVersion>
+      <DefaultRuntimeFrameworkVersion Condition=" '$(IsServicingBuild)' != 'true' AND
+          '%(TargetFramework)' == 'net12.0' ">12.0.0-dev</DefaultRuntimeFrameworkVersion>
+    </KnownFrameworkReference>
+  </ItemGroup>
+
+  <!-- When building and running locally, manually resolve the just-built frameworks. On Helix, let the SDK resolve the packs itself (they're laid out on top of the .NET SDK in the work items) -->
+  <PropertyGroup Condition="'$(UpdateAspNetCoreKnownFramework)' == 'true' AND '$(HELIX_CORRELATION_PAYLOAD)' == ''">
+    <!-- Allow additional targeting and runtime packs to be downloaded only if required by a test. -->
+    <EnableTargetingPackDownload Condition="'$(TestRequiresTargetingPackDownload)' != 'true'">false</EnableTargetingPackDownload>
+    <EnableRuntimePackDownload Condition="'$(TestRequiresRuntimePackDownload)' != 'true'">false</EnableRuntimePackDownload>
+    <GenerateErrorForMissingTargetingPacks>false</GenerateErrorForMissingTargetingPacks>
+  </PropertyGroup>
+
+  <Target Name="ResolveLiveBuiltAspnetCoreKnownFramework" Condition="'$(UpdateAspNetCoreKnownFramework)' == 'true' AND '$(HELIX_CORRELATION_PAYLOAD)' == ''" AfterTargets="ResolveFrameworkReferences">
+    <Error Text="Requested Microsoft.AspNetCore.App v12.0.0-dev ref pack does not exist."
+        Condition="!Exists('$(TargetingPackLayoutRoot)packs\Microsoft.AspNetCore.App.Ref\12.0.0-dev\data\FrameworkList.xml') " />
+    <ItemGroup>
+      <ResolvedTargetingPack Path="$(TargetingPackLayoutRoot)packs\Microsoft.AspNetCore.App.Ref\12.0.0-dev"
+                             NugetPackageVersion="12.0.0-dev"
+                             PackageDirectory="$(TargetingPackLayoutRoot)packs\Microsoft.AspNetCore.App.Ref\12.0.0-dev"
+                             Condition="'%(ResolvedTargetingPack.RuntimeFrameworkName)' == 'Microsoft.AspNetCore.App'" />
+      <ResolvedRuntimePack PackageDirectory="$(SharedFrameworkLayoutRoot)shared\Microsoft.AspNetCore.App\12.0.0-dev"
+                           Condition="'%(ResolvedRuntimePack.RuntimeFrameworkName)' == 'Microsoft.AspNetCore.App'" />
+      <ResolvedFrameworkReference TargetingPackPath="$(TargetingPackLayoutRoot)packs\Microsoft.AspNetCore.App.Ref\12.0.0-dev"
+                                  TargetingPackVersion="12.0.0-dev"
+                                  RuntimePackPath="$(SharedFrameworkLayoutRoot)shared\Microsoft.AspNetCore.App\12.0.0-dev"
+                                  Condition="'%(Identity)' == 'Microsoft.AspNetCore.App'" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Make a netstandard2.1 copy of the .net ILLinkPack to work around a trimming issue.
+    See https://github.com/dotnet/linker/issues/3175
+  -->
+  <Target Name="_FixKnownILLinkPack"
+          BeforeTargets="ProcessFrameworkReferences">
+    <ItemGroup>
+      <KnownILLinkPack Include="@(KnownILLinkPack)"
+                       Condition="'%(TargetFramework)' == 'net7.0'"
+                       TargetFramework="netstandard2.1"
+                       ILLinkPackVersion="%(KnownILLinkPack.ILLinkPackVersion)" />
+    </ItemGroup>
+  </Target>
+</Project>

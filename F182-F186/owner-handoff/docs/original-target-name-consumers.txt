@@ -1,0 +1,39 @@
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:289:        var roleName = "FindByNameAsync" + Guid.NewGuid().ToString();
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:291:        Assert.Null(await manager.FindByNameAsync(roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:294:        Assert.Equal(role, await manager.FindByNameAsync(roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:313:        Assert.Equal(role, await manager.FindByNameAsync("Changed"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:376:            IdentityResultAssert.IsSuccess(await manager.AddToRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:377:            Assert.True(await manager.IsInRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:402:                IdentityResultAssert.IsSuccess(await userManager.AddToRoleAsync(u, await roleManager.GetRoleNameAsync(r)));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:403:                Assert.True(await userManager.IsInRoleAsync(u, await roleManager.GetRoleNameAsync(r)));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:435:            IdentityResultAssert.IsSuccess(await userManager.AddToRoleAsync(user, await roleManager.GetRoleNameAsync(r)));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:436:            Assert.True(await userManager.IsInRoleAsync(user, await roleManager.GetRoleNameAsync(r)));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:438:        IdentityResultAssert.IsSuccess(await userManager.RemoveFromRoleAsync(user, await roleManager.GetRoleNameAsync(roles[2])));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:439:        Assert.False(await userManager.IsInRoleAsync(user, await roleManager.GetRoleNameAsync(roles[2])));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:462:            IdentityResultAssert.IsSuccess(await userManager.AddToRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:463:            Assert.True(await userManager.IsInRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:467:            IdentityResultAssert.IsSuccess(await userManager.RemoveFromRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:468:            Assert.False(await userManager.IsInRoleAsync(u, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:487:        var result = await userMgr.RemoveFromRoleAsync(user, roleName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:507:        IdentityResultAssert.IsSuccess(await userMgr.AddToRoleAsync(user, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:508:        Assert.True(await userMgr.IsInRoleAsync(user, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:509:        IdentityResultAssert.IsFailure(await userMgr.AddToRoleAsync(user, roleName), _errorDescriber.UserAlreadyInRole(roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:528:        Assert.False(await userMgr.IsInRoleAsync(user, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:530:        Assert.True(await userMgr.IsInRoleAsync(user, roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:544:        Assert.NotNull(await roleMgr.FindByNameAsync(roleName));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:558:        Assert.Equal(roleName, await roleMgr.GetRoleNameAsync(await roleMgr.FindByNameAsync(roleName)));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:593:            Assert.Equal(3, (await manager.GetUsersInRoleAsync(await roleManager.GetRoleNameAsync(role))).Count);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs:596:        Assert.Empty((await manager.GetUsersInRoleAsync("123456")));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:494:                                result = await userManager.AddToRoleAsync(user, "role");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:505:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:511:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:544:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:556:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:562:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/FunctionalTest.cs:573:                            var user = await userManager.FindByNameAsync("hao");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryStore.cs:19:    public Task AddToRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryStore.cs:30:    public Task RemoveFromRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryStore.cs:51:    public Task<bool> IsInRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryStore.cs:59:    public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default(CancellationToken))
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryStore.cs:120:    Task<TRole> IRoleStore<TRole>.FindByNameAsync(string roleName, CancellationToken cancellationToken)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Identity/test/InMemory.Test/InMemoryUserStore.cs:246:    public Task<TUser> FindByNameAsync(string userName, CancellationToken cancellationToken = default(CancellationToken))

@@ -1,0 +1,18 @@
+{
+  "assembly": "Microsoft.AspNetCore.Identity.InMemory.Test",
+  "boundary": "Nine unchanged unconditional inherited Facts in the real InMemoryStoreTest; no selected Theories or repeated prior unrelated eleven-Fact selection",
+  "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest",
+  "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+  "fixture": "InMemoryStoreTest itself does not declare the InMemoryUserStoreTest SQLite IClassFixture. The latter is a different native test class and is unselected here.",
+  "expected": [
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanRoleFindByName", "parameters": [], "findings": ["F186"], "producer": "RoleManager.FindByName/RoleExists/Create; real store factory" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanUpdateRoleName", "parameters": [], "findings": ["F186"], "producer": "RoleManager.SetRoleName/Update/Create/FindByName with normalized-name mutation" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanDeleteRole", "parameters": [], "findings": ["F186"], "producer": "RoleManager.Create/Delete/RoleExists" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CreateRoleFailsIfExists", "parameters": [], "findings": ["F186"], "producer": "Default RoleValidator through actual public manager Create and duplicate-name lookup" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanAddUsersToRole", "parameters": [], "findings": ["F182","F184"], "producer": "Real public user/role managers sharing actual singleton store context; four user additions/membership" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanRemoveUsersFromRole", "parameters": [], "findings": ["F182","F183","F184"], "producer": "Real managers add and remove four users and observe membership" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "RemoveUserNotInRoleFails", "parameters": [], "findings": ["F183","F184"], "producer": "UserManager precheck and UserNotInRole result; does not execute F183 leaf removal on missing membership" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "AddUserToRoleFailsIfAlreadyInRole", "parameters": [], "findings": ["F182","F184"], "producer": "First real manager addition; duplicate rejected by public manager membership precheck" },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanGetUsersInRole", "parameters": [], "findings": ["F182","F184","F185"], "producer": "Four actual created roles/six users; three users added via manager; real user list and missing-role list" }
+  ]
+}

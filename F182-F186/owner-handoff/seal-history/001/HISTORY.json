@@ -1,0 +1,32 @@
+{
+  "firstSeal": {
+    "result": "PASS",
+    "manifestFiles": 2159,
+    "manifestBytes": 214623937,
+    "manifestSha256": "369CBAB6C067871DDFD4D05F5DB5FA774D9D4366EC00B79B7B44C4B80AB683CA",
+    "auditResult": "PASS",
+    "allNativeRows": 18,
+    "assertionsPerRole": 185
+  },
+  "postsealFailure": {
+    "script": "Finalize-Seal.ps1",
+    "stage": "Optional final PID-identity census after successful seal and permission-bounded audit",
+    "actualError": "You cannot call a method on a null-valued expression.",
+    "line": 69,
+    "cause": "Get-Process returned an object whose StartTime was null. The finalizer did not falsely declare completion. No native test/compiler rerun and no sealed bytes changed by this failed finalizer.",
+    "rawRedirectedStreams": [
+      "seal-completion-001.stdout.txt",
+      "seal-completion-001.stderr.txt"
+    ],
+    "correctedMethod": "Use full canonical StartTime when available; null falls back to one exact-PID CIM query. A matching CIM microsecond conservatively remains possibly owned; absence and creation-identified reuse remain distinct."
+  },
+  "diagnosticFollowup": {
+    "toolShellId": 3298,
+    "result": "Failed preparation-only diagnostic",
+    "actualError": "Cannot find path 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F182-F186-022\\postseal-finalization-failure-v0\\bounded-recorded-native-pid-probe.json' because it does not exist.",
+    "explanation": "The completed bounded 106-native-identity probe produced an empty array (no live known native PID). Piping that empty array through ConvertTo-Json produced no file; the trailing Get-Content failed. No null/PID state is hidden and no native work started.",
+    "rawToolOutputBoundary": "Tool error is transcribed here; no owned redirected stdout/stderr was requested for that diagnostic. Its original full tool input/output persists in session history."
+  },
+  "preservation": "First successful seal/audit, complete failed finalizer input/redirected streams, corrected finalizer input and prior HANDOFF are retained. The final manifest includes this entire history. Only HANDOFF is amended for disclosure; no native, compiler, source or test result is changed.",
+  "findingState": "F182-F186 PENDING"
+}

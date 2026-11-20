@@ -1,0 +1,73 @@
+{
+  "boundary": "Nine supplemental console rows, not discovered VSTest Facts/Theories. Same single compiled common consumer on both complete native role graphs.",
+  "rows": [
+    {
+      "name": "RoleNames_ManagerMembershipMissingAndOrdering",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 39,
+      "parameters": {},
+      "requiredChecks": ["exact-store-serves-both-interfaces","same-store-in-second-scope","managers-are-scoped-not-shared","actual-default-normalizer","missing-role-add-is-manager-success","missing-add-did-not-create-association","missing-remove-precheck-failure","equal-value-and-case-manager-lookup","users-are-exact-references-in-user-insertion-not-add-or-name-order","repeat-add-rejected-before-store-add","remove-preserves-other-user","readd-restores-user-insertion-order"]
+    },
+    {
+      "name": "RoleNames_ManagerNormalizedNameUpdateDeleteReadd",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 39,
+      "parameters": {},
+      "requiredChecks": ["stored-reference-sees-set-name-before-update","old-name-gone-before-update","new-name-resolves-existing-association-before-update","replacement-reference-not-old-object","same-id-replacement-keeps-membership","delete-does-not-remove-user-association","get-role-names-observes-orphaned-id","same-id-recreate-rebinds-retained-association","same-id-recreate-shows-retained-member","unrelated-role-reference-unchanged"]
+    },
+    {
+      "name": "RoleNames_ManagerNormalizationUniquenessAndArgumentBoundaries",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 18,
+      "parameters": {},
+      "requiredChecks": ["actual-normalizer-canonicalizes-and-uppercases","decomposed-case-lookup-real-normalizer","duplicate-exact-name-rejected","duplicate-case-name-rejected","duplicate-canonically-equivalent-name-rejected","create-null-name-rejected","create-empty-name-rejected","create-whitespace-name-rejected","manager-find-null-name-guard","manager-user-list-null-name-guard","null-add-argument-no-null-role-is-noop-success"]
+    },
+    {
+      "name": "RoleNames_PublicSetterProducesDuplicateNames",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 16,
+      "parameters": {},
+      "requiredChecks": ["public-set-name-does-not-run-uniqueness-validator","setter-produced-two-live-equal-normalized-names","F182-direct-real-store-add-duplicate-role-names","F183-direct-real-store-remove-duplicate-role-names","F184-manager-membership-duplicate-role-names","F185-manager-user-list-duplicate-role-names","F186-manager-name-duplicate-role-names","update-validator-lookup-also-observes-duplicates","validated-update-after-restoration"]
+    },
+    {
+      "name": "RoleNames_PublicSetterNullNormalizedName_NullFirst",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 17,
+      "parameters": {"nullFirst":true},
+      "requiredChecks": ["public-nullable-set-name-produces-null-normalized-name","null-property-and-enumeration-order-observed","update-validation-rejects-null-but-reference-already-mutated","direct-role-store-null-name-matches-null-normalized-property","F182-direct-null-name-add-resolves-null-role","F184-direct-null-name-member-hit","F183-direct-null-name-remove-clears-association","F185-user-list-throws-even-if-normal-match-precedes-null","user-list-recovers-after-name-restored"]
+    },
+    {
+      "name": "RoleNames_PublicSetterNullNormalizedName_NullLast",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 17,
+      "parameters": {"nullFirst":false},
+      "requiredChecks": ["public-nullable-set-name-produces-null-normalized-name","null-property-and-enumeration-order-observed","update-validation-rejects-null-but-reference-already-mutated","nonnull-role-name-lookup-survives-other-null-property","F185-user-list-throws-even-if-normal-match-precedes-null","manager-role-name-null-is-still-guarded","user-list-recovers-after-name-restored"]
+    },
+    {
+      "name": "RoleNames_PublicSetterEmptyNormalizedName",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 14,
+      "parameters": {},
+      "requiredChecks": ["public-setter-produces-empty-normalized-name","update-rejects-empty-name-after-reference-mutation","F186-manager-empty-lookup-returns-stored-role","F182-manager-empty-name-add","F184-empty-name-is-member-after-add","F185-empty-user-list-is-guarded-even-with-matching-role-and-member","F183-manager-empty-name-remove","validate-restored-nonempty-name"]
+    },
+    {
+      "name": "RoleNames_DirectStoreComparerAndMissingDiagnostics",
+      "findings": ["F182","F183","F184","F185","F186"],
+      "assertions": 18,
+      "parameters": {},
+      "requiredChecks": ["F182-case-exact-role-selected-not-universal-case-insensitive","F184-case-exact-membership-positive-and-negative","F185-upper-exact-list","F185-lower-exact-list","F185-mixed-case-list-missing","F186-ordinal-ignore-case-sees-two-matches","F183-direct-missing-role-dereferences-null","F183-missing-role-with-empty-association-list-does-not-evaluate-null-dereference","F186-single-ignore-case-match-returns-exact-upper"]
+    },
+    {
+      "name": "RoleNames_DirectStoreDuplicateAssociationDiagnostics",
+      "findings": ["F182","F183","F184","F185"],
+      "assertions": 7,
+      "parameters": {},
+      "requiredChecks": ["F182-direct-repeated-add-produces-two-associations","F184-any-membership-remains-true","F185-any-user-selection-does-not-duplicate-user","F183-user-association-single-or-default-rejects-duplicate-associations","failed-duplicate-remove-leaves-associations-intact"]
+    }
+  ],
+  "perRole": {"rows":9,"passedAssertions":185},
+  "unverified": [
+    "Different-ID same-name re-creation while an orphan association is retained: new-ID case in this consumer occurs only after removal of the prior association.",
+    "Custom normalizers/validators, arbitrary direct Poco property mutation, concurrency, broad culture/Unicode/cardinality inputs, cancellation and store-disposal behavior beyond unchanged source."
+  ]
+}

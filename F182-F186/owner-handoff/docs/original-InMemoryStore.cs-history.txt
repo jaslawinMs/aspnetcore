@@ -1,0 +1,209 @@
+commit 07ad803981a7cf5af03aa96d58f4509da309fb2d
+Author:     Mackinnon Buck <mackinnon.buck@gmail.com>
+AuthorDate: 2026-02-11T08:16:21-08:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2026-02-11T08:16:21-08:00
+
+    Infer passkey display name from AAGUID (#65343)
+
+diff --git a/src/Identity/test/InMemory.Test/InMemoryStore.cs b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+index c5860db845..e5522d97b7 100644
+--- a/src/Identity/test/InMemory.Test/InMemoryStore.cs
++++ b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+@@ -215,7 +215,8 @@ public class InMemoryStore<TUser, TRole> :
+             p.AttestationObject,
+             p.ClientDataJson)
+         {
+-            Name = p.Name
++            Name = p.Name,
++            Aaguid = p.Aaguid
+         };
+ 
+     private static PocoUserPasskey<string> ToPocoUserPasskey(TUser user, UserPasskeyInfo p)
+@@ -233,6 +234,7 @@ public class InMemoryStore<TUser, TRole> :
+             IsBackedUp = p.IsBackedUp,
+             AttestationObject = p.AttestationObject,
+             ClientDataJson = p.ClientDataJson,
++            Aaguid = p.Aaguid,
+         };
+ 
+     public IQueryable<TRole> Roles
+
+commit 9b3858c8ceed11739203c1216d65bddf51bee22a
+Author:     Mackinnon Buck <mackinnon.buck@gmail.com>
+AuthorDate: 2025-10-13T13:14:49-04:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2025-10-13T10:14:49-07:00
+
+    Allow `UserStore` to update passkey name (#63981)
+
+diff --git a/src/Identity/test/InMemory.Test/InMemoryStore.cs b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+index 23598c8b8c..c5860db845 100644
+--- a/src/Identity/test/InMemory.Test/InMemoryStore.cs
++++ b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+@@ -9,6 +9,7 @@ namespace Microsoft.AspNetCore.Identity.InMemory;
+ public class InMemoryStore<TUser, TRole> :
+     InMemoryUserStore<TUser>,
+     IUserRoleStore<TUser>,
++    IUserPasskeyStore<TUser>,
+     IQueryableRoleStore<TRole>,
+     IRoleClaimStore<TRole>
+     where TRole : PocoRole
+@@ -158,6 +159,82 @@ public class InMemoryStore<TUser, TRole> :
+         return Task.FromResult(0);
+     }
+ 
++    public Task AddOrUpdatePasskeyAsync(TUser user, UserPasskeyInfo passkey, CancellationToken cancellationToken)
++    {
++        var passkeyEntity = user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(passkey.CredentialId));
++        if (passkeyEntity is null)
++        {
++            user.Passkeys.Add(ToPocoUserPasskey(user, passkey));
++        }
++        else
++        {
++            passkeyEntity.Name = passkey.Name;
++            passkeyEntity.SignCount = passkey.SignCount;
++            passkeyEntity.IsBackedUp = passkey.IsBackedUp;
++            passkeyEntity.IsUserVerified = passkey.IsUserVerified;
++        }
++        return Task.CompletedTask;
++    }
++
++    public Task<IList<UserPasskeyInfo>> GetPasskeysAsync(TUser user, CancellationToken cancellationToken)
++    {
++        return Task.FromResult<IList<UserPasskeyInfo>>(user.Passkeys.Select(ToUserPasskeyInfo).ToList()!);
++    }
++
++    public Task<TUser> FindByPasskeyIdAsync(byte[] credentialId, CancellationToken cancellationToken)
++    {
++        return Task.FromResult(Users.FirstOrDefault(u => u.Passkeys.Any(p => p.CredentialId.SequenceEqual(credentialId))));
++    }
++
++    public Task<UserPasskeyInfo> FindPasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
++    {
++        return Task.FromResult(ToUserPasskeyInfo(user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(credentialId))));
++    }
++
++    public Task RemovePasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
++    {
++        var passkey = user.Passkeys.SingleOrDefault(p => p.CredentialId.SequenceEqual(credentialId));
++        if (passkey is not null)
++        {
++            user.Passkeys.Remove(passkey);
++        }
++
++        return Task.CompletedTask;
++    }
++
++    private static UserPasskeyInfo ToUserPasskeyInfo(PocoUserPasskey<string> p)
++        => p is null ? null : new(
++            p.CredentialId,
++            p.PublicKey,
++            p.CreatedAt,
++            p.SignCount,
++            p.Transports,
++            p.IsUserVerified,
++            p.IsBackupEligible,
++            p.IsBackedUp,
++            p.AttestationObject,
++            p.ClientDataJson)
++        {
++            Name = p.Name
++        };
++
++    private static PocoUserPasskey<string> ToPocoUserPasskey(TUser user, UserPasskeyInfo p)
++        => new()
++        {
++            UserId = user.Id,
++            CredentialId = p.CredentialId,
++            PublicKey = p.PublicKey,
++            Name = p.Name,
++            CreatedAt = p.CreatedAt,
++            Transports = p.Transports,
++            SignCount = p.SignCount,
++            IsUserVerified = p.IsUserVerified,
++            IsBackupEligible = p.IsBackupEligible,
++            IsBackedUp = p.IsBackedUp,
++            AttestationObject = p.AttestationObject,
++            ClientDataJson = p.ClientDataJson,
++        };
++
+     public IQueryable<TRole> Roles
+     {
+         get { return _roles.Values.AsQueryable(); }
+
+commit 887c7b32d9d6efa0c484350db4ebfe7d46ca7870
+Author:     Safia Abdalla <safia@microsoft.com>
+AuthorDate: 2023-05-18T18:40:41-07:00
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2023-05-18T18:40:41-07:00
+
+    Change incorrect usage of ArgumentNullException (#48243)
+    
+    * Change incorrect usage of ArgumentNullException
+    
+    * Fix tests
+    
+    * Split exception
+    
+    * Try using shared source
+    
+    * Fix argument helpers for netstandard and netfx
+    
+    * Address feedback from review
+    
+    * Fix nullability attributes in shared helpers
+    
+    * Fix null or empty check for netfx and netstandard
+    
+    * Use EmptyString again for checks
+    
+    * Update check again
+    
+    ---------
+    
+    Co-authored-by: mla-alm <mla@specialisterne.com>
+
+diff --git a/src/Identity/test/InMemory.Test/InMemoryStore.cs b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+index 9227da6d60..23598c8b8c 100644
+--- a/src/Identity/test/InMemory.Test/InMemoryStore.cs
++++ b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+@@ -57,10 +57,7 @@ public class InMemoryStore<TUser, TRole> :
+     // RoleId == rolename for inmemory store tests
+     public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default(CancellationToken))
+     {
+-        if (String.IsNullOrEmpty(roleName))
+-        {
+-            throw new ArgumentNullException(nameof(roleName));
+-        }
++        ArgumentException.ThrowIfNullOrEmpty(roleName);
+ 
+         var role = _roles.Values.Where(x => x.NormalizedName.Equals(roleName)).SingleOrDefault();
+         if (role == null)
+
+commit c85baf8db0c72ae8e68643029d514b2e737c9fae
+Author:     Shreyas Jejurkar <shreyasjejurkar123@live.com>
+AuthorDate: 2022-01-02T20:09:22+05:30
+Commit:     GitHub <noreply@github.com>
+CommitDate: 2022-01-02T06:39:22-08:00
+
+    chore : Remove unwanted `using` statement (#39176)
+
+diff --git a/src/Identity/test/InMemory.Test/InMemoryStore.cs b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+index 20b6562c41..9227da6d60 100644
+--- a/src/Identity/test/InMemory.Test/InMemoryStore.cs
++++ b/src/Identity/test/InMemory.Test/InMemoryStore.cs
+@@ -1,12 +1,7 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+ using System.Security.Claims;
+-using System.Threading;
+-using System.Threading.Tasks;
+ using Microsoft.AspNetCore.Identity.Test;
+ 
+ namespace Microsoft.AspNetCore.Identity.InMemory;

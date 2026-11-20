@@ -1,0 +1,60 @@
+{
+  "boundary": "Six supplemental console rows, not discovered VSTest tests. Exactly the same accepted DLL/PDB/deps/runtimeconfig are copied across roles. Each execution explicitly uses the normal role native owner deps/runtimeconfig and whole role dependency graph.",
+  "rows": [
+    {
+      "name": "F173_RoleId_ManagerIdentityLifecycle",
+      "finding": "F173",
+      "assertions": 25,
+      "ownerTypeFragment": ".InMemoryStore`2",
+      "parameters": {},
+      "requiredChecks": ["missing-before-create", "equal-id-distinct-string-instance", "equal-value-key-returns-exact-stored-role", "repeat-id-lookup", "other-scope-sees-same-role", "case-distinct-role-id-has-separate-value", "lookup-after-role-update", "lookup-returns-replacement-role-object", "role-missing-after-delete", "repeat-role-miss-after-delete", "case-distinct-role-survives-other-delete"]
+    },
+    {
+      "name": "F174_Login_ManagerIdentityLifecycle_BaseStore",
+      "finding": "F174",
+      "assertions": 36,
+      "ownerTypeFragment": ".InMemoryUserStore`1",
+      "parameters": {"inherited": false},
+      "requiredChecks": ["missing-login-tuple-before-add", "equal-login-components-are-distinct-string-instances", "equal-value-tuple-returns-exact-stored-user", "repeat-login-lookup", "other-manager-reuses-login-map", "provider-case-has-separate-value", "key-case-has-separate-value", "login-after-user-update-has-exact-identity", "removed-login-returns-null", "repeat-removed-login-returns-null", "readded-login-returns-exact-same-user", "readded-login-missing-after-second-remove"]
+    },
+    {
+      "name": "F174_Login_ManagerIdentityLifecycle_InheritedStore",
+      "finding": "F174",
+      "assertions": 36,
+      "ownerTypeFragment": ".InMemoryStore`2",
+      "parameters": {"inherited": true},
+      "requiredChecks": ["missing-login-tuple-before-add", "equal-login-components-are-distinct-string-instances", "equal-value-tuple-returns-exact-stored-user", "repeat-login-lookup", "other-manager-reuses-login-map", "provider-case-has-separate-value", "key-case-has-separate-value", "login-after-user-update-has-exact-identity", "removed-login-returns-null", "repeat-removed-login-returns-null", "readded-login-returns-exact-same-user", "readded-login-missing-after-second-remove"]
+    },
+    {
+      "name": "F174_Login_ComposedKeyAndEmptyComponents",
+      "finding": "F174",
+      "assertions": 13,
+      "ownerTypeFragment": ".InMemoryUserStore`1",
+      "parameters": {},
+      "requiredChecks": ["original-pipe-tuple-exact-user", "alternate-components-with-same-composed-key", "manager-sees-composed-key-alias-as-existing", "composed-key-alias-missing-after-remove", "empty-components-missing-before-add", "empty-components-return-exact-user", "empty-components-null-after-remove"]
+    },
+    {
+      "name": "F175_UserId_ManagerIdentityLifecycle_BaseStore",
+      "finding": "F175",
+      "assertions": 23,
+      "ownerTypeFragment": ".InMemoryUserStore`1",
+      "parameters": {"inherited": false},
+      "requiredChecks": ["missing-before-user-create", "equal-user-id-distinct-string-instance", "equal-value-key-returns-exact-stored-user", "repeat-user-id-lookup", "other-scope-sees-same-user", "case-distinct-user-id-has-separate-value", "lookup-after-user-update", "lookup-returns-replacement-user-object", "user-missing-after-delete", "repeat-user-miss-after-delete", "case-distinct-user-survives-other-delete"]
+    },
+    {
+      "name": "F175_UserId_ManagerIdentityLifecycle_InheritedStore",
+      "finding": "F175",
+      "assertions": 23,
+      "ownerTypeFragment": ".InMemoryStore`2",
+      "parameters": {"inherited": true},
+      "requiredChecks": ["missing-before-user-create", "equal-user-id-distinct-string-instance", "equal-value-key-returns-exact-stored-user", "repeat-user-id-lookup", "other-scope-sees-same-user", "case-distinct-user-id-has-separate-value", "lookup-after-user-update", "lookup-returns-replacement-user-object", "user-missing-after-delete", "repeat-user-miss-after-delete", "case-distinct-user-survives-other-delete"]
+    }
+  ],
+  "inputs": {
+    "roleIds": ["Role-Key", "role-key", "new string with equal Role-Key content"],
+    "userIds": ["User-Key", "user-key", "new string with equal User-Key content"],
+    "loginTuples": [["Provider", "Key"], ["provider", "Key"], ["Provider", "key"], ["Key", "Provider"], ["Pipe|Provider", "Key"], ["Pipe", "Provider|Key"], ["", ""]],
+    "equalLoginStrings": "newly allocated strings with Provider and Key contents"
+  },
+  "unverified": ["null/empty user or role IDs", "null-key argument behavior", "single-empty-login-component variants", "culture/Unicode matrix", "concurrent access", "large stores", "store update/delete interactions outside the explicit rows", "hosted UI/testasset execution", "NativeAOT", "performance or call frequency"]
+}

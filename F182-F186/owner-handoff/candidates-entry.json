@@ -1,0 +1,137 @@
+[
+  {
+    "id": "F182",
+    "finding": {
+      "card_id": "dictionary-values-linear-search-reverse-map",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 21,
+      "line_end": 21,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "AddToRoleAsync scans every role value to resolve a role by normalized name.",
+      "explanation": "The store is keyed by role ID, but AddToRoleAsync performs a SingleOrDefault scan over _roles.Values for a secondary NormalizedName lookup. This is an informational test-store occurrence.",
+      "snippet": "var roleEntity = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F183",
+    "finding": {
+      "card_id": "dictionary-values-linear-search-reverse-map",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 32,
+      "line_end": 32,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "RemoveFromRoleAsync scans every role value to resolve a role by normalized name.",
+      "explanation": "The method bypasses the dictionary key and linearly searches _roles.Values by NormalizedName before removing the user-role association. It is retained as informational because this store exists for tests.",
+      "snippet": "var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F184",
+    "finding": {
+      "card_id": "dictionary-values-linear-search-reverse-map",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 53,
+      "line_end": 53,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "IsInRoleAsync performs a reverse lookup by scanning all role values.",
+      "explanation": "The role dictionary is keyed by ID, while this operation searches the Values collection for a matching NormalizedName. The linear reverse lookup is informational in the test-only in-memory store.",
+      "snippet": "var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F185",
+    "finding": {
+      "card_id": "dictionary-values-linear-search-reverse-map",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 63,
+      "line_end": 63,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "GetUsersInRoleAsync scans all dictionary values to find a role by normalized name.",
+      "explanation": "The method uses Where followed by SingleOrDefault over _roles.Values for a secondary-property lookup instead of a name index. The occurrence is informational because it is test-store code.",
+      "snippet": "var role = _roles.Values.Where(x => x.NormalizedName.Equals(roleName)).SingleOrDefault();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F186",
+    "finding": {
+      "card_id": "dictionary-values-linear-search-reverse-map",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 122,
+      "line_end": 124,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "FindByNameAsync scans the role dictionary values for a normalized-name match.",
+      "explanation": "Roles is backed by _roles.Values.AsQueryable(), so SingleOrDefault performs a linear secondary-key search across the dictionary values. The test-only store occurrence is informational.",
+      "snippet": "Roles.SingleOrDefault(r => String.Equals(r.NormalizedName, roleName, StringComparison.OrdinalIgnoreCase))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

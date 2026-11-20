@@ -1,0 +1,21 @@
+{
+  "assembly": "Microsoft.AspNetCore.Identity.InMemory.Test",
+  "project": "src\\Identity\\test\\InMemory.Test\\Microsoft.AspNetCore.Identity.InMemory.Test.csproj",
+  "selectionKind": "Existing unchanged native tests, bounded to the three lookups and their public producers",
+  "instrumentation": "Common accepted DLL is also a process-exit startup hook. It only records identity; test code and owner images are unchanged. Supplemental rows are not VSTest tests.",
+  "expected": [
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanRoleFindById", "findings": ["F173"], "producer": "RoleManager.FindByIdAsync; missing then real manager CreateAsync and hit", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanFindById", "findings": ["F175"], "producer": "UserManager.CreateAsync then FindByIdAsync through inherited store", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryUserStoreTest", "method": "CanFindById", "findings": ["F175"], "producer": "UserManager.CreateAsync then FindByIdAsync through base store", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanDeleteUser", "findings": ["F175"], "producer": "UserManager.CreateAsync/DeleteAsync then ID miss through inherited store", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryUserStoreTest", "method": "CanDeleteUser", "findings": ["F175"], "producer": "UserManager.CreateAsync/DeleteAsync then ID miss through base store", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanCreateUserAddRemoveLogin", "findings": ["F174"], "producer": "UserManager.AddLoginAsync prelookup; hit; RemoveLoginAsync and miss", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryUserStoreTest", "method": "CanCreateUserAddRemoveLogin", "findings": ["F174"], "producer": "UserManager.AddLoginAsync prelookup; hit; RemoveLoginAsync and miss", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "CanCreateUserAddLogin", "findings": ["F174"], "producer": "UserManager.AddLoginAsync performs missing-login check before store insertion", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryUserStoreTest", "method": "CanCreateUserAddLogin", "findings": ["F174"], "producer": "UserManager.AddLoginAsync performs missing-login check before store insertion", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryStoreTest", "method": "AddDupeLoginFails", "findings": ["F174"], "producer": "UserManager.AddLoginAsync performs missing then existing-login checks", "parameters": [] },
+    { "class": "Microsoft.AspNetCore.Identity.InMemory.Test.InMemoryUserStoreTest", "method": "AddDupeLoginFails", "findings": ["F174"], "producer": "UserManager.AddLoginAsync performs missing then existing-login checks", "parameters": [] }
+  ],
+  "parameterizedRows": "No selected existing method is parameterized. Unselected theory rows are not claimed as executed.",
+  "excluded": "Other native Identity tests, controllers, hosted functional tests, UI test assets and NativeAOT are not selected."
+}
