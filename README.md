@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 157/358 finalized**: 78 drafts, 26 no-gain, 28 rejected and 25 duplicates;
-201 findings remain unfinished.
+**Progress: 158/358 finalized**: 78 drafts, 26 no-gain, 29 rejected and 25 duplicates;
+200 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F135 | Not admitted: no material optimization established for genuine output-cache Dictionary and selected LINQ Count fast path; residual cost unmeasured, not measured no-gain.54 real middleware rows,6 exact existing tests with62/68 distinction,67 non-owner differences reject causal pairing;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#181](https://github.com/jaslawinMs/aspnetcore/issues/181) | [Dictionary emptiness evidence](F135/README.md), [verified publication](F135/publication.json) |
 | F145 | [Draft jaslawinMs/aspnetcore#180](https://github.com/jaslawinMs/aspnetcore/pull/180), [tracking jaslawinMs/aspnetcore#179](https://github.com/jaslawinMs/aspnetcore/issues/179); focused IIS test asset: full200M-character Kestrel request14.88%/15.71%less time on independent fixed source/runtime pairs,7/7favorable each; unchanged65kcontrols0.98356/0.97576 pass.2closed comparisons/56retained scalar timings,4real functional variants,owner-only137-file pairs,portable source/PDB and independent arithmetic. No allocation/nativeIIS/wholeCI/application claim; named native test not run, not merge-ready | [Fixed UTF-8 test-workload buffer](F145/README.md), [verified publication](F145/publication.json) |
 | F134 | Not admitted: no material optimization established for the real owned List and loaded LINQ Count fast path.10 producer cases/pin,6 exact default test executions; residual cost unmeasured, not measured no-gain.0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#178](https://github.com/jaslawinMs/aspnetcore/issues/178) | [WebSocket emptiness evidence](F134/README.md), [verified publication](F134/publication.json) |
 | F151 | Not admitted: Contains membership; no material value-type T producer established in real MVC. Helper-only comparer contract differences are not shipping reachability proof.183 assertions/pin, canonical3/3 tests per role plus explicit fallback preserved;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#177](https://github.com/jaslawinMs/aspnetcore/issues/177) | [Bounded MVC equality study](CopyOnWriteEquality/README.md), [verified publication](CopyOnWriteEquality/publication.json) |
