@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 184/358 finalized**: 78 drafts, 28 no-gain, 53 rejected and 25 duplicates;
-174 findings remain unfinished.
+**Progress: 187/358 finalized**: 78 drafts, 28 no-gain, 56 rejected and 25 duplicates;
+171 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F173 | Not admitted: role-ID lookup in a test-support store; real manager lifecycle preserved, material workload benefit not established. [Tracking jaslawinMs/aspnetcore#195](https://github.com/jaslawinMs/aspnetcore/issues/195) | [Real test-store study](F173-F175/README.md), [verified publication](F173-F175/publication.json) |
+| F174 | Not admitted: composed-login lookup in a test-support store; real manager lifecycle preserved, material workload benefit not established. [Tracking jaslawinMs/aspnetcore#195](https://github.com/jaslawinMs/aspnetcore/issues/195) | [Real test-store study](F173-F175/README.md), [verified publication](F173-F175/publication.json) |
+| F175 | Not admitted: user-ID lookup in a test-support store; real manager lifecycle preserved, material workload benefit not established. [Tracking jaslawinMs/aspnetcore#195](https://github.com/jaslawinMs/aspnetcore/issues/195) | [Real test-store study](F173-F175/README.md), [verified publication](F173-F175/publication.json) |
 | F166 | Not admitted: fixed configuration-time MIME mapping; material workload benefit not established. [Tracking jaslawinMs/aspnetcore#194](https://github.com/jaslawinMs/aspnetcore/issues/194) | [Real producer study](F166-F168/README.md), [verified publication](F166-F168/publication.json) |
 | F167 | Not admitted: retained-key constructor map; material workload benefit not established. [Tracking jaslawinMs/aspnetcore#194](https://github.com/jaslawinMs/aspnetcore/issues/194) | [Real producer study](F166-F168/README.md), [verified publication](F166-F168/publication.json) |
 | F168 | Not admitted: write-once dynamic test helper; material workload benefit not established. [Tracking jaslawinMs/aspnetcore#194](https://github.com/jaslawinMs/aspnetcore/issues/194) | [Real producer study](F166-F168/README.md), [verified publication](F166-F168/publication.json) |
