@@ -1,0 +1,81 @@
+[
+  {
+    "id": "F166",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Components/WebAssembly/Server/src/ComponentsWebAssemblyApplicationBuilderExtensions.cs",
+      "line_start": 133,
+      "line_end": 135,
+      "project": "Microsoft.AspNetCore.Components.WebAssembly.Server",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Static-file content-type setup probes each mapping before adding it.",
+      "explanation": "AddMapping calls ContainsKey and then Add with the same key on the provider mappings dictionary, causing two hash-table probes for each missing mapping. This runs during application configuration with a fixed small set of mappings, so the structural match is informational.",
+      "snippet": "if (!provider.Mappings.ContainsKey(name))\n{\n    provider.Mappings.Add(name, mimeType);\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F167",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/DataProtection/DataProtection/src/KeyManagement/KeyRing.cs",
+      "line_start": 31,
+      "line_end": 33,
+      "project": "Microsoft.AspNetCore.DataProtection",
+      "target_frameworks": [
+        "net462",
+        "netstandard2.0",
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Key-ring construction checks for the default key before adding it.",
+      "explanation": "The constructor calls ContainsKey and then Add with defaultKey.KeyId on the same plain dictionary, repeating the key hash and bucket probe when the default key is absent. Key-ring construction is infrequent, so the occurrence is informational.",
+      "snippet": "if (!_keyIdToKeyHolderMap.ContainsKey(defaultKey.KeyId))\n{\n    _keyIdToKeyHolderMap.Add(defaultKey.KeyId, new KeyHolder(defaultKey));\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F168",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Features/JsonPatch/test/WriteOnceDynamicTestObject.cs",
+      "line_start": 109,
+      "line_end": 114,
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Test dictionary insertion probes the same key twice",
+      "explanation": "SetValueForKey calls ContainsKey(key) and then uses the indexer setter for the same dictionary and key, repeating hashing and bucket lookup for one logical insert. The occurrence is confined to a test helper.",
+      "snippet": "if (_dictionary.ContainsKey(key)) { ... }\n_dictionary[key] = value;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

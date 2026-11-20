@@ -1,0 +1,16 @@
+commit 0b76599c31b3fa367dc172272e81cee87a634ba9
+Author: David <davidfallah1@gmail.com>
+Date:   Mon Oct 2 09:54:55 2017 +0100
+
+    Improve conformance of replace operations to spec
+    
+    This ensures that JSON patch "replace" operations are functionally
+    equivalent to "remove" operations followed by "add" operations at the
+    same path, as RFC 6902 specifies.
+    
+    Addresses #110
+
+ src/Microsoft.AspNetCore.JsonPatch/Internal/DynamicObjectAdapter.cs           |   5 +++++
+ test/Microsoft.AspNetCore.JsonPatch.Test/Internal/DynamicObjectAdapterTest.cs |   4 ++--
+ test/Microsoft.AspNetCore.JsonPatch.Test/WriteOnceDynamicTestObject.cs        | 117 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 124 insertions(+), 2 deletions(-)

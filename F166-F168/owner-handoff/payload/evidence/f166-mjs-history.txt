@@ -1,0 +1,23 @@
+commit adf603f4de06d6e030c3f4e48ed499d032caff37
+Author:     Radek Doulik <radek.doulik@gmail.com>
+AuthorDate: Wed Jun 19 16:47:42 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Jun 19 16:47:42 2024 +0200
+
+    [Blazor] Add mapping for .mjs files (#56316)
+    
+    Newer emscripten produces dotnet.native.worker.mjs instead of .js
+    Context: https://github.com/dotnet/runtime/pull/100334#pullrequestreview-2115161601
+
+diff --git a/src/Components/WebAssembly/Server/src/ComponentsWebAssemblyApplicationBuilderExtensions.cs b/src/Components/WebAssembly/Server/src/ComponentsWebAssemblyApplicationBuilderExtensions.cs
+index 2fe8c3de1a..7cf70b7d02 100644
+--- a/src/Components/WebAssembly/Server/src/ComponentsWebAssemblyApplicationBuilderExtensions.cs
++++ b/src/Components/WebAssembly/Server/src/ComponentsWebAssemblyApplicationBuilderExtensions.cs
+@@ -94,6 +94,7 @@ public static class ComponentsWebAssemblyApplicationBuilderExtensions
+         AddMapping(contentTypeProvider, ".br", MediaTypeNames.Application.Octet);
+         AddMapping(contentTypeProvider, ".dat", MediaTypeNames.Application.Octet);
+         AddMapping(contentTypeProvider, ".blat", MediaTypeNames.Application.Octet);
++        AddMapping(contentTypeProvider, ".mjs", MediaTypeNames.Text.JavaScript);
+ 
+         options.ContentTypeProvider = contentTypeProvider;
+ 
