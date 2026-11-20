@@ -1,0 +1,1406 @@
+{
+  "role": "default",
+  "boundary": "Supplemental console checks; not discovered VSTest tests",
+  "consumer": {
+    "name": "AutoPerf.Identity.Contracts",
+    "fullName": "AutoPerf.Identity.Contracts, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+    "mvid": "7880271e-929a-45e2-9fb5-daa12b870449",
+    "location": "C:\\src\\ap-F173-d013\\artifacts\\bin\\Microsoft.AspNetCore.Identity.InMemory.Test\\Release\\net12.0\\AutoPerf.Identity.Contracts.dll",
+    "dynamic": false,
+    "sha256": "E852FA844C751E3436E802D28519B17519143E50C851487DEE58A0856D8EA1E3",
+    "informationalVersion": null
+  },
+  "owner": {
+    "name": "Microsoft.AspNetCore.Identity.InMemory.Test",
+    "fullName": "Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60",
+    "mvid": "fa45c1ab-7d49-43c5-8ce5-8fe7492f5c5f",
+    "location": "C:\\src\\ap-F173-d013\\artifacts\\bin\\Microsoft.AspNetCore.Identity.InMemory.Test\\Release\\net12.0\\Microsoft.AspNetCore.Identity.InMemory.Test.dll",
+    "dynamic": false,
+    "sha256": "BDF28BD1545E1303896561BD1BEABFA9E8CCC2F49CF301DBA8E818917C317013",
+    "informationalVersion": "12.0.0-dev"
+  },
+  "managerProducer": {
+    "name": "Microsoft.Extensions.Identity.Core",
+    "fullName": "Microsoft.Extensions.Identity.Core, Version=12.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60",
+    "mvid": "bc39d8ef-c6ce-44b7-aada-d765b4b9189d",
+    "location": "C:\\src\\ap-F173-d013\\artifacts\\bin\\Microsoft.AspNetCore.Identity.InMemory.Test\\Release\\net12.0\\Microsoft.Extensions.Identity.Core.dll",
+    "dynamic": false,
+    "sha256": "5C7730DF0721DD36D485F7B954D12B272618860FF4D24F95FFD926B949DB2091",
+    "informationalVersion": "12.0.0-dev"
+  },
+  "coreLib": {
+    "name": "System.Private.CoreLib",
+    "fullName": "System.Private.CoreLib, Version=12.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
+    "mvid": "7d1be881-a554-424e-b653-6b452406a125",
+    "location": "C:\\src\\ap-F173-d013\\.dotnet\\shared\\Microsoft.NETCore.App\\12.0.0-alpha.1.26569.107\\System.Private.CoreLib.dll",
+    "dynamic": false,
+    "sha256": "09DC73D8B850905F8250C160732CEDEB532349827E59267BF04B0F59B0D55AF8",
+    "informationalVersion": "12.0.0-alpha.1.26569.107\u002B4f30608f5e5220a5671e61f4bd5dece130657f47"
+  },
+  "rows": [
+    {
+      "name": "F173_RoleId_ManagerIdentityLifecycle",
+      "finding": "F173",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryStore\u00602[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60],[Microsoft.AspNetCore.Identity.Test.PocoRole, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "store-is-exact-provided-instance-in-first-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-is-reused-in-second-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "user-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-registration-is-singleton",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "same-store-owns-role-and-user-contracts",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "role-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "missing-before-create",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedRoleName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-role",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "equal-id-distinct-string-instance",
+          "passed": true,
+          "observed": {
+            "equalId": "Role-Key"
+          }
+        },
+        {
+          "name": "equal-value-key-returns-exact-stored-role",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "UpperRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-id-lookup",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "UpperRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "other-scope-sees-same-role",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "UpperRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-id-missing",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedRoleName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-case-distinct-role-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "case-distinct-role-id-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "role-key",
+            "returnedRoleName": "LowerRole",
+            "expectedId": "role-key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "original-role-id-not-replaced-by-case-distinct-id",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "UpperRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-update-same-role-object",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-after-role-update",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "UpdatedRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "role-updated-property-observed",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-update-replacement-role-same-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-returns-replacement-role-object",
+          "passed": true,
+          "observed": {
+            "returnedId": "Role-Key",
+            "returnedRoleName": "ReplacementRole",
+            "expectedId": "Role-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-delete-replacement-role",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "role-missing-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedRoleName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-role-miss-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedRoleName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-role-survives-other-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": "role-key",
+            "returnedRoleName": "LowerRole",
+            "expectedId": "role-key",
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F174_Login_ManagerIdentityLifecycle_BaseStore",
+      "finding": "F174",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryUserStore\u00601[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "store-is-exact-provided-instance-in-first-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-is-reused-in-second-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "user-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-registration-is-singleton",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "missing-login-tuple-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "create-login-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "manager-add-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "equal-login-components-are-distinct-string-instances",
+          "passed": true,
+          "observed": {
+            "equalProvider": "Provider",
+            "equalKey": "Key",
+            "inherited": false
+          }
+        },
+        {
+          "name": "equal-value-tuple-returns-exact-stored-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-login-lookup",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "other-manager-reuses-login-map",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-case-distinct-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-key-case-distinct-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "reversed-login-components-do-not-match",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "create-provider-case-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "create-key-case-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "add-provider-case-distinct-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "add-key-case-distinct-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "provider-case-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-provider-case",
+            "returnedUserName": "ProviderCaseUser",
+            "expectedId": "login-provider-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "key-case-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-key-case",
+            "returnedUserName": "KeyCaseUser",
+            "expectedId": "login-key-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "original-tuple-still-owns-original-object",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "update-login-user-object",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "login-after-user-update-has-exact-identity",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-returned-user-has-updated-property",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-rejects-existing-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": false,
+            "errors": [
+              "LoginAlreadyAssociated"
+            ]
+          }
+        },
+        {
+          "name": "manager-remove-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "removed-login-returns-null",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-removed-login-returns-null",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-list-empty-after-remove",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-readd-removed-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "readded-login-returns-exact-same-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-list-one-after-readd",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-remove-readded-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "readded-login-missing-after-second-remove",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-case-survives-original-removal",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-provider-case",
+            "returnedUserName": "ProviderCaseUser",
+            "expectedId": "login-provider-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "key-case-survives-original-removal",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-key-case",
+            "returnedUserName": "KeyCaseUser",
+            "expectedId": "login-key-case",
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F174_Login_ManagerIdentityLifecycle_InheritedStore",
+      "finding": "F174",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryStore\u00602[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60],[Microsoft.AspNetCore.Identity.Test.PocoRole, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "store-is-exact-provided-instance-in-first-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-is-reused-in-second-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "user-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-registration-is-singleton",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "missing-login-tuple-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "create-login-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "manager-add-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "equal-login-components-are-distinct-string-instances",
+          "passed": true,
+          "observed": {
+            "equalProvider": "Provider",
+            "equalKey": "Key",
+            "inherited": true
+          }
+        },
+        {
+          "name": "equal-value-tuple-returns-exact-stored-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-login-lookup",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "other-manager-reuses-login-map",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-case-distinct-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-key-case-distinct-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "reversed-login-components-do-not-match",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "create-provider-case-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "create-key-case-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "add-provider-case-distinct-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "add-key-case-distinct-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "provider-case-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-provider-case",
+            "returnedUserName": "ProviderCaseUser",
+            "expectedId": "login-provider-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "key-case-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-key-case",
+            "returnedUserName": "KeyCaseUser",
+            "expectedId": "login-key-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "original-tuple-still-owns-original-object",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "update-login-user-object",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "login-after-user-update-has-exact-identity",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-returned-user-has-updated-property",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-rejects-existing-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": false,
+            "errors": [
+              "LoginAlreadyAssociated"
+            ]
+          }
+        },
+        {
+          "name": "manager-remove-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "removed-login-returns-null",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-removed-login-returns-null",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-list-empty-after-remove",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-readd-removed-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "readded-login-returns-exact-same-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-user",
+            "returnedUserName": "LoginUser",
+            "expectedId": "login-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "login-list-one-after-readd",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-remove-readded-login",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "readded-login-missing-after-second-remove",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "provider-case-survives-original-removal",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-provider-case",
+            "returnedUserName": "ProviderCaseUser",
+            "expectedId": "login-provider-case",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "key-case-survives-original-removal",
+          "passed": true,
+          "observed": {
+            "returnedId": "login-key-case",
+            "returnedUserName": "KeyCaseUser",
+            "expectedId": "login-key-case",
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F174_Login_ComposedKeyAndEmptyComponents",
+      "finding": "F174",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryUserStore\u00601[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "create-composition-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "create-other-composition-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "add-pipe-containing-tuple",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "original-pipe-tuple-exact-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "composition-user",
+            "returnedUserName": "CompositionUser",
+            "expectedId": "composition-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "alternate-components-with-same-composed-key",
+          "passed": true,
+          "observed": {
+            "returnedId": "composition-user",
+            "returnedUserName": "CompositionUser",
+            "expectedId": "composition-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-sees-composed-key-alias-as-existing",
+          "passed": true,
+          "observed": {
+            "Succeeded": false,
+            "errors": [
+              "LoginAlreadyAssociated"
+            ]
+          }
+        },
+        {
+          "name": "remove-original-pipe-tuple",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "composed-key-alias-missing-after-remove",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "empty-components-missing-before-add",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-add-empty-components",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "empty-components-return-exact-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "composition-user",
+            "returnedUserName": "CompositionUser",
+            "expectedId": "composition-user",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-remove-empty-components",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "empty-components-null-after-remove",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F175_UserId_ManagerIdentityLifecycle_BaseStore",
+      "finding": "F175",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryUserStore\u00601[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "store-is-exact-provided-instance-in-first-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-is-reused-in-second-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "user-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-registration-is-singleton",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "missing-before-user-create",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "equal-user-id-distinct-string-instance",
+          "passed": true,
+          "observed": {
+            "equalId": "User-Key",
+            "inherited": false
+          }
+        },
+        {
+          "name": "equal-value-key-returns-exact-stored-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-user-id-lookup",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "other-scope-sees-same-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-user-id-missing",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-case-distinct-user-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "case-distinct-user-id-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "user-key",
+            "returnedUserName": "LowerUser",
+            "expectedId": "user-key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "original-user-id-not-replaced-by-case-distinct-id",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-update-same-user-object",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-after-user-update",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpdatedUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "user-updated-property-observed",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-update-replacement-user-same-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-returns-replacement-user-object",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "ReplacementUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-delete-replacement-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "user-missing-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-user-miss-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-user-survives-other-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": "user-key",
+            "returnedUserName": "LowerUser",
+            "expectedId": "user-key",
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F175_UserId_ManagerIdentityLifecycle_InheritedStore",
+      "finding": "F175",
+      "ownerType": "Microsoft.AspNetCore.Identity.InMemory.InMemoryStore\u00602[[Microsoft.AspNetCore.Identity.Test.PocoUser, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60],[Microsoft.AspNetCore.Identity.Test.PocoRole, Microsoft.AspNetCore.Identity.InMemory.Test, Version=42.42.42.42, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+      "outcome": "Passed",
+      "checks": [
+        {
+          "name": "store-is-exact-provided-instance-in-first-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-is-reused-in-second-scope",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "user-managers-are-distinct-across-scopes",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "store-registration-is-singleton",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "missing-before-user-create",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "equal-user-id-distinct-string-instance",
+          "passed": true,
+          "observed": {
+            "equalId": "User-Key",
+            "inherited": true
+          }
+        },
+        {
+          "name": "equal-value-key-returns-exact-stored-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-user-id-lookup",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "other-scope-sees-same-user",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-user-id-missing",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-create-case-distinct-user-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "case-distinct-user-id-has-separate-value",
+          "passed": true,
+          "observed": {
+            "returnedId": "user-key",
+            "returnedUserName": "LowerUser",
+            "expectedId": "user-key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "original-user-id-not-replaced-by-case-distinct-id",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpperUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-update-same-user-object",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-after-user-update",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "UpdatedUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "user-updated-property-observed",
+          "passed": true,
+          "observed": null
+        },
+        {
+          "name": "manager-update-replacement-user-same-id",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "lookup-returns-replacement-user-object",
+          "passed": true,
+          "observed": {
+            "returnedId": "User-Key",
+            "returnedUserName": "ReplacementUser",
+            "expectedId": "User-Key",
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "manager-delete-replacement-user",
+          "passed": true,
+          "observed": {
+            "Succeeded": true,
+            "errors": []
+          }
+        },
+        {
+          "name": "user-missing-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "repeat-user-miss-after-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": null,
+            "returnedUserName": null,
+            "expectedId": null,
+            "referenceEqualsExpected": true
+          }
+        },
+        {
+          "name": "case-distinct-user-survives-other-delete",
+          "passed": true,
+          "observed": {
+            "returnedId": "user-key",
+            "returnedUserName": "LowerUser",
+            "expectedId": "user-key",
+            "referenceEqualsExpected": true
+          }
+        }
+      ]
+    }
+  ],
+  "exitCode": 0,
+  "failure": null
+}

@@ -1,0 +1,57 @@
+{
+  "scope": "F173/F174/F175 informational net12.0 nonshipping test-store code; no shipping store assessment",
+  "sourceReachabilityBoundary": "Selected pinned Identity source, raw history (four followed changes per owner file), local LSP navigation, and exact-scope pinned git grep. This is not a resolved whole-repository consumer census.",
+  "sourceIdentityDisambiguation": [
+    "The target is Microsoft.AspNetCore.Identity.InMemory.InMemoryUserStore<TUser> in test\\InMemory.Test, and its InMemoryStore<TUser,TRole> subclass.",
+    "PasskeyConformance and PasskeyUI samples have different InMemoryUserStore<TUser> implementations in their own namespaces. Same-simple-name grep hits are not target consumers.",
+    "Identity.DefaultUI.WebSite.csproj links the target InMemoryUserStore.cs and Poco model source into another testasset assembly. Its source reuse is not execution of that testasset in this capsule."
+  ],
+  "selectedNativeConstruction": {
+    "roleStore": "InMemoryStoreTest.CreateTestContext constructs one InMemoryStore<PocoUser,PocoRole>. AddUserStore/AddRoleStore register the exact provided object as singleton for both interfaces in the test's service collection.",
+    "baseUserStore": "InMemoryUserStoreTest.CreateTestContext constructs one InMemoryUserStore<PocoUser>; AddUserStore registers that exact object as singleton.",
+    "managerFactory": "UserManagerSpecificationTestBase.CreateManager and IdentitySpecificationTestBase.CreateRoleManager create a context when none is supplied, set up real Identity DI and resolve public managers from a new provider. Explicit shared contexts are reused in other specification scenarios; no cross-test shared-store lifetime is inferred.",
+    "fixture": "The selected InMemoryUserStoreTest rows also instantiate their unchanged class fixture, which opens an in-memory SQLite connection. They are real discovered native tests, not the abstract specification support library by itself.",
+    "conditionalRows": "All eleven selected native methods are unconditional Facts. No theory rows are selected; every selected role/name/result is structurally reconciled."
+  },
+  "sourceOnlyConstructionNotExecuted": {
+    "functionalTest": "FunctionalTest creates one InMemoryStore in each CreateTestServer service setup, registering the same instance for user and role interfaces in that host.",
+    "controllerTest": "ControllerTest uses two separate AddSingleton<TService,TImplementation> registrations for user and role services; do not infer a single shared instance across those service descriptors.",
+    "defaultUITestasset": "PocoUserStartup registers the linked-source base user store as a singleton. This hosted path was not built or run here."
+  },
+  "lookups": [
+    {
+      "finding": "F173",
+      "owner": "InMemoryStore<TUser,TRole>.IRoleStore<TRole>.FindByIdAsync",
+      "field": "_roles",
+      "construction": "Readonly instance Dictionary<string,TRole>() with no explicit comparer; allocated with its store instance.",
+      "producer": "Public RoleManager.CreateAsync/UpdateAsync ultimately call store CreateAsync/UpdateAsync, storing the supplied role object by Id. Public RoleManager.FindByIdAsync delegates the Id without name normalization.",
+      "removal": "Store DeleteAsync removes the Id after its existing known-role check.",
+      "observed": "Missing/hit, newly allocated equal string, exact object identity, repeated lookups, second DI scope using the same store, case-distinct Id values, same-object and replacement-object updates, deletion and unaffected case-distinct control."
+    },
+    {
+      "finding": "F174",
+      "owner": "InMemoryUserStore<TUser>.FindByLoginAsync",
+      "field": "_logins",
+      "construction": "Readonly instance Dictionary<string,TUser>() with no explicit comparer; key is GetLoginKey(provider,key), string concatenation provider + | + key.",
+      "producer": "Real UserManager.AddLoginAsync first performs FindByLoginAsync, then calls the real store AddLoginAsync. The store appends the Poco login record and stores the original user object under the composed string key.",
+      "removal": "Real RemoveLoginAsync removes the matching Poco login record and assigns null at the dictionary key; it does not Dictionary.Remove that key. The public removed lookup returns null. A manager re-add succeeds through the actual existing-key/null-value path.",
+      "observed": "Missing/hit, separately allocated equal tuple components, exact user identity, repeated lookup, provider/key case distinctions, normal same-object update, duplicate rejection, removal/repeat-null/re-add/second-removal and unaffected case controls in both base and inherited store instances. Actual pipe-composed-key aliases and empty components are separately observed."
+    },
+    {
+      "finding": "F175",
+      "owner": "InMemoryUserStore<TUser>.FindByIdAsync",
+      "field": "_users",
+      "construction": "Readonly instance Dictionary<string,TUser>() with no explicit comparer.",
+      "producer": "Public UserManager.CreateAsync/UpdateAsync ultimately call real store CreateAsync/UpdateAsync, both assigning the exact provided user object at user.Id. Public UserManager.FindByIdAsync delegates Id without name normalization.",
+      "removal": "Store DeleteAsync removes user.Id after its existing known-user check.",
+      "observed": "Missing/hit, newly allocated equal string, exact user identity, repeated lookup, reused store across manager scopes, case-distinct Ids, same-object/replacement-object updates, removal/repeated miss and unaffected case control in both base and inherited store instances."
+    }
+  ],
+  "observationLimits": [
+    "No lookup instrumentation, probe counts, cardinality/frequency measurement, timing, allocation metric or benefit/outcome decision.",
+    "Dictionary construction is source evidence. Finite equality/case behavior is exercised; the internal concrete comparer implementation was not introspected.",
+    "The native process-exit startup hook did not produce native testhost receipts. Its runtime57 SDK/VSTest records are not relabeled as native assertion-runtime identities.",
+    "A second unchanged native run without the hook provides sampled actual testhost CoreLib/CoreCLR/host module paths and hashes. The early module snapshot did not capture the target managed owner/manager PE as loaded modules. Those native owner files are tied to the exact native command/TRX codeBase/output manifests and freshly parsed selected PE/PDB bytes; their actual in-process managed MVID observations are from the separate supplemental real-store process, not VSTest.",
+    "No post-fix/red-green comparison applies: no candidate implementation or bug fix is part of this preparation."
+  ]
+}
