@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 205/358 finalized**: 78 drafts, 29 no-gain, 73 rejected and 25 duplicates;
-153 findings remain unfinished.
+**Progress: 207/358 finalized**: 78 drafts, 29 no-gain, 75 rejected and 25 duplicates;
+151 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F237 | **Rejected:** obsolete runtime-compilation lifecycle; real physical discovery contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#203](https://github.com/jaslawinMs/aspnetcore/issues/203) | [Razor evidence](F237-F238/README.md), [verified publication](F237-F238/publication.json) |
+| F238 | **Rejected:** obsolete runtime-compilation lifecycle; real physical discovery contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#203](https://github.com/jaslawinMs/aspnetcore/issues/203) | [Razor evidence](F237-F238/README.md), [verified publication](F237-F238/publication.json) |
 | F187 | **Rejected:** nonshipping missing-result test helper; material fixture workload unestablished. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
 | F188 | **Rejected:** nonshipping missing-result test helper; material fixture workload unestablished. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
 | F189 | **Rejected:** actual owning fixture excludes nested controller; target allocation not reached. [Tracking jaslawinMs/aspnetcore#202](https://github.com/jaslawinMs/aspnetcore/issues/202) | [MVC fixture evidence](F187-F189/README.md), [verified publication](F187-F189/publication.json) |
