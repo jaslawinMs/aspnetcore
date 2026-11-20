@@ -1,0 +1,22 @@
+commit 983ca23811fe46ffaadf6af786ac9b411aa600d9
+Author: Martin Costello <martin@martincostello.com>
+Date:   Tue Nov 1 01:02:30 2022 +0000
+
+    Enable CA1854 (#44799)
+
+diff --git a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+index a4e8fd125d..6d161a062f 100644
+--- a/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
++++ b/src/Mvc/shared/Mvc.Views.TestCommon/TestFileProvider.cs
+@@ -70,9 +70,9 @@ public class TestFileProvider : IFileProvider
+ 
+     public virtual IFileInfo GetFileInfo(string subpath)
+     {
+-        if (_lookup.ContainsKey(subpath))
++        if (_lookup.TryGetValue(subpath, out var fileInfo))
+         {
+-            return _lookup[subpath];
++            return fileInfo;
+         }
+         else
+         {
