@@ -13,6 +13,9 @@ internal class MinimumAgePolicyProvider : IAuthorizationPolicyProvider
     const string POLICY_PREFIX = "MinimumAge";
     public DefaultAuthorizationPolicyProvider FallbackPolicyProvider { get; }
 
+    /// <inheritdoc />
+    public bool AllowsCachingPolicies => true;
+
     public MinimumAgePolicyProvider(IOptions<AuthorizationOptions> options)
     {
         // ASP.NET Core only uses one authorization policy provider, so if the custom implementation
