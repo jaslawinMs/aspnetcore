@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UseAppHost>false</UseAppHost>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>AutoPerf.F134.Characterization</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AssemblySearchPaths>$(SourceBuiltAssemblies);{HintPathFromItem};{RawFileName};{TargetFrameworkDirectory};{CandidateAssemblyFiles}</AssemblySearchPaths>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="ProbeSupport.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SourceBuiltAssemblies)' != ''">
+    <Reference Include="$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.Server.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.Features.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.TestHost.dll;$(SourceBuiltAssemblies)\Microsoft.AspNetCore.WebSockets.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.DependencyInjection.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.DependencyInjection.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.Hosting.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.Hosting.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.Logging.Abstractions.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.Options.dll;$(SourceBuiltAssemblies)\Microsoft.Extensions.Primitives.dll;$(SourceBuiltAssemblies)\Microsoft.Net.Http.Headers.dll">
+      <Private>true</Private>
+      <SpecificVersion>true</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+  <Target Name="RequireSourceBuiltInputs" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(SourceBuiltAssemblies)' == ''" Text="Set SourceBuiltAssemblies to a coordinator-attested, source-built dependency closure. No ASP.NET Core FrameworkReference fallback is permitted." />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Hosting.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.Abstractions.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Hosting.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Hosting.Server.Abstractions.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Hosting.Server.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Http.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.Abstractions.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Http.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.Http.Features.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.Http.Features.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.TestHost.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.TestHost.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.WebSockets.dll')" Text="Required source-built input missing: Microsoft.AspNetCore.WebSockets.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.DependencyInjection.dll')" Text="Required source-built input missing: Microsoft.Extensions.DependencyInjection.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.DependencyInjection.Abstractions.dll')" Text="Required source-built input missing: Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.Hosting.dll')" Text="Required source-built input missing: Microsoft.Extensions.Hosting.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.Hosting.Abstractions.dll')" Text="Required source-built input missing: Microsoft.Extensions.Hosting.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.Logging.Abstractions.dll')" Text="Required source-built input missing: Microsoft.Extensions.Logging.Abstractions.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.Options.dll')" Text="Required source-built input missing: Microsoft.Extensions.Options.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Extensions.Primitives.dll')" Text="Required source-built input missing: Microsoft.Extensions.Primitives.dll" />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.Net.Http.Headers.dll')" Text="Required source-built input missing: Microsoft.Net.Http.Headers.dll" />
+  </Target>
+</Project>

@@ -1,0 +1,212 @@
+{
+  "findingId": "F134",
+  "researchStatus": "preparation-only; not finalized",
+  "pinnedCommits": {
+    "authoritativeBaseline": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "actualDefault": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+    "authoritativeBaselineSource": "sources\\baseline\\src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+    "actualDefaultSource": "sources\\default\\src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+    "sourceDelta": "byte-identical for the assigned file",
+    "baselineBytes": 5791,
+    "actualDefaultBytes": 5791,
+    "baselineSha256": "1c85857dfd0859e1f8a325aaaf88a2f4634b16ecdf03e2806857cbc136830289",
+    "actualDefaultSha256": "1c85857dfd0859e1f8a325aaaf88a2f4634b16ecdf03e2806857cbc136830289",
+    "diffArtifact": "raw\\F134-baseline-default-diff.stdout",
+    "diffBytes": 0,
+    "scope": "Assigned file only; not a claim that the entire revisions or test graphs are identical."
+  },
+  "sourceEvidence": [
+    {
+      "path": "src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+      "lineStart": 21,
+      "lineEnd": 39,
+      "commit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+      "artifact": "sources\\default\\src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+      "wholeFileBytes": 5791,
+      "wholeFileSha256": "1c85857dfd0859e1f8a325aaaf88a2f4634b16ecdf03e2806857cbc136830289",
+      "snippet": "\n    internal WebSocketClient(PathString pathBase, ApplicationWrapper application)\n    {\n        _application = application ?? throw new ArgumentNullException(nameof(application));\n\n        // PathString.StartsWithSegments that we use below requires the base path to not end in a slash.\n        if (pathBase.HasValue && pathBase.Value.EndsWith('/'))\n        {\n            pathBase = new PathString(pathBase.Value[..^1]); // All but the last character.\n        }\n        _pathBase = pathBase;\n\n        SubProtocols = new List<string>();\n    }\n\n    /// <summary>\n    /// Gets the list of WebSocket subprotocols that are established in the initial handshake.\n    /// </summary>\n    public IList<string> SubProtocols { get; }",
+      "sourceFact": "The constructor initializes the get-only IList<string> property with an owned List<string>. Normal callers cannot replace the collection implementation."
+    },
+    {
+      "path": "src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+      "lineStart": 79,
+      "lineEnd": 95,
+      "commit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+      "artifact": "sources\\default\\src\\Hosting\\TestHost\\src\\WebSocketClient.cs",
+      "wholeFileBytes": 5791,
+      "wholeFileSha256": "1c85857dfd0859e1f8a325aaaf88a2f4634b16ecdf03e2806857cbc136830289",
+      "snippet": "            request.Headers.Add(HeaderNames.Connection, new string[] { \"Upgrade\" });\n            request.Headers.Add(HeaderNames.Upgrade, new string[] { \"websocket\" });\n            request.Headers.Add(HeaderNames.SecWebSocketVersion, new string[] { \"13\" });\n            request.Headers.Add(HeaderNames.SecWebSocketKey, new string[] { CreateRequestKey() });\n            if (SubProtocols.Any())\n            {\n                request.Headers.Add(HeaderNames.SecWebSocketProtocol, SubProtocols.ToArray());\n            }\n\n            request.Body = Stream.Null;\n\n            // WebSocket\n            webSocketFeature = new WebSocketFeature(context);\n            context.Features.Set<IHttpWebSocketFeature>(webSocketFeature);\n\n            ConfigureRequest?.Invoke(context.Request);\n        });",
+      "sourceFact": "ConnectAsync conditionally adds Sec-WebSocket-Protocol from the current list, then invokes ConfigureRequest. ToArray still needs LINQ if only Any is changed."
+    },
+    {
+      "path": "src\\Hosting\\TestHost\\src\\TestServer.cs",
+      "lineStart": 190,
+      "lineEnd": 197,
+      "commit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+      "artifact": "sources\\default\\src\\Hosting\\TestHost\\src\\TestServer.cs",
+      "wholeFileBytes": 10553,
+      "wholeFileSha256": "6c7d52a2ed415c7291cc1aa89618c60bf36bb2caf05f23de70e22d1777b41a91",
+      "snippet": "    /// <summary>\n    /// Creates a <see cref=\"WebSocketClient\" /> for interacting with the test server.\n    /// </summary>\n    public WebSocketClient CreateWebSocketClient()\n    {\n        var pathBase = BaseAddress == null ? PathString.Empty : PathString.FromUriComponent(BaseAddress);\n        return new WebSocketClient(pathBase, Application) { AllowSynchronousIO = AllowSynchronousIO, PreserveExecutionContext = PreserveExecutionContext };\n    }",
+      "sourceFact": "TestServer.CreateWebSocketClient constructs the concrete client for its ApplicationWrapper."
+    },
+    {
+      "repository": "dotnet/runtime",
+      "commit": "4cc1155e6af3a6f0b733b8900bf2f0d1495be7e0",
+      "path": "src/libraries/System.Linq/src/System/Linq/AnyAll.cs",
+      "lineStart": 11,
+      "lineEnd": 21,
+      "artifact": "external-source\\runtime\\4cc1155e6af3a6f0b733b8900bf2f0d1495be7e0\\AnyAll.cs",
+      "snippet": "        public static bool Any<TSource>(this IEnumerable<TSource> source)\n        {\n            if (source is null)\n            {\n                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.source);\n            }\n\n            if (source is ICollection<TSource> gc)\n            {\n                return gc.Count != 0;\n            }",
+      "sourceFact": "This pinned modern Enumerable.Any implementation returns ICollection<T>.Count != 0 before its enumeration fallback.",
+      "limitation": "Fetched runtime source is authoritative for that commit, not proof of the exact repository-selected or installed runtime implementation or JIT behavior."
+    }
+  ],
+  "historyAndOverlapEvidence": {
+    "fileHistoryArtifact": "raw\\F134-file-history.stdout",
+    "relevantHistoryArtifact": "raw\\F134-relevant-history.stdout",
+    "seamBlameArtifact": "raw\\F134-seam-blame.stdout",
+    "entries": [
+      {
+        "commit": "af8d35dba62f91a74b416a96822b1ec5152b6f3b",
+        "subject": "Merge Pass SubProtocols from TestHost WebSocketClient (#14666) (#14667)",
+        "artifact": "raw\\F134-subprotocol-header-history-patch.stdout",
+        "fact": "The 2019 change added the Any guard and forwarding of the subprotocol array together; preserve that header-forwarding contract."
+      },
+      {
+        "commit": "3ea008c80d5cc63de7f90ddfd6823b7b006251ff",
+        "subject": "Add rule to seal internal and private types (#41457)",
+        "fact": "Latest touching commit in the pinned follow-history; the target expression remains present at both campaign and actual-default pins."
+      }
+    ],
+    "overlapSearches": [
+      {
+        "commandLabel": "F134-upstream-open-prs",
+        "query": "repo:dotnet/aspnetcore is:pr is:open (WebSocketClient OR SubProtocols)",
+        "artifact": "raw\\F134-upstream-open-prs.stdout",
+        "totalCount": 0,
+        "returnedCount": 0,
+        "incompleteResults": false,
+        "resultPageTruncated": false,
+        "matches": [],
+        "interpretation": "No exact identifier-text match among open upstream PRs."
+      },
+      {
+        "commandLabel": "F134-fork-issues-prs",
+        "query": "repo:jaslawinMs/aspnetcore (WebSocketClient OR SubProtocols)",
+        "artifact": "raw\\F134-fork-issues-prs.stdout",
+        "totalCount": 0,
+        "returnedCount": 0,
+        "incompleteResults": false,
+        "resultPageTruncated": false,
+        "matches": [],
+        "interpretation": "No exact identifier-text match among fork issues/PRs of any state."
+      },
+      {
+        "commandLabel": "F134-fork-websocket",
+        "query": "repo:jaslawinMs/aspnetcore WebSocket",
+        "artifact": "raw\\F134-fork-websocket.stdout",
+        "totalCount": 3,
+        "returnedCount": 3,
+        "incompleteResults": false,
+        "resultPageTruncated": false,
+        "matches": [
+          {
+            "number": 68,
+            "state": "open",
+            "title": "AutoPerf F062: SPA proxy linked cancellation cleanup",
+            "url": "https://github.com/jaslawinMs/aspnetcore/issues/68",
+            "kind": "issue"
+          },
+          {
+            "number": 69,
+            "state": "open",
+            "title": "Dispose linked cancellation source after SPA proxy requests",
+            "url": "https://github.com/jaslawinMs/aspnetcore/pull/69",
+            "kind": "pull-request"
+          },
+          {
+            "number": 73,
+            "state": "open",
+            "title": "Explore NavLink common-prefix performance trade-offs",
+            "url": "https://github.com/jaslawinMs/aspnetcore/pull/73",
+            "kind": "pull-request"
+          }
+        ],
+        "interpretation": "Three broader WebSocket-text matches were returned, with titles about SPA proxy cancellation or NavLink. They are not confirmed duplicates; their complete diffs were not audited."
+      }
+    ],
+    "limitations": [
+      "Bounded file history and focused GitHub issue/PR text searches, not a new scan or a global caller graph.",
+      "GitHub search does not establish that every open PR diff was inspected. Zero lexical matches do not prove absence of overlapping work.",
+      "GitHub responses are preserved as fetched. Any timings or test results in third-party PR bodies are external claims and are not validation performed or adopted by this worker."
+    ]
+  },
+  "producerBoundary": {
+    "behaviorOwner": "Microsoft.AspNetCore.TestHost.WebSocketClient",
+    "nearestObservedPath": "TestServer.CreateWebSocketClient -> WebSocketClient.ConnectAsync -> HttpContextBuilder.Configure request headers -> SendAsync -> in-memory WebSocket acceptance.",
+    "productionProducer": "The shipped TestHost client creates the actual handshake request from its owned SubProtocols list.",
+    "finalObservable": "Server-visible protocol header/list and successful handshake; selected socket SubProtocol and normal close remain unchanged.",
+    "selectedFaithfulSurface": "Existing TestHost managed handshake tests, with server-side header assertions for empty, one, and several protocols if progressing.",
+    "lowerBoundaryFalsePassRisk": "An isolated Any-versus-Count loop omits request creation, protocol serialization, ConfigureRequest ordering, and the actual handshake.",
+    "runtimeExercised": false
+  },
+  "existingTests": {
+    "project": "src\\Hosting\\TestHost\\test\\Microsoft.AspNetCore.TestHost.Tests.csproj",
+    "commit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+    "knownCoverage": [
+      {
+        "name": "Microsoft.AspNetCore.TestHost.Tests.TestClientTests.WebSocketSubProtocolsWorks",
+        "path": "src\\Hosting\\TestHost\\test\\TestClientTests.cs",
+        "lineStart": 791,
+        "lineEnd": 845,
+        "observes": "Adds alpha/bravo through the real client, reads requested protocols server-side, accepts charlie, and checks close/subprotocol results."
+      },
+      {
+        "name": "Microsoft.AspNetCore.TestHost.Tests.WebSocketClientTests.CanAcceptWebSocket",
+        "path": "src\\Hosting\\TestHost\\test\\WebSocketClientTests.cs",
+        "lineStart": 66,
+        "lineEnd": 108,
+        "observes": "Uses the default empty list and a real TestServer acceptance/send/receive/close path; it does not explicitly assert header absence."
+      }
+    ],
+    "likelyMinimalValidationCommands": [
+      {
+        "command": ". .\\activate.ps1; dotnet test .\\src\\Hosting\\TestHost\\test\\Microsoft.AspNetCore.TestHost.Tests.csproj --no-restore -p:UseIisNativeAssets=false --filter \"FullyQualifiedName=Microsoft.AspNetCore.TestHost.Tests.TestClientTests.WebSocketSubProtocolsWorks|FullyQualifiedName=Microsoft.AspNetCore.TestHost.Tests.WebSocketClientTests.CanAcceptWebSocket\"",
+        "result": "NOT RUN: execution forbidden by this read-only assignment"
+      }
+    ],
+    "prerequisites": [
+      "Future coordinator-only execution from the repository root, after activating the repository-local SDK.",
+      "Required existing restore/generated/dependency outputs must be available; their availability was not checked by running a build or test.",
+      "No test discovery, assertion, parameterized row, build, or runtime result is claimed here."
+    ],
+    "coverageGaps": [
+      "Inspected tests do not separately assert absent versus present protocol headers for empty/single/multiple lists."
+    ]
+  },
+  "recommendation": "candidate-for-predeclared-comparison",
+  "rationale": [
+    "The structural replacement can remain inside the existing method and preserve the public API: SubProtocols.Count != 0.",
+    "The owned receiver is already counted. Modern Any has an ICollection<T> fast path, so this is not an enumeration-removal or asymptotic-improvement finding.",
+    "There is a real, nearby handshake producer and observable. That permits a narrow future comparison rather than rejecting the item solely for being informational."
+  ],
+  "impactAssessment": "The disputed branch executes per connection setup, not per WebSocket message. Any material benefit must be established through repeated real TestHost handshakes, not extrapolated from an isolated emptiness check; no benefit is claimed.",
+  "preservationPitfalls": [
+    "Keep the empty-list header-absence behavior and the nonempty list contents/order.",
+    "Keep ToArray and ConfigureRequest ordering; System.Linq is still used by ToArray.",
+    "Do not change server protocol selection or add/alter a public member.",
+    "Do not use a custom collection substitute as evidence for this get-only List-backed producer."
+  ],
+  "prospectiveAcceptanceCriteria": [
+    "Actual handshakes preserve empty/single/multiple protocol observations and accepted SubProtocol.",
+    "The same faithful correctness path is green at baseline and candidate before a separately authorized serial comparison.",
+    "A later comparison reports the full handshake boundary and does not claim enumeration or allocation removal from Any alone."
+  ],
+  "unverifiedBoundaries": [
+    "Source-and-history evidence only. No benchmark, timing comparison, .NET command, build, test, server, restore, or install was run.",
+    "No behavioral equivalence, runtime allocation result, JIT result, or material performance gain has been demonstrated.",
+    "Configured graph/LSP limitations were supplied by the coordinator. Scoped pinned text hits are not complete caller-coverage evidence.",
+    "Exact runtime/JIT treatment of Any versus direct Count on the campaign SDK has not been inspected at execution."
+  ],
+  "nextMinimalAction": "Coordinator only: predeclare empty/single/multiple real ConnectAsync cases and header/socket observables, retain the two named tests, then consider a strictly serial comparison of the one-expression change. Treat equal/no-material-gain as a valid outcome; do not broaden the change."
+}

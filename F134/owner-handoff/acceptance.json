@@ -1,0 +1,34 @@
+{
+  "findingId": "F134",
+  "scope": "Untimed producer characterization and executable preparation, not optimization implementation or authoritative disposition.",
+  "definedBeforeNewProbeImplementation": true,
+  "owner": "TestServer.CreateWebSocketClient -> real WebSocketClient.ConnectAsync -> HttpContextBuilder -> real TestHost IHttpWebSocketFeature -> TestWebSocket pair",
+  "cases": [
+    { "id": "F134.HandshakeEmpty", "assertions": "Empty owned List: absent subprotocol header, empty requested protocols, null negotiated protocol, exact binary payload and normal two-sided close." },
+    { "id": "F134.HandshakeOne", "assertions": "alpha offered and observed in order; alpha negotiated; exact payload and close." },
+    { "id": "F134.HandshakeSeveral", "assertions": "alpha,bravo offered in order; server selects bravo; client sees bravo; exact payload and close." },
+    { "id": "F134.UnrequestedSelection", "assertions": "Existing TestHost behavior permits server selection charlie when alpha,bravo offered; client sees charlie. This does not claim network WebSocket validation." },
+    { "id": "F134.DuplicateOffers", "assertions": "alpha,alpha list preserved at header/request boundary; alpha accepted; no new client-side validation." },
+    { "id": "F134.RejectedHandshakeEmpty", "assertions": "Real endpoint returns 400 for empty list; ConnectAsync throws InvalidOperationException with exact status-code message; real endpoint observed correct absent header." },
+    { "id": "F134.RejectedHandshakeNonempty", "assertions": "Same real 400 rejection for alpha; correct present header/list observed." },
+    { "id": "F134.Status101WithoutAccept", "assertions": "Real endpoint sets 101 but does not call AcceptWebSocketAsync; ConnectAsync throws InvalidOperationException with exact Incomplete handshake message." },
+    { "id": "F134.ApplicationException", "assertions": "Real endpoint throws a predeclared exception; ConnectAsync propagates the same exception object, not a substituted handshake error." },
+    { "id": "F134.ConfigureRequestOverride", "assertions": "Actual ConfigureRequest executes after generated headers, replacing alpha with bravo; real endpoint observes bravo and client negotiates bravo; original client list remains alpha." }
+  ],
+  "existingTests": [
+    "Microsoft.AspNetCore.TestHost.Tests.WebSocketClientTests.CanAcceptWebSocket",
+    "Microsoft.AspNetCore.TestHost.TestClientTests.WebSocketSubProtocolsWorks",
+    "Microsoft.AspNetCore.TestHost.Tests.WebSocketClientTests.ConnectAsync_ShouldSetRequestProperties",
+    "Microsoft.AspNetCore.TestHost.Tests.WebSocketClientTests.VerifyWebSocketAndUpgradeFeatures"
+  ],
+  "inputPolicy": "Fresh consumer graph and fresh copied test run output. Accepted owner/closure inputs are copied, hash-checked and never changed. No source owner rebuild is necessary to extend accepted byte-bound source-built owner evidence.",
+  "verifyOnly": "Only --verify-only PAYLOAD is accepted; no timing, allocation or benchmark modes exist.",
+  "imageIdentityClarificationBeforeAnyCompilation": "Compile common consumer once and copy the exact same common DLL/PDB/deps/runtimeconfig into both variant run images. Inventory every image file with no fixture-prefix exclusion. The only possible future candidate-pair differences are Microsoft.AspNetCore.TestHost.dll and Microsoft.AspNetCore.TestHost.pdb; original/default dependency differences must be reported as a failing future owner-only identity gate, not excused.",
+  "acceptanceDoesNotProve": [
+    "Any-vs-Count material gain, speedup, allocation difference, JIT inlining, or statistical significance",
+    "TCP/browser/WebSocket protocol conformance",
+    "Concurrent mutation, invalid URI/null URI, all invalid/empty/null protocol strings, or cancellation races",
+    "A new live GitHub default observation while GitHub access is forbidden"
+  ],
+  "candidatePolicy": "No candidate patch is required or manufactured. A future narrow source edit and performance experiment need separate coordinator authorization."
+}

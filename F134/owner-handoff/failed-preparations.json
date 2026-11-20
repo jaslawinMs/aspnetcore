@@ -1,0 +1,20 @@
+[
+  {
+    "stage": "static-installed-LINQ-PE-inspection-first-attempt",
+    "command": "& .\\Read-InstalledLinqIL.ps1",
+    "exitCode": 1,
+    "diagnostic": "PowerShell found multiple ambiguous MetadataTokens.GetToken overloads for MethodDefinitionHandle while formatting the final report. IL reading had completed, but no report was produced.",
+    "fix": "Record the resolved method name and RVA instead of requesting the unnecessary ambiguous final token conversion.",
+    "scope": "Artifact metadata tooling only; no source, producer, build, test, host, timing, allocation or benchmark execution.",
+    "subsequentResult": "Corrected metadata-only rerun completed with exit 0; full selected installed method IL preserved in evidence\\installed-linq-static-il.json."
+  },
+  {
+    "stage": "existing-test-report-first-parse",
+    "command": ".\\Read-ExistingTestResults.ps1",
+    "exitCode": 1,
+    "diagnostic": "VSTest exited 0 with five passing rows, but the parser rejected the report because six rows were required. The inherited proposed TestClientTests FQN incorrectly contained the extra namespace segment .Tests.",
+    "sourceOfCorrection": "Pinned evidence\\TestClientTests.cs declares namespace Microsoft.AspNetCore.TestHost; class TestClientTests; method WebSocketSubProtocolsWorks.",
+    "fix": "Correct the future filter and execute only the missing exact test in a fresh follow-up report; preserve the first five-pass report unchanged.",
+    "subsequentResult": "Correct exact missing test passed 1/1 in a fresh follow-up. Both TRX reports parsed: all six individually required rows passed, zero skipped. Common harness was not rebuilt."
+  }
+]
