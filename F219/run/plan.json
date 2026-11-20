@@ -1,0 +1,78 @@
+{
+  "findingId": "F219",
+  "protocol": "Existing repository whole-document GenerationBenchmarks, frozen before candidate implementation or timing",
+  "originalRevision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefaultRevision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+  "target": "src\\OpenApi\\src\\Extensions\\ApiDescriptionExtensions.cs",
+  "targetOriginalWorkingSha256": "68630FFC68DA7EBA1934A98B711C0B0BB3BB70560FAD537F57139EB2FBC5AB93",
+  "benchmark": "Microsoft.AspNetCore.OpenApi.Microbenchmarks.GenerationBenchmarks.GenerateDocument",
+  "benchmarkSourceSha256": "1ABB4E537B44811DDBD4E3B6406F39A47A0821DA5EBD2592BCB30AD42F17DFBD",
+  "parameter": "EndpointCount",
+  "parameterValues": [10, 100, 1000],
+  "sourceDefinedOperationCounts": [34, 304, 3004],
+  "primaryParameter": 100,
+  "primaryBoundary": "Repeated core document generation from the unchanged supported repository benchmark and its real ApiDescription producer. Not business request throughput, HTTP serialization, or a claim about production document-request frequency.",
+  "functionalRequirements": [
+    "Existing coordinator producer-to-document 15-row request-body selection, including both values of every Boolean theory, passes for baseline and candidate using the same fixed filter.",
+    "Real loaded helper preserves null out and false for zero or multiple Body descriptions, exact object and true for exactly one Body description, and separation of Body from Form/FormFile.",
+    "Direct helper multi-body characterization is not evidence that multiple physically bound JSON bodies are supported by RequestDelegateFactory.",
+    "Untimed inspection of unchanged benchmark setup and actual generated document checks the three operation counts before any measurement.",
+    "Source diff is one fused indexed body-selection loop only; no public contract, form-selector, fixture, dataset, runtime or dependency changes."
+  ],
+  "benchmarkDotNet": {
+    "packageVersion": "0.13.0",
+    "actualDllSha256": "4560EE1128636D3913C3FA71B8419DD2317FB97FD331231A53AD5501D5BA5437",
+    "fixtureUnchanged": true,
+    "memoryDiagnoser": true,
+    "configUnionRule": "AlwaysUseGlobal",
+    "toolchain": "Pinned BenchmarkDotNet in-process no-emit engine with a small private IExecutor/IToolchain adapter that omits stock process/thread priority and affinity assignments. The existing pinned internal runner is bound explicitly before measurement; no library patch, new IVT or shipping reflection change.",
+    "job": {
+      "strategy": "Throughput",
+      "launchCount": 1,
+      "warmupCount": 3,
+      "iterationCount": 7,
+      "iterationTimeMilliseconds": 100,
+      "unrollFactor": 1,
+      "outlierMode": "DontRemove",
+      "powerPlan": "DoNotEnforce",
+      "serverGc": true,
+      "tieredCompilation": false
+    },
+    "noPriorityAffinityPowerOrMachineConfigurationChanges": true
+  },
+  "schedule": {
+    "blocks": 7,
+    "freshProcessesPerBlock": 3,
+    "blockOrder": ["BaselineBefore", "Candidate", "BaselineAfter"],
+    "eachProcessRunsAllThreeUnchangedParameters": true,
+    "baselineForBlock": "Geometric mean of BaselineBefore and BaselineAfter, separately for elapsed and allocated bytes.",
+    "baselineControl": "BaselineBefore versus identical BaselineAfter image, never a different workload.",
+    "noSamplesExcludedOrRetried": true
+  },
+  "acceptance": {
+    "wholeDocumentPrimaryMinimumElapsedOrAllocationReductionPercent": 5,
+    "requiredPrimaryDirectionalBlocks": 6,
+    "maximumElapsedRegressionPercentAtAnyParameter": 5,
+    "maximumAllocationRegressionPercentAtAnyParameter": 1,
+    "maximumAbsoluteBaselineControlElapsedDriftPercentEveryBlockAndParameter": 10,
+    "requiredCompleteBlocks": 7,
+    "aggregation": "Geometric mean of seven candidate/block-baseline ratios, separately per parameter and metric.",
+    "allocationMetric": "BenchmarkDotNet MemoryDiagnoser bytes per unchanged GenerateDocument invocation, not isolated helper allocation.",
+    "sourceRoleOrder": ["Original", "ObservedDefault"],
+    "defaultOnlyAfterOriginalPasses": true,
+    "failedControlOrIncompleteExecution": "Inconclusive, not measured no gain or a successful optimization."
+  },
+  "execution": {
+    "maximumComparisonsIncludingFailedOrPartial": 3,
+    "oneComparisonPerSourceRole": true,
+    "maximumSimultaneousBenchmarksAllHosts": 1,
+    "coordinatorOnly": true,
+    "samePhysicalHostAndExactRuntimeWithinEachPair": true,
+    "runtimePolicy": "Original exact 12.0.0-alpha.1.26562.105. Default exact runtime selected from its pinned source graph and frozen with accepted images before its comparison; no runtime substitution or source-role pooling.",
+    "commonImage": "Unchanged built repository benchmark, tests, dependency graph, and private adapter; causal variants may differ only in Microsoft.AspNetCore.OpenApi.dll and its PDB.",
+    "requiresBeforeTiming": "Plan seal, green functional acceptance, all-file causal inventories, observed loaded runtime/owner/fixture identities, approved child-awaiting driver and launcher hashes, owned coordinator native work quiescent, actual global gateway lease. Merely writing this plan does not authorize measurement.",
+    "noAdHocTimingSelectorsOrResultDrivenChanges": true,
+    "preserveAllFailuresAndClosedBudgets": true,
+    "sharedHostLimitations": "No dedicated isolation or universal unrelated-process inactivity is claimed. Untimed helper work on separate hosts may continue."
+  }
+}
