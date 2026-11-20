@@ -1,0 +1,21 @@
+commit 2c29c9b20f6f712fccec047858e87f30f518e7e2
+Author: kishanAnem <kishan3034@gmail.com>
+Date:   Thu Jul 22 19:36:06 2021 +0200
+
+    ComplexObjectModelBinder throws error when creating instance for positional records that inherit positional record (#34618)
+    
+    Fixes #31077
+
+diff --git a/src/Mvc/Mvc.Core/src/ModelBinding/Metadata/DefaultBindingMetadataProvider.cs b/src/Mvc/Mvc.Core/src/ModelBinding/Metadata/DefaultBindingMetadataProvider.cs
+index f83d9d7299..6b4121f818 100644
+--- a/src/Mvc/Mvc.Core/src/ModelBinding/Metadata/DefaultBindingMetadataProvider.cs
++++ b/src/Mvc/Mvc.Core/src/ModelBinding/Metadata/DefaultBindingMetadataProvider.cs
+@@ -146,7 +146,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Metadata
+             {
+                 // Based on the state of the art as described in https://github.com/dotnet/roslyn/issues/45777
+                 var cloneMethod = type.GetMethod("<Clone>$", BindingFlags.Public | BindingFlags.Instance);
+-                return cloneMethod != null && cloneMethod.ReturnType == type;
++                return cloneMethod != null && (cloneMethod.ReturnType == type || cloneMethod.ReturnType == type.BaseType);
+             }
+         }
+ 

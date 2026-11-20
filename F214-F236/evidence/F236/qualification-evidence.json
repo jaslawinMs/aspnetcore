@@ -1,0 +1,80 @@
+{
+  "finding": "F236",
+  "evidenceBoundary": "Source/history qualification plus a same-role native MVC Core build. Requested native unit assertions did not execute.",
+  "smallestFaithfulNativeReproduction": {
+    "owner": "DefaultBindingMetadataProvider.GetBoundConstructor",
+    "existingFixture": "src\\Mvc\\Mvc.Core\\test\\ModelBinding\\Metadata\\DefaultBindingMetadataProviderTest.cs",
+    "actualClassName": "DefaultModelMetadataBindingDetailsProviderTest",
+    "validExample": "RecordTypeWithPrimaryConstructor(string name) produces a compiler-generated record marker, one public constructor and a matching visible string property; the existing test asserts constructor selection and parameter name.",
+    "inheritedExample": "Model(string Name, int Value) : BaseModel(Value) verifies inherited record discovery.",
+    "manualExample": "RecordTypeWithConformingSynthesizedConstructor(string Name, int Age) verifies the heuristic also accepts a manually authored constructor with matching properties.",
+    "invalidExamples": "Existing rows reject ordinary classes, non-public-only construction, parameterless records, multiple-public-constructor records and a record whose constructor parameters do not conform.",
+    "runtimeOutcome": "Blocked before discovery. These examples describe the existing faithful source fixture, not observed passing assertions."
+  },
+  "constructorContract": [
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultBindingMetadataProvider.cs:80-145",
+      "observation": "Abstract types, value types including record structs, interfaces and types with no public constructors return null. Record recognition requires the public instance <Clone>$ method returning the type or its immediate base type. Ordinary C# primary-constructor classes are not admitted merely because they have matching properties."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultBindingMetadataProvider.cs:103-138",
+      "observation": "Exactly one public constructor with at least one parameter is required. Each parameter must have some visible property with an ordinal, case-sensitive equal name and exactly equal reflected Type; assignability and conversion are not used. Extra properties are permitted. Declaration order is not required: the loop only checks existence and returns the sole constructor, not the matched properties."
+    },
+    {
+      "source": "src\\Shared\\PropertyHelper\\PropertyHelper.cs:18-19,411-485,492-568",
+      "observation": "The producer is GetVisibleProperties, not raw Type.GetProperties. Interesting properties have public instance non-indexed getters and are not byref-like. A setter is not required. Inherited properties hidden by a closer same-name declaration are removed; the closer-declaration lookup includes public/non-public, static/instance declarations. Replacing this with raw reflection or a name-only type lookup could admit a hidden or wrong-type member."
+    }
+  ],
+  "producerAndReuse": [
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\DependencyInjection\\MvcCoreServiceCollectionExtensions.cs:207-214; src\\Mvc\\Mvc.Core\\src\\Infrastructure\\MvcCoreMvcOptionsSetup.cs:113",
+      "observation": "Default MVC registration makes the metadata provider a singleton and includes the default binding-details provider in the metadata-details pipeline."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadataProvider.cs:20-22,69,150-212; DefaultModelMetadata.cs:90-106,376-390",
+      "observation": "Model metadata is cached by ModelMetadataIdentity; BindingMetadata and constructor metadata are lazy retained details. The target scan is not repeated for each ordinary request using the same initialized metadata. Distinct identities/providers and unsynchronized concurrent first use can still repeat it; there is no globally once-per-Type guarantee."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Binders\\ComplexObjectModelBinderProvider.cs:41-58; ComplexObjectModelBinder.cs:75-87,162; Metadata\\DefaultModelMetadataProvider.cs:230-296",
+      "observation": "The real binder producer consumes the selected constructor metadata to create parameter binders. The metadata provider builds constructor parameter metadata and a compiled invoker; object creation uses that invoker. Request collection cardinality does not change a record type's reflected constructor cardinality."
+    },
+    {
+      "source": "src\\Mvc\\Mvc\\src\\HotReloadService.cs:54-76; src\\Shared\\PropertyHelper\\PropertyHelper.cs:13,41-43,556-568",
+      "observation": "MVC's metadata-update service clears the metadata-provider cache and signals action-descriptor changes. PropertyHelper has its own metadata-update handler clearing both property caches. No new retained state or cache was introduced, so no additional hot-reload mechanism is proposed. This was traced in source, not validated through a live metadata delta."
+    }
+  ],
+  "materiality": {
+    "scanShape": "At most parameters times visible properties, with early exit on an unmatched parameter. No timing, allocation or performance counters were gathered.",
+    "boundedNativeFixtureInventory": "native-fixture-cardinalities-v2.json",
+    "nativeFixtureRange": "52 existing record declarations, one through four constructor parameters. Address13 at line 2733 has four parameters; Person6 and Person7 have three.",
+    "limits": "The fixture inventory is not an exhaustive application inventory or proof that wider customer records do not exist. Rebuilding metadata in a synthetic loop or inventing giant records would not establish a material ordinary-MVC workload.",
+    "decision": "No surgical optimization is justified by the evidence collected. Retain the finding as an understood source shape, not a performance-qualified or publishable change."
+  },
+  "freshDefault": {
+    "pin": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "targetAndMainProducerFiles": "Target provider, DefaultModelMetadataProvider, DefaultModelMetadata, PropertyHelper and reviewed native fixtures have identical Git blobs between Original and Default.",
+    "separateDefaultDelta": "ModelMetadata.cs differs in eager readonly hash-code initialization; its constructor/property matching loop is unchanged. The separate delta is preserved in default-modelmetadata-changes.diff and was not copied into Original.",
+    "evidence": ["default-source-observation.json", "default-recheck.json", "target-source-equality.json", "source-role-blob-index.json"]
+  },
+  "historyAndRelatedWork": {
+    "initialFeature": "088a6fa1ec2750640fafbc9352b3aca256e6eb9c, Add support for binding record types (#23976); the same nested property-existence heuristic was introduced there.",
+    "inheritedRecordCorrection": "2c29c9b20f6f712fccec047858e87f30f518e7e2 (#34618) widened the clone-return-type check to include the immediate base type.",
+    "lastTargetFileCommitAtDefault": "c096dbbbe652f03be926502d790eb499682eea13, 2023-01-10.",
+    "officialContract": "Pinned dotnet/AspNetCore.Docs model-binding source, lines 484-568: one public record constructor, exact case-sensitive property name/type, manually authored matching record constructors supported; input-formatter deserialization is a different boundary.",
+    "documentationPin": "docs-observation.json",
+    "upstreamWork": [
+      "https://github.com/dotnet/aspnetcore/pull/69585 changes record-parameter BindingBehavior fallback in the same file, not constructor discovery.",
+      "https://github.com/dotnet/aspnetcore/pull/69909 changes downstream constructor mapping publication order, not this existence scan."
+    ],
+    "forkChecks": "Bounded searches for metadata/constructor work in jaslawinMs/aspnetcore, fork-author record-constructor PRs in upstream, F236 fork ref prefix and local F236 branch names found no match. These are bounded duplicate checks, not an exhaustive proof of all unpublished work."
+  },
+  "scope": {
+    "shippingCodeChanges": 0,
+    "testSourceChanges": 0,
+    "newCachesPublicApiDefaultsOrConventions": 0,
+    "otherOwnerWorktreesEdited": 0,
+    "nativeBoundaryNotExpanded": "Stopped after the normal MVC test graph hit missing Blazor assets. Did not generate or borrow those assets, change the test project graph, or replace native tests with a custom compiler.",
+    "publicationCommitsPushesIssuesOrPolicyChanges": 0,
+    "comparisonAuthorizations": 0
+  }
+}

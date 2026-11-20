@@ -1,0 +1,96 @@
+{
+  "findingId": "F214",
+  "owner": "a49af7f8-9952-4ab2-bfea-f0c206589028",
+  "recordedAtUtc": "2026-11-20T23:39:46.4334239Z",
+  "ownerDetermination": "No justified product candidate: shipping keys are string; captured modern native null guards do not box.",
+  "candidate": null,
+  "coordinatorFinalDisposition": null,
+  "originalPin": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedUpstreamDefault": {
+    "repository": "dotnet/aspnetcore",
+    "receipt": "upstream\\default-commit.json",
+    "pin": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "branch": "main"
+  },
+  "sourceIdentity": {
+    "originalAndDefaultTargetIdentical": true,
+    "allLinkedInputsIdentical": true,
+    "index": "source-index.json",
+    "targetSha256": "6803B0E6BFE3BB62AD44C61E3AF76ED2E69EECD89648578E00E26D837A8E8CEA"
+  },
+  "callerEvidence": {
+    "cardinalityBoundary": "Real query/cookie source and selected canonical tests, not deployed key/frequency data.",
+    "locatedStructKeyProducers": 0,
+    "flaggedTryAddShippingDirectCallers": 0,
+    "file": "caller-evidence.json",
+    "locatedNewSites": 6,
+    "closedShippingTypes": 3
+  },
+  "runtimeDetermination": {
+    "methods": "ContainsKey and TryAdd",
+    "partitions": "string references, int, deliberately out-of-annotation int?",
+    "result": "Direct pointer comparison / eliminated int guard / direct nullable HasValue test; no surviving boxing in these captured guards.",
+    "file": "jit-determination.json",
+    "runtime": ".NET 12.0.0-alpha.1.26557.102, Windows x64",
+    "nativeTier": "Normal default Tier0/minopt"
+  },
+  "tests": [
+    {
+      "role": "original",
+      "total": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "rows": "original-unit-row-results.json",
+      "rawXunitXml": "original-unit-results.xml",
+      "environment": "64-bit (x64) .NET 12.0.0-alpha.1.26557.102 [collection-per-class, non-parallel]"
+    },
+    {
+      "role": "default",
+      "total": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "rows": "default-unit-row-results.json",
+      "rawXunitXml": "default-unit-results.xml",
+      "environment": "64-bit (x64) .NET 12.0.0-alpha.1.26557.102 [collection-per-class, non-parallel]"
+    }
+  ],
+  "canonicalProjectCommandBlocked": {
+    "substituteBoundary": "18 xUnit3 rows per pin using unchanged canonical tests and source plus 6 private null-contract rows; not the canonical project graph or hosted HTTP.",
+    "receipt": "native\\015-canonical-shared-tests-no-restore.json",
+    "name": "Microsoft.AspNetCore.Shared.Tests --filter FullyQualifiedName~AdaptiveCapacityDictionaryTests",
+    "assertionsReached": false,
+    "prerequisite": "artifacts\\bin\\GenerateFiles\\Directory.Build.props",
+    "exitCode": 1
+  },
+  "exactCommandsAndExits": "commands.json",
+  "failuresPreserved": "preserved-failures.json",
+  "executionControlException": {
+    "receipt": "owned-descendant-cleanup.json",
+    "fullyCompliant": false,
+    "detail": "Malformed argv unintentionally enabled shared compilation for this failed attempt. Final audit detected the owned lingering server; actual owned cleanup and hardened managed preflight are recorded. Later passing builds use separate no-sharing/no-reuse/max2 flags. Coordinator must retain this exception.",
+    "failedAttempt": "native\\017-original-linked-tests-build.json"
+  },
+  "privateGraphs": "private-graphs.json",
+  "changedFilesAndHashes": "changed-file-index.json",
+  "shippingDiff": "shipping-changes.diff",
+  "diagnosticSourceDiff": "diagnostic-additions.diff",
+  "reservedPreserved": "reserved-after-verification.json",
+  "quiescence": {
+    "rootsStarted": 37,
+    "liveRecordedIdentities": 0,
+    "receipt": "owned-native-terminal.json",
+    "allRecordedRootsAndBothStreamsTerminal": true
+  },
+  "materialityAndPerformance": {
+    "performanceRuns": 0,
+    "redGreen": "No product change or defect reproduction exists, so no bug-fix red/green claim. Passing rows characterize unchanged contracts.",
+    "allocationCounters": 0,
+    "exclusions": "Whole-operation allocations/performance, deployed traffic frequency, arbitrary structs/tiers, AOT/Mono/browser/other runtimes, and a shipping value-key producer are not established.",
+    "publication": "None; coordinator-only",
+    "warmups": 0,
+    "comparisonAuthorizations": 0,
+    "verified": false
+  }
+}

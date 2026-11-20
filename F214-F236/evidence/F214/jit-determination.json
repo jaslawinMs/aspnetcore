@@ -1,0 +1,113 @@
+{
+  "runtime": ".NET 12.0.0-alpha.1.26557.102+76e3c03e6b29f1bbe1aca97d655c560db2320436, Windows x64",
+  "runtimeIdentity": "runtime-identity.json",
+  "frameworkObservedInNativeStdout": [
+    "native\\030-original-jit-run.stdout.txt",
+    "native\\033-default-jit-run.stdout.txt"
+  ],
+  "diagnostics": [
+    {
+      "role": "original",
+      "log": "original-jit-disassembly.txt",
+      "sections": [
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.__Canon,System.__Canon]:ContainsKey(System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.__Canon,System.__Canon]:TryAdd(System.__Canon,System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[int,System.__Canon]:ContainsKey(int):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": false,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[int,System.__Canon]:TryAdd(int,System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": false,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.Nullable`1[int],System.__Canon]:ContainsKey(System.Nullable`1[int]):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": true
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.Nullable`1[int],System.__Canon]:TryAdd(System.Nullable`1[int],System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": true
+        }
+      ],
+      "nativeGuardInterpretation": "Reference-key bodies compare the reference directly. Int bodies omit the null-key test/throw. Nullable-int bodies test the HasValue byte directly. These are observed instruction sequences, not an inference from IL box lowering."
+    },
+    {
+      "role": "default",
+      "log": "default-jit-disassembly.txt",
+      "sections": [
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.__Canon,System.__Canon]:ContainsKey(System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.__Canon,System.__Canon]:TryAdd(System.__Canon,System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[int,System.__Canon]:ContainsKey(int):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": false,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[int,System.__Canon]:TryAdd(int,System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": false,
+          "nativeNullableHasValueTest": false
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.Nullable`1[int],System.__Canon]:ContainsKey(System.Nullable`1[int]):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": true
+        },
+        {
+          "signature": "; Assembly listing for method Microsoft.AspNetCore.Internal.AdaptiveCapacityDictionary`2[System.Nullable`1[int],System.__Canon]:TryAdd(System.Nullable`1[int],System.__Canon):bool:this (Tier0)",
+          "normalTier0": true,
+          "boxHelperPresent": false,
+          "nullThrowPresent": true,
+          "nativeNullableHasValueTest": true
+        }
+      ],
+      "nativeGuardInterpretation": "Reference-key bodies compare the reference directly. Int bodies omit the null-key test/throw. Nullable-int bodies test the HasValue byte directly. These are observed instruction sequences, not an inference from IL box lowering."
+    }
+  ],
+  "observationFlagsOnly": "DOTNET_JitDisasm=ContainsKey TryAdd; DOTNET_JitDisasmAssemblies=F214.JitDiagnostic; DOTNET_JitStdOutFile=<role log>. The capture also contains an incidental System.Text.Json Dictionary method, excluded from F214 interpretation.",
+  "optimization": "Normal Release compilation and default runtime Tier0/minopt observed; no tiering, PGO, ReadyToRun, inlining, affinity, priority, or power overrides; no warmup or benchmark loop.",
+  "noBoxingInInspectedNullGuards": true,
+  "allocationCountersOrPerformanceMeasurements": false,
+  "limitations": "Only ContainsKey/TryAdd for string/string, int/string, and deliberately out-of-annotation int?/string were disassembled. This does not claim whole dictionary operations allocate nothing, establish any shipping struct-key producer, or cover every type, tier, AOT/Mono/browser/runtime/platform."
+}

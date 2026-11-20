@@ -1,0 +1,90 @@
+{
+  "findingId": "F214",
+  "originalPin": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefaultPin": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+  "sourceInventories": [
+    "native\\009-original-inventory.json",
+    "native\\010-default-inventory.json"
+  ],
+  "scope": "Pin-specific tracked src text inventories, exact project/source reads, and local C# LSP references/callers. Not a claim about external, reflective, generated, or future uses.",
+  "shippingOwner": {
+    "assembly": "Microsoft.AspNetCore.Http",
+    "project": "src\\Http\\Http\\src\\Microsoft.AspNetCore.Http.csproj",
+    "linkedSourceLine": 29,
+    "type": "internal sealed AdaptiveCapacityDictionary<TKey, TValue> where TKey : notnull",
+    "uniqueLocatedClosedShippingTypes": 3,
+    "locatedNewExpressionSites": 6,
+    "locatedValueTypeKeyProducers": 0
+  },
+  "closedTypes": [
+    {
+      "type": "AdaptiveCapacityDictionary<string, StringValues>",
+      "producer": "QueryFeature.Query -> ParseNullableQueryInternal -> QueryStringEnumerable -> KvpAccumulator.Append",
+      "source": "src\\Http\\Http\\src\\Features\\QueryFeature.cs",
+      "newSites": [136, 214],
+      "guardsReached": ["TryGetValue", "indexer get", "indexer set"],
+      "cardinality": "One lazy primary accumulator per parse; key count is the distinct decoded case-insensitive query-name count. Nonempty queries use Append; parsing is cached until the source query changes. The empty GetResults fallback is another static construction site, not an additional per-pair dictionary.",
+      "importantDistinction": "StringValues is the VALUE type. TKey remains string and this value-type TValue does not cause generic key-null boxing."
+    },
+    {
+      "type": "AdaptiveCapacityDictionary<string, List<string>>",
+      "producer": "QueryFeature.KvpAccumulator.Append -> AppendToExpandingAccumulator",
+      "source": "src\\Http\\Http\\src\\Features\\QueryFeature.cs",
+      "newSites": [163],
+      "guardsReached": ["indexer get", "indexer set"],
+      "cardinality": "At most one lazy expanding dictionary per parse, initialized when a key repeats; entries correspond to repeated string keys. Initial capacity is 5, not a count of production requests."
+    },
+    {
+      "type": "AdaptiveCapacityDictionary<string, string>",
+      "producer": "RequestCookieCollection.Parse -> CookieHeaderParserShared.TryParseValues",
+      "source": "src\\Http\\Http\\src\\Internal\\RequestCookieCollection.cs",
+      "newSites": [30, 35, 41],
+      "guardsReached": ["indexer set", "ContainsKey", "TryGetValue"],
+      "cardinality": "Parse uses one new collection/store for a nonempty header input; the parser assigns through IDictionary<string,string>. The other constructors include explicit capacity and a Dictionary wrapper documented for tests. The static Empty instance owns a reference-key empty store.",
+      "parserSource": "src\\Http\\Shared\\CookieHeaderParserShared.cs",
+      "parserInsertionLine": 44,
+      "parserKeyType": "parsedName.Value.Value is string"
+    }
+  ],
+  "consumer": {
+    "source": "src\\Http\\Http\\src\\QueryCollectionInternal.cs",
+    "role": "Wraps the existing string/StringValues accumulator and forwards lookups; does not introduce another key type."
+  },
+  "flaggedTryAdd": {
+    "source": "src\\Shared\\Dictionary\\AdaptiveCapacityDictionary.cs",
+    "line": 450,
+    "locatedShippingDirectCallers": 0,
+    "localLspIncomingCalls": [
+      "AdaptiveCapacityDictionaryTests.TryAdd_EmptyStringIsAllowed",
+      "AdaptiveCapacityDictionaryTests.TryAdd_EmptyStorage_CanAdd",
+      "AdaptiveCapacityDictionaryTests.TryAdd_ArrayStorage_CanAdd",
+      "AdaptiveCapacityDictionaryTests.TryAdd_ArrayStorage_DoesNotAddWhenKeyIsPresent",
+      "AdaptiveCapacityDictionaryTests.ListStorage_SwitchesToDictionaryAfter10_TryAdd"
+    ],
+    "lspBoundary": "LSP queried the reserved checkout read-only; the relevant source is independently identical at the two private pins. The identified shipping parser interface exposes indexer assignment, not this internal TryAdd method."
+  },
+  "cardinalityValidation": {
+    "arrayThreshold": 10,
+    "dictionaryTransition": "The eleventh distinct insertion, or constructor capacity above 10.",
+    "executedCanonicalScenarios": [
+      "ParseQueryWithUniqueKeysWorks: 2 distinct keys, both leading-question-mark rows.",
+      "ParseQueryWithThreefoldKeysGroups: 2 keys, one with 3 values.",
+      "CaseInsensitiveWithFewKeys: 1 case-insensitive key with 5 values.",
+      "CaseInsensitiveWithManyKeys: 12 distinct case-insensitive keys, including a key with 10 values.",
+      "ParseManyCookies: 12 parsed cookie keys.",
+      "ListStorage_SwitchesToDictionaryAfter10_TryAdd and UpgradeToDictionary_KeepsComparer: real source threshold/comparer behavior."
+    ],
+    "boundary": "Unmodified canonical tests and owning parser/feature source linked into a private xUnit assembly. These are actual string-key producers, not a hosted HTTP server or deployed traffic study.",
+    "productionRequestFrequencyOrKeyDistributionMeasured": false
+  },
+  "nullContracts": {
+    "reference": "notnull is a nullable-analysis contract, not a runtime guarantee. Passing a null reference still throws ArgumentNullException with ParamName key before storage access; ordinary string-key checks do not box a value.",
+    "nonNullableValue": "TKey : notnull permits int and other non-nullable value types. Even default(int) is not null. The synthetic int cases exercise this supported type partition but do not establish a shipping producer.",
+    "nullableValue": "int? violates the notnull annotation and is deliberately warning-suppressed only in private diagnostics. It remains runtime-constructible: an empty nullable key is rejected, while present zero works. A blanket IsValueType guard bypass would not preserve that behavior.",
+    "observedRows": "All eight guarded operations are checked for null rejection in initial array and dictionary storage modes; value and nullable present-default round trips are asserted, not just absence of exceptions.",
+    "annotationAuthority": "documentation\\constraints-on-type-parameters.md",
+    "nullableAuthority": "documentation\\nullable-value-types.md"
+  },
+  "ownerRecommendation": "No product candidate: the structural card matches the generic constraint, but the located production keys are references and the modern native diagnostic has no surviving boxing in the inspected null guards.",
+  "finalDisposition": "Coordinator-owned; not changed by this handoff."
+}

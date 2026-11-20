@@ -1,0 +1,1080 @@
+--- NUL
++++ ACCEPTANCE.json
+@@ -0,0 +1,27 @@
++{
++  "findingId": "F214",
++  "card": "generic-null-check-boxing",
++  "owner": "a49af7f8-9952-4ab2-bfea-f0c206589028",
++  "originalPin": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
++  "reservedRepository": "C:\\src\\aspnetcore",
++  "privateGraphNames": [
++    "C:\\src\\ap-F214-o195",
++    "C:\\src\\ap-F214-d195"
++  ],
++  "criteria": [
++    "Observe and pin actual upstream default source, compare the precise null-guard seam with the original baseline, and inspect relevant history and existing work.",
++    "Identify the shipping linked-source assembly and all located key-type instantiations and real producers; distinguish TValue structs from TKey structs and source cardinality from deployment frequency.",
++    "Explain reference, non-nullable value, and nullable-value null semantics without treating annotation constraints or IL box instructions as allocation proof.",
++    "Any native/build/test process requires actual F214 registration, an active untimed preparation scope, and an immediately preceding actual HOLD/lease check.",
++    "Prefer existing canonical unit/producer tests if authorized; optional JIT inspection must be untimed, bounded, and preserve optimization settings, with no warmup or benchmark-like loop.",
++    "Propose a private shipping candidate only after establishing a genuine surviving runtime problem and a faithful producer; otherwise preserve source and report a precise no-candidate rationale.",
++    "Persist exact source identities, caller evidence, diagnostic/test commands and exits, a changed-file diff/hash index, and runtime/performance limitations; leave all owned native work terminal."
++  ],
++  "excluded": [
++    "Timing, allocation counters, benchmarks, profiles, performance comparisons, publication, and final coordinator disposition.",
++    "Unrelated finding scopes, reserved-checkout writes, policy/lease/registry/ledger changes, public API/default/convention changes, and dependency configuration edits.",
++    "Production reachability inferred from a synthetic value-key call.",
++    "Claims about unexecuted runtimes, deployment key distributions, NativeAOT, Mono, or WebAssembly."
++  ],
++  "comparisonAuthorizations": 0
++}
+--- NUL
++++ Collect-F214Source.ps1
+@@ -0,0 +1,120 @@
++$ErrorActionPreference = 'Stop'
++Set-Location $PSScriptRoot
++
++function Write-Json([string] $Path, $Value)
++{
++    $Value | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $Path -Encoding utf8
++}
++
++$requests = [Collections.Generic.List[object]]::new()
++function Save-Source([string] $Url, [string] $RelativePath)
++{
++    $parent = Split-Path -Parent $RelativePath
++    if ($parent -and -not (Test-Path -LiteralPath $parent))
++    {
++        New-Item -ItemType Directory -Path $parent | Out-Null
++    }
++
++    $response = Invoke-WebRequest -Uri $Url -Headers @{ 'User-Agent' = 'F214-readonly-source-investigation' }
++    [IO.File]::WriteAllText((Join-Path $PWD $RelativePath), $response.Content, [Text.UTF8Encoding]::new($false))
++    $requests.Add([ordered]@{
++        url = $Url
++        path = $RelativePath
++        observedAtUtc = [DateTime]::UtcNow.ToString('O')
++        statusCode = [int]$response.StatusCode
++        sha256 = (Get-FileHash -LiteralPath $RelativePath -Algorithm SHA256).Hash
++    })
++    return $response.Content
++}
++
++$policyPath = '..\policy.json'
++$policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
++$registeredOwner = $policy.independentFindingPreparationWorkers.F214
++$scope = $policy.activeWorkerPreparationScopes.F214
++Write-Json 'initial-authorization-observation.json' ([ordered]@{
++    recordedAtUtc = [DateTime]::UtcNow.ToString('O')
++    policyPath = (Resolve-Path $policyPath).Path
++    policySha256 = (Get-FileHash -LiteralPath $policyPath -Algorithm SHA256).Hash
++    registeredOwner = $registeredOwner
++    scope = $scope
++    actualWorkerBuildHoldActive = $policy.actualWorkerBuildHoldActive
++    buildAndTestWorkQuiesced = $policy.buildAndTestWorkQuiesced
++    leasePath = (Join-Path (Split-Path $PSScriptRoot) 'benchmark-exclusive.lease.json')
++    leasePresent = (Test-Path -LiteralPath '..\benchmark-exclusive.lease.json')
++    ownedNativeStarts = 0
++    action = 'Read-only source/network and artifact I/O only; no native executable.'
++})
++
++$repository = Save-Source 'https://api.github.com/repos/dotnet/aspnetcore' 'upstream\repository.json' | ConvertFrom-Json
++$default = Save-Source ("https://api.github.com/repos/dotnet/aspnetcore/commits/" + $repository.default_branch) 'upstream\default-commit.json' | ConvertFrom-Json
++$original = '37e809ead5824bc753a1c3d56f11615bdb1296c5'
++$paths = @(
++    'src/Shared/Dictionary/AdaptiveCapacityDictionary.cs',
++    'src/Shared/Dictionary/DictionaryDebugView.cs',
++    'src/Shared/test/Shared.Tests/AdaptiveCapacityDictionaryTests.cs',
++    'src/Shared/test/Shared.Tests/Microsoft.AspNetCore.Shared.Tests.csproj',
++    'src/Http/Http/src/Features/QueryFeature.cs',
++    'src/Http/Http/src/Internal/RequestCookieCollection.cs',
++    'src/Http/Http/src/QueryCollectionInternal.cs',
++    'src/Http/Http/src/Microsoft.AspNetCore.Http.csproj',
++    'global.json'
++)
++$files = [Collections.Generic.List[object]]::new()
++foreach ($role in @('original', 'default'))
++{
++    $pin = if ($role -eq 'original') { $original } else { $default.sha }
++    foreach ($path in $paths)
++    {
++        $relative = Join-Path (Join-Path 'source' $role) ($path.Replace('/', '\'))
++        try
++        {
++            $null = Save-Source ("https://raw.githubusercontent.com/dotnet/aspnetcore/" + $pin + '/' + $path) $relative
++            $files.Add([ordered]@{
++                role = $role
++                pin = $pin
++                repositoryPath = $path.Replace('/', '\')
++                artifact = $relative
++                sha256 = (Get-FileHash -LiteralPath $relative -Algorithm SHA256).Hash
++            })
++        }
++        catch
++        {
++            $files.Add([ordered]@{
++                role = $role
++                pin = $pin
++                repositoryPath = $path.Replace('/', '\')
++                error = $_.Exception.Message
++            })
++        }
++    }
++}
++
++$null = Save-Source ('https://api.github.com/repos/dotnet/aspnetcore/commits?sha=' + $default.sha + '&path=src%2FShared%2FDictionary%2FAdaptiveCapacityDictionary.cs&per_page=20') 'upstream\file-history.json'
++$null = Save-Source 'https://api.github.com/search/issues?q=repo%3Adotnet%2Faspnetcore%20%22AdaptiveCapacityDictionary%22%20boxing&per_page=10' 'upstream\related-boxing-issues.json'
++$null = Save-Source 'https://api.github.com/search/issues?q=repo%3Adotnet%2Faspnetcore%20%22AdaptiveCapacityDictionary%22&per_page=20' 'upstream\related-dictionary-issues.json'
++$null = Save-Source 'https://raw.githubusercontent.com/dotnet/docs/2c76c7edad105d84e0c97be66f807e238fd49f6d/docs/csharp/programming-guide/generics/constraints-on-type-parameters.md' 'documentation\constraints-on-type-parameters.md'
++$null = Save-Source 'https://raw.githubusercontent.com/dotnet/docs/156931bb4ec1e81b028c76ea983553f2e9778bdd/docs/csharp/language-reference/builtin-types/nullable-value-types.md' 'documentation\nullable-value-types.md'
++
++$runtimeVersionPath = 'C:\src\aspnetcore\.dotnet\shared\Microsoft.NETCore.App\12.0.0-alpha.1.26557.102\.version'
++$runtimeVersion = Get-Content -LiteralPath $runtimeVersionPath
++$null = Save-Source ('https://raw.githubusercontent.com/dotnet/runtime/' + $runtimeVersion[0] + '/src/coreclr/jit/importer.cpp') 'runtime-source\importer.cpp'
++$null = Save-Source ('https://raw.githubusercontent.com/dotnet/runtime/' + $runtimeVersion[0] + '/src/coreclr/jit/importer.h') 'runtime-source\importer.h'
++Write-Json 'runtime-source\identity.json' ([ordered]@{
++    observedVersionFile = $runtimeVersionPath
++    runtimeCommit = $runtimeVersion[0]
++    productVersion = $runtimeVersion[1]
++    boundary = 'Installed file identity and upstream source only; not a runtime execution or JIT-code observation.'
++})
++
++Write-Json 'source-index.json' ([ordered]@{
++    originalPin = $original
++    upstreamRepository = $repository.full_name
++    observedDefaultBranch = $repository.default_branch
++    observedDefaultPin = $default.sha
++    observedDefaultCommitDate = $default.commit.committer.date
++    files = $files
++})
++Write-Json 'source-requests.json' $requests
++$files | Select-Object role, repositoryPath, sha256, error | Format-Table -AutoSize
++Write-Output ("ACTUAL_DEFAULT_PIN=" + $default.sha)
++Write-Output 'Source collection completed without starting a native child.'
+--- NUL
++++ Invoke-F214Native.ps1
+@@ -0,0 +1,199 @@
++param(
++    [Parameter(Mandatory)] [string] $Executable,
++    [Parameter(Mandatory)] [string[]] $Arguments,
++    [Parameter(Mandatory)] [string] $WorkingDirectory,
++    [Parameter(Mandatory)] [string] $ReceiptName,
++    [string] $Graph
++)
++
++$ErrorActionPreference = 'Stop'
++$policyPath = Join-Path (Split-Path $PSScriptRoot) 'policy.json'
++$leasePath = Join-Path (Split-Path $PSScriptRoot) 'benchmark-exclusive.lease.json'
++$evidence = Join-Path $PSScriptRoot ('native\' + $ReceiptName)
++New-Item -ItemType Directory -Force -Path (Split-Path $evidence) | Out-Null
++if (Test-Path -LiteralPath ($evidence + '.json'))
++{
++    throw "Refusing to overwrite an existing native receipt: $ReceiptName"
++}
++
++function Read-Admission
++{
++    $policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
++    $observation = [ordered]@{
++        observedAtUtc = [DateTime]::UtcNow.ToString('O')
++        policySha256 = (Get-FileHash -LiteralPath $policyPath -Algorithm SHA256).Hash
++        registeredOwner = $policy.independentFindingPreparationWorkers.F214
++        scope = $policy.activeWorkerPreparationScopes.F214
++        actualWorkerBuildHoldActive = $policy.actualWorkerBuildHoldActive
++        explicitWorkerBuildHoldActive = $policy.explicitWorkerBuildHoldActive
++        buildAndTestWorkQuiesced = $policy.buildAndTestWorkQuiesced
++        leasePresent = (Test-Path -LiteralPath $leasePath)
++    }
++    $observation['allowed'] = $observation.registeredOwner -eq 'a49af7f8-9952-4ab2-bfea-f0c206589028' -and
++        $observation.scope -match '195.*untimed' -and
++        $policy.workersMayBuildOrTest -eq $true -and
++        $observation.actualWorkerBuildHoldActive -ne $true -and
++        $observation.explicitWorkerBuildHoldActive -ne $true -and
++        $observation.buildAndTestWorkQuiesced -ne $true -and
++        -not $observation.leasePresent
++    return $observation
++}
++
++$receipt = [ordered]@{
++    receiptName = $ReceiptName
++    executable = $Executable
++    arguments = $Arguments
++    workingDirectory = $WorkingDirectory
++    graphActivation = $null
++    nativeStarted = $false
++    comparisonAuthorizations = 0
++    performanceCounters = $false
++    elapsedMeasurement = $false
++}
++$process = $null
++$observed = @{}
++$stdoutTask = $null
++$stderrTask = $null
++try
++{
++    if ([IO.Path]::GetFileName($Executable) -eq 'dotnet.exe')
++    {
++        if ($Arguments[0] -in @('build', 'test', 'restore') -and
++            (($Arguments -notcontains '-m:1' -and $Arguments -notcontains '-m:2') -or
++                $Arguments -notcontains '-nr:false' -or
++                $Arguments -notcontains '-p:UseSharedCompilation=false'))
++        {
++            throw 'Separate bounded-node, no-node-reuse, and no-shared-compilation argv entries are mandatory; concatenated properties are forbidden.'
++        }
++
++        if ($Graph -notin @('C:\src\ap-F214-o195', 'C:\src\ap-F214-d195'))
++        {
++            throw 'An exact private F214 graph is required before dotnet invocation.'
++        }
++
++        Set-Location $Graph
++        $env:DOTNET_GENERATE_ASPNET_CERTIFICATE = 'false'
++        $env:DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = 'false'
++        $env:MSBUILDDISABLENODEREUSE = '1'
++        $env:DOTNET_CLI_HOME = Join-Path $Graph 'artifacts\F214\cli-home'
++        $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
++        $env:DOTNET_NOLOGO = '1'
++        . (Join-Path $Graph 'activate.ps1')
++        $resolvedDotnet = @(Get-Command dotnet -CommandType Application)[0].Source
++        if ($resolvedDotnet -ne (Join-Path $Graph '.dotnet\dotnet.exe') -or
++            $Executable -ne (Join-Path $Graph '.dotnet\dotnet.exe'))
++        {
++            throw 'Exact graph-local dotnet resolution failed; ambient fallback is forbidden.'
++        }
++
++        $receipt.graphActivation = [ordered]@{
++            script = (Join-Path $Graph 'activate.ps1')
++            scriptSha256 = (Get-FileHash -LiteralPath (Join-Path $Graph 'activate.ps1') -Algorithm SHA256).Hash
++            globalJsonSha256 = (Get-FileHash -LiteralPath (Join-Path $Graph 'global.json') -Algorithm SHA256).Hash
++            resolvedDotnet = $resolvedDotnet
++            DOTNET_GENERATE_ASPNET_CERTIFICATE = $env:DOTNET_GENERATE_ASPNET_CERTIFICATE
++            DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = $env:DOTNET_ADD_GLOBAL_TOOLS_TO_PATH
++            MSBUILDDISABLENODEREUSE = $env:MSBUILDDISABLENODEREUSE
++            optimizationEnvironment = @(Get-ChildItem Env: | Where-Object Name -Match '^(DOTNET|COMPlus)_(Tier|Jit|ReadyToRun|GC)' | Sort-Object Name | Select-Object Name, Value)
++        }
++    }
++
++    $env:GIT_OPTIONAL_LOCKS = '0'
++    $startInfo = [Diagnostics.ProcessStartInfo]::new()
++    $startInfo.FileName = $Executable
++    $startInfo.WorkingDirectory = $WorkingDirectory
++    $startInfo.UseShellExecute = $false
++    $startInfo.RedirectStandardOutput = $true
++    $startInfo.RedirectStandardError = $true
++    $startInfo.CreateNoWindow = $true
++    foreach ($argument in $Arguments)
++    {
++        $startInfo.ArgumentList.Add($argument)
++    }
++
++    $receipt.admission = Read-Admission
++    if (-not $receipt.admission.allowed)
++    {
++        throw 'F214 native admission denied by actual registration, scope, HOLD, or benchmark lease.'
++    }
++
++    $process = [Diagnostics.Process]::new()
++    $process.StartInfo = $startInfo
++    if (-not $process.Start())
++    {
++        throw 'Native process did not start.'
++    }
++
++    $receipt.nativeStarted = $true
++    $receipt.pid = $process.Id
++    $receipt.startedAtUtc = $process.StartTime.ToUniversalTime().ToString('O')
++    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
++    $stderrTask = $process.StandardError.ReadToEndAsync()
++    do
++    {
++        $allProcesses = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, CreationDate)
++        $parents = @($process.Id) + @($observed.Keys)
++        do
++        {
++            $newChildren = @($allProcesses | Where-Object { $_.ParentProcessId -in $parents -and -not $observed.ContainsKey([int]$_.ProcessId) })
++            foreach ($child in $newChildren)
++            {
++                $observed[[int]$child.ProcessId] = $child
++            }
++            $parents = @($process.Id) + @($observed.Keys)
++        } while ($newChildren.Count -gt 0)
++
++        $current = Read-Admission
++        if (-not $current.allowed)
++        {
++            $receipt.holdObserved = $current
++            foreach ($child in @($observed.Values))
++            {
++                $live = Get-CimInstance Win32_Process -Filter "ProcessId=$($child.ProcessId)"
++                if ($live -and $live.CreationDate.ToUniversalTime() -eq $child.CreationDate.ToUniversalTime())
++                {
++                    Stop-Process -Id $live.ProcessId -Force
++                }
++            }
++            if (-not $process.HasExited)
++            {
++                Stop-Process -Id $process.Id -Force
++            }
++        }
++    } while (-not $process.WaitForExit(500))
++
++    $process.WaitForExit()
++    [IO.File]::WriteAllText(($evidence + '.stdout.txt'), $stdoutTask.GetAwaiter().GetResult(), [Text.UTF8Encoding]::new($false))
++    [IO.File]::WriteAllText(($evidence + '.stderr.txt'), $stderrTask.GetAwaiter().GetResult(), [Text.UTF8Encoding]::new($false))
++    $receipt.exitCode = $process.ExitCode
++    $receipt.rootTerminal = $process.HasExited
++    $receipt.stdoutTerminal = $stdoutTask.IsCompleted
++    $receipt.stderrTerminal = $stderrTask.IsCompleted
++    $receipt.observedChildren = @($observed.Values)
++    $receipt.liveObservedChildren = @($observed.Values | Where-Object {
++        $live = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.ProcessId)"
++        $live -and $live.CreationDate.ToUniversalTime() -eq $_.CreationDate.ToUniversalTime()
++    })
++    if ($receipt.liveObservedChildren.Count -ne 0)
++    {
++        throw 'An observed child remains live after root exit; no clean-terminal claim is allowed.'
++    }
++}
++catch
++{
++    $receipt.error = $_.Exception.Message
++    throw
++}
++finally
++{
++    $receipt.recordedAtUtc = [DateTime]::UtcNow.ToString('O')
++    $receipt | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath ($evidence + '.json') -Encoding utf8
++}
++
++Write-Output ("F214 " + $ReceiptName + " EXIT=" + $receipt.exitCode + " PID=" + $receipt.pid)
++if ($receipt.exitCode -ne 0)
++{
++    Get-Content -LiteralPath ($evidence + '.stderr.txt')
++    Get-Content -LiteralPath ($evidence + '.stdout.txt') | Select-Object -Last 35
++    throw "Native command failed; receipt preserved: $ReceiptName"
++}
+--- NUL
++++ Prepare-F214Graphs.ps1
+@@ -0,0 +1,49 @@
++$ErrorActionPreference = 'Stop'
++Set-Location $PSScriptRoot
++$native = Join-Path $PSScriptRoot 'Invoke-F214Native.ps1'
++$git = (Get-Command git -CommandType Application).Source
++$reserved = 'C:\src\aspnetcore'
++$original = 'C:\src\ap-F214-o195'
++$default = 'C:\src\ap-F214-d195'
++$defaultPin = (Get-Content -LiteralPath 'upstream\default-commit.json' -Raw | ConvertFrom-Json).sha
++
++if ((Test-Path -LiteralPath $original) -or (Test-Path -LiteralPath $default))
++{
++    throw 'At least one requested fresh F214 graph already exists; refusing reuse or overwrite.'
++}
++
++@('.git\HEAD', '.git\index', '.git\refs\heads\autoperf\F145-hoist-large-response-utf8-encoding') |
++    ForEach-Object {
++        $path = Join-Path $reserved $_
++        if (Test-Path -LiteralPath $path)
++        {
++            [ordered]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash }
++        }
++    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath 'reserved-before.hashes.json' -Encoding utf8
++
++& $native -Executable $git -Arguments @('--no-optional-locks', '--no-pager', '-C', $reserved, 'status', '--porcelain=v1', '--untracked-files=all') -WorkingDirectory $PSScriptRoot -ReceiptName '001-reserved-status-before'
++& $native -Executable $git -Arguments @('--no-optional-locks', '--no-pager', '-C', $reserved, 'rev-parse', 'HEAD') -WorkingDirectory $PSScriptRoot -ReceiptName '002-reserved-head-before'
++& $native -Executable $git -Arguments @('-c', 'core.longpaths=true', 'clone', '--quiet', '--shared', '--no-checkout', $reserved, $original) -WorkingDirectory $PSScriptRoot -ReceiptName '003-clone-original'
++& $native -Executable $git -Arguments @('-c', 'core.longpaths=true', '-C', $original, 'checkout', '--quiet', '--detach', '37e809ead5824bc753a1c3d56f11615bdb1296c5') -WorkingDirectory $PSScriptRoot -ReceiptName '004-checkout-original'
++& $native -Executable $git -Arguments @('-c', 'core.longpaths=true', 'clone', '--quiet', '--shared', '--no-checkout', $reserved, $default) -WorkingDirectory $PSScriptRoot -ReceiptName '005-clone-default'
++& $native -Executable $git -Arguments @('-C', $default, 'cat-file', '-e', ($defaultPin + '^{commit}')) -WorkingDirectory $PSScriptRoot -ReceiptName '006-probe-default-object'
++& $native -Executable $git -Arguments @('-c', 'core.longpaths=true', '-C', $default, 'checkout', '--quiet', '--detach', $defaultPin) -WorkingDirectory $PSScriptRoot -ReceiptName '007-checkout-default'
++
++foreach ($graph in @($original, $default))
++{
++    if (Test-Path -LiteralPath (Join-Path $graph '.dotnet'))
++    {
++        throw 'Fresh source graph unexpectedly already contains .dotnet.'
++    }
++    New-Item -ItemType Junction -Path (Join-Path $graph '.dotnet') -Target (Join-Path $reserved '.dotnet') | Out-Null
++}
++
++[ordered]@{
++    original = $original
++    originalPin = '37e809ead5824bc753a1c3d56f11615bdb1296c5'
++    default = $default
++    defaultPin = $defaultPin
++    sourceGraphIsolation = 'Independent .git directories and indexes; read-only object alternates, not reserved worktree registration.'
++    sdkCache = 'Private .dotnet junctions reference the existing reserved SDK cache; no source/build/test output from another finding is reused.'
++    comparisonAuthorizations = 0
++} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath 'private-graphs.json' -Encoding utf8
+--- NUL
++++ Run-F214Qualification.ps1
+@@ -0,0 +1,79 @@
++param(
++    [Parameter(Mandatory)] [ValidateSet('original', 'default')] [string] $Role,
++    [Parameter(Mandatory)] [ValidateSet('tests', 'jit')] [string] $Kind,
++    [Parameter(Mandatory)] [int] $FirstReceipt,
++    [switch] $SkipRestore
++)
++
++$ErrorActionPreference = 'Stop'
++$graph = if ($Role -eq 'original') { 'C:\src\ap-F214-o195' } else { 'C:\src\ap-F214-d195' }
++$native = Join-Path $PSScriptRoot 'Invoke-F214Native.ps1'
++$dotnet = Join-Path $graph '.dotnet\dotnet.exe'
++$projectName = if ($Kind -eq 'tests') { 'F214.Qualification.Tests' } else { 'F214.JitDiagnostic' }
++$project = Join-Path $PSScriptRoot ("qualification\$projectName.csproj")
++$output = Join-Path $graph ("artifacts\F214\$Kind\bin")
++$intermediate = Join-Path $graph ("artifacts\F214\$Kind\obj")
++$common = @(
++    "-p:SourceGraph=$graph"
++    "-p:BaseIntermediateOutputPath=$intermediate\"
++    "-p:MSBuildProjectExtensionsPath=$intermediate\"
++    "-p:OutputPath=$output\"
++    '-m:2'
++    '-nr:false'
++    '-p:UseSharedCompilation=false'
++    '-tl:off'
++    '-clp:NoSummary'
++    '-v:q'
++)
++$prefix = '{0:D3}-{1}-{2}' -f $FirstReceipt, $Role, $Kind
++if (-not $SkipRestore)
++{
++    & $native -Executable $dotnet -Arguments (@('restore', $project, '--source', 'C:\.tools\.nuget\packages', '-p:NuGetAudit=false') + $common) -WorkingDirectory $graph -Graph $graph -ReceiptName ($prefix + '-cache-restore')
++}
++$prefix = '{0:D3}-{1}-{2}' -f ($FirstReceipt + 1), $Role, $Kind
++& $native -Executable $dotnet -Arguments (@('build', $project, '--no-restore', '-c', 'Release') + $common) -WorkingDirectory $graph -Graph $graph -ReceiptName ($prefix + '-build')
++
++$dll = Join-Path $output ($projectName + '.dll')
++if ($Kind -eq 'tests')
++{
++    $resultPath = Join-Path $PSScriptRoot ("$Role-unit-results.xml")
++    $methods = @(
++        'Microsoft.AspNetCore.Internal.Tests.AdaptiveCapacityDictionaryTests.TryAdd_*'
++        'Microsoft.AspNetCore.Internal.Tests.AdaptiveCapacityDictionaryTests.ListStorage_SwitchesToDictionaryAfter10_TryAdd'
++        'Microsoft.AspNetCore.Internal.Tests.AdaptiveCapacityDictionaryTests.UpgradeToDictionary_KeepsComparer'
++        'Microsoft.AspNetCore.Http.Features.QueryFeatureTests.ParseQueryWithUniqueKeysWorks'
++        'Microsoft.AspNetCore.Http.Features.QueryFeatureTests.ParseQueryWithThreefoldKeysGroups'
++        'Microsoft.AspNetCore.Http.Features.QueryFeatureTests.CaseInsensitiveWithManyKeys'
++        'Microsoft.AspNetCore.Http.Features.QueryFeatureTests.CaseInsensitiveWithFewKeys'
++        'Microsoft.AspNetCore.Http.Tests.RequestCookiesCollectionTests.ParseManyCookies'
++        'F214.Qualification.Tests.F214NullGuardQualificationTests.*'
++    )
++    $runArguments = @($dll, '-noLogo', '-noColor', '-parallel', 'none', '-xml', $resultPath)
++    foreach ($method in $methods)
++    {
++        $runArguments += @('-method', $method)
++    }
++
++    $prefix = '{0:D3}-{1}-{2}' -f ($FirstReceipt + 2), $Role, $Kind
++    & $native -Executable $dotnet -Arguments $runArguments -WorkingDirectory $graph -Graph $graph -ReceiptName ($prefix + '-run')
++}
++else
++{
++    $oldDisasm = $env:DOTNET_JitDisasm
++    $oldAssemblies = $env:DOTNET_JitDisasmAssemblies
++    $oldOutput = $env:DOTNET_JitStdOutFile
++    try
++    {
++        $env:DOTNET_JitDisasm = 'ContainsKey TryAdd'
++        $env:DOTNET_JitDisasmAssemblies = 'F214.JitDiagnostic'
++        $env:DOTNET_JitStdOutFile = Join-Path $PSScriptRoot ("$Role-jit-disassembly.txt")
++        $prefix = '{0:D3}-{1}-{2}' -f ($FirstReceipt + 2), $Role, $Kind
++        & $native -Executable $dotnet -Arguments @($dll) -WorkingDirectory $graph -Graph $graph -ReceiptName ($prefix + '-run')
++    }
++    finally
++    {
++        $env:DOTNET_JitDisasm = $oldDisasm
++        $env:DOTNET_JitDisasmAssemblies = $oldAssemblies
++        $env:DOTNET_JitStdOutFile = $oldOutput
++    }
++}
+--- NUL
++++ Complete-F214Handoff.ps1
+@@ -0,0 +1,295 @@
++$ErrorActionPreference = 'Stop'
++Set-Location $PSScriptRoot
++
++function Write-Json([string] $Path, $Value)
++{
++    $Value | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $Path -Encoding utf8
++}
++
++$receipts = @(Get-ChildItem -LiteralPath 'native' -Filter '*.json' -File | Sort-Object Name | ForEach-Object {
++    [pscustomobject]@{
++        path = 'native\' + $_.Name
++        sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
++        value = (Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json)
++    }
++})
++$started = @($receipts | Where-Object { $_.value.nativeStarted })
++foreach ($receipt in $started)
++{
++    if (-not $receipt.value.rootTerminal -or -not $receipt.value.stdoutTerminal -or -not $receipt.value.stderrTerminal -or
++        @($receipt.value.liveObservedChildren).Count -ne 0 -or -not $receipt.value.admission.allowed)
++    {
++        throw "An owned native receipt is not cleanly terminal/admitted: $($receipt.path)"
++    }
++}
++
++$allProcesses = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, CreationDate)
++$identities = [Collections.Generic.List[object]]::new()
++foreach ($receipt in $started)
++{
++    $root = Get-Process -Id $receipt.value.pid -ErrorAction SilentlyContinue
++    $rootMatches = $root -and $root.StartTime.ToUniversalTime().Ticks -eq ([DateTime]$receipt.value.startedAtUtc).ToUniversalTime().Ticks
++    $identities.Add([ordered]@{
++        receipt = $receipt.path
++        kind = 'recorded native root'
++        pid = $receipt.value.pid
++        recordedCreationUtc = $receipt.value.startedAtUtc
++        recordedIdentityStillLive = [bool]$rootMatches
++    })
++    foreach ($child in @($receipt.value.observedChildren))
++    {
++        $live = $allProcesses | Where-Object ProcessId -eq $child.ProcessId
++        $childMatches = $live -and $live.CreationDate.ToUniversalTime() -eq ([DateTime]$child.CreationDate).ToUniversalTime()
++        $identities.Add([ordered]@{
++            receipt = $receipt.path
++            kind = 'actually observed descendant'
++            pid = $child.ProcessId
++            recordedCreationUtc = ([DateTime]$child.CreationDate).ToUniversalTime().ToString('O')
++            recordedIdentityStillLive = [bool]$childMatches
++        })
++    }
++}
++if (@($identities | Where-Object { $_.recordedIdentityStillLive }).Count -ne 0)
++{
++    throw 'At least one actual owned root/observed descendant is still live.'
++}
++Write-Json 'owned-native-terminal.json' ([ordered]@{
++    observedAtUtc = [DateTime]::UtcNow.ToString('O')
++    nativeRootsStarted = $started.Count
++    rootsAndObservedDescendants = $identities
++    allRecordedRootsAndBothStreamsTerminal = $true
++    liveRecordedIdentities = 0
++    boundary = 'Only this owner actual native roots and observed descendants. No assertion about unrelated users, unobserved processes, or global dedicated-host inactivity.'
++})
++
++$before = Get-Content -LiteralPath 'reserved-before.hashes.json' -Raw | ConvertFrom-Json
++$reservedHashes = @($before | ForEach-Object {
++    $afterHash = (Get-FileHash -LiteralPath $_.path -Algorithm SHA256).Hash
++    [ordered]@{ path = $_.path; beforeSha256 = $_.sha256; afterSha256 = $afterHash; identical = $_.sha256 -eq $afterHash }
++})
++$statusUnchanged = [IO.File]::ReadAllText((Join-Path $PWD 'native\001-reserved-status-before.stdout.txt')) -eq
++    [IO.File]::ReadAllText((Join-Path $PWD 'native\036-reserved-final-status.stdout.txt'))
++$reservedHead = (Get-Content -LiteralPath 'native\037-reserved-final-head.stdout.txt' -Raw).Trim()
++if (-not $statusUnchanged -or @($reservedHashes | Where-Object { -not $_.identical }).Count -ne 0 -or
++    $reservedHead -ne '24875ef5dabb55567870b39f6eb0002170435e2f')
++{
++    throw 'Reserved checkout identity/status preservation failed.'
++}
++Write-Json 'reserved-after-verification.json' ([ordered]@{
++    head = $reservedHead
++    branch = (Get-Content -LiteralPath 'C:\src\aspnetcore\.git\HEAD' -Raw).Trim()
++    beforeAfterStatusIdentical = $statusUnchanged
++    beforeAfterMetadataHashes = $reservedHashes
++    untrackedFiles = @(Get-Content -LiteralPath 'native\036-reserved-final-status.stdout.txt')
++    scope = 'No writes targeted reserved tracked files, four reports, branch, index, or worktree registry. The four report contents were not independently before/after hashed.'
++})
++
++$graphs = @(
++    @{ role = 'original'; path = 'C:\src\ap-F214-o195'; pin = '37e809ead5824bc753a1c3d56f11615bdb1296c5'; status = 'native\034-original-final-status.stdout.txt'; diff = 'native\038-original-final-diff.stdout.txt' }
++    @{ role = 'default'; path = 'C:\src\ap-F214-d195'; pin = 'd3483989953ae3cccd773aea5ea04cb0c7198531'; status = 'native\035-default-final-status.stdout.txt'; diff = 'native\039-default-final-diff.stdout.txt' }
++)
++[xml]$project = Get-Content -LiteralPath 'qualification\F214.Qualification.Tests.csproj' -Raw
++$sourcePaths = @($project.SelectNodes('/Project/ItemGroup/Compile') |
++    ForEach-Object { $_.GetAttribute('Include') } |
++    Where-Object { $_.StartsWith('$(SourceGraph)\') } |
++    ForEach-Object { $_.Replace('$(SourceGraph)\', '') })
++$sourcePaths += @('src\Http\Http\src\Microsoft.AspNetCore.Http.csproj', 'src\Http\WebUtilities\src\Microsoft.AspNetCore.WebUtilities.csproj')
++$sourceFiles = @($sourcePaths | ForEach-Object {
++    $relative = $_
++    $originalHash = (Get-FileHash -LiteralPath (Join-Path $graphs[0].path $relative) -Algorithm SHA256).Hash
++    $defaultHash = (Get-FileHash -LiteralPath (Join-Path $graphs[1].path $relative) -Algorithm SHA256).Hash
++    [ordered]@{ path = $relative; originalSha256 = $originalHash; defaultSha256 = $defaultHash; identical = $originalHash -eq $defaultHash }
++})
++Write-Json 'source-index.json' ([ordered]@{
++    originalPin = $graphs[0].pin
++    upstreamRepository = 'dotnet/aspnetcore'
++    upstreamDefaultBranch = 'main'
++    upstreamDefaultPin = $graphs[1].pin
++    observedDefaultCommitPath = 'upstream\default-commit.json'
++    observedDefaultSnapshotWrittenUtc = (Get-Item -LiteralPath 'upstream\default-commit.json').LastWriteTimeUtc.ToString('O')
++    files = $sourceFiles
++})
++$shippingDiff = ''
++foreach ($graph in $graphs)
++{
++    $status = Get-Content -LiteralPath $graph.status -Raw
++    if (-not $status.Contains('# branch.oid ' + $graph.pin) -or $status -match '(?m)^[12u?] ')
++    {
++        throw "Private source graph has unexpected identity or changes: $($graph.role)"
++    }
++    $diff = Get-Content -LiteralPath $graph.diff -Raw
++    if ($diff)
++    {
++        throw "A product change was made without a justified candidate: $($graph.role)"
++    }
++    $shippingDiff += $diff
++}
++[IO.File]::WriteAllText((Join-Path $PWD 'shipping-changes.diff'), $shippingDiff, [Text.UTF8Encoding]::new($false))
++
++$testResults = @($graphs | ForEach-Object {
++    $result = Get-Content -LiteralPath ($_.role + '-unit-row-results.json') -Raw | ConvertFrom-Json
++    if ($result.total -ne 18 -or $result.failed -ne 0 -or $result.skipped -ne 0 -or @($result.rows | Where-Object result -ne 'Pass').Count -ne 0)
++    {
++        throw 'A selected unit row did not pass or was not executed.'
++    }
++    [ordered]@{ role = $_.role; total = $result.total; passed = $result.passed; failed = 0; skipped = 0; rows = ($_.role + '-unit-row-results.json'); rawXunitXml = ($_.role + '-unit-results.xml'); environment = $result.framework }
++})
++
++$jit = @($graphs | ForEach-Object {
++    $role = $_.role
++    $path = "$role-jit-disassembly.txt"
++    $text = Get-Content -LiteralPath $path -Raw
++    $sections = @([regex]::Matches($text, '(?ms)^; Assembly listing for method Microsoft\.AspNetCore\.Internal\.AdaptiveCapacityDictionary.*?(?=^; Assembly listing|\z)') |
++        ForEach-Object {
++            $body = $_.Value
++            $signature = ($body -split "`n")[0].Trim()
++            [ordered]@{
++                signature = $signature
++                normalTier0 = $signature.Contains('(Tier0)') -and $body.Contains('compiling with minopt')
++                boxHelperPresent = $body.Contains('CORINFO_HELP_BOX')
++                nullThrowPresent = $body.Contains(':ThrowArgumentNullExceptionForKey()')
++                nativeNullableHasValueTest = $body.Contains('movzx    eax, byte  ptr [rbp+0x18]') -and $body.Contains('test     eax, eax')
++            }
++        })
++    if ($sections.Count -ne 6 -or @($sections | Where-Object { -not $_.normalTier0 -or $_.boxHelperPresent }).Count -ne 0 -or
++        @($sections | Where-Object { $_.signature.Contains('`2[int,') -and $_.nullThrowPresent }).Count -ne 0 -or
++        @($sections | Where-Object { $_.nativeNullableHasValueTest }).Count -ne 2)
++    {
++        throw "Unexpected JIT diagnostic evidence for $role"
++    }
++    [ordered]@{
++        role = $role
++        log = $path
++        sections = $sections
++        nativeGuardInterpretation = 'Reference-key bodies compare the reference directly. Int bodies omit the null-key test/throw. Nullable-int bodies test the HasValue byte directly. These are observed instruction sequences, not an inference from IL box lowering.'
++    }
++})
++Write-Json 'jit-determination.json' ([ordered]@{
++    runtime = '.NET 12.0.0-alpha.1.26557.102+76e3c03e6b29f1bbe1aca97d655c560db2320436, Windows x64'
++    runtimeIdentity = 'runtime-identity.json'
++    frameworkObservedInNativeStdout = @('native\030-original-jit-run.stdout.txt', 'native\033-default-jit-run.stdout.txt')
++    diagnostics = $jit
++    observationFlagsOnly = 'DOTNET_JitDisasm=ContainsKey TryAdd; DOTNET_JitDisasmAssemblies=F214.JitDiagnostic; DOTNET_JitStdOutFile=<role log>. The capture also contains an incidental System.Text.Json Dictionary method, excluded from F214 interpretation.'
++    optimization = 'Normal Release compilation and default runtime Tier0/minopt observed; no tiering, PGO, ReadyToRun, inlining, affinity, priority, or power overrides; no warmup or benchmark loop.'
++    noBoxingInInspectedNullGuards = $true
++    allocationCountersOrPerformanceMeasurements = $false
++    limitations = 'Only ContainsKey/TryAdd for string/string, int/string, and deliberately out-of-annotation int?/string were disassembled. This does not claim whole dictionary operations allocate nothing, establish any shipping struct-key producer, or cover every type, tier, AOT/Mono/browser/runtime/platform.'
++})
++
++$commands = @($receipts | ForEach-Object {
++    [ordered]@{
++        receipt = $_.path
++        receiptSha256 = $_.sha256
++        executable = $_.value.executable
++        arguments = $_.value.arguments
++        workingDirectory = $_.value.workingDirectory
++        nativeStarted = $_.value.nativeStarted
++        pid = $_.value.pid
++        exitCode = $_.value.exitCode
++        error = $_.value.error
++        rootTerminal = $_.value.rootTerminal
++        stdoutTerminal = $_.value.stdoutTerminal
++        stderrTerminal = $_.value.stderrTerminal
++        stdout = $(if (Test-Path -LiteralPath $_.path.Replace('.json', '.stdout.txt')) { $_.path.Replace('.json', '.stdout.txt') } else { $null })
++        stderr = $(if (Test-Path -LiteralPath $_.path.Replace('.json', '.stderr.txt')) { $_.path.Replace('.json', '.stderr.txt') } else { $null })
++        admissionPolicySha256 = $_.value.admission.policySha256
++    }
++})
++Write-Json 'commands.json' $commands
++
++$authored = @(
++    'ACCEPTANCE.json'
++    'Collect-F214Source.ps1'
++    'Invoke-F214Native.ps1'
++    'Prepare-F214Graphs.ps1'
++    'Run-F214Qualification.ps1'
++    'Complete-F214Handoff.ps1'
++    'caller-evidence.json'
++    'qualification\F214.Qualification.Tests.csproj'
++    'qualification\F214NullGuardQualificationTests.cs'
++    'qualification\F214.JitDiagnostic.csproj'
++    'qualification\JitDiagnostic.cs'
++)
++$diagnosticDiff = [Text.StringBuilder]::new()
++foreach ($path in $authored)
++{
++    $lines = [IO.File]::ReadAllLines((Join-Path $PWD $path))
++    $null = $diagnosticDiff.AppendLine("--- NUL").AppendLine("+++ $path").AppendLine("@@ -0,0 +1,$($lines.Count) @@")
++    foreach ($line in $lines)
++    {
++        $null = $diagnosticDiff.Append('+').AppendLine($line)
++    }
++}
++[IO.File]::WriteAllText((Join-Path $PWD 'diagnostic-additions.diff'), $diagnosticDiff.ToString(), [Text.UTF8Encoding]::new($false))
++$images = @($graphs | ForEach-Object {
++    $graph = $_
++    foreach ($kind in @('tests', 'jit'))
++    {
++        $assembly = if ($kind -eq 'tests') { 'F214.Qualification.Tests' } else { 'F214.JitDiagnostic' }
++        foreach ($extension in @('.dll', '.pdb', '.deps.json', '.runtimeconfig.json'))
++        {
++            $path = Join-Path $graph.path ("artifacts\F214\$kind\bin\$assembly$extension")
++            [ordered]@{ role = $graph.role; kind = $kind; path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash }
++        }
++    }
++})
++Write-Json 'diagnostic-image-index.json' $images
++
++$failures = @(
++    @{ receipt = 'source-history-and-preserved-failure.json'; boundary = 'Read-only source retrieval'; reason = 'Initial collector failed HTTP404 resolving installed runtime version commit as public JIT source; native disassembly later supplies actual runtime evidence. Wrong DictionaryDebugView source path 404s were caught; actual located debugger helpers are in source-index.' }
++    @{ receipt = 'native\011-original-dotnet-info.json'; boundary = 'Before native start'; reason = 'Path-resolution guard saw multiple installed dotnet application results. Pure resolution observation proved graph host first; corrected selection still requires the explicit graph executable. No dotnet started in this attempt.' }
++    @{ receipt = 'native\015-canonical-shared-tests-no-restore.json'; boundary = 'Before assertions'; reason = 'Canonical project requires absent artifacts\bin\GenerateFiles\Directory.Build.props. No test row reached assertions there; no full-graph bootstrapping or dependency restore was claimed.' }
++    @{ receipt = 'native\017-original-linked-tests-build.json'; boundary = 'Harness compilation and execution-control exception'; reason = 'An inline PowerShell argv concatenation combined properties into SourceGraph and therefore failed to apply the intended no-shared-compilation argument. This failed build actually started owned VBCSCompiler PID46248 and its console child. Preserved exactly, not described as compliant. Corrected later build arrays have separate required flags.' }
++    @{ receipt = 'native\019-original-tests-build.json'; boundary = 'Harness compilation'; reason = 'Exact shared HttpParseResult helper missing from initial linked closure; included unchanged actual source, not IVT or product edits.' }
++    @{ receipt = 'native\021-original-tests-build.json'; boundary = 'Harness compilation'; reason = 'QueryStringEnumerable needed its actual WebUtilities project preprocessor constant, independently read from the canonical project. Corrected harness compilation definition without editing source.' }
++    @{ receipt = 'finalization-live-descendant-diagnostic.json'; boundary = 'Finalizer, before handoff'; reason = 'First finalizer exited1 and refused sealing when same-source CIM creation-time comparison found the lingering compiler and console. Earlier wrapper Get-Process/CIM precision comparison missed these two identities.' }
++    @{ receipt = 'owned-descendant-cleanup.json'; boundary = 'Actual owned descendant cleanup'; reason = 'Compiler PID46248 creation identity verified and stopped by literal PID; its observed console PID40840 was subsequently observed already terminal, not falsely claimed killed. First variable-PID tool request was not executed; literal-PID request completed successfully. No name-based or foreign termination.' }
++    @{ receipt = 'native\042-malformed-build-preflight-denied.json'; boundary = 'Managed preflight only, before activation or native start'; reason = 'Replayed the exact malformed017 argv through the hardened separate-argument guard; expected denial with nativeStarted=false. No further dotnet build/run was started.' }
++)
++Write-Json 'preserved-failures.json' $failures
++
++$handOff = [ordered]@{
++    findingId = 'F214'
++    owner = 'a49af7f8-9952-4ab2-bfea-f0c206589028'
++    recordedAtUtc = [DateTime]::UtcNow.ToString('O')
++    ownerDetermination = 'No justified product candidate: shipping keys are string; captured modern native null guards do not box.'
++    candidate = $null
++    coordinatorFinalDisposition = $null
++    originalPin = $graphs[0].pin
++    observedUpstreamDefault = @{ repository = 'dotnet/aspnetcore'; branch = 'main'; pin = $graphs[1].pin; receipt = 'upstream\default-commit.json' }
++    sourceIdentity = @{ index = 'source-index.json'; targetSha256 = $sourceFiles[0].originalSha256; originalAndDefaultTargetIdentical = $sourceFiles[0].identical; allLinkedInputsIdentical = @($sourceFiles | Where-Object { -not $_.identical }).Count -eq 0 }
++    callerEvidence = @{ file = 'caller-evidence.json'; closedShippingTypes = 3; locatedNewSites = 6; locatedStructKeyProducers = 0; flaggedTryAddShippingDirectCallers = 0; cardinalityBoundary = 'Real query/cookie source and selected canonical tests, not deployed key/frequency data.' }
++    runtimeDetermination = @{ file = 'jit-determination.json'; runtime = '.NET 12.0.0-alpha.1.26557.102, Windows x64'; nativeTier = 'Normal default Tier0/minopt'; methods = 'ContainsKey and TryAdd'; partitions = 'string references, int, deliberately out-of-annotation int?'; result = 'Direct pointer comparison / eliminated int guard / direct nullable HasValue test; no surviving boxing in these captured guards.' }
++    tests = $testResults
++    canonicalProjectCommandBlocked = @{ name = 'Microsoft.AspNetCore.Shared.Tests --filter FullyQualifiedName~AdaptiveCapacityDictionaryTests'; receipt = 'native\015-canonical-shared-tests-no-restore.json'; exitCode = 1; prerequisite = 'artifacts\bin\GenerateFiles\Directory.Build.props'; assertionsReached = $false; substituteBoundary = '18 xUnit3 rows per pin using unchanged canonical tests and source plus 6 private null-contract rows; not the canonical project graph or hosted HTTP.' }
++    exactCommandsAndExits = 'commands.json'
++    failuresPreserved = 'preserved-failures.json'
++    executionControlException = @{ fullyCompliant = $false; receipt = 'owned-descendant-cleanup.json'; failedAttempt = 'native\017-original-linked-tests-build.json'; detail = 'Malformed argv unintentionally enabled shared compilation for this failed attempt. Final audit detected the owned lingering server; actual owned cleanup and hardened managed preflight are recorded. Later passing builds use separate no-sharing/no-reuse/max2 flags. Coordinator must retain this exception.' }
++    privateGraphs = 'private-graphs.json'
++    changedFilesAndHashes = 'changed-file-index.json'
++    shippingDiff = 'shipping-changes.diff'
++    diagnosticSourceDiff = 'diagnostic-additions.diff'
++    reservedPreserved = 'reserved-after-verification.json'
++    quiescence = @{ receipt = 'owned-native-terminal.json'; rootsStarted = $started.Count; allRecordedRootsAndBothStreamsTerminal = $true; liveRecordedIdentities = 0 }
++    materialityAndPerformance = @{ verified = $false; comparisonAuthorizations = 0; performanceRuns = 0; allocationCounters = 0; warmups = 0; publication = 'None; coordinator-only'; redGreen = 'No product change or defect reproduction exists, so no bug-fix red/green claim. Passing rows characterize unchanged contracts.'; exclusions = 'Whole-operation allocations/performance, deployed traffic frequency, arbitrary structs/tiers, AOT/Mono/browser/other runtimes, and a shipping value-key producer are not established.' }
++}
++Write-Json 'HANDOFF.json' $handOff
++
++$indexed = $authored + @(
++    'HANDOFF.json', 'source-index.json', 'source-history-and-preserved-failure.json', 'runtime-identity.json',
++    'original-unit-row-results.json', 'default-unit-row-results.json', 'original-unit-results.xml', 'default-unit-results.xml',
++    'original-jit-disassembly.txt', 'default-jit-disassembly.txt', 'jit-determination.json', 'commands.json',
++    'preserved-failures.json', 'diagnostic-image-index.json', 'owned-native-terminal.json', 'reserved-after-verification.json',
++    'shipping-changes.diff', 'diagnostic-additions.diff', 'private-graphs.json', 'upstream\default-commit.json',
++    'final-readonly-policy-observation.json', 'finalization-live-descendant-diagnostic.json', 'owned-descendant-cleanup.json'
++)
++Write-Json 'changed-file-index.json' ([ordered]@{
++    shippingChanges = @()
++    privateGraphTrackedDiffsEmpty = $true
++    artifactOnlyFiles = @($indexed | ForEach-Object {
++        [ordered]@{ path = $_; sha256 = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash; length = (Get-Item -LiteralPath $_).Length }
++    })
++    diagnosticImages = 'diagnostic-image-index.json'
++    selfHashExcluded = $true
++})
++Write-Output ("F214 HANDOFF SEALED: Original/default each 18 Pass; native roots " + $started.Count + " terminal; product changes 0; performance comparisons 0.")
+--- NUL
++++ caller-evidence.json
+@@ -0,0 +1,90 @@
++{
++  "findingId": "F214",
++  "originalPin": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
++  "observedDefaultPin": "d3483989953ae3cccd773aea5ea04cb0c7198531",
++  "sourceInventories": [
++    "native\\009-original-inventory.json",
++    "native\\010-default-inventory.json"
++  ],
++  "scope": "Pin-specific tracked src text inventories, exact project/source reads, and local C# LSP references/callers. Not a claim about external, reflective, generated, or future uses.",
++  "shippingOwner": {
++    "assembly": "Microsoft.AspNetCore.Http",
++    "project": "src\\Http\\Http\\src\\Microsoft.AspNetCore.Http.csproj",
++    "linkedSourceLine": 29,
++    "type": "internal sealed AdaptiveCapacityDictionary<TKey, TValue> where TKey : notnull",
++    "uniqueLocatedClosedShippingTypes": 3,
++    "locatedNewExpressionSites": 6,
++    "locatedValueTypeKeyProducers": 0
++  },
++  "closedTypes": [
++    {
++      "type": "AdaptiveCapacityDictionary<string, StringValues>",
++      "producer": "QueryFeature.Query -> ParseNullableQueryInternal -> QueryStringEnumerable -> KvpAccumulator.Append",
++      "source": "src\\Http\\Http\\src\\Features\\QueryFeature.cs",
++      "newSites": [136, 214],
++      "guardsReached": ["TryGetValue", "indexer get", "indexer set"],
++      "cardinality": "One lazy primary accumulator per parse; key count is the distinct decoded case-insensitive query-name count. Nonempty queries use Append; parsing is cached until the source query changes. The empty GetResults fallback is another static construction site, not an additional per-pair dictionary.",
++      "importantDistinction": "StringValues is the VALUE type. TKey remains string and this value-type TValue does not cause generic key-null boxing."
++    },
++    {
++      "type": "AdaptiveCapacityDictionary<string, List<string>>",
++      "producer": "QueryFeature.KvpAccumulator.Append -> AppendToExpandingAccumulator",
++      "source": "src\\Http\\Http\\src\\Features\\QueryFeature.cs",
++      "newSites": [163],
++      "guardsReached": ["indexer get", "indexer set"],
++      "cardinality": "At most one lazy expanding dictionary per parse, initialized when a key repeats; entries correspond to repeated string keys. Initial capacity is 5, not a count of production requests."
++    },
++    {
++      "type": "AdaptiveCapacityDictionary<string, string>",
++      "producer": "RequestCookieCollection.Parse -> CookieHeaderParserShared.TryParseValues",
++      "source": "src\\Http\\Http\\src\\Internal\\RequestCookieCollection.cs",
++      "newSites": [30, 35, 41],
++      "guardsReached": ["indexer set", "ContainsKey", "TryGetValue"],
++      "cardinality": "Parse uses one new collection/store for a nonempty header input; the parser assigns through IDictionary<string,string>. The other constructors include explicit capacity and a Dictionary wrapper documented for tests. The static Empty instance owns a reference-key empty store.",
++      "parserSource": "src\\Http\\Shared\\CookieHeaderParserShared.cs",
++      "parserInsertionLine": 44,
++      "parserKeyType": "parsedName.Value.Value is string"
++    }
++  ],
++  "consumer": {
++    "source": "src\\Http\\Http\\src\\QueryCollectionInternal.cs",
++    "role": "Wraps the existing string/StringValues accumulator and forwards lookups; does not introduce another key type."
++  },
++  "flaggedTryAdd": {
++    "source": "src\\Shared\\Dictionary\\AdaptiveCapacityDictionary.cs",
++    "line": 450,
++    "locatedShippingDirectCallers": 0,
++    "localLspIncomingCalls": [
++      "AdaptiveCapacityDictionaryTests.TryAdd_EmptyStringIsAllowed",
++      "AdaptiveCapacityDictionaryTests.TryAdd_EmptyStorage_CanAdd",
++      "AdaptiveCapacityDictionaryTests.TryAdd_ArrayStorage_CanAdd",
++      "AdaptiveCapacityDictionaryTests.TryAdd_ArrayStorage_DoesNotAddWhenKeyIsPresent",
++      "AdaptiveCapacityDictionaryTests.ListStorage_SwitchesToDictionaryAfter10_TryAdd"
++    ],
++    "lspBoundary": "LSP queried the reserved checkout read-only; the relevant source is independently identical at the two private pins. The identified shipping parser interface exposes indexer assignment, not this internal TryAdd method."
++  },
++  "cardinalityValidation": {
++    "arrayThreshold": 10,
++    "dictionaryTransition": "The eleventh distinct insertion, or constructor capacity above 10.",
++    "executedCanonicalScenarios": [
++      "ParseQueryWithUniqueKeysWorks: 2 distinct keys, both leading-question-mark rows.",
++      "ParseQueryWithThreefoldKeysGroups: 2 keys, one with 3 values.",
++      "CaseInsensitiveWithFewKeys: 1 case-insensitive key with 5 values.",
++      "CaseInsensitiveWithManyKeys: 12 distinct case-insensitive keys, including a key with 10 values.",
++      "ParseManyCookies: 12 parsed cookie keys.",
++      "ListStorage_SwitchesToDictionaryAfter10_TryAdd and UpgradeToDictionary_KeepsComparer: real source threshold/comparer behavior."
++    ],
++    "boundary": "Unmodified canonical tests and owning parser/feature source linked into a private xUnit assembly. These are actual string-key producers, not a hosted HTTP server or deployed traffic study.",
++    "productionRequestFrequencyOrKeyDistributionMeasured": false
++  },
++  "nullContracts": {
++    "reference": "notnull is a nullable-analysis contract, not a runtime guarantee. Passing a null reference still throws ArgumentNullException with ParamName key before storage access; ordinary string-key checks do not box a value.",
++    "nonNullableValue": "TKey : notnull permits int and other non-nullable value types. Even default(int) is not null. The synthetic int cases exercise this supported type partition but do not establish a shipping producer.",
++    "nullableValue": "int? violates the notnull annotation and is deliberately warning-suppressed only in private diagnostics. It remains runtime-constructible: an empty nullable key is rejected, while present zero works. A blanket IsValueType guard bypass would not preserve that behavior.",
++    "observedRows": "All eight guarded operations are checked for null rejection in initial array and dictionary storage modes; value and nullable present-default round trips are asserted, not just absence of exceptions.",
++    "annotationAuthority": "documentation\\constraints-on-type-parameters.md",
++    "nullableAuthority": "documentation\\nullable-value-types.md"
++  },
++  "ownerRecommendation": "No product candidate: the structural card matches the generic constraint, but the located production keys are references and the modern native diagnostic has no surviving boxing in the inspected null guards.",
++  "finalDisposition": "Coordinator-owned; not changed by this handoff."
++}
+--- NUL
++++ qualification\F214.Qualification.Tests.csproj
+@@ -0,0 +1,39 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>net12.0</TargetFramework>
++    <LangVersion>13.0</LangVersion>
++    <Nullable>annotations</Nullable>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <DefineConstants>$(DefineConstants);QueryStringEnumerable_In_WebUtilities</DefineConstants>
++    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
++    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
++    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
++    <RuntimeFrameworkVersion>12.0.0-alpha.1.26557.102</RuntimeFrameworkVersion>
++    <RollForward>Disable</RollForward>
++    <NoWarn>$(NoWarn);CS0436</NoWarn>
++  </PropertyGroup>
++  <ItemGroup>
++    <FrameworkReference Include="Microsoft.AspNetCore.App" />
++    <PackageReference Include="xunit.v3" Version="3.2.2" />
++    <Using Include="Xunit" />
++    <Compile Include="F214NullGuardQualificationTests.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Dictionary\AdaptiveCapacityDictionary.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Debugger\DictionaryDebugView.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Debugger\DictionaryItemDebugView.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Debugger\StringValuesDictionaryDebugView.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\QueryStringEnumerable.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\QueryStringDecoder.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\HttpRuleParser.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\HttpParseResult.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Shared\CookieHeaderParserShared.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Http\src\Features\QueryFeature.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Http\src\QueryCollectionInternal.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Http\src\Internal\RequestCookieCollection.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\test\Shared.Tests\AdaptiveCapacityDictionaryTests.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Http\test\Features\QueryFeatureTests.cs" />
++    <Compile Include="$(SourceGraph)\src\Http\Http\test\RequestCookiesCollectionTests.cs" />
++    <Compile Include="$(SourceGraph)\src\Testing\src\ExceptionAssertions.cs" />
++    <Compile Include="$(SourceGraph)\src\Testing\src\CultureReplacer.cs" />
++  </ItemGroup>
++</Project>
+--- NUL
++++ qualification\F214NullGuardQualificationTests.cs
+@@ -0,0 +1,83 @@
++using Microsoft.AspNetCore.Internal;
++
++namespace F214.Qualification.Tests;
++
++public class F214NullGuardQualificationTests
++{
++    [Theory]
++    [InlineData(0)]
++    [InlineData(11)]
++    public void ReferenceNullKeysAreRejectedByEveryGuard(int capacity)
++    {
++        var dictionary = new AdaptiveCapacityDictionary<string, string>(capacity);
++        var key = (string)null!;
++        Assert.Equal(capacity > 10, dictionary._dictionaryStorage is not null);
++        Assert.Equal(capacity <= 10, dictionary._arrayStorage is not null);
++
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary[key]);
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary[key] = "value");
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Add(key, "value"));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.ContainsKey(key));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Remove(key));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Remove(key, out _));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.TryAdd(key, "value"));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.TryGetValue(key, out _));
++        Assert.Empty(dictionary);
++    }
++
++    [Theory]
++    [InlineData(0)]
++    [InlineData(11)]
++    public void NonNullableValueKeysAcceptDefaultAcrossGuardedOperations(int capacity)
++    {
++        var dictionary = new AdaptiveCapacityDictionary<int, string>(capacity);
++        Assert.Equal(capacity > 10, dictionary._dictionaryStorage is not null);
++        Assert.Equal(capacity <= 10, dictionary._arrayStorage is not null);
++
++        Assert.True(dictionary.TryAdd(0, "zero"));
++        Assert.False(dictionary.TryAdd(0, "replacement"));
++        Assert.Equal("zero", dictionary[0]);
++        dictionary[0] = "updated";
++        Assert.True(dictionary.TryGetValue(0, out var value));
++        Assert.Equal("updated", value);
++        Assert.True(dictionary.ContainsKey(0));
++        Assert.True(dictionary.Remove(0, out var removed));
++        Assert.Equal("updated", removed);
++        dictionary.Add(0, "again");
++        Assert.True(dictionary.Remove(0));
++        Assert.False(dictionary.Remove(0));
++        Assert.Empty(dictionary);
++    }
++
++    [Theory]
++    [InlineData(0)]
++    [InlineData(11)]
++    public void NullableValueKeysRejectEmptyAndAcceptPresentDefault(int capacity)
++    {
++        // This intentionally probes the runtime behavior outside the notnull annotation contract.
++#pragma warning disable CS8714
++        var dictionary = new AdaptiveCapacityDictionary<int?, string>(capacity);
++#pragma warning restore CS8714
++        int? key = null;
++        Assert.Equal(capacity > 10, dictionary._dictionaryStorage is not null);
++        Assert.Equal(capacity <= 10, dictionary._arrayStorage is not null);
++
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary[key]);
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary[key] = "value");
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Add(key, "value"));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.ContainsKey(key));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Remove(key));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.Remove(key, out _));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.TryAdd(key, "value"));
++        Assert.Throws<ArgumentNullException>(nameof(key), () => dictionary.TryGetValue(key, out _));
++        Assert.Empty(dictionary);
++
++        Assert.True(dictionary.TryAdd(0, "present zero"));
++        Assert.False(dictionary.TryAdd(0, "replacement"));
++        Assert.Equal("present zero", dictionary[0]);
++        Assert.True(dictionary.ContainsKey(0));
++        Assert.True(dictionary.Remove(0, out var removed));
++        Assert.Equal("present zero", removed);
++        Assert.Empty(dictionary);
++    }
++}
+--- NUL
++++ qualification\F214.JitDiagnostic.csproj
+@@ -0,0 +1,19 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>net12.0</TargetFramework>
++    <LangVersion>13.0</LangVersion>
++    <Nullable>enable</Nullable>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
++    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
++    <RuntimeFrameworkVersion>12.0.0-alpha.1.26557.102</RuntimeFrameworkVersion>
++    <RollForward>Disable</RollForward>
++  </PropertyGroup>
++  <ItemGroup>
++    <Compile Include="JitDiagnostic.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Dictionary\AdaptiveCapacityDictionary.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Debugger\DictionaryDebugView.cs" />
++    <Compile Include="$(SourceGraph)\src\Shared\Debugger\DictionaryItemDebugView.cs" />
++  </ItemGroup>
++</Project>
+--- NUL
++++ qualification\JitDiagnostic.cs
+@@ -0,0 +1,47 @@
++using System.Diagnostics;
++using System.Runtime.InteropServices;
++using System.Text.Json;
++using Microsoft.AspNetCore.Internal;
++
++Console.WriteLine(JsonSerializer.Serialize(new
++{
++    Diagnostic = "Untimed single-pass actual-source guard diagnostic; synthetic keys are not production producers.",
++    Framework = RuntimeInformation.FrameworkDescription,
++    Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
++    CoreLib = typeof(object).Assembly.Location,
++    RuntimeProductVersion = FileVersionInfo.GetVersionInfo(typeof(object).Assembly.Location).ProductVersion,
++    ModuleVersionId = typeof(object).Module.ModuleVersionId,
++}));
++
++var referenceKeys = new AdaptiveCapacityDictionary<string, string>();
++if (referenceKeys.ContainsKey("key") || !referenceKeys.TryAdd("key", "value"))
++{
++    throw new InvalidOperationException("Reference-key diagnostic failed.");
++}
++
++var valueKeys = new AdaptiveCapacityDictionary<int, string>();
++if (valueKeys.ContainsKey(0) || !valueKeys.TryAdd(0, "zero"))
++{
++    throw new InvalidOperationException("Non-nullable value-key diagnostic failed.");
++}
++
++// Nullable keys deliberately exercise behavior outside the notnull annotation contract.
++#pragma warning disable CS8714
++var nullableKeys = new AdaptiveCapacityDictionary<int?, string>();
++#pragma warning restore CS8714
++if (nullableKeys.ContainsKey(0) || !nullableKeys.TryAdd(0, "present zero"))
++{
++    throw new InvalidOperationException("Present nullable-key diagnostic failed.");
++}
++
++try
++{
++    nullableKeys.ContainsKey(null);
++    throw new InvalidOperationException("Empty nullable key was accepted.");
++}
++catch (ArgumentNullException exception) when (exception.ParamName is "key")
++{
++    Console.WriteLine("PASS empty nullable key rejected; normal runtime optimization/tiering settings unchanged.");
++}
++
++Console.WriteLine("PASS reference, int, and nullable-int source methods executed once without counters, warmup, or timing.");

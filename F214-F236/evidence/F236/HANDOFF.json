@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "finding": "F236",
+  "disposition": "no-candidate-retained; native-correctness-blocked-before-discovery",
+  "target": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultBindingMetadataProvider.cs",
+  "sourceRoles": {
+    "Original": {
+      "root": "C:\\src\\ap-F236-o194",
+      "head": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "detached": true,
+      "sourceChanges": 0
+    },
+    "Default": {
+      "repository": "dotnet/aspnetcore",
+      "branch": "main",
+      "head": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+      "verification": "Fresh read-only GitHub source and final branch recheck; no Default native execution or worktree creation.",
+      "targetGitBlob": "90eb0b9eb208159dd15799c755039f3a98412023",
+      "targetIdenticalToOriginal": true
+    },
+    "reservedCoordinator": {
+      "root": "C:\\src\\aspnetcore",
+      "head": "24875ef5dabb55567870b39f6eb0002170435e2f",
+      "branch": "autoperf/F145-hoist-large-response-utf8-encoding",
+      "edits": 0
+    }
+  },
+  "qualification": {
+    "producer": "MVC's singleton DefaultModelMetadataProvider lazily runs the default binding-details provider per cached metadata identity; record constructor discovery reads real reflected constructor parameters and PropertyHelper's visible properties.",
+    "consumer": "ComplexObjectModelBinderProvider reads BoundConstructor and builds parameter binders; DefaultModelMetadataProvider constructs the invoker used by ComplexObjectModelBinder.",
+    "workload": "The existing ComplexRecordIntegrationTest source contains 52 record declarations: 18 with one parameter, 31 with two, two with three, and one with four. This is native fixture evidence, not customer telemetry.",
+    "rationale": "The nested existence scan is real, but the reviewed workload is small and metadata results are reused. No evidence establishes material benefit from adding a temporary hash structure or another cache. A delegate-removal rewrite would not address the scan's complexity and is not retained without a demonstrated material workload.",
+    "limitations": "Not strictly once per Type: distinct metadata identities/providers, invalidation and concurrent first use can repeat discovery. No application frequency, elapsed-time, allocation, or throughput conclusion is claimed.",
+    "details": "qualification-evidence.json"
+  },
+  "correctness": {
+    "project": "src\\Mvc\\Mvc.Core\\test\\Microsoft.AspNetCore.Mvc.Core.Test.csproj",
+    "requestedExistingRows": 13,
+    "executedRows": 0,
+    "result": "The final native attempt built the same-role MVC Core product assembly, then failed on four missing Blazor JS assets before test discovery. Constructor, cache and hidden-property assertions remain unexecuted.",
+    "blockedTests": "DefaultModelMetadataBindingDetailsProviderTest.GetBoundConstructor*; DefaultModelMetadataProviderTest.GetMetadataForType_Cached; DefaultModelMetadataProviderTest.GetMetadataForProperties_ExcludesHiddenProperties",
+    "details": "correctness-test-results.json",
+    "redGreen": "Not applicable: no fix or optimization implemented."
+  },
+  "hotReload": "Existing MVC metadata and PropertyHelper cache invalidation traced. No cache or derived-state change; no live-edit validation or new handler.",
+  "nativeWork": {
+    "starts": 6,
+    "exitCodes": [0, 1, 0, 1, 0, 1],
+    "commandsAndGateChecks": "native-001-admission.json through native-006-admission.json",
+    "closedStreamsAndExits": "native-001-result.json through native-006-result.json",
+    "sdk": "12.0.100-alpha.1.26557.102",
+    "sdkHostRuntime": "12.0.0-alpha.1.26565.104",
+    "testHostRuntime": "Not started.",
+    "ownedGraphProcessesAtFinalObservation": 0,
+    "allOwnedNativeWorkTerminal": true,
+    "evidence": "native-quiescence-observation.json"
+  },
+  "coordinatorOnly": {
+    "comparisonAuthorizations": 0,
+    "comparisonsStarted": 0,
+    "timingWarmupCounterProfilerOrBenchmarkLoopWork": 0,
+    "performanceOrEligibilityResult": "Not assessed.",
+    "remainingAdmission": "Only reconsider a candidate after evidence of a material real record-metadata workload. Any future comparison, same-host/runtime pairing, finalization and publication remain coordinator-only."
+  },
+  "changesAndHashes": "changed-file-diff-hash-index.json",
+  "sourceDiff": "changed-files.diff"
+}
