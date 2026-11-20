@@ -1,0 +1,373 @@
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+... Skipped lines
+
+  'using System;\r\n' +
+    'using System.Collections.Generic;\r\n' +
+    'using System.IO;\r\n' +
+    'using System.Linq;\r\n' +
+    'using System.Reflection;\r\n' +
+...
+    '            actualRealPhysicalFileProviderNativeRazorDirectiveFactoryAndPublicRegistrationExecuted = true,\r\n' +
++   '            actualPublicRegistrationBoundary = "AddMvcCore().AddRazorPages(...).AddRazorRuntimeCompilation(); not the broader IServiceCollection.AddRazorPages() aggregate",\r\n' +
++   '            actualOtherRegisteredProv'... 3825 more characters
+-   '            actualOtherRegisteredProvidersNotInvokedByThisProbe = true,\r\n' +
+-   '            actualCompiledPageProducerCaseInsensitiveCompiledModelOverlapAndEndpointHttpBoundaryNotEstablished = true,\r\n' +
+-   '            actual'... 3651 more characters
+
+    at file:///C:/Users/jaslawin/.copilot/session-state/a24edcfd-1bb9-4160-afce-6ba54b1b7f00/files/F237-F238-prepare-common-069.mjs:36:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'using System;\r\n' +
+    'using System.Collections.Generic;\r\n' +
+    'using System.IO;\r\n' +
+    'using System.Linq;\r\n' +
+    'using System.Reflection;\r\n' +
+    'using System.Runtime.InteropServices;\r\n' +
+    'using System.Security.Cryptography;\r\n' +
+    'using System.Text.Json;\r\n' +
+    'using Microsoft.AspNetCore.Hosting;\r\n' +
+    'using Microsoft.AspNetCore.Mvc.ApplicationModels;\r\n' +
+    'using Microsoft.AspNetCore.Mvc.RazorPages;\r\n' +
+    'using Microsoft.AspNetCore.Razor.Language;\r\n' +
+    'using Microsoft.Extensions.DependencyInjection;\r\n' +
+    'using Microsoft.Extensions.FileProviders;\r\n' +
+    'using Microsoft.Extensions.Hosting;\r\n' +
+    'using Microsoft.Extensions.Logging;\r\n' +
+    'using Moq;\r\n' +
+    '\r\n' +
+    '#pragma warning disable ASPDEPR003\r\n' +
+    '\r\n' +
+    'namespace AutoPerf.RuntimePageDiscoveryProbe;\r\n' +
+    '\r\n' +
+    'internal static class Program\r\n' +
+    '{\r\n' +
+    '    private static void Main(string[] args)\r\n' +
+    '    {\r\n' +
+    '        if (args.Length != 3)\r\n' +
+    '        {\r\n' +
+    '            throw new ArgumentException("Expected role, physical fixture root, and frozen fixture-plan JSON.");\r\n' +
+    '        }\r\n' +
+    '\r\n' +
+    '        var planBytes = File.ReadAllBytes(args[2]);\r\n' +
+    '        var plan = JsonSerializer.Deserialize<FixturePlan[]>(planBytes)\r\n' +
+    '            ?? throw new InvalidOperationException("The fixture plan is null.");\r\n' +
+    '        var rows = new List<object>();\r\n' +
+    '        foreach (var fixture in plan)\r\n' +
+    '        {\r\n' +
+    '            var checks = new List<string>();\r\n' +
+    '            void Require(bool condition, string name)\r\n' +
+    '            {\r\n' +
+    '                if (!condition)\r\n' +
+    '                {\r\n' +
+    '                    throw new InvalidOperationException($"{args[0]}/{fixture.Name}: {name}");\r\n' +
+    '                }\r\n' +
+    '\r\n' +
+    '                checks.Add(name);\r\n' +
+    '            }\r\n' +
+    '\r\n' +
+    '            var physicalRoot = Path.Combine(args[1], fixture.Name);\r\n' +
+    '            var beforeFiles = FileInventory(physicalRoot);\r\n' +
+    '            using var physical = new PhysicalFileProvider(physicalRoot);\r\n' +
+    '            var environment = new Mock<IWebHostEnvironment>();\r\n' +
+    '            environment.SetupGet(value => value.ApplicationName).Returns(typeof(Program).Assembly.GetName().Name!);\r\n' +
+    '            environment.SetupGet(value => value.EnvironmentName).Returns(Environments.Development);\r\n' +
+    '            environment.SetupGet(value => value.ContentRootPath).Returns(physicalRoot);\r\n' +
+    '            environment.SetupGet(value => value.ContentRootFileProvider).Returns(physical);\r\n' +
+    '            environment.SetupGet(value => value.WebRootPath).Returns(string.Empty);\r\n' +
+    '            environment.SetupGet(value => value.WebRootFileProvider).Returns(new NullFileProvider());\r\n' +
+    '            var collector = new CollectingProvider();\r\n' +
+    '            using var loggerFactory = LoggerFactory.Create(builder => builder.ClearProviders()\r\n' +
+    '                .SetMinimumLevel(LogLevel.Warning).AddProvider(collector));\r\n' +
+    '            var services = new ServiceCollection();\r\n' +
+    '            services.AddSingleton(environment.Object);\r\n' +
+    '            services.AddSingleton<IHostEnvironment>(environment.Object);\r\n' +
+    '            services.AddSingleton<ILoggerFactory>(loggerFactory);\r\n' +
+    '            services.AddLogging();\r\n' +
+    '            services.AddMvcCore().AddRazorPages(options => options.RootDirectory = fixture.RootDirectory)\r\n' +
+    '                .AddRazorRuntimeCompilation();\r\n' +
+    '            using var serviceProvider = services.BuildServiceProvider();\r\n' +
+    '            var providers = serviceProvider.GetServices<IPageRouteModelProvider>().ToArray();\r\n' +
+    '            var provider = providers.Single(value => value.GetType().FullName ==\r\n' +
+    '                "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.RazorProjectPageRouteModelProvider");\r\n' +
+    '            var fileSystem = serviceProvider.GetRequiredService<RazorProjectFileSystem>();\r\n' +
+    '            Require(fileSystem.GetType().FullName ==\r\n' +
+    '                "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.FileProviderRazorProjectFileSystem",\r\n' +
+    '                "ActualPublicRegistrationResolvesNativeFileProviderRazorProjectFileSystemAndRouteProvider");\r\n' +
+    '            var areas = fileSystem.EnumerateItems("/Areas").Select(Item).ToArray();\r\n' +
+    '            var pages = fileSystem.EnumerateItems(fixture.RootDirectory).Select(Item).ToArray();\r\n' +
+    '            Require(areas.Length == fixture.ExpectedAreaItems && pages.Length == fixture.ExpectedPageItems,\r\n' +
+    '                "ActualPhysicalRazorFileEnumerationCountsMatchFrozenInputs");\r\n' +
+    '            Require(areas.Concat(pages).All(value => value.Exists &&\r\n' +
+    '                value.CombinedPath.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) &&\r\n' +
+    '                beforeFiles.Any(file => string.Equals(file.Path, value.CombinedPath, StringComparison.OrdinalIgnoreCase))),\r\n' +
+    '                "ActualRazorItemsExistAndComeFromOwnedPhysicalCshtmlFilesNotInjectedRows");\r\n' +
+    '            var context = new PageRouteModelProviderContext();\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuting(context);\r\n' +
+    '\r\n' +
+    '            var firstModels = context.RouteModels.ToArray();\r\n' +
+    '            var snapshots = firstModels.Select(Snapshot).ToArray();\r\n' +
+    '            Require(firstModels.Length == fixture.Models.Length,\r\n' +
+    '                "NativeProviderProducesExactFrozenModelCardinality");\r\n' +
+    '            Require(snapshots.Select(value => value.RelativePath).Distinct(StringComparer.OrdinalIgnoreCase).Count() ==\r\n' +
+    '                snapshots.Length, "OverlappingAreaAndRootEnumerationsDoNotDuplicatePhysicalRelativePaths");\r\n' +
+    '            foreach (var expected in fixture.Models)\r\n' +
+    '            {\r\n' +
+    '                var matching = snapshots.Where(value => value.RelativePath == expected.RelativePath).ToArray();\r\n' +
+    '                Require(matching.Length == 1, "ActualModelPresentOnce:" + expected.RelativePath);\r\n' +
+    '                Require(JsonSerializer.Serialize(matching[0]) == JsonSerializer.Serialize(expected),\r\n' +
+    '                    "ActualModelValuesAndSelectorsMatch:" + expected.RelativePath);\r\n' +
+    '            }\r\n' +
+    '\r\n' +
+    '            var areaSet = fixture.Models.Where(value => value.AreaName is not null)\r\n' +
+    '                .Select(value => value.RelativePath).ToHashSet(StringComparer.Ordinal);\r\n' +
+    '            var normalSet = fixture.Models.Where(value => value.AreaName is null)\r\n' +
+    '                .Select(value => value.RelativePath).ToHashSet(StringComparer.Ordinal);\r\n' +
+    '            var expectedOrder = areas.Where(value => areaSet.Contains(value.CombinedPath))\r\n' +
+    '                .Concat(pages.Where(value => normalSet.Contains(value.CombinedPath)))\r\n' +
+    '                .Select(value => value.CombinedPath);\r\n' +
+    '            Require(snapshots.Select(value => value.RelativePath).SequenceEqual(expectedOrder),\r\n' +
+    '                "ActualAreaModelsPrecedeNormalModelsInTheirRealFilesystemEnumerationOrder");\r\n' +
+    '            Require(collector.Entries.Count(value => value.EventId == 1) == fixture.ExpectedUnsupportedAreaWarnings &&\r\n' +
+    '                collector.Entries.Count(value => value.EventId == 104) == fixture.ExpectedMalformedWarnings &&\r\n' +
+    '                collector.Entries.Count == fixture.ExpectedUnsupportedAreaWarnings + fixture.ExpectedMalformedWarnings,\r\n' +
+    '                "ActualFirstPassUnsupportedAreaAndMalformedDirectiveDiagnosticsMatchFrozenCase");\r\n' +
+    '            var firstLogs = collector.Entries.ToArray();\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuted(context);\r\n' +
+    '\r\n' +
+    '            Require(context.RouteModels.SequenceEqual(firstModels),\r\n' +
+    '                "ActualExecutedHookPreservesProducedModelReferencesAndOrder");\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuting(context);\r\n' +
+    '\r\n' +
+    '            Require(context.RouteModels.SequenceEqual(firstModels) &&\r\n' +
+    '                JsonSerializer.Serialize(context.RouteModels.Select(Snapshot)) == JsonSerializer.Serialize(snapshots),\r\n' +
+    '                "ActualSecondDiscoveryPreservesExistingNativeProducedModelsAndSelectorValues");\r\n' +
+    '            Require(JsonSerializer.Serialize(FileInventory(physicalRoot)) == JsonSerializer.Serialize(beforeFiles),\r\n' +
+    '                "ActualDiscoveryDoesNotMutateOwnedPhysicalFixtureFiles");\r\n' +
+    '            rows.Add(new\r\n' +
+    '            {\r\n' +
+    '                name = fixture.Name,\r\n' +
+    '                actualStatus = "PASS",\r\n' +
+    '                actualChecks = checks,\r\n' +
+    '                actualPhysicalFiles = beforeFiles,\r\n' +
+    '                actualAreaRazorItems = areas,\r\n' +
+    '                actualNormalRazorItems = pages,\r\n' +
+    '                actualModels = snapshots,\r\n' +
+    '                actualFirstPassLogs = firstLogs,\r\n' +
+    '                actualAllPassLogs = collector.Entries,\r\n' +
+    '                actualRegisteredProviders = providers.Select(value => new\r\n' +
+    '                {\r\n' +
+    '                    type = value.GetType().FullName,\r\n' +
+    '                    order = value.Order,\r\n' +
+    '                    invokedByThisProbe = ReferenceEquals(value, provider)\r\n' +
+    '                }).ToArray(),\r\n' +
+    '                actualNativeProvider = Image(provider.GetType().Assembly),\r\n' +
+    '                actualNativeFactoryModels = Image(typeof(PageRouteModel).Assembly),\r\n' +
+    '                actualNativePhysicalFileProvider = Image(typeof(PhysicalFileProvider).Assembly)\r\n' +
+    '            });\r\n' +
+    '        }\r\n' +
+    '\r\n' +
+    '        Console.WriteLine(JsonSerializer.Serialize(new\r\n' +
+    '        {\r\n' +
+    '            actualStatus = "PASS",\r\n' +
+    '            actualRole = args[0],\r\n' +
+    '            actualPid = Environment.ProcessId,\r\n' +
+    '            actualRuntime = RuntimeInformation.FrameworkDescription,\r\n' +
+    '            actualFixturePlanSha256 = Convert.ToHexString(SHA256.HashData(planBytes)),\r\n' +
+    '            actualCoreLibrary = Image(typeof(object).Assembly),\r\n' +
+    '            actualConsumer = Image(typeof(Program).Assembly),\r\n' +
+    '            actualRows = rows,\r\n' +
+    '            actualLoadedManagedImages = AppDomain.CurrentDomain.GetAssemblies()\r\n' +
+    '                .Where(value => !value.IsDynamic && value.Location.Length != 0)\r\n' +
+    '                .OrderBy(value => value.GetName().Name, StringComparer.Ordinal).Select(Image).ToArray(),\r\n' +
+    '            actualDynamicAssemblyNamesExcludedFromFileInventory = AppDomain.CurrentDomain.GetAssemblies()\r\n' +
+    '                .Where(value => value.IsDynamic).Select(value => value.FullName).ToArray(),\r\n' +
+    '            actualRealPhysicalFileProviderNativeRazorDirectiveFactoryAndPublicRegistrationExecuted = true,\r\n' +
+    '            actualPublicRegistrationBoundary = "AddMvcCore().AddRazorPages(...).AddRazorRuntimeCompilation(); not the broader IServiceCollection.AddRazorPages() aggregate",\r\n' +
+    '            actualOtherRegisteredProv'... 3825 more characters,
+  expected: 'using System;\r\n' +
+    'using System.Collections.Generic;\r\n' +
+    'using System.IO;\r\n' +
+    'using System.Linq;\r\n' +
+    'using System.Reflection;\r\n' +
+    'using System.Runtime.InteropServices;\r\n' +
+    'using System.Security.Cryptography;\r\n' +
+    'using System.Text.Json;\r\n' +
+    'using Microsoft.AspNetCore.Hosting;\r\n' +
+    'using Microsoft.AspNetCore.Mvc.ApplicationModels;\r\n' +
+    'using Microsoft.AspNetCore.Mvc.RazorPages;\r\n' +
+    'using Microsoft.AspNetCore.Razor.Language;\r\n' +
+    'using Microsoft.Extensions.DependencyInjection;\r\n' +
+    'using Microsoft.Extensions.FileProviders;\r\n' +
+    'using Microsoft.Extensions.Hosting;\r\n' +
+    'using Microsoft.Extensions.Logging;\r\n' +
+    'using Moq;\r\n' +
+    '\r\n' +
+    '#pragma warning disable ASPDEPR003\r\n' +
+    '\r\n' +
+    'namespace AutoPerf.RuntimePageDiscoveryProbe;\r\n' +
+    '\r\n' +
+    'internal static class Program\r\n' +
+    '{\r\n' +
+    '    private static void Main(string[] args)\r\n' +
+    '    {\r\n' +
+    '        if (args.Length != 3)\r\n' +
+    '        {\r\n' +
+    '            throw new ArgumentException("Expected role, physical fixture root, and frozen fixture-plan JSON.");\r\n' +
+    '        }\r\n' +
+    '\r\n' +
+    '        var planBytes = File.ReadAllBytes(args[2]);\r\n' +
+    '        var plan = JsonSerializer.Deserialize<FixturePlan[]>(planBytes)\r\n' +
+    '            ?? throw new InvalidOperationException("The fixture plan is null.");\r\n' +
+    '        var rows = new List<object>();\r\n' +
+    '        foreach (var fixture in plan)\r\n' +
+    '        {\r\n' +
+    '            var checks = new List<string>();\r\n' +
+    '            void Require(bool condition, string name)\r\n' +
+    '            {\r\n' +
+    '                if (!condition)\r\n' +
+    '                {\r\n' +
+    '                    throw new InvalidOperationException($"{args[0]}/{fixture.Name}: {name}");\r\n' +
+    '                }\r\n' +
+    '\r\n' +
+    '                checks.Add(name);\r\n' +
+    '            }\r\n' +
+    '\r\n' +
+    '            var physicalRoot = Path.Combine(args[1], fixture.Name);\r\n' +
+    '            var beforeFiles = FileInventory(physicalRoot);\r\n' +
+    '            using var physical = new PhysicalFileProvider(physicalRoot);\r\n' +
+    '            var environment = new Mock<IWebHostEnvironment>();\r\n' +
+    '            environment.SetupGet(value => value.ApplicationName).Returns(typeof(Program).Assembly.GetName().Name!);\r\n' +
+    '            environment.SetupGet(value => value.EnvironmentName).Returns(Environments.Development);\r\n' +
+    '            environment.SetupGet(value => value.ContentRootPath).Returns(physicalRoot);\r\n' +
+    '            environment.SetupGet(value => value.ContentRootFileProvider).Returns(physical);\r\n' +
+    '            environment.SetupGet(value => value.WebRootPath).Returns(string.Empty);\r\n' +
+    '            environment.SetupGet(value => value.WebRootFileProvider).Returns(new NullFileProvider());\r\n' +
+    '            var collector = new CollectingProvider();\r\n' +
+    '            using var loggerFactory = LoggerFactory.Create(builder => builder.ClearProviders()\r\n' +
+    '                .SetMinimumLevel(LogLevel.Warning).AddProvider(collector));\r\n' +
+    '            var services = new ServiceCollection();\r\n' +
+    '            services.AddSingleton(environment.Object);\r\n' +
+    '            services.AddSingleton<IHostEnvironment>(environment.Object);\r\n' +
+    '            services.AddSingleton<ILoggerFactory>(loggerFactory);\r\n' +
+    '            services.AddLogging();\r\n' +
+    '            services.AddMvcCore().AddRazorPages(options => options.RootDirectory = fixture.RootDirectory)\r\n' +
+    '                .AddRazorRuntimeCompilation();\r\n' +
+    '            using var serviceProvider = services.BuildServiceProvider();\r\n' +
+    '            var providers = serviceProvider.GetServices<IPageRouteModelProvider>().ToArray();\r\n' +
+    '            var provider = providers.Single(value => value.GetType().FullName ==\r\n' +
+    '                "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.RazorProjectPageRouteModelProvider");\r\n' +
+    '            var fileSystem = serviceProvider.GetRequiredService<RazorProjectFileSystem>();\r\n' +
+    '            Require(fileSystem.GetType().FullName ==\r\n' +
+    '                "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.FileProviderRazorProjectFileSystem",\r\n' +
+    '                "ActualPublicRegistrationResolvesNativeFileProviderRazorProjectFileSystemAndRouteProvider");\r\n' +
+    '            var areas = fileSystem.EnumerateItems("/Areas").Select(Item).ToArray();\r\n' +
+    '            var pages = fileSystem.EnumerateItems(fixture.RootDirectory).Select(Item).ToArray();\r\n' +
+    '            Require(areas.Length == fixture.ExpectedAreaItems && pages.Length == fixture.ExpectedPageItems,\r\n' +
+    '                "ActualPhysicalRazorFileEnumerationCountsMatchFrozenInputs");\r\n' +
+    '            Require(areas.Concat(pages).All(value => value.Exists &&\r\n' +
+    '                value.CombinedPath.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) &&\r\n' +
+    '                beforeFiles.Any(file => string.Equals(file.Path, value.CombinedPath, StringComparison.OrdinalIgnoreCase))),\r\n' +
+    '                "ActualRazorItemsExistAndComeFromOwnedPhysicalCshtmlFilesNotInjectedRows");\r\n' +
+    '            var context = new PageRouteModelProviderContext();\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuting(context);\r\n' +
+    '\r\n' +
+    '            var firstModels = context.RouteModels.ToArray();\r\n' +
+    '            var snapshots = firstModels.Select(Snapshot).ToArray();\r\n' +
+    '            Require(firstModels.Length == fixture.Models.Length,\r\n' +
+    '                "NativeProviderProducesExactFrozenModelCardinality");\r\n' +
+    '            Require(snapshots.Select(value => value.RelativePath).Distinct(StringComparer.OrdinalIgnoreCase).Count() ==\r\n' +
+    '                snapshots.Length, "OverlappingAreaAndRootEnumerationsDoNotDuplicatePhysicalRelativePaths");\r\n' +
+    '            foreach (var expected in fixture.Models)\r\n' +
+    '            {\r\n' +
+    '                var matching = snapshots.Where(value => value.RelativePath == expected.RelativePath).ToArray();\r\n' +
+    '                Require(matching.Length == 1, "ActualModelPresentOnce:" + expected.RelativePath);\r\n' +
+    '                Require(JsonSerializer.Serialize(matching[0]) == JsonSerializer.Serialize(expected),\r\n' +
+    '                    "ActualModelValuesAndSelectorsMatch:" + expected.RelativePath);\r\n' +
+    '            }\r\n' +
+    '\r\n' +
+    '            var areaSet = fixture.Models.Where(value => value.AreaName is not null)\r\n' +
+    '                .Select(value => value.RelativePath).ToHashSet(StringComparer.Ordinal);\r\n' +
+    '            var normalSet = fixture.Models.Where(value => value.AreaName is null)\r\n' +
+    '                .Select(value => value.RelativePath).ToHashSet(StringComparer.Ordinal);\r\n' +
+    '            var expectedOrder = areas.Where(value => areaSet.Contains(value.CombinedPath))\r\n' +
+    '                .Concat(pages.Where(value => normalSet.Contains(value.CombinedPath)))\r\n' +
+    '                .Select(value => value.CombinedPath);\r\n' +
+    '            Require(snapshots.Select(value => value.RelativePath).SequenceEqual(expectedOrder),\r\n' +
+    '                "ActualAreaModelsPrecedeNormalModelsInTheirRealFilesystemEnumerationOrder");\r\n' +
+    '            Require(collector.Entries.Count(value => value.EventId == 1) == fixture.ExpectedUnsupportedAreaWarnings &&\r\n' +
+    '                collector.Entries.Count(value => value.EventId == 104) == fixture.ExpectedMalformedWarnings &&\r\n' +
+    '                collector.Entries.Count == fixture.ExpectedUnsupportedAreaWarnings + fixture.ExpectedMalformedWarnings,\r\n' +
+    '                "ActualFirstPassUnsupportedAreaAndMalformedDirectiveDiagnosticsMatchFrozenCase");\r\n' +
+    '            var firstLogs = collector.Entries.ToArray();\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuted(context);\r\n' +
+    '\r\n' +
+    '            Require(context.RouteModels.SequenceEqual(firstModels),\r\n' +
+    '                "ActualExecutedHookPreservesProducedModelReferencesAndOrder");\r\n' +
+    '\r\n' +
+    '            provider.OnProvidersExecuting(context);\r\n' +
+    '\r\n' +
+    '            Require(context.RouteModels.SequenceEqual(firstModels) &&\r\n' +
+    '                JsonSerializer.Serialize(context.RouteModels.Select(Snapshot)) == JsonSerializer.Serialize(snapshots),\r\n' +
+    '                "ActualSecondDiscoveryPreservesExistingNativeProducedModelsAndSelectorValues");\r\n' +
+    '            Require(JsonSerializer.Serialize(FileInventory(physicalRoot)) == JsonSerializer.Serialize(beforeFiles),\r\n' +
+    '                "ActualDiscoveryDoesNotMutateOwnedPhysicalFixtureFiles");\r\n' +
+    '            rows.Add(new\r\n' +
+    '            {\r\n' +
+    '                name = fixture.Name,\r\n' +
+    '                actualStatus = "PASS",\r\n' +
+    '                actualChecks = checks,\r\n' +
+    '                actualPhysicalFiles = beforeFiles,\r\n' +
+    '                actualAreaRazorItems = areas,\r\n' +
+    '                actualNormalRazorItems = pages,\r\n' +
+    '                actualModels = snapshots,\r\n' +
+    '                actualFirstPassLogs = firstLogs,\r\n' +
+    '                actualAllPassLogs = collector.Entries,\r\n' +
+    '                actualRegisteredProviders = providers.Select(value => new\r\n' +
+    '                {\r\n' +
+    '                    type = value.GetType().FullName,\r\n' +
+    '                    order = value.Order,\r\n' +
+    '                    invokedByThisProbe = ReferenceEquals(value, provider)\r\n' +
+    '                }).ToArray(),\r\n' +
+    '                actualNativeProvider = Image(provider.GetType().Assembly),\r\n' +
+    '                actualNativeFactoryModels = Image(typeof(PageRouteModel).Assembly),\r\n' +
+    '                actualNativePhysicalFileProvider = Image(typeof(PhysicalFileProvider).Assembly)\r\n' +
+    '            });\r\n' +
+    '        }\r\n' +
+    '\r\n' +
+    '        Console.WriteLine(JsonSerializer.Serialize(new\r\n' +
+    '        {\r\n' +
+    '            actualStatus = "PASS",\r\n' +
+    '            actualRole = args[0],\r\n' +
+    '            actualPid = Environment.ProcessId,\r\n' +
+    '            actualRuntime = RuntimeInformation.FrameworkDescription,\r\n' +
+    '            actualFixturePlanSha256 = Convert.ToHexString(SHA256.HashData(planBytes)),\r\n' +
+    '            actualCoreLibrary = Image(typeof(object).Assembly),\r\n' +
+    '            actualConsumer = Image(typeof(Program).Assembly),\r\n' +
+    '            actualRows = rows,\r\n' +
+    '            actualLoadedManagedImages = AppDomain.CurrentDomain.GetAssemblies()\r\n' +
+    '                .Where(value => !value.IsDynamic && value.Location.Length != 0)\r\n' +
+    '                .OrderBy(value => value.GetName().Name, StringComparer.Ordinal).Select(Image).ToArray(),\r\n' +
+    '            actualDynamicAssemblyNamesExcludedFromFileInventory = AppDomain.CurrentDomain.GetAssemblies()\r\n' +
+    '                .Where(value => value.IsDynamic).Select(value => value.FullName).ToArray(),\r\n' +
+    '            actualRealPhysicalFileProviderNativeRazorDirectiveFactoryAndPublicRegistrationExecuted = true,\r\n' +
+    '            actualOtherRegisteredProvidersNotInvokedByThisProbe = true,\r\n' +
+    '            actualCompiledPageProducerCaseInsensitiveCompiledModelOverlapAndEndpointHttpBoundaryNotEstablished = true,\r\n' +
+    '            actual'... 3651 more characters,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.13.0
