@@ -356,9 +356,10 @@ namespace Microsoft.AspNetCore.OpenApi.Generated
                 }
                 if (methodComment.Parameters is { Count: > 0})
                 {
+                    var methodParameters = methodInfo.GetParameters();
                     foreach (var parameterComment in methodComment.Parameters)
                     {
-                        var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodInfo.GetParameters(), info => info.Name == parameterComment.Name);
+                        var parameterInfo = global::System.Linq.Enumerable.SingleOrDefault(methodParameters, info => info.Name == parameterComment.Name);
                         var modelName = GetModelName(parameterInfo, parameterComment.Name);
                         var operationParameter = GetOperationParameter(operation, modelName);
                         if (operationParameter is not null)
