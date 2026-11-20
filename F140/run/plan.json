@@ -1,0 +1,75 @@
+{
+  "findingId": "F140",
+  "recordedAt": "2026-11-20T12:43:10.081Z",
+  "expectedMachine": "CPC-jasla-LSEJU",
+  "powershell": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "roles": {
+    "Original37": {
+      "graph": "C:\\src\\ap-F140-o013",
+      "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "runtime": "12.0.0-alpha.1.26562.105",
+      "functionalResults": {
+        "baseline": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\invocations\\Original37-baseline-functional-022\\functional-result.json",
+        "candidate": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\invocations\\Original37-candidate-functional-022\\functional-result.json"
+      }
+    },
+    "Default90": {
+      "graph": "C:\\src\\ap-F140-d013",
+      "revision": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+      "runtime": "12.0.0-alpha.1.26569.107",
+      "functionalResults": {
+        "baseline": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\invocations\\Default90-baseline-functional-022\\functional-result.json",
+        "candidate": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\invocations\\Default90-candidate-functional-022\\functional-result.json"
+      }
+    }
+  },
+  "driverSha256": "0AD091EE79978A142F859835EB712F1149F5FA43244DDB3AC0B702355C3FCA07",
+  "runnerSha256": "1C398954E50A41DE603B686C186DB24BA3560C84A68E4F667C695FD154BB5605",
+  "acceptanceFile": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\acceptance-before-candidate.json",
+  "acceptanceSha256": "F87E6F884C3D528F7D3833D229C90781D2B41DCFF53D6C5455213030DB35B98B",
+  "clarificationFile": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F140-implementation-019\\pre-execution-dataset-clarification-021.json",
+  "clarificationSha256": "AE9522BA55AD9BD4451444419CD4D97DCB69CC71A3F18956F3CE621E47FB4E6B",
+  "protocol": {
+    "frozenBeforeCandidateOrCounter": true,
+    "measurementFramework": "Custom process-wide GC.GetTotalAllocatedBytes(precise:true) and Stopwatch, not BenchmarkDotNet.",
+    "boundary": "Actual public HubConnection.SendCoreAsync and actual native test transport raw frame reader; exact entire serialized frame compared each operation, no socket/server/browser throughput claim.",
+    "primaryDataset": "One fixed send with Guid00112233-4455-6677-8899-aabbccddeeff, Payload(7,payload), List<int>{3,5,8}, and object; all TypeCode.Object. No input substitution after results.",
+    "unchangedControlDataset": "One fixed primitive/null/string/enum/DateTime/decimal send retaining the existing TypeCode guard.",
+    "changedPathNonregressionDataset": "One fixed Payload(7,payload) plus object send; both runtime types have no implemented interfaces.",
+    "operationsPerObservationPerDataset": 8192,
+    "warmupOperationsPerDatasetPerFreshVariantProcess": 128,
+    "pairedObservationsPerSourceRole": 7,
+    "freshVariantProcessPerObservation": true,
+    "variantOrder": "Alternate baseline/candidate by pair index.",
+    "datasetOrder": "Rotate the fixed [primary,primitive-control,no-interface] dataset list by pairIndex modulo3, same order within each pair.",
+    "primaryAllocationGeomeanMaximumRatio": 0.95,
+    "primaryAllocationMinimumFavorablePairs": 6,
+    "minimumMeanAbsoluteAllocatedBytesSavedPerObservation": 1048576,
+    "absoluteSavingExplanation": "At least128bytes saved per completed public send over8192sends, below the two representative interface-array copies; not a claim about all argument shapes.",
+    "primaryElapsedGeomeanMaximumRatio": 1.1,
+    "unchangedControlAllocationGeomeanRatioRange": [
+      0.95,
+      1.05
+    ],
+    "unchangedControlElapsedGeomeanRatioRange": [
+      0.9,
+      1.1
+    ],
+    "changedPathAllocationGeomeanMaximumRatio": 1.05,
+    "changedPathElapsedGeomeanMaximumRatio": 1.05,
+    "maximumComparisonsIncludingFailedOrPartial": 3,
+    "executeDefaultOnlyIfOriginalIndependentlyPasses": true,
+    "bothRolesMustIndependentlyQualify": true,
+    "noRolePoolingOrResultDrivenRetryOrTuning": true,
+    "noMetricsUntilFreshActualOwnerHoldAndGlobalGatewayAdmission": true,
+    "benchmarkEnvironment": {
+      "DOTNET_TieredCompilation": "0",
+      "actualPerProcessRuntimePinned": true,
+      "actualNormalPriorityAtSampleTimeClaimed": false
+    },
+    "limitations": "Steady-state type reuse only; no cold-type, unique-type-churn, network, startup, machine-idleness or universal app-speedup claim."
+  },
+  "actualFixtureInputsAndCandidateAlreadyFrozenBeforeAnyMetric": true,
+  "actualNoAlternativeDatasetsThresholdsRetriesOrPrimarySelectors": true,
+  "actualPhysicalMachineDedicatedOrNormalSamplePriorityClaimed": false
+}
