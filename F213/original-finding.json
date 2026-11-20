@@ -1,0 +1,15 @@
+{
+  "card_id": "fixed-size-positional-list",
+  "file": "src/Middleware/HttpLogging/src/MediaTypeHelpers.cs",
+  "line_start": 13,
+  "line_end": 19,
+  "severity": "informational",
+  "confidence": "high",
+  "classification": "informational",
+  "hot_path": "moderate",
+  "tfm_sensitive": false,
+  "summary": "A fixed four-element encoding table is retained as List<Encoding>.",
+  "explanation": "SupportedEncodings is private, static, fixed after initialization, and is indexed by Count and indexer in media-type detection. An Encoding[] would represent the fixed positional data with less collection machinery. The list is tiny and process-wide, so the expected impact is informational.",
+  "snippet": "private static readonly List<Encoding> SupportedEncodings = new List<Encoding>()\n{\n    Encoding.UTF8, Encoding.Unicode, Encoding.ASCII, Encoding.Latin1\n};",
+  "suppressed": false
+}
