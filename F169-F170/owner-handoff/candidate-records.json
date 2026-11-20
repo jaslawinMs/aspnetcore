@@ -1,0 +1,56 @@
+[
+  {
+    "id": "F169",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Http/Http.Abstractions/test/UseWhenExtensionsTests.cs",
+      "line_start": 127,
+      "line_end": 137,
+      "project": "Microsoft.AspNetCore.Http.Abstractions.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "The Increment test helper probes HttpContext.Items repeatedly for the same key.",
+      "explanation": "Within one helper invocation, ContainsKey(key) is followed by an indexer read and indexer writes for the same IDictionary key. TryGetValue can supply the existing value with one lookup. This is retained only as informational because it is test helper code.",
+      "snippet": "if (!context.Items.ContainsKey(key))\n{\n    context.Items[key] = 1;\n}\nelse\n{\n    var item = context.Items[key];",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F170",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Http/Http.Abstractions/test/UseWhenExtensionsTests.cs",
+      "line_start": 151,
+      "line_end": 156,
+      "project": "Microsoft.AspNetCore.Http.Abstractions.Tests",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "The Count test helper checks key membership before reading the same dictionary entry.",
+      "explanation": "ContainsKey(key) and context.Items[key] probe the same IDictionary key during one helper call. TryGetValue would avoid the duplicate lookup. This is retained only as informational test-code evidence.",
+      "snippet": "if (!context.Items.ContainsKey(key))\n{\n    return 0;\n}\n\nvar item = context.Items[key];",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

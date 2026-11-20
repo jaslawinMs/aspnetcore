@@ -1,0 +1,75 @@
+{
+  "findings": ["F169", "F170"],
+  "status": "PENDING; unchanged preparation, no implementation or performance decision",
+  "nativeFilter": "FullyQualifiedName~Microsoft.AspNetCore.Builder.Extensions.UseWhenExtensionsTests",
+  "nativeCases": [
+    "Microsoft.AspNetCore.Builder.Extensions.UseWhenExtensionsTests.NullArguments_ArgumentNullException",
+    "Microsoft.AspNetCore.Builder.Extensions.UseWhenExtensionsTests.PredicateTrue_BranchTaken_WillRejoin",
+    "Microsoft.AspNetCore.Builder.Extensions.UseWhenExtensionsTests.PredicateTrue_BranchTaken_CanTerminate",
+    "Microsoft.AspNetCore.Builder.Extensions.UseWhenExtensionsTests.PredicateFalse_PassThrough"
+  ],
+  "nativeBoundary": {
+    "owner": "Unmodified source-built Microsoft.AspNetCore.Http.Abstractions.Tests.dll private Increment and Count helpers; public UseWhen/Use and source-built Microsoft.AspNetCore.Http.dll ApplicationBuilder/DefaultHttpContext/ItemsDictionary own pipeline and Items production.",
+    "producer": "CreateBuilder creates real ApplicationBuilder. UseWhen immediately configures real child builders; Build appends main to branch, builds delegates and reverse-composes middleware. Native tests invoke the resulting RequestDelegate with their actual DefaultHttpContext.",
+    "observable": "Exact parent/child/grandchild counts after genuine rejoin, terminating grandchild and false predicate; argument-null exceptions for predicate/configuration.",
+    "coverageLimit": "Each native pipeline test has a new context and increments each reached named key once. Existing native tests establish absent writes and both present and absent reads, NOT the existing-int/null/wrong-type increment branches or repeated business-request frequency.",
+    "staticPerCase": [
+      {"case": "PredicateTrue_BranchTaken_WillRejoin", "incrementFactories": 3, "executedMiddlewareBodies": 3, "countHelperCalls": 3, "expectedCounts": {"parent": 1, "child": 1, "grandchild": 1}, "defaultTerminalReachable": true},
+      {"case": "PredicateTrue_BranchTaken_CanTerminate", "incrementFactories": 3, "executedMiddlewareBodies": 1, "countHelperCalls": 3, "expectedCounts": {"parent": 0, "child": 0, "grandchild": 1}, "defaultTerminalReachable": false},
+      {"case": "PredicateFalse_PassThrough", "incrementFactories": 2, "executedMiddlewareBodies": 1, "countHelperCalls": 2, "expectedCounts": {"parent": 1, "child": 0}, "defaultTerminalReachable": true}
+    ],
+    "staticCountQualification": "Source-derived calls for one invocation of each fixed native test only, not measured operation counters, production traffic, hotness or a suite-speedup estimate."
+  },
+  "items": {
+    "declared": "HttpContext.Items is replaceable IDictionary<object, object?>; helper keys are non-nullable string and native keys are the literals parent, child, grandchild.",
+    "actualDefaultProducer": "DefaultHttpContext lazily fetches IItemsFeature using new ItemsFeature(); ItemsFeature constructs ItemsDictionary; ItemsDictionary lazily creates Dictionary<object, object?> on first write.",
+    "comparer": "Default Dictionary<object, object?> uses EqualityComparer<object>.Default, observed as ObjectEqualityComparer<object>. String keys use case-sensitive value equality, not reference equality. This is not a universal comparer promise for caller-supplied Items replacements.",
+    "missing": "ItemsDictionary indexer returns null for missing keys, not KeyNotFoundException. ContainsKey returns false without creating backing storage when storage is uninitialized.",
+    "otherProducer": "ApplicationBuilder's actual default terminal writes __RequestUnhandled=true and sets 404 when response has not started. It is not executed when Increment's terminate flag short-circuits. Supplemental checks observe this real terminal instead of injecting a next callback.",
+    "increment": "Increment factory captures key and terminate at pipeline configuration, returning middleware. Middleware runs only when its real branch is selected: absent=>boxed Int32 1; present boxed Int32 n=>1+n; present null or any non-Int32=>boxed Int32 1. Native defaults are unchecked, so MaxValue wraps to MinValue. It then returns Task.FromResult<object?>(null) if terminating, otherwise calls the Use-produced simpleNext function.",
+    "count": "Count is a post-execution private test reader, not production middleware: absent=>0; present boxed Int32=>that exact value; present null/non-Int32=>0; no writes.",
+    "nullKeyBoundary": "Helpers annotate string non-null. Diagnostic invalid-null Count on fresh uninitialized Items returns 0; first invalid-null pipeline write creates backing Dictionary then throws ArgumentNullException(paramName key); subsequent invalid-null Count throws the same exception type/parameter. These are private-helper/invalid-input characterizations, not valid HTTP-producer reachability.",
+    "excluded": "No replacement/custom Items dictionaries, concurrent mutation, null HttpContext, browser/server transport, or external traffic was executed."
+  },
+  "supplementalCases": [
+    "F169F170.RealPipeline.RepeatedContextAndFreshContext",
+    "F169F170.RealPipeline.SeededIntZero",
+    "F169F170.RealPipeline.SeededIntPositive",
+    "F169F170.RealPipeline.SeededIntNegative",
+    "F169F170.RealPipeline.SeededIntMaxValueUnchecked",
+    "F169F170.RealPipeline.SeededNullResetsToOne",
+    "F169F170.RealPipeline.SeededStringResetsToOne",
+    "F169F170.RealPipeline.SeededInt64ResetsToOne",
+    "F169F170.RealPipeline.StringCaseAndValueEquality",
+    "F169F170.RealPipeline.TerminationSkipsParentAndDefaultTerminal",
+    "F169F170.RealPipeline.FalseBranchLeavesSeededNullUntouched",
+    "F169F170.PrivateHelperAndRealPipeline.NullKeyLazyVersusInitialized"
+  ],
+  "supplementalBoundary": {
+    "implementation": "One C#13 executable compiled successfully once, zero warnings, using normal analyzer defaults. It references source-built owner DLLs from Original37, dynamically resolves each role's actual native image and reflects actual private helper methods from that role's compiled native test DLL. No helper body is copied and no new framework IVT or UnsafeAccessor is used.",
+    "producer": "Reflection directly invokes only the private Increment factory and Count reader. The actual returned middleware is registered in real source-built UseWhen/Use and executed by its real public ApplicationBuilder-built RequestDelegate. Present/seeded/repeated states are explicit diagnostic setups, not claimed native-test or business-traffic preconditions.",
+    "commonIdentity": "Identical common DLL/PDB/deps/runtimeconfig and common inputs across roles; no role-specific fixture recompilation. Initial --no-restore attempt failed for missing assets before compilation; the single later compile succeeded.",
+    "runtime": "Both separate supplemental consoles and SDK/VSTest runners actually use runtime57. Native assertions instead execute on Original runtime62 and Default runtime69. Hostfxr65 is a loader and is never relabeled as assertion CoreCLR/hostpolicy.",
+    "assertionCounts": "12 distinct supplemental names, 12 executions per role, 24 total; no extra unreported successful or failed supplemental attempt."
+  },
+  "tfmAndHistory": {
+    "tfm": "The actual owner and native test projects target DefaultNetCoreTargetFramework=net12.0, single target in each role. IDictionary.TryGetValue is already implemented by the actual ItemsDictionary and is available on these native interface/runtime surfaces; no candidate or alternate-TFM compatibility claim was made.",
+    "language": "Native projects retain LangVersion=preview, Nullable=enable, CheckForOverflowUnderflow=false, EnableNETAnalyzers=true. Only the diagnostic consumer pins C#13 as requested; native language/analyzers were not disabled.",
+    "history": "Retained --follow history for the test helper file, UseWhen and ItemsDictionary plus an explicit helper-changing history query and full selected-path Original/default diff. Original37 trace reaches preexisting history; the freshly fetched default clone is shallow, so its root-like add diffs do not establish introduction dates.",
+    "docs": "BuildFromSource, BuildErrors, CrossCuttingGuidance, Http area build.cmd, actual project/props/global.json and root instructions are selected. No applicable root/Http AGENTS.md existed at the inspected paths."
+  },
+  "failures": [
+    "Both initial --no-restore native builds: missing generated artifacts\\bin\\GenerateFiles\\Directory.Build.props (MSB4019). Normal private GenerateFiles build/GenerateDirectoryBuildFiles repaired only after the actual failure.",
+    "Both normal dependency-aware native builds: missing ANCM native asset at IIS project ValidateNativeComponentsBuilt. Retry retained only /p:UseIisNativeAssets=false. No JS/static-assets/analyzer exclusions were needed.",
+    "Common initial --no-restore build: missing obj\\project.assets.json (NETSDK1004). Restored only after failure, then one successful common compile.",
+    "Default initial native test attempt: exact runtime69 missing, failed/aborted before any case. Raw zero-row failed TRX and both streams remain selected. Only afterward privately copied the explicitly provided runtime69, 198 all-file hashes verified including CoreLib 09dc73d8b850905f8250c160732cedeb532349827e59267bf04b0f59b0d55af8; no runtime override or machine install."
+  ],
+  "limitations": [
+    "No candidate, bug-fix red/green, benchmark, counters, profiler, timing/allocation comparison or performance verdict.",
+    "Shared host and shared SDK/host/runtime/package-cache paths are explicitly declared; private clones, restore outputs, CLI/scratch/HTTP/plugin caches are isolated. No host-idleness claim.",
+    "Startup-hook identities are bounded actual assembly/module observations in the named processes, not an exhaustive execution closure. Native testhost snapshots occur at actual owner-load events; testhost exit is established by awaited native roots and fresh known-PID checks.",
+    "Portable auditor freshly parses selected PE/PDB/raw source/XML and verifies declared all-key inventories/differences from saved hashes. Omitted bytes are not freshly rehashed by the portable auditor and no full compiler-input or runnable whole-image closure is claimed.",
+    "Early inspection Git/gh/PowerShell calls precede the detailed recorder and lack captured OS-root PIDs/environment/streams as files; all native .NET build/test/compile/runtime attempts are fully recorded thereafter.",
+    "No remote work, services, agents, shipping/permanent-test edits, source commits, GitHub writes, shared ledger/policy/result writes, or finalization of either candidate."
+  ]
+}
