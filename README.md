@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 155/358 finalized**: 77 drafts, 26 no-gain, 27 rejected and 25 duplicates;
-203 findings remain unfinished.
+**Progress: 156/358 finalized**: 77 drafts, 26 no-gain, 28 rejected and 25 duplicates;
+202 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F134 | Not admitted: no material optimization established for the real owned List and loaded LINQ Count fast path.10 producer cases/pin,6 exact default test executions; residual cost unmeasured, not measured no-gain.0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#178](https://github.com/jaslawinMs/aspnetcore/issues/178) | [WebSocket emptiness evidence](F134/README.md), [verified publication](F134/publication.json) |
 | F151 | Not admitted: Contains membership; no material value-type T producer established in real MVC. Helper-only comparer contract differences are not shipping reachability proof.183 assertions/pin, canonical3/3 tests per role plus explicit fallback preserved;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#177](https://github.com/jaslawinMs/aspnetcore/issues/177) | [Bounded MVC equality study](CopyOnWriteEquality/README.md), [verified publication](CopyOnWriteEquality/publication.json) |
 | F152 | Not admitted: IndexOf first matching index/-1; no material value-type T producer established in real MVC. Helper-only comparer contract differences are not shipping reachability proof.183 assertions/pin, canonical3/3 tests per role plus explicit fallback preserved;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#177](https://github.com/jaslawinMs/aspnetcore/issues/177) | [Bounded MVC equality study](CopyOnWriteEquality/README.md), [verified publication](CopyOnWriteEquality/publication.json) |
 | F142 | Inconclusive, no performance PR: numerical168B/op(7.394%) difference but common measurement DLL/PDB differ; frozen image-identity gate fails. Three closed pairs/630 samples,42 serialized children;25/25 existing tests per source and14-row fresh untimed rebuild do not repair historical timing. [Tracking jaslawinMs/aspnetcore#176](https://github.com/jaslawinMs/aspnetcore/issues/176) | [Parameter-array measurement isolation](F142/README.md), [final identity adjudication](F142/final-qualification.json), [verified publication](F142/publication.json) |
