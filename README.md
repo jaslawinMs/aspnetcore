@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 159/358 finalized**: 78 drafts, 26 no-gain, 30 rejected and 25 duplicates;
-199 findings remain unfinished.
+**Progress: 160/358 finalized**: 78 drafts, 26 no-gain, 31 rejected and 25 duplicates;
+198 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F146 | Sample/workload-specific pooling not admitted:4KB source buffer is once per accepted handler and reused across reads; material churn/benefit unestablished, not measured no-gain.6 real managed HTTP3 XML rows; extracted handler, not compiled sample/nativeQUIC/browser;12 raw source/PDB checksum checks,61 non-owner differences reject causal timing;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#183](https://github.com/jaslawinMs/aspnetcore/issues/183) | [WebTransport sample-buffer evidence](F146/README.md), [verified publication](F146/publication.json) |
 | F137 | Informational cold-initialization modernization, not admitted: real dictionary double probe, but no material startup/resource workload or gain established; not measured no-gain.20 exact native XML rows and18 real accepted producer cases/pin; wrong probe preserved,367 non-owner differences/runtime mismatch reject causal timing;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#182](https://github.com/jaslawinMs/aspnetcore/issues/182) | [Precompiled-view initialization evidence](F137/README.md), [verified publication](F137/publication.json) |
 | F135 | Not admitted: no material optimization established for genuine output-cache Dictionary and selected LINQ Count fast path; residual cost unmeasured, not measured no-gain.54 real middleware rows,6 exact existing tests with62/68 distinction,67 non-owner differences reject causal pairing;0 comparisons/no PR. [Tracking jaslawinMs/aspnetcore#181](https://github.com/jaslawinMs/aspnetcore/issues/181) | [Dictionary emptiness evidence](F135/README.md), [verified publication](F135/publication.json) |
 | F145 | [Draft jaslawinMs/aspnetcore#180](https://github.com/jaslawinMs/aspnetcore/pull/180), [tracking jaslawinMs/aspnetcore#179](https://github.com/jaslawinMs/aspnetcore/issues/179); focused IIS test asset: full200M-character Kestrel request14.88%/15.71%less time on independent fixed source/runtime pairs,7/7favorable each; unchanged65kcontrols0.98356/0.97576 pass.2closed comparisons/56retained scalar timings,4real functional variants,owner-only137-file pairs,portable source/PDB and independent arithmetic. No allocation/nativeIIS/wholeCI/application claim; named native test not run, not merge-ready | [Fixed UTF-8 test-workload buffer](F145/README.md), [verified publication](F145/publication.json) |
