@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 194/358 finalized**: 78 drafts, 29 no-gain, 62 rejected and 25 duplicates;
-164 findings remain unfinished.
+**Progress: 198/358 finalized**: 78 drafts, 29 no-gain, 66 rejected and 25 duplicates;
+160 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,10 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F176 | **Rejected:** startup/initialization `MapControllers` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
+| F177 | **Rejected:** startup/initialization `MapDefaultControllerRoute` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
+| F178 | **Rejected:** startup/initialization `MapControllerRoute` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
+| F179 | **Rejected:** startup/initialization `DefaultViewCompiler.EnsureCompiledViews` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
 | F141 | **Rejected:** actual NativeAOT enumerator setup reached; material stream-setup workload unestablished. [Tracking jaslawinMs/aspnetcore#198](https://github.com/jaslawinMs/aspnetcore/issues/198) | [NativeAOT producer evidence](F141/README.md), [verified publication](F141/publication.json) |
 | F182 | **Rejected:** nonshipping `AddToRoleAsync` reverse-index redesign; live mutation/comparer/duplicate contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#197](https://github.com/jaslawinMs/aspnetcore/issues/197) | [Role-name evidence](F182-F186/README.md), [verified publication](F182-F186/publication.json) |
 | F183 | **Rejected:** nonshipping `RemoveFromRoleAsync` reverse-index redesign; live mutation/comparer/duplicate contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#197](https://github.com/jaslawinMs/aspnetcore/issues/197) | [Role-name evidence](F182-F186/README.md), [verified publication](F182-F186/publication.json) |
