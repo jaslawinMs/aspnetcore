@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 173/358 finalized**: 78 drafts, 28 no-gain, 42 rejected and 25 duplicates;
-185 findings remain unfinished.
+**Progress: 176/358 finalized**: 78 drafts, 28 no-gain, 45 rejected and 25 duplicates;
+182 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F163 | Not admitted: cached per-Type collision metadata; material cache-miss optimization unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
+| F164 | Not admitted: asset-label initialization/first-duplicate contract; material constructor benefit unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
+| F165 | Not admitted: valid public scoped merge, but internal convention supplies null scopes; material scoped workload unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
 | F153 | Not admitted: real request byte-read fallback/sync gate, but material workload and useful override unestablished. Original-only execution; default limits explicit. [Tracking jaslawinMs/aspnetcore#190](https://github.com/jaslawinMs/aspnetcore/issues/190) | [Request-byte contract study](F153-F154/README.md), [verified publication](F153-F154/publication.json) |
 | F154 | Not admitted: request wrapper writes are unsupported after the sync gate; no successful byte-write workload established. Original-only execution; default limits explicit. [Tracking jaslawinMs/aspnetcore#190](https://github.com/jaslawinMs/aspnetcore/issues/190) | [Request-byte contract study](F153-F154/README.md), [verified publication](F153-F154/publication.json) |
 | F155 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
