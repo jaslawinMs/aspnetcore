@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 176/358 finalized**: 78 drafts, 28 no-gain, 45 rejected and 25 duplicates;
-182 findings remain unfinished.
+**Progress: 179/358 finalized**: 78 drafts, 28 no-gain, 48 rejected and 25 duplicates;
+179 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F160 | Not admitted: already consumes TryGetValue result for first-candidate diagnostics. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
+| F161 | Not admitted: membership-only dictionary admits a plausible set simplification, but material compiler benefit is unestablished. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
+| F162 | Not admitted: membership-only dictionary admits a plausible set simplification, but material compiler benefit is unestablished. [Tracking jaslawinMs/aspnetcore#192](https://github.com/jaslawinMs/aspnetcore/issues/192) | [Generator collision/TFM study](F160-F162/README.md), [verified publication](F160-F162/publication.json) |
 | F163 | Not admitted: cached per-Type collision metadata; material cache-miss optimization unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
 | F164 | Not admitted: asset-label initialization/first-duplicate contract; material constructor benefit unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
 | F165 | Not admitted: valid public scoped merge, but internal convention supplies null scopes; material scoped workload unestablished. [Tracking jaslawinMs/aspnetcore#191](https://github.com/jaslawinMs/aspnetcore/issues/191) | [Metadata/import-map study](F163-F165/README.md), [verified publication](F163-F165/publication.json) |
