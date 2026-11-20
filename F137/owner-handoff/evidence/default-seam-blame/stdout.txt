@@ -1,0 +1,31 @@
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 55)         // This is our L0 cache, and is a durable store. Views migrate into the cache as they are requested
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 56)         // from either the set of known precompiled views, or by being compiled.
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 57)         _cache = new MemoryCache(new MemoryCacheOptions());
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 58) 
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 59)         // We need to validate that the all of the precompiled views are unique by path (case-insensitive).
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 60)         // We do this because there's no good way to canonicalize paths on windows, and it will create
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 61)         // problems when deploying to linux. Rather than deal with these issues, we just don't support
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 62)         // views that differ only by case.
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 63)         _precompiledViews = new Dictionary<string, CompiledViewDescriptor>(
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 64)             precompiledViews.Count,
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 65)             StringComparer.OrdinalIgnoreCase);
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 66) 
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 67)         foreach (var precompiledView in precompiledViews)
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 68)         {
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 69)             Log.ViewCompilerLocatedCompiledView(_logger, precompiledView.RelativePath);
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 70) 
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 71)             if (!_precompiledViews.ContainsKey(precompiledView.RelativePath))
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 72)             {
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 73)                 // View ordering has precedence semantics, a view with a higher precedence was
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 74)                 // already added to the list.
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 75)                 _precompiledViews.Add(precompiledView.RelativePath, precompiledView);
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 76)             }
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 77)         }
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 78) 
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 79)         if (_precompiledViews.Count == 0)
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 80)         {
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 81)             Log.ViewCompilerNoCompiledViewsFound(_logger);
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 82)         }
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 83)     }
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 84) 
+^00560e2dd1 (Ans Elgyar 2026-11-20 08:50:57 +0200 85)     public Task<CompiledViewDescriptor> CompileAsync(string relativePath)

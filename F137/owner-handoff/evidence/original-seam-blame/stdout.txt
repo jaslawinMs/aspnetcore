@@ -1,0 +1,31 @@
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 55)         // This is our L0 cache, and is a durable store. Views migrate into the cache as they are requested
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 56)         // from either the set of known precompiled views, or by being compiled.
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 57)         _cache = new MemoryCache(new MemoryCacheOptions());
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 58) 
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 59)         // We need to validate that the all of the precompiled views are unique by path (case-insensitive).
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 60)         // We do this because there's no good way to canonicalize paths on windows, and it will create
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 61)         // problems when deploying to linux. Rather than deal with these issues, we just don't support
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 62)         // views that differ only by case.
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 63)         _precompiledViews = new Dictionary<string, CompiledViewDescriptor>(
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 64)             precompiledViews.Count,
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 65)             StringComparer.OrdinalIgnoreCase);
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 66) 
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 67)         foreach (var precompiledView in precompiledViews)
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 68)         {
+bc1efeb10b src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (David Acker 2022-01-20 08:44:22 -0500 69)             Log.ViewCompilerLocatedCompiledView(_logger, precompiledView.RelativePath);
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 70) 
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 71)             if (!_precompiledViews.ContainsKey(precompiledView.RelativePath))
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 72)             {
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 73)                 // View ordering has precedence semantics, a view with a higher precedence was
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 74)                 // already added to the list.
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 75)                 _precompiledViews.Add(precompiledView.RelativePath, precompiledView);
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 76)             }
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 77)         }
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 78) 
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 79)         if (_precompiledViews.Count == 0)
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 80)         {
+bc1efeb10b src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (David Acker 2022-01-20 08:44:22 -0500 81)             Log.ViewCompilerNoCompiledViewsFound(_logger);
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 82)         }
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 83)     }
+0f072a9565 src/Mvc/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/RuntimeViewCompiler.cs (Pranav K    2019-01-29 09:34:43 -0800 84) 
+a450cb69b5 src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs                      (Pranav K    2021-11-05 17:52:08 -0700 85)     public Task<CompiledViewDescriptor> CompileAsync(string relativePath)

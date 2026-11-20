@@ -1,0 +1,45 @@
+{
+  "attempt001": {
+    "toolSession": "f137-freeze-and-verify",
+    "exitCode": 1,
+    "manifest": "..\\frozen-files.json",
+    "manifestSha256": "1341b0fe0cb2d9fd558a99a8f79cde94336f2b1300700ac6f07e3601ec47a2fc",
+    "payloadFiles": 3992,
+    "actualConsumerImageFiles": 3592,
+    "recordedPayloadBytes": null,
+    "sumOfSerializedActualFileLengths": 363370470,
+    "sealerStdout": "attempt001-freeze-stdout.txt",
+    "rawVerifierFailure": "Exception: commands\\Verify-Frozen.ps1:34; Manifest count/length total mismatch",
+    "failurePhase": "After its independent full payload hash/read-only checks, before producer/TRX/PID reconciliation.",
+    "cause": "Measure-Object length -Sum did not read the length key of ordered dictionaries and returned null. A minimal ordered dictionary with length=123 reproduced a null measured Sum.",
+    "preservation": "All original payload entries, first manifest, first SHA envelope, scripts, outcomes and read-only attributes remain unchanged. The final additive manifest includes the original failed manifest and envelope as evidence."
+  },
+  "diagnostic001": {
+    "toolSession": "f137-seal-aggregate-diagnosis",
+    "exitCode": 1,
+    "rawFailure": "InvalidOperation: You cannot call a method on a null-valued expression.",
+    "cause": "The diagnostic called GetType() on the null aggregate payloadBytes. It made no artifact or consumer changes."
+  },
+  "diagnostic002": {
+    "toolSession": "f137-seal-aggregate-confirmed",
+    "exitCode": 0,
+    "manifestPayloadFileCount": 3992,
+    "actualEntryCount": 3992,
+    "manifestPayloadBytes": null,
+    "sumOfSerializedFileLengths": 363370470,
+    "manifestByteTotalIsNull": true,
+    "originalManifestStillReadOnly": true,
+    "firstVerificationReceiptExists": false,
+    "minimalOrderedDictionaryLength": 123,
+    "minimalOrderedDictionaryMeasuredSum": null,
+    "recordedNativeCommands": 65,
+    "everyObservedNativePidTerminal": true,
+    "terminalProcessObservations": 444
+  },
+  "attempt002": {
+    "scope": "Small additive metadata/sealing correction only; no source, image, common consumer, native test result, hold receipt, or original 65-root provenance changes.",
+    "fix": "Explicit Int64 accumulation of each serialized file length; independently rehash every final selected payload file and reconcile each native TRX result and producer outcome.",
+    "finalStatusEvidence": "verification.json",
+    "finalManifest": "frozen-files.json"
+  }
+}

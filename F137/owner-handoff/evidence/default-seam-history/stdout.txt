@@ -1,0 +1,13 @@
+commit 00560e2dd1954a2acf2bc54b35422b0f32484bf1
+Author:     Ans Elgyar <anselgyar27@gmail.com>
+AuthorDate: Fri Nov 20 08:50:57 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Nov 20 06:50:57 2026 +0000
+
+    Include parameter default value in RDG endpoint comparison (#69752)
+    
+    Endpoints whose handlers differ only by a parameter's default value (for example (int page = 1) and (int page = 2)) were treated as equal and grouped under a single interceptor. The interceptor casts the handler to the first endpoint's delegate type, so the second endpoint threw an InvalidCastException at startup.
+    
+    Compare HasDefaultValue and DefaultValue in EndpointParameter.Equals and GetHashCode so these endpoints get separate interceptors.
+    
+    Fixes #69675
