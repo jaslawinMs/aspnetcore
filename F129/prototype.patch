@@ -1,0 +1,22 @@
+diff --git "a/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F129\\images\\Original\\source\\src\\Components\\Media\\src\\FileDownload.cs" "b/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F129\\images\\Prototype\\source\\src\\Components\\Media\\src\\FileDownload.cs"
+index 00838f60ca..aabba0002d 100644
+--- "a/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F129\\images\\Original\\source\\src\\Components\\Media\\src\\FileDownload.cs"
++++ "b/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-runs\\F129\\images\\Prototype\\source\\src\\Components\\Media\\src\\FileDownload.cs"
+@@ -76,16 +76,7 @@ public sealed class FileDownload : MediaComponentBase
+         IEnumerable<KeyValuePair<string, object>>? attributesToRender = AdditionalAttributes;
+         if (AdditionalAttributes is not null && AdditionalAttributes.ContainsKey("href"))
+         {
+-            var copy = new Dictionary<string, object>(AdditionalAttributes.Count);
+-            foreach (var kvp in AdditionalAttributes)
+-            {
+-                if (kvp.Key == "href")
+-                {
+-                    continue;
+-                }
+-                copy.Add(kvp.Key, kvp.Value!);
+-            }
+-            attributesToRender = copy;
++            attributesToRender = System.Linq.Enumerable.Where(AdditionalAttributes, static kvp => kvp.Key != "href");
+         }
+         builder.AddMultipleAttributes(6, attributesToRender);
+ 

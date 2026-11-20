@@ -1,0 +1,12 @@
+@@ -115,6 +115,11 @@ private async Task OnClickAsync()
+ 
+         try
+         {
++            if (source.Stream.CanSeek)
++            {
++                source.Stream.Position = 0;
++            }
++
+             var result = await JSRuntime.InvokeAsync<bool>(
+                 "Blazor._internal.BinaryMedia.downloadAsync",
+                 token,

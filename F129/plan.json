@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "findingId": "F129",
+  "sealedAt": "2026-11-20T01:11:28.684Z",
+  "kind": "Managed semantic investigation with one explicitly throwaway unbuffered-filter prototype; not a shipping implementation",
+  "baselineCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualDefaultCommit": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+  "sourceBranch": "autoperf/F129-characterize-download-attribute-snapshot",
+  "finding": {
+    "card_id": "enumerable-materialized-before-single-use",
+    "file": "src/Components/Media/src/FileDownload.cs",
+    "line_start": 79,
+    "line_end": 90,
+    "project": "Microsoft.AspNetCore.Components.Media",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "low",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "Rendering copies all additional attributes into a dictionary only to enumerate it once.",
+    "explanation": "When AdditionalAttributes contains href, BuildRenderTree allocates and populates a new Dictionary solely to omit that key, then immediately passes the dictionary to AddMultipleAttributes for one enumeration. The component render path can execute repeatedly. A filtered single-pass representation could avoid the temporary collection if AddMultipleAttributes consumption and mutation-snapshot semantics remain unchanged.",
+    "snippet": "var copy = new Dictionary<string, object>(AdditionalAttributes.Count);\n// copy all entries except href\nattributesToRender = copy;\nbuilder.AddMultipleAttributes(6, attributesToRender);",
+    "suppressed": false
+  },
+  "question": "Does replacing conditional dictionary materialization with a lazy ordinal href filter preserve actual FileDownload rendering?",
+  "prototype": "Change only the contents of the existing href-present branch to attributesToRender = AdditionalAttributes.Where(static kvp => kvp.Key != \"href\");. Keep the branch condition, all other rendering, and source-provided comparer behavior.",
+  "acceptance": [
+    "Use the actual source-built FileDownload, MediaComponentBase, RenderTreeBuilder and public HtmlRenderer through normal component parameter delivery.",
+    "Verify the unchanged baseline and the genuine actual-default test dependency graph before any prototype edit.",
+    "Run all seven existing FileDownloadTest cases on original, actual default, prototype and restored original, preserving every XML result.",
+    "Use one compiled common private C# 13 harness for all source images. Record actual loaded assembly locations, hashes and MVIDs.",
+    "Run the nine declared profiles three times each using fresh components, fresh MediaSource streams, actual rendering and actual object-value ToString dispatch.",
+    "Require exact inert-href/class behavior in ordinary cases, actual mutation reachability, and the same final HTML or exception behavior in the mutation cases. Do not invoke ToString or BuildRenderTree directly.",
+    "For a rejected prototype, restore the exact original bytes, rebuild, and rerun the same assertions. Do not retain shipping edits, permanent tests or a source PR."
+  ],
+  "profiles": [
+    "NoAttributes",
+    "OrdinaryNoHref",
+    "OrdinaryWithHref",
+    "UppercaseHrefOrdinalIgnoreCase",
+    "ReplaceValueWithHref",
+    "ReplaceValueWithoutHref",
+    "AddKeyWithHref",
+    "AddKeyWithoutHref",
+    "ChildContentWithHref"
+  ],
+  "repetitions": 3,
+  "baselineExpectations": {
+    "ReplaceValueWithHref": "Real ToString updates the supplied source dictionary, but the rendered data-after remains before, from the eager copy.",
+    "ReplaceValueWithoutHref": "Nearest opposite: no conditional copy; rendered data-after becomes after.",
+    "AddKeyWithHref": "Real ToString inserts a new source key; original still finishes rendering its detached snapshot and omits the late key.",
+    "AddKeyWithoutHref": "Nearest opposite: the direct source enumeration reports InvalidOperationException after the real insertion.",
+    "ChildContentWithHref": "Custom content bypasses default attribute processing; the mutating value must not be converted."
+  },
+  "dispositionRules": [
+    "If a declared ordinary or snapshot assertion differs, reject this unbuffered recommendation without timing or publishing an optimization PR.",
+    "A rejection does not establish that all buffered/list/array/pooling/constructor optimizations are impossible; those are not established or measured by this case.",
+    "If every assertion is equivalent, do not improvise timing: seal a separate fixed benchmark plan and accepted source before consuming any comparison authorization."
+  ],
+  "validationBoundary": {
+    "behaviorOwner": "FileDownload.BuildRenderTree plus RenderTreeBuilder.AddMultipleAttributes and AddAttribute(object)",
+    "productionProducer": "Normal renderer parameter assignment followed by actual element-attribute value.ToString conversion; the application-owned value performs the source-dictionary mutation.",
+    "finalObservable": "Actual HtmlRenderer HTML output or actual renderer exception, plus observed ToString call and dictionary mutation counts.",
+    "permanentSurface": "None for a research rejection. Any later shipping implementation must follow the Components sample and permanent coverage workflow.",
+    "excluded": "No browser download, JS interop, DOM/layout, Server/WASM/Auto lifecycle, latency, throughput, memory-savings or general application safety claim.",
+    "falsePassRisk": "A copied render loop, string-only attributes, a callback invoked directly by the probe, or unchanged ordinary tests alone would not establish actual conversion reachability or snapshot equivalence."
+  },
+  "timingBudget": {
+    "maximumAuthorizations": 3,
+    "authorizations": [],
+    "performed": 0,
+    "timingPermittedForThisSemanticPlan": false
+  },
+  "machinePolicy": "Shared box; no power, affinity, priority, firewall, URL ACL or other machine setting changes; no concurrent overlapping builds."
+}
