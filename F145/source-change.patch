@@ -1,0 +1,17 @@
+diff --git a/src/Servers/IIS/IIS/test/testassets/InProcessWebSite/Startup.cs b/src/Servers/IIS/IIS/test/testassets/InProcessWebSite/Startup.cs
+index d08b10ae1e..3c86dfaffc 100644
+--- a/src/Servers/IIS/IIS/test/testassets/InProcessWebSite/Startup.cs
++++ b/src/Servers/IIS/IIS/test/testassets/InProcessWebSite/Startup.cs
+@@ -978,10 +978,11 @@ public partial class Startup
+         var tempFile = System.IO.Path.GetTempFileName();
+         var fileContent = new string('a', 200000);
+         var fileStream = File.OpenWrite(tempFile);
++        var fileContentBytes = Encoding.UTF8.GetBytes(fileContent);
+ 
+         for (var i = 0; i < 1000; i++)
+         {
+-            await fileStream.WriteAsync(Encoding.UTF8.GetBytes(fileContent), 0, fileContent.Length);
++            await fileStream.WriteAsync(fileContentBytes, 0, fileContent.Length);
+         }
+         fileStream.Close();
+ 

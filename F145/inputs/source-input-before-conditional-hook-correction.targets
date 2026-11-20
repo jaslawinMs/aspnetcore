@@ -1,0 +1,17 @@
+<Project>
+  <Import Project="$(AutoPerfPriorAfterCommonTargets)" Condition="'$(AutoPerfPriorAfterCommonTargets)' != ''" />
+  <Target Name="AutoPerfSelectF145Source" BeforeTargets="CoreCompile" Condition="'$(MSBuildProjectName)' == 'InProcessWebSite'">
+    <Error Condition="'$(AutoPerfPriorAfterCommonTargets)' == ''" Text="The pre-existing SDK import must be preserved." />
+    <Error Condition="!Exists('$(AutoPerfStartupSource)')" Text="The exact selected Startup source must exist." />
+    <ItemGroup>
+      <_AutoPerfStartupBefore Include="@(Compile)" Condition="'%(Compile.Filename)%(Compile.Extension)' == 'Startup.cs'" />
+    </ItemGroup>
+    <Error Condition="'@(_AutoPerfStartupBefore->Count())' != '1'" Text="Exactly one existing Startup compilation input is required." />
+    <WriteLinesToFile File="$(AutoPerfCompileItemsRecord).before.txt" Lines="@(Compile->'%(FullPath)')" Overwrite="true" Encoding="UTF-8" />
+    <ItemGroup>
+      <Compile Remove="@(_AutoPerfStartupBefore)" />
+      <Compile Include="$(AutoPerfStartupSource)" Link="Startup.cs" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(AutoPerfCompileItemsRecord).after.txt" Lines="@(Compile->'%(FullPath)')" Overwrite="true" Encoding="UTF-8" />
+  </Target>
+</Project>
