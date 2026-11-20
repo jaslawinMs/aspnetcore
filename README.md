@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 171/358 finalized**: 78 drafts, 28 no-gain, 40 rejected and 25 duplicates;
-187 findings remain unfinished.
+**Progress: 173/358 finalized**: 78 drafts, 28 no-gain, 42 rejected and 25 duplicates;
+185 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F153 | Not admitted: real request byte-read fallback/sync gate, but material workload and useful override unestablished. Original-only execution; default limits explicit. [Tracking jaslawinMs/aspnetcore#190](https://github.com/jaslawinMs/aspnetcore/issues/190) | [Request-byte contract study](F153-F154/README.md), [verified publication](F153-F154/publication.json) |
+| F154 | Not admitted: request wrapper writes are unsupported after the sync gate; no successful byte-write workload established. Original-only execution; default limits explicit. [Tracking jaslawinMs/aspnetcore#190](https://github.com/jaslawinMs/aspnetcore/issues/190) | [Request-byte contract study](F153-F154/README.md), [verified publication](F153-F154/publication.json) |
 | F155 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
 | F156 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml_WithNoErrors uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
 | F157 | Not admitted: ReadXml_ReadsValidationProblemDetailsXml_WithEmptyErrorsElement uses one local serializer for one operation; material suite benefit and reusable lifetime/isolation unestablished. [Tracking jaslawinMs/aspnetcore#189](https://github.com/jaslawinMs/aspnetcore/issues/189) | [Per-Fact XML study](F155-F159/README.md), [verified publication](F155-F159/publication.json) |
