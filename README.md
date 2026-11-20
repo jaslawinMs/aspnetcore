@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 236/358 finalized**: 78 drafts, 31 no-gain, 77 rejected and 50 duplicates;
-122 findings remain unfinished.
+**Progress: 238/358 finalized**: 78 drafts, 31 no-gain, 79 rejected and 50 duplicates;
+120 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F214 | Rejected, scoped null-guard evidence | [jaslawinMs/aspnetcore#210](https://github.com/jaslawinMs/aspnetcore/issues/210): located string-key producers and inspected .NET 12 native guards do not substantiate the claimed boxing; not a whole-operation allocation or performance claim. [Evidence](F214-F236/README.md) |
+| F236 | Rejected, no material candidate established | [jaslawinMs/aspnetcore#210](https://github.com/jaslawinMs/aspnetcore/issues/210): cached metadata and small reviewed constructor fixture do not justify a replacement; 13 MVC source rows blocked before discovery, not passed. [Evidence](F214-F236/README.md) |
 | F202 | Duplicate generated helper | [jaslawinMs/aspnetcore#209](https://github.com/jaslawinMs/aspnetcore/issues/209): same emitted JSON helper as still-pending F201; no separate fix or performance claim. [Evidence](F201-F203-aliases/README.md) |
 | F203 | Duplicate generated helper | [jaslawinMs/aspnetcore#209](https://github.com/jaslawinMs/aspnetcore/issues/209): same emitted JSON helper as still-pending F201; no separate fix or performance claim. [Evidence](F201-F203-aliases/README.md) |
 | F198 | No qualified gain: inconclusive | [jaslawinMs/aspnetcore#208](https://github.com/jaslawinMs/aspnetcore/issues/208): completed 7-block study failed baseline drift controls; 1/3 permanently closed, no retry, Default comparison or PR. [Evidence](F198/README.md) |
