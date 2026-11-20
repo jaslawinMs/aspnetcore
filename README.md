@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 198/358 finalized**: 78 drafts, 29 no-gain, 66 rejected and 25 duplicates;
-160 findings remain unfinished.
+**Progress: 200/358 finalized**: 78 drafts, 29 no-gain, 68 rejected and 25 duplicates;
+158 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F194 | **Rejected:** nonshipping manifest `TestEntry` materialization; real producer/snapshot/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#200](https://github.com/jaslawinMs/aspnetcore/issues/200) | [Manifest helper evidence](F194-F195/README.md), [verified publication](F194-F195/publication.json) |
+| F195 | **Rejected:** nonshipping manifest `TestEntry` materialization; real producer/snapshot/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#200](https://github.com/jaslawinMs/aspnetcore/issues/200) | [Manifest helper evidence](F194-F195/README.md), [verified publication](F194-F195/publication.json) |
 | F176 | **Rejected:** startup/initialization `MapControllers` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
 | F177 | **Rejected:** startup/initialization `MapDefaultControllerRoute` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
 | F178 | **Rejected:** startup/initialization `MapControllerRoute` dictionary probes; real identity/order contracts accepted, material workload unestablished. [Tracking jaslawinMs/aspnetcore#199](https://github.com/jaslawinMs/aspnetcore/issues/199) | [MVC startup evidence](F176-F179/README.md), [verified publication](F176-F179/publication.json) |
