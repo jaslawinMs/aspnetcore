@@ -1,0 +1,83 @@
+[
+  {
+    "id": "F160",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Components/AI/gen/ToolBlockEmitter.cs",
+      "line_start": 188,
+      "line_end": 197,
+      "project": "Microsoft.AspNetCore.Components.AI.SourceGenerators",
+      "target_frameworks": [
+        "netstandard2.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Duplicate tool-name detection probes the same dictionary key before insertion.",
+      "explanation": "EmitRegistration calls TryGetValue for each tool name and then assigns that same key through the indexer on the non-duplicate path. Successful inserts therefore perform a lookup followed by another hash-table probe. This runs during source generation, so the occurrence is informational.",
+      "snippet": "if (seen.TryGetValue(c.ToolName, out var existing))\n{\n    ...\n}\nelse\n{\n    seen[c.ToolName] = c;\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F161",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Components/AI/gen/ToolBlockParser.cs",
+      "line_start": 136,
+      "line_end": 143,
+      "project": "Microsoft.AspNetCore.Components.AI.SourceGenerators",
+      "target_frameworks": [
+        "netstandard2.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Tool parameter parsing performs a dictionary membership probe before insertion.",
+      "explanation": "The source generator calls ContainsKey for each discovered tool parameter and then assigns the same key through the indexer. A successful new entry therefore performs separate lookup and insertion probes. TryAdd can preserve duplicate detection while avoiding the second probe; this is source-generation work, so it is informational.",
+      "snippet": "if (seenKeys.ContainsKey(argKey)) ... seenKeys[argKey] = prop.Name;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F162",
+    "finding": {
+      "card_id": "dictionary-containskey-before-indexer",
+      "file": "src/Components/AI/gen/ToolBlockParser.cs",
+      "line_start": 180,
+      "line_end": 187,
+      "project": "Microsoft.AspNetCore.Components.AI.SourceGenerators",
+      "target_frameworks": [
+        "netstandard2.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Tool result parsing performs a dictionary membership probe before insertion.",
+      "explanation": "The source generator calls ContainsKey for each discovered result key and then assigns that same key through the indexer. TryAdd can preserve the duplicate diagnostic and avoid a second dictionary probe. This runs during source generation and is therefore informational.",
+      "snippet": "if (seenResultKeys.ContainsKey(resultKey)) ... seenResultKeys[resultKey] = prop.Name;",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

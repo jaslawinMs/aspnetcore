@@ -1,0 +1,91 @@
+commit f43bd56c5d3d3579390ddf68887413fc02abc089
+Author:     Javier Calvarro Nelson <32700855+ilonatommy@users.noreply.github.com>
+AuthorDate: Fri Aug 21 16:22:45 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Aug 21 16:22:45 2026 +0200
+
+    [Blazor] Add Components.AI server tool rendering (#68327)
+    
+    * feat(ai): map server tool calls and results into blocks
+    
+    Map server-owned function calls into provider-neutral content blocks and pair each result by call ID, even when multiple invocations remain active. Custom Blazor renderers can observe the loading-to-result transition while unmatched server tools remain hidden by default.
+    
+    Keep UI actions ahead of generic function mapping so browser-owned tools preserve their execution path. The runtime continues to depend only on Microsoft.Extensions.AI and exposes no AG-UI protocol types.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * feat(ai-gen): generate typed tool block handlers
+    
+    Add ToolBlock, ToolParameter, and ToolResult contracts plus an incremental generator that emits strongly typed function handlers and consumer-local registration. Generated handlers bind call arguments and results, pair results by call ID, and fall back to the generic server-tool block when no typed tool matches.
+    
+    Diagnose invalid declarations at compile time, preserve incremental-generator cacheability, support escaped consumer namespaces, and package the analyzer with Components.AI. Deserialization failures surface instead of being silently swallowed, keeping malformed tool payloads observable.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * feat(dojo): render canonical weather tool results
+    
+    Rationale: demonstrate typed server-tool rendering across the real AG-UI HTTP/SSE boundary without moving execution into the client.
+    
+    Implementation: add the backend_tool_rendering endpoint and keyed client, execute get_weather on the API, bind its streamed JSON result to a generated WeatherToolBlock, and render the canonical weather card.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * test(ai): cover server tools and typed block generation
+    
+    Rationale: lock down call-id pairing, generated consumer compatibility, and the real dual-host weather path before adding its recorded model payload.
+    
+    Coverage: add concurrent server-tool mapping tests, generator diagnostics and compilation tests, and a browser scenario that replaces only the API model while preserving AG-UI HTTP/SSE transport.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * generated(ai): add weather tool recording
+    
+    Rationale: keep the deterministic model transcript separate from handwritten server-tool and browser-test code.
+    
+    Recording: capture the get_weather call and its continuation so the dual-host scenario runs without external credentials while retaining real API execution and AG-UI transport.
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    
+    * Address server tool rendering review feedback
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * fix(ai): pair same-update tool results
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    Copilot-Session: baddc46b-b86e-4be5-add2-1a7b3cac8195
+    
+    * Align generic server tool mapping
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Cover built-in mapping with `FunctionInvocationHandler` in E2E test, mark requests executed and observe no blocks created due to informational flagging of function call.
+    
+    ---------
+    
+    Co-authored-by: Milos Kotlar <kotlarmilos@gmail.com>
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    Co-authored-by: Ilona Tomkowicz <itomkowicz@microsoft.com>
+    Copilot-Session: 323b0ef8-7905-4041-8388-a08586c0bd34
+    Copilot-Session: baddc46b-b86e-4be5-add2-1a7b3cac8195
+
+ src/Components/AI/gen/DiagnosticDescriptors.cs                                              | 106 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Components/AI/gen/Microsoft.AspNetCore.Components.AI.SourceGenerators.csproj            |  26 +++++++++++++
+ src/Components/AI/gen/ToolBlockCandidate.cs                                                 | 280 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Components/AI/gen/ToolBlockEmitter.cs                                                   | 380 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Components/AI/gen/ToolBlockGenerator.cs                                                 |  49 ++++++++++++++++++++++++
+ src/Components/AI/gen/ToolBlockParser.cs                                                    | 280 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Components/AI/gen/test/Microsoft.AspNetCore.Components.AI.SourceGenerators.Tests.csproj |  19 +++++++++
+ src/Components/AI/gen/test/ToolBlockGeneratorTests.cs                                       | 340 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 8 files changed, 1480 insertions(+)
