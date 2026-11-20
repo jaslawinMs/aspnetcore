@@ -1,0 +1,164 @@
+{
+  "findingId": "F133",
+  "recordedAt": "2026-11-20T02:41:00.763Z",
+  "actualFinding": {
+    "card_id": "uncached-reflection-in-hot-path",
+    "file": "src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs",
+    "line_start": 56,
+    "line_end": 56,
+    "severity": "low",
+    "confidence": "medium",
+    "classification": "likely",
+    "hot_path": "moderate",
+    "tfm_sensitive": false,
+    "summary": "The non-default metadata path performs a property reflection lookup for each validation entry.",
+    "explanation": "GetChildren invokes IsUnionValueProperty for every child. When metadata is not DefaultModelMetadata, ContainerType.GetProperty(nameof(IUnion.Value)) is rediscovered inside that loop rather than cached per union type.",
+    "snippet": "metadata.ContainerType?.GetProperty(nameof(IUnion.Value))?.GetMethod",
+    "suppressed": false
+  },
+  "originalCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "actualCurrentDefault": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+  "actualSelectedGitTextEqualFiles": [
+    "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultUnionValidationStrategy.cs",
+    "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\ValidationVisitor.cs",
+    "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultComplexObjectValidationStrategy.cs",
+    "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadata.cs",
+    "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadataProvider.cs",
+    "src\\Mvc\\test\\Mvc.IntegrationTests\\UnionValidationIntegrationTest.cs",
+    "src\\Mvc\\test\\Mvc.IntegrationTests\\Microsoft.AspNetCore.Mvc.IntegrationTests.csproj"
+  ],
+  "actualSupplementalDefaultDeltas": [
+    {
+      "file": "src\\Mvc\\Mvc.Abstractions\\src\\ModelBinding\\ModelMetadata.cs",
+      "recordedDiff": "research/src_Mvc_Mvc.Abstractions_src_ModelBinding_ModelMetadata.cs.diff.txt",
+      "sha256": "238C4E1826BAAE4C5F7044198605B5A9F3F00A624CF0C1B8590E615FFDE52202"
+    }
+  ],
+  "actualPhysicalSnapshots": [
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultUnionValidationStrategy.cs",
+      "bytes": 2399,
+      "sha256": "A3AFB7F78F2EADB5FE4EA15AB793D9BA505AADD7F8ABC48F3A16FAA618EAA8F1"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultUnionValidationStrategy.cs",
+      "bytes": 2399,
+      "sha256": "A3AFB7F78F2EADB5FE4EA15AB793D9BA505AADD7F8ABC48F3A16FAA618EAA8F1"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\ValidationVisitor.cs",
+      "bytes": 22710,
+      "sha256": "3DD753DEAC0BABF66B41E247C6134649CA4F54A36250EF0C8CA0D3CB535C3682"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\ValidationVisitor.cs",
+      "bytes": 22710,
+      "sha256": "3DD753DEAC0BABF66B41E247C6134649CA4F54A36250EF0C8CA0D3CB535C3682"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultComplexObjectValidationStrategy.cs",
+      "bytes": 4589,
+      "sha256": "A68BEC4048C2E7C9CB85F064464D9715A41302AEDA925333C86B6C2B1CCCD4C3"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Validation\\DefaultComplexObjectValidationStrategy.cs",
+      "bytes": 4589,
+      "sha256": "A68BEC4048C2E7C9CB85F064464D9715A41302AEDA925333C86B6C2B1CCCD4C3"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadata.cs",
+      "bytes": 19994,
+      "sha256": "942EF85AD8AD7853AEAE3B4B1497BFD73A5FFF566750ADD532ED63D47857861F"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadata.cs",
+      "bytes": 19994,
+      "sha256": "942EF85AD8AD7853AEAE3B4B1497BFD73A5FFF566750ADD532ED63D47857861F"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadataProvider.cs",
+      "bytes": 16685,
+      "sha256": "5502713078592C9BCD93C638DA1FB8DDD94261A1E9C1B5B232A7D05623E50492"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Core\\src\\ModelBinding\\Metadata\\DefaultModelMetadataProvider.cs",
+      "bytes": 16685,
+      "sha256": "5502713078592C9BCD93C638DA1FB8DDD94261A1E9C1B5B232A7D05623E50492"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\Mvc.Abstractions\\src\\ModelBinding\\ModelMetadata.cs",
+      "bytes": 34220,
+      "sha256": "7EE18D58A66D5C8831B804F94EE6FD94595A24F9C0FE88F3F3165E238CC3DCF0"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\Mvc.Abstractions\\src\\ModelBinding\\ModelMetadata.cs",
+      "bytes": 34023,
+      "sha256": "9A145ACCCB243079A73D3C5B41667002D62FAE9F4CB303B8DB8B0E0B8CF83C2A"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\test\\Mvc.IntegrationTests\\UnionValidationIntegrationTest.cs",
+      "bytes": 22043,
+      "sha256": "202B00C79729C1B5BA0B53C8C418DDCF605F28216AB880197C4139DE4AFC1C1B"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\test\\Mvc.IntegrationTests\\UnionValidationIntegrationTest.cs",
+      "bytes": 22043,
+      "sha256": "202B00C79729C1B5BA0B53C8C418DDCF605F28216AB880197C4139DE4AFC1C1B"
+    },
+    {
+      "role": "Original",
+      "file": "src\\Mvc\\test\\Mvc.IntegrationTests\\Microsoft.AspNetCore.Mvc.IntegrationTests.csproj",
+      "bytes": 2244,
+      "sha256": "438B223C9543D57BBCAF417165E1B98A37C0C073CB1FF270E4A683403AE0B0AE"
+    },
+    {
+      "role": "Default",
+      "file": "src\\Mvc\\test\\Mvc.IntegrationTests\\Microsoft.AspNetCore.Mvc.IntegrationTests.csproj",
+      "bytes": 2244,
+      "sha256": "438B223C9543D57BBCAF417165E1B98A37C0C073CB1FF270E4A683403AE0B0AE"
+    }
+  ],
+  "hypothesis": "The flagged ContainerType.GetProperty fallback is guarded by Property metadata named Value and is bypassed by DefaultModelMetadata. Calling IsUnionValueProperty for every entry is not equivalent to rediscovering a property for every entry. Provider decoration alone need not produce non-default metadata. Establish the actual normal metadata producer and validation effect before proposing another cache.",
+  "acceptance": [
+    "Run the actual existing UnionValidationIntegrationTest class from Original and actual Default, retain every individual XML execution/outcome and duplicate display-name rows.",
+    "An unchanged C#13 public DI/IObjectModelValidator probe runs seven fixed profiles, both ordinary and decorated providers and two repetitions per role. Validate exact model-state keys/messages, actual union getters and real IValidatableObject invocation counts. Many-property union has seventeen reflected properties but only one Value-name candidate.",
+    "Observe real metadata CLR types and stable cached references. Label fallback eligibility as a source predicate over actual metadata, not instrumented GetProperty calls. Do not equate provider decoration with replacement ModelMetadata or conflate other union reflection with this exact fallback.",
+    "Bind six selected Core/Abstractions physical source documents to the actually loaded PE/PDB and capture runtime assembly paths/hashes. Freeze complete consumer inventories; no silent shared-framework owner substitution.",
+    "Rebuild the exact two common inputs in a genuinely fresh project and repeat unchanged original/default characterization without timing. Do not call this an owner-graph or complete compiler-input reconstruction.",
+    "If only the default/cached producer is established, reject the proposed default-hot-path/cache inference narrowly, with custom non-default metadata performance explicitly unmeasured, not unreachable or impossible. Do not claim a measured no-gain or a literal no-op.",
+    "If realistic actionable custom-metadata evidence instead emerges, seal a separate fixed prototype/primary/control/qualification plan before edits or timing. Never infer speed or improvement from call counts alone.",
+    "Keep all shipping files, protected root files, unrelated reports, previous capsules and fixed REPORT unchanged. No source PR or browser launch for an unestablished/rejected proposal."
+  ],
+  "fixedProbeProfiles": [
+    "PublicInvalid",
+    "PublicValid",
+    "ManyPropertiesInvalid",
+    "ExplicitInvalid",
+    "NamesakeRequired",
+    "NamesakeCase",
+    "OrdinaryObject"
+  ],
+  "fixedProviderModes": [
+    "Default",
+    "DecoratedProvider"
+  ],
+  "repetitions": 2,
+  "actualExpectedRowsPerRole": 28,
+  "actualTimingAuthorizedByThisPlan": false,
+  "observationBoundary": "Actual public model validation and metadata production below HTTP; no callback injection, fake reflection counter, custom ModelMetadata producer, HTTP/browser, trimming/AOT or live metadata delta claim.",
+  "actualCodeNavigationLimit": "Configured ADO scope is unrelated. Local C# LSP references returned only the same file and workspace symbols omitted known symbols; bounded Mvc.Core text fallback is not a global caller census."
+}

@@ -1,0 +1,27 @@
+{
+  "recordedAt": "2026-11-20T02:24:00.938Z",
+  "actualCampaignFinalized": 132,
+  "next": {
+    "id": "F133",
+    "finding": {
+      "card_id": "uncached-reflection-in-hot-path",
+      "file": "src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultUnionValidationStrategy.cs",
+      "line_start": 56,
+      "line_end": 56,
+      "severity": "low",
+      "confidence": "medium",
+      "classification": "likely",
+      "hot_path": "moderate",
+      "tfm_sensitive": false,
+      "summary": "The non-default metadata path performs a property reflection lookup for each validation entry.",
+      "explanation": "GetChildren invokes IsUnionValueProperty for every child. When metadata is not DefaultModelMetadata, ContainerType.GetProperty(nameof(IUnion.Value)) is rediscovered inside that loop rather than cached per union type.",
+      "snippet": "metadata.ContainerType?.GetProperty(nameof(IUnion.Value))?.GetMethod",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+}
