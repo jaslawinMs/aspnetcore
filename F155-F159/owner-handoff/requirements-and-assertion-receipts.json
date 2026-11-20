@@ -1,0 +1,108 @@
+{
+  "scope": "F155-F159 preparation only; no candidate, shipping/permanent-test change, benchmark, performance outcome, ledger write or publication",
+  "nativeAcceptance": {
+    "roles": ["original37", "observedDefault"],
+    "originalCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "defaultCommitObservedAtEntry": "90f48c2ea8ab6d5d0fbdcc2862c5e02aa279b44d",
+    "requiredCasesPerRole": 5,
+    "testFrameworkRows": "Five existing [Fact] methods. No theory, InlineData, MemberData or parameter rows in this class.",
+    "runtimePolicy": "Observe generated runtimeconfig and loaded runtime. Do not equate transport/ref-pack/Arcade version with loaded runtime and do not override RuntimeFrameworkVersion.",
+    "sourcePolicy": "Build each detached checkout's own unchanged source and actual restored project-reference graph; document explicit JS/ANCM/static-assets exclusions after observed prerequisite failures.",
+    "auditPolicy": "Selected-file hashes, Git/LF versus physical source, selected PE/PDB pairing and Document source checksums, parsed native XML rows/IDs/counters, and selected loaded-image identities must be checked offline from capsule-relative files.",
+    "terminalPolicy": "Owned launchers and output streams terminal; distinguish bounded process observations from exhaustive descendant census.",
+    "pendingIds": ["F155", "F156", "F157", "F158", "F159"]
+  },
+  "evidenceKind": {
+    "thisFile": "Saved source-inspection/assertion-ownership receipt, not a runtime value dump. Passing native test rows establish that their existing assertions completed.",
+    "rawRuntimeFacts": "Native TRX/XML and exit-time loaded-image receipts are separate selected files; portable audit reparses the TRX and binary/PDB/source bytes.",
+    "frequency": "One source-local serializer construction and one ReadObject or WriteObject call per Fact invocation. Native run receipts identify every invocation, including any identity-capture rerun; no production request-rate, hot-loop workload, cache reuse, allocation or timing evidence.",
+    "lifetime": "Read serializers are method locals; write serializers are locals inside the test's XmlWriter using scope. No shared fixture, static serializer, singleton/DI registration or construction loop in the five methods. Scope exit is not proof of collection or disposal.",
+    "producerConsumer": "Existing real DataContractSerializer ReadObject/WriteObject is the producer/consumer mechanism. It invokes the real IXmlSerializable wrapper implementation; no shipping bodies or substituted calls are compiled into a replacement consumer."
+  },
+  "findings": [
+    {
+      "id": "F155",
+      "status": "PENDING",
+      "originalLine": 29,
+      "method": "ReadXml_ReadsValidationProblemDetailsXml",
+      "fullyQualifiedName": "Microsoft.AspNetCore.Mvc.Formatters.Xml.ValidationProblemDetailsWrapperTest.ReadXml_ReadsValidationProblemDetailsXml",
+      "parameterRow": null,
+      "producer": "DataContractSerializer(typeof(ValidationProblemDetailsWrapper)).ReadObject over a MemoryStream containing the method's UTF-8 XML",
+      "consumer": "ProblemDetailsWrapper.ReadXml -> virtual ValidationProblemDetailsWrapper.ReadValue -> ReadErrorProperty; actual ValidationProblemDetails data",
+      "assertionsOwnedByMethod": {
+        "wrapperType": "ValidationProblemDetailsWrapper",
+        "title": "Some title",
+        "instance": "Some instance",
+        "status": 400,
+        "extensions": {"[key2]": "Test Value 2", "key1": "Test Value 1"},
+        "errors": {"": ["Test error 4"], "[error2]": ["Test error 3"], "error1": ["Test error 1 Test error 2"]},
+        "detail": "Not asserted by this method."
+      }
+    },
+    {
+      "id": "F156",
+      "status": "PENDING",
+      "originalLine": 85,
+      "method": "ReadXml_ReadsValidationProblemDetailsXml_WithNoErrors",
+      "fullyQualifiedName": "Microsoft.AspNetCore.Mvc.Formatters.Xml.ValidationProblemDetailsWrapperTest.ReadXml_ReadsValidationProblemDetailsXml_WithNoErrors",
+      "parameterRow": null,
+      "producer": "Real ReadObject over XML with no MVC-Errors element",
+      "consumer": "Real wrapper/base XML reader and ValidationProblemDetails",
+      "assertionsOwnedByMethod": {
+        "wrapperType": "ValidationProblemDetailsWrapper",
+        "title": "Some title",
+        "instance": "Some instance",
+        "status": 400,
+        "extensionsInAssertedOrder": [["key1", "Test Value 1"], ["[key2]", "Test Value 2"]],
+        "errors": "Empty"
+      }
+    },
+    {
+      "id": "F157",
+      "status": "PENDING",
+      "originalLine": 123,
+      "method": "ReadXml_ReadsValidationProblemDetailsXml_WithEmptyErrorsElement",
+      "fullyQualifiedName": "Microsoft.AspNetCore.Mvc.Formatters.Xml.ValidationProblemDetailsWrapperTest.ReadXml_ReadsValidationProblemDetailsXml_WithEmptyErrorsElement",
+      "parameterRow": null,
+      "producer": "Real ReadObject over XML containing <MVC-Errors />",
+      "consumer": "Real wrapper/base XML reader and ValidationProblemDetails",
+      "assertionsOwnedByMethod": {
+        "wrapperType": "ValidationProblemDetailsWrapper",
+        "title": "Some title",
+        "status": 400,
+        "errors": "Empty",
+        "instanceAndExtensions": "Not asserted by this method."
+      }
+    },
+    {
+      "id": "F158",
+      "status": "PENDING",
+      "originalLine": 175,
+      "method": "WriteXml_WritesValidXml",
+      "fullyQualifiedName": "Microsoft.AspNetCore.Mvc.Formatters.Xml.ValidationProblemDetailsWrapperTest.WriteXml_WritesValidXml",
+      "parameterRow": null,
+      "producer": "Existing ValidationProblemDetails data wrapped by ValidationProblemDetailsWrapper, then real DataContractSerializer.WriteObject(XmlWriter, wrapper)",
+      "consumer": "ValidationProblemDetailsWrapper.WriteXml -> base ProblemDetailsWrapper.WriteXml -> XmlWriter -> actual output stream -> StreamReader text",
+      "assertionsOwnedByMethod": {
+        "exactFullOutput": "<?xml version=\"1.0\" encoding=\"utf-8\"?><problem xmlns=\"urn:ietf:rfc:7807\"><detail>Some detail</detail><title>Some title</title><key1>Test Value 1</key1><_x005B_Key2_x005D_>Test Value 2</_x005B_Key2_x005D_><MVC-Errors><error1>Test error 1 Test error 2</error1><_x005B_error2_x005D_>Test error 3</_x005B_error2_x005D_><MVC-Empty>Test error 4</MVC-Empty></MVC-Errors></problem>",
+        "inputError1": ["Test error 1", "Test error 2"],
+        "inputOtherErrors": {"[error2]": ["Test error 3"], "": ["Test error 4"]},
+        "comparison": "Assert.Equal(expectedContent, res); full text, including declaration, namespace, element order, encoded bracket names, joined error text and MVC-Empty placeholder."
+      }
+    },
+    {
+      "id": "F159",
+      "status": "PENDING",
+      "originalLine": 213,
+      "method": "WriteXml_WithNoValidationErrors",
+      "fullyQualifiedName": "Microsoft.AspNetCore.Mvc.Formatters.Xml.ValidationProblemDetailsWrapperTest.WriteXml_WithNoValidationErrors",
+      "parameterRow": null,
+      "producer": "Existing ValidationProblemDetails with no errors, wrapped and passed to real WriteObject",
+      "consumer": "Real wrapper/base writer -> XML stream -> StreamReader text",
+      "assertionsOwnedByMethod": {
+        "exactFullOutput": "<?xml version=\"1.0\" encoding=\"utf-8\"?><problem xmlns=\"urn:ietf:rfc:7807\"><detail>Some detail</detail><title>Some title</title><key1>Test Value 1</key1><_x005B_Key2_x005D_>Test Value 2</_x005B_Key2_x005D_></problem>",
+        "comparison": "Exact full output equality also requires omission of MVC-Errors."
+      }
+    }
+  ]
+}
