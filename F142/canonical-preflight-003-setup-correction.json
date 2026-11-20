@@ -1,0 +1,13 @@
+{
+  "finding": "F142",
+  "unchangedSevenProfileAcceptanceSha256": "74F8D6981E7CE9723B8C8C0B40BCCD9B7E5E041B620D1EEB3CFAB56C16C5B342",
+  "attempt": "canonical-preflight-003\\Original",
+  "observed": "The real Undocumented row passed. The real Zero document had no summary and its unchanged exact assertion failed. Later rows did not execute.",
+  "producerEvidence": "The actual generated cache contains only DocumentFixture's accessible members, not any private Handlers member.",
+  "sourceEvidence": [
+    "src\\OpenApi\\gen\\XmlCommentGenerator.Parser.cs ParseCompilation uses AssemblyTypeSymbolsVisitor.",
+    "src\\OpenApi\\gen\\Helpers\\AssemblyTypeSymbolsVisitor.cs VisitNamedType stops for a private type; IsAccessibleType accepts public, internal and protected-internal declarations."
+  ],
+  "minimalPrivateFixtureCorrection": "Make the nested handler container and its BodyInput parameter type internal so the real generator can discover them. Keep every profile, handler body, XML comment and expected assertion unchanged.",
+  "scope": "Private characterization fixture setup only; no shipping source or generator edit, prototype, measurement or budget authorization."
+}

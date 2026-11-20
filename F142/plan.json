@@ -1,0 +1,80 @@
+{
+  "findingId": "F142",
+  "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefault": "ae89581dfd24c6277b4267a9779d05f7b9f047f1",
+  "sealedBeforeCandidateAndTiming": true,
+  "acceptanceInputSet": "canonical-preflight-inputs-005",
+  "actualOwner": "XmlCommentGenerator.Emitter.cs emits the runtime XmlCommentOperationTransformer parameter-comment loop.",
+  "candidate": "Inside the existing methodComment.Parameters Count>0 guard, obtain methodInfo.GetParameters() once into methodParameters before foreach and preserve the existing SingleOrDefault predicate and all surrounding branches.",
+  "correctness": {
+    "profiles": [
+      "Undocumented",
+      "Zero",
+      "One",
+      "Four",
+      "Aliased",
+      "Ignored",
+      "Body"
+    ],
+    "baselineAndDefaultFullProducerRowsPassed": 14,
+    "baselineAndDefaultCapturedSetupRowsPassed": 14,
+    "candidateRequiresIdenticalSevenFullProducerAndSevenCapturedSetupRows": true,
+    "exactSerializedOperationStateMustRemainIdenticalBeforeAndAfterRepeatedActualTransforms": true
+  },
+  "primary": {
+    "profile": "Four",
+    "boundary": "Warm isolated actual analyzer-generated operation transformer on a real provider-produced operation/context: four documented query parameters including one integer example.",
+    "notClaimed": "Whole-document generation, application throughput, startup time or cross-machine speedup."
+  },
+  "usefulGainGate": {
+    "timeRoute": "Median paired primary less-time at least10%, with no primary allocation regression.",
+    "allocationRoute": "Median paired primary saving at least128B/op AND5%, with primary median elapsed regression no greater than3%.",
+    "controls": "No allocation increase of16B/op or more, and no elapsed regression greater than10% reproduced in at least2 completed comparisons, for any secondary profile.",
+    "decision": "Use only the predeclared Four primary. Aggregate per-comparison medians. At most3 comparisons including failures/partials. No tuning or primary substitution after timing.",
+    "earlyStop": "Only after a complete comparison showing at least25% primary time or allocation improvement, primary elapsed regression no greater than3%, and all controls elapsed regression no greater than5% with no allocation regression."
+  },
+  "secondaryProfiles": [
+    "Undocumented",
+    "Zero",
+    "One",
+    "Aliased",
+    "Ignored",
+    "Body"
+  ],
+  "samples": {
+    "warmupInvocations": 20000,
+    "sampleCount": 15,
+    "invocationsPerSample": 50000,
+    "timer": "Stopwatch.GetTimestamp",
+    "allocation": "GC.GetAllocatedBytesForCurrentThread; only verified synchronous-completion transforms and unchanged thread identity."
+  },
+  "comparisonRoleOrders": [
+    [
+      "Original",
+      "Candidate"
+    ],
+    [
+      "Candidate",
+      "Original"
+    ],
+    [
+      "Original",
+      "Candidate"
+    ]
+  ],
+  "sourceAndRuntime": {
+    "physicalBenchmarkHost": "jaro-dev7 / CPC-jasla-LSEJU",
+    "actualRuntime": "12.0.0-alpha.1.26565.104",
+    "identicalFrozenDependenciesAndHarnessRequiredForOriginalCandidate": true,
+    "sameMachineAndConfiguration": true,
+    "buildsAndTestsQuiescentOnThisHost": true,
+    "coordinatorExclusiveGatewayRequired": true,
+    "maximumSimultaneousBenchmarksAcrossAllHosts": 1,
+    "remoteBenchmarksAuthorized": false,
+    "machineSettingsOrPriorityOrAffinityChangesAuthorized": false,
+    "sharedEnvironmentNotDedicated": true
+  },
+  "maximumAuthorizations": 3,
+  "historicalAliasBudgetsRemainClosed": true,
+  "priorFailedPreparationsRetained": true
+}

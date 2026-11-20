@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net12.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UseAppHost>false</UseAppHost>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>AutoPerf.F142.GeneratedOwner</AssemblyName>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    <AssemblySearchPaths>$(SourceBuiltAssemblies);{HintPathFromItem};{RawFileName};{TargetFrameworkDirectory};{CandidateAssemblyFiles}</AssemblySearchPaths>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DocumentFixture.cs" />
+    <Reference Include="$(SourceBuiltAssemblies)\*.dll">
+      <Private>true</Private>
+      <SpecificVersion>true</SpecificVersion>
+    </Reference>
+    <Analyzer Include="$(GeneratorAssembly)" />
+  </ItemGroup>
+  <Target Name="RequirePinnedInputs" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(SourceBuiltAssemblies)' == ''" Text="An inventoried source-built dependency closure is required." />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.OpenApi.dll')" Text="The source-built OpenAPI owner is missing." />
+    <Error Condition="!Exists('$(SourceBuiltAssemblies)\Microsoft.AspNetCore.TestHost.dll')" Text="The source-built TestHost is missing." />
+    <Error Condition="'$(GeneratorAssembly)' == '' Or !Exists('$(GeneratorAssembly)')" Text="The exact source-built XML-comment generator is required." />
+  </Target>
+</Project>

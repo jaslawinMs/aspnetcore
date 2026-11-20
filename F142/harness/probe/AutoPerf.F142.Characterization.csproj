@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net12.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UseAppHost>false</UseAppHost>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>AutoPerf.F142.Characterization</AssemblyName>
+    <AssemblySearchPaths>$(SourceBuiltAssemblies);{HintPathFromItem};{RawFileName};{TargetFrameworkDirectory};{CandidateAssemblyFiles}</AssemblySearchPaths>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Reference Include="$(GeneratedOwnerAssembly)">
+      <HintPath>$(GeneratedOwnerAssembly)</HintPath>
+      <Private>true</Private>
+      <SpecificVersion>true</SpecificVersion>
+    </Reference>
+    <Reference Include="$(SourceBuiltAssemblies)\*.dll">
+      <Private>true</Private>
+      <SpecificVersion>true</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+  <Target Name="RequireGeneratedOwner" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(GeneratedOwnerAssembly)' == '' Or !Exists('$(GeneratedOwnerAssembly)')" Text="The source-generated owner must be built before the unchanged probe." />
+    <Error Condition="'$(SourceBuiltAssemblies)' == ''" Text="The same inventoried source-built dependency closure is required." />
+  </Target>
+</Project>
