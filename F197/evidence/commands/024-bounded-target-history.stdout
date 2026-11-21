@@ -1,0 +1,362 @@
+369c9d8551133ba915fdcc5a734e5e4eebd74de8
+2025-12-01T22:27:42+01:00
+Add support for .slnx file exclusion in BaselineTest (#62767)
+This update introduces a new condition to the `relativePath` checks in `BaselineTest.cs`. The code now excludes files that end with the `.slnx` extension, enhancing the filtering of project-related file types and directories during processing.
+773dd5a1b1e14c28908b5fffdf47282921f8ec93
+2025-07-18T16:21:25+02:00
+Revert "Baseline tests should check for all possible extensions of not expect…" (#62800)
+This reverts commit 8bb2b2067815996d9a8224ee38aa80a79f797827.
+8bb2b2067815996d9a8224ee38aa80a79f797827
+2025-07-17T11:38:46+02:00
+Baseline tests should check for all possible extensions of not expected files (#62752)
+
+92097249f384278f5b0f5309757e5f7fff4eb917
+2024-08-23T19:27:53+02:00
+Upgrade xunit version to 2.9.0 (#57303)
+* Upgrade Xunit version to 2.9.0
+
+* React to removed/changed xunit exceptions
+
+* Fix ambiguous calls
+
+* Replace Assert.True(false, ...) with Assert.Fail
+
+* Await async methods and change async void -> async Task
+
+* Use Assert.Equal for string equality checks
+
+* Apply analyzer fixes: use Assert.Single and Assert.Empty
+
+* Apply analyzer fixes: null parameter in Theory data
+
+* Fix TheoryData generic mismatch
+
+* Test methods can't return value
+
+* Suppress Do not call ConfigureAwait(false) in test method
+
+* Suppress Do not use blocking task operations in test method
+
+* Suppress Fixture arguments to test classes must have fixture sources
+
+* Fix DllNotFoundException in HttpApi on non-Windows platforms
+
+* Disable tests that were unintentionally skipped before and fail now
+
+* Fix generated test code
+
+* Disable generated tests that were unintentionally skipped before and fail now
+
+* Add issue link to ResultsOfTTests.Generated.cs
+
+* Add issue link to UserManagerTest.cs
+
+* Disable xUnit1030 globally
+
+* Move check for HttpApi into test code
+
+* Revert changes to ResultsOfTTests, they were fixed
+fc8decab6ac53d05adb19093ddce83ef1b5f1c31
+2023-11-01T17:15:44-07:00
+Rename Microsoft.Aspnetcore.Testing to Microsoft.AspNetCore.InternalTesting (#51713)
+* Rename Microsoft.Aspnetcore.Testing to Microsoft.AspNetCore.TestUtils
+
+* Pack Microsoft.Aspnetcore.Testutils
+
+* Rename Microsoft.AspNetCore.Testing.props to Microsoft.AspNetCore.TestUtils.props
+
+* TestUtils -> InternalTesting
+
+* Renames
+
+* Update WebApplicationFunctionalTests.cs
+
+* Update HubConnectionTests.cs
+dba39685d183c9a836689522b0aa97b87671027b
+2023-09-28T04:38:36-07:00
+[automated] Merge branch 'release/8.0' => 'main' (#50973)
+* [release/8.0-rc2] [Blazor] Make auto components prefer the existing render mode (#50851)
+
+# Make auto components prefer the existing render mode
+
+Ensures that if interactive components exist on the page and they all use a single render mode, components with the "Auto" render mode will also use that render mode.
+
+## Description
+
+It's a common requirement for state to be shared between interactive root components. For example, the `<HeadOutlet>` component, which allows updating content in the HTML `<head>`, renders content specified by a `<HeadContent>` component, if it exists. However, this only works if the `<HeadOutlet>` and `<HeadContent>` components use the same interactive render mode.
+
+The Auto render mode lets Blazor select a "best" render mode (either Server or WebAssembly) at runtime, primarily depending on whether Blazor WebAssembly resources are cached in the browser. However, previously it did this without taking into consideration the render mode used by existing components on the page.
+
+For example, suppose a `<HeadOutlet>` with an Auto render mode gets added to the page before WebAssembly resources have been loaded and cached, so it uses Blazor Server. Later, a `<HeadContent>` component, also with an Auto render mode, gets added to the page. But at this point, WebAssembly resources have loaded completely, so the `<HeadContent>` component uses Blazor WebAssembly. In this example, the content in the `<head>` does not update, because the `<HeadOutlet>` and `<HeadContent>` use different render modes.
+
+This PR updates the auto render mode decision making logic to the following:
+* If WebAssembly components exist on the page, use WebAssembly
+* Otherwise, if Server components exist on the page, use Server
+* Otherwise, if WebAssembly resources are cached, use WebAssembly
+* Otherwise, use Server
+
+Fixes #50686
+
+## Customer Impact
+
+Medium/high. We've seen multiple reports of the existing behavior causing problems in customer apps, and there isn't a workaround.
+
+## Regression?
+
+- [ ] Yes
+- [X] No
+
+This behavior has existed since the Auto render mode was introduced in an earlier .NET 8 preview release.
+
+## Risk
+
+- [ ] High
+- [ ] Medium
+- [X] Low
+
+This PR is a small change to the Auto mode logic. It's unlikely that customers were already relying on the existing behavior.
+
+## Verification
+
+- [X] Manual (required)
+- [X] Automated
+
+## Packaging changes reviewed?
+
+- [ ] Yes
+- [ ] No
+- [X] N/A
+
+* Add Identity Components to Blazor template (#50722)
+
+# Add Identity Components to Blazor template
+
+## Description
+
+This adds the option to add Identity Razor Components (`*.razor` files) when using the Blazor project template. This supports the same feature set as the Identity Razor Pages (`*.cshtml` files). We've already done an accessibility pass over these newly added components and this PR includes all the fixes for Accessibility too. As with the Identity Razor Pages, this supports local authentication (with the option to configure external login providers) and Identity management using EF Core.
+
+Fixes #48786
+
+## Customer Impact
+
+These Identity Razor Components have been a common request for years as noted above, because it allows Blazor developers to use Identity without needing to add Razor Pages infrastructure which would otherwise be unnecessary and doesn't integrate well with the rest of the app. For example, the Identity Razor Pages to a Blazor app would use a different layout that doesn't match the look and feel of the Razor Components that make up the rest of the app.
+
+## Regression?
+
+- [ ] Yes
+- [x] No
+
+## Risk
+
+- [ ] High
+- [ ] Medium
+- [x] Low
+
+These are template only changes that only affect the brand new Blazor project template. It should have no impact on the project template output unless you opt-in to the individual auth option (other than a [small fix](https://github.com/dotnet/aspnetcore/pull/50722/commits/5462e42a630c26086a7a1276cc230e668f379ee5) to make the `--empty` option produce compileable output with all `InteractivityPlatform` options.)
+
+## Verification
+
+- [x] Manual (required)
+- [x] Automated
+
+We're also adding new validation scenarios for vendors to validate periodically.
+
+## Packaging changes reviewed?
+
+- [ ] Yes
+- [ ] No
+- [x] N/A
+
+----
+
+- [x] Finish user management components for 2fa, external login, personal data, etc...
+- [x] Add signout link
+- [x] Verify RegisterOnPersisting gets invoked as expected with the changes from #50625
+- [x] Render ShowRecoveryCodes.razor inline rather than via a redirect.
+- [x] Add baseline tests
+- [x] Fix BOMs
+- [x] Validate the template in VS
+
+* Add logging to Http.Sys tests (#50883)
+
+* Skip failing tests (#50917)
+
+* Avoid re-running routing for implicit middlewares and remove implicit anti-forgery (#50864)
+
+## Description
+
+Avoid running routing eagerly in implicit middlewares to prevents the `EndpointFeature` from being set and causing unexpected reactions in other middlewares, like the static file middleware.
+
+We also remove the implicit registration of the anti-forgery middleware to avoid unintended collisions with authentication in Blazor.
+
+Fixes https://github.com/dotnet/aspnetcore/issues/50818, https://github.com/dotnet/aspnetcore/issues/50815, https://github.com/dotnet/aspnetcore/issues/50844
+
+## Customer Impact
+
+Without this change, the anti-forgery middleware in Blazor apps runs too early and is not able to examine authentication state in the application. Requiring the middleware to be registered explicitly ensures that the correct ordering is applied.
+
+Without this change, users will run into difficult to resolve issues with building applications that include forms with Blazor web apps.
+
+## Regression?
+
+- [X] Yes
+- [ ] No
+
+This is a regression that was introduced to middleware routing in .NET 8 Preview 7.
+
+## Risk
+
+- [ ] High
+- [X] Medium
+- [ ] Low
+
+**Medium risk** because:
+- We are reverting a change that was originally applied to resolve https://github.com/dotnet/aspnetcore/issues/49654. This means that the original bug will impact users, specifically those who are calling `UseRouting` explicitly without calling `UseAuthentication` and `UseAuthorization` if they are not available. There is a workaround that we plan to document this behavior for users.
+- Apps deployed in .NET 8 RC 1 will break because we no longer automatically enable the anti-forgery middleware. Users will receive an exception at startup notifying them of the code changes to make in order to get things working correctly.
+
+## Verification
+
+- [X] Manual (required)
+- [X] Automated
+
+## Packaging changes reviewed?
+
+- [ ] Yes
+- [ ] No
+- [X] N/A
+
+* [release/8.0] Update dependencies from dotnet/runtime (#50957)
+
+* Update dependencies from https://github.com/dotnet/runtime build 20230926.15
+
+Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting , Microsoft.SourceBuild.Intermediate.runtime.linux-x64
+ From Version 8.0.0-rtm.23475.7 -> To Version 8.0.0-rtm.23476.15
+
+* Update node version
+
+---------
+
+Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+Co-authored-by: jacalvar <jacalvar@microsoft.com>
+
+* [Blazor] Antiforgery fix (#50946)
+
+# Ensure antiforgery token flows to Blazor WebAssembly
+
+The change makes sure that we persist the Antiforgery token during prerendering so that it is available to WebAssembly components.
+
+## Description
+
+* When using cookie authentication it is necessary to use antiforgery protection to prevent cross-site request forgery attacks.
+* Blazor Webassembly interactive components must get access to the request antiforgery token to attach it to any outgoing API call.
+* The antiforgery request token was not flowing from the server to the client correctly.
+* This change enables calling APIs from web assembly to the server safely.
+Fixes https://github.com/dotnet/aspnetcore/issues/50900
+
+## Customer Impact
+
+.NET 8.0 customers who have created Blazor Web Apps will fail to call APIs from webassembly components, as they won't be able to attach the required antiforgery token.
+
+## Regression?
+
+- [ ] Yes
+- [X] No
+
+[If yes, specify the version the behavior has regressed from]
+
+## Risk
+
+- [ ] High
+- [ ] Medium
+- [X] Low
+
+The fix is simple and we added an E2E test to cover the scenario.
+
+## Verification
+
+- [ ] Manual (required)
+- [X] Automated
+
+## Packaging changes reviewed?
+
+- [ ] Yes
+- [ ] No
+- [X] N/A
+
+----
+
+## When servicing release/2.1
+
+- [ ] Make necessary changes in eng/PatchConfig.props
+
+* Update dependencies from https://github.com/dotnet/runtime build 20230927.9 (#50977)
+
+Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting , Microsoft.SourceBuild.Intermediate.runtime.linux-x64
+ From Version 8.0.0-rtm.23476.15 -> To Version 8.0.0-rtm.23477.9
+
+Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+
+---------
+
+Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+Co-authored-by: Stephen Halter <halter73@gmail.com>
+Co-authored-by: Brennan <brecon@microsoft.com>
+Co-authored-by: William Godbe <wigodbe@microsoft.com>
+Co-authored-by: Safia Abdalla <safia@microsoft.com>
+Co-authored-by: dotnet-maestro[bot] <42748379+dotnet-maestro[bot]@users.noreply.github.com>
+Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+Co-authored-by: jacalvar <jacalvar@microsoft.com>
+2fce01df64d8550c5cc7fbc773fca0b4b9a51a52
+2023-09-22T11:50:01-07:00
+Add Identity Components to Blazor template (#50722)
+# Add Identity Components to Blazor template
+
+## Description
+
+This adds the option to add Identity Razor Components (`*.razor` files) when using the Blazor project template. This supports the same feature set as the Identity Razor Pages (`*.cshtml` files). We've already done an accessibility pass over these newly added components and this PR includes all the fixes for Accessibility too. As with the Identity Razor Pages, this supports local authentication (with the option to configure external login providers) and Identity management using EF Core.
+
+Fixes #48786
+
+## Customer Impact
+
+These Identity Razor Components have been a common request for years as noted above, because it allows Blazor developers to use Identity without needing to add Razor Pages infrastructure which would otherwise be unnecessary and doesn't integrate well with the rest of the app. For example, the Identity Razor Pages to a Blazor app would use a different layout that doesn't match the look and feel of the Razor Components that make up the rest of the app.
+
+## Regression?
+
+- [ ] Yes
+- [x] No
+
+## Risk
+
+- [ ] High
+- [ ] Medium
+- [x] Low
+
+These are template only changes that only affect the brand new Blazor project template. It should have no impact on the project template output unless you opt-in to the individual auth option (other than a [small fix](https://github.com/dotnet/aspnetcore/pull/50722/commits/5462e42a630c26086a7a1276cc230e668f379ee5) to make the `--empty` option produce compileable output with all `InteractivityPlatform` options.)
+
+## Verification
+
+- [x] Manual (required)
+- [x] Automated
+
+We're also adding new validation scenarios for vendors to validate periodically.
+
+## Packaging changes reviewed?
+
+- [ ] Yes
+- [ ] No
+- [x] N/A
+
+----
+
+- [x] Finish user management components for 2fa, external login, personal data, etc...
+- [x] Add signout link
+- [x] Verify RegisterOnPersisting gets invoked as expected with the changes from #50625
+- [x] Render ShowRecoveryCodes.razor inline rather than via a redirect.
+- [x] Add baseline tests
+- [x] Fix BOMs
+- [x] Validate the template in VS
+b3eca0553a7cf68eae1755ed91320cae949e0ca7
+2023-07-28T20:08:16+02:00
+remove duplicate checks on path (#49648)
+

@@ -1,0 +1,44 @@
+{
+  "finding": "F197",
+  "decision": "bounded-source-only-no-material-candidate",
+  "proposedDisposition": "rejected",
+  "retainedSite": "BaselineTest.Template_Produces_The_Right_Set_Of_FilesAsync, Directory.EnumerateFiles(...).ToArray(), line87 in both source roles.",
+  "premise": "The generated-file sequence really is copied before one foreach. The finding is not dismissed as nonexistent or multi-use.",
+  "sourceProducer": [
+    "ProjectFactoryFixture.CreateProject awaits template-engine initialization, constructs a uniquely named Project and assigns its output directory.",
+    "BaselineTest awaits Project.RunDotNetNewRawAsync(arguments) before enumerating the output directory.",
+    "RunDotNetNewRawAsync invokes the real dotnet command with the custom hive/output directory, awaits exit and checks exit0.",
+    "The retained recursive file enumeration then validates expected names and reads relevant C# namespace declarations. bin/obj and project/build/solution files are filtered after enumeration."
+  ],
+  "scopeAndCounts": {
+    "scenarioDefinitionsPerRole": 75,
+    "expectedListedNamesMin": 2,
+    "expectedListedNamesMax": 136,
+    "meaning": "Counts of names in captured baseline JSON, not actual directory/cardinality/runtime measurements.",
+    "actualGeneratedTreeAndObjBinCountsObserved": false,
+    "earlierMaterializations": "Typed TheoryData<string,string[]> and substituted expectedFiles reused by foreach and repeated Assert.Contains are separate sites and unchanged."
+  },
+  "reasonNotToImplement": "This is a test-only verification step following actual template generation. Avoiding its result array has no demonstrated material effect on the owning scenario. Removing it would also interleave filesystem enumeration with assertions/file reads instead of completing enumeration first; no bug or universal equivalence claim is made. Do not fabricate a large tree or repeat enumeration to justify an optimization.",
+  "history": {
+    "scope": "Eight recorded target-file history entries, latest target-file diff and one bounded public PR search, not exhaustive history/unpublished work.",
+    "latestInspectedChange": "369c9d8551133ba915fdcc5a734e5e4eebd74de8 adds .slnx exclusion; it does not change retained materialization.",
+    "relatedSearch": "BaselineTest ToArray in dotnet/aspnetcore, limit10, returned no matches; not exhaustive duplication proof."
+  },
+  "acceptance": {
+    "pinnedWholeSourceAndProducerBoundary": "met-source-only",
+    "materialCandidateGate": "not-met",
+    "candidateSourceEdits": 0,
+    "privateGraphsCreated": 0,
+    "nativeBuildTestRestoreOrDotnetNewStarts": 0,
+    "comparisonAuthorizationsOrMeasurements": 0,
+    "existingOwningTest": "Templates.Test.BaselineTest.Template_Produces_The_Right_Set_Of_FilesAsync",
+    "testStatus": "Not scheduled after source-only no-candidate gate. No generated-app/package/runtime behavior or missing-prerequisite failure is claimed."
+  },
+  "limits": [
+    "No runtime enumeration type, directory size, test duration, allocation or measured no-gain evidence.",
+    "No complete generated-application producer graph was built or its availability assumed.",
+    "No test-coverage, directory snapshot concurrency or universal immateriality claim.",
+    "Navigation and initial wrong import-path read limitations are preserved separately.",
+    "Only verified fork publication may finalize the pending canonical entry."
+  ]
+}

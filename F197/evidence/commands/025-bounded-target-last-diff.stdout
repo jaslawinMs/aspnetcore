@@ -1,0 +1,22 @@
+commit 369c9d8551133ba915fdcc5a734e5e4eebd74de8
+Author:     Marco Minerva <marco.minerva@gmail.com>
+AuthorDate: Mon Dec 1 22:27:42 2025 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Dec 1 13:27:42 2025 -0800
+
+    Add support for .slnx file exclusion in BaselineTest (#62767)
+    
+    This update introduces a new condition to the `relativePath` checks in `BaselineTest.cs`. The code now excludes files that end with the `.slnx` extension, enhancing the filtering of project-related file types and directories during processing.
+
+diff --git a/src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs b/src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs
+index 55a1bc3e09..629a50c9c9 100644
+--- a/src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs
++++ b/src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs
+@@ -92,6 +92,7 @@ public class BaselineTest : LoggedTest
+                 relativePath.EndsWith(".fsproj", StringComparison.Ordinal) ||
+                 relativePath.EndsWith(".props", StringComparison.Ordinal) ||
+                 relativePath.EndsWith(".sln", StringComparison.Ordinal) ||
++                relativePath.EndsWith(".slnx", StringComparison.Ordinal) ||
+                 relativePath.EndsWith(".targets", StringComparison.Ordinal) ||
+                 relativePath.StartsWith("bin/", StringComparison.Ordinal) ||
+                 relativePath.StartsWith("obj/", StringComparison.Ordinal) ||

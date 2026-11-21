@@ -1,0 +1,27 @@
+{
+  "id": "F197",
+  "finding": {
+    "card_id": "enumerable-materialized-before-single-use",
+    "file": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line_start": 87,
+    "line_end": 87,
+    "project": "Templates.Tests",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "informational",
+    "confidence": "high",
+    "classification": "informational",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "The generated-file enumeration is copied to an array before one foreach.",
+    "explanation": "Directory.EnumerateFiles is materialized with ToArray, and filesInFolder is consumed only by the immediately following foreach. The test does not mutate the output directory while iterating, so the array allocation and copy are avoidable; the occurrence is test-only and informational.",
+    "snippet": "var filesInFolder = Directory.EnumerateFiles(Project.TemplateOutputDir, \"*\", SearchOption.AllDirectories).ToArray();",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
