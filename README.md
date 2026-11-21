@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 242/358 finalized**: 78 drafts, 31 no-gain, 83 rejected and 50 duplicates;
-116 findings remain unfinished.
+**Progress: 245/358 finalized**: 78 drafts, 31 no-gain, 86 rejected and 50 duplicates;
+113 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F192 | Rejected, bounded installer materialization | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): normal tracked scalar inputs2-3 and array-versus-iterator join tradeoff do not justify a candidate; no task-host/runtime measurement. [Evidence](F192-F193-F196/README.md) |
+| F193 | Rejected, header backing and semantics qualified | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): array backing already reused; scalar materiality unestablished and general ToString delimiter semantics differ. No wire/runtime result. [Evidence](F192-F193-F196/README.md) |
+| F196 | Rejected, bounded tag-cloud producer | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): fixed67tags and Index counts20/15/20 establish no material candidate; static expected-HTML check is not rendering/native/performance. [Evidence](F192-F193-F196/README.md) |
 | F190 | Rejected, real producers already cheap-countable | [jaslawinMs/aspnetcore#212](https://github.com/jaslawinMs/aspnetcore/issues/212): actual arrays and fixed-depth pipelines have metadata counts in pinned source; no native runtime/performance result. [Evidence](F190-F191/README.md) |
 | F191 | Rejected, diagnostic producer already indexed | [jaslawinMs/aspnetcore#212](https://github.com/jaslawinMs/aspnetcore/issues/212): real producer returns `Diagnostic[]`, so `ElementAt` is indexed; no repeated non-indexed traversal on located paths. [Evidence](F190-F191/README.md) |
 | F240 | Rejected, no material discovery candidate | [jaslawinMs/aspnetcore#211](https://github.com/jaslawinMs/aspnetcore/issues/211): opt-in registration and small reviewed source populations do not justify replacement complexity; no native or performance result. [Evidence](F240-F268/README.md) |
