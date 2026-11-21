@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 247/358 finalized**: 78 drafts, 31 no-gain, 88 rejected and 50 duplicates;
-111 findings remain unfinished.
+**Progress: 248/358 finalized**: 78 drafts, 31 no-gain, 89 rejected and 50 duplicates;
+110 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F199 | Rejected, transport-abort materiality unestablished | [jaslawinMs/aspnetcore#216](https://github.com/jaslawinMs/aspnetcore/issues/216): real copy and declared List-task span path qualified, but no material transport-stop workload or runtime performance result. [Evidence](F199/README.md) |
 | F197 | Rejected, bounded template file verification | [jaslawinMs/aspnetcore#215](https://github.com/jaslawinMs/aspnetcore/issues/215): real single-use array exists, but cold generated-file test has no established material need; source-defined75scenarios are not runtime counts. [Evidence](F197/README.md) |
 | F208 | Rejected, materiality not established | [jaslawinMs/aspnetcore#214](https://github.com/jaslawinMs/aspnetcore/issues/214): real-Node private guard has row-level correctness evidence, but no justified natural CLI workload or material performance result; not measured no-gain. [Evidence](F208/README.md) |
 | F192 | Rejected, bounded installer materialization | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): normal tracked scalar inputs2-3 and array-versus-iterator join tradeoff do not justify a candidate; no task-host/runtime measurement. [Evidence](F192-F193-F196/README.md) |
