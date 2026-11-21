@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 238/358 finalized**: 78 drafts, 31 no-gain, 79 rejected and 50 duplicates;
-120 findings remain unfinished.
+**Progress: 240/358 finalized**: 78 drafts, 31 no-gain, 81 rejected and 50 duplicates;
+118 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F240 | Rejected, no material discovery candidate | [jaslawinMs/aspnetcore#211](https://github.com/jaslawinMs/aspnetcore/issues/211): opt-in registration and small reviewed source populations do not justify replacement complexity; no native or performance result. [Evidence](F240-F268/README.md) |
+| F268 | Rejected, no material sample candidate | [jaslawinMs/aspnetcore#211](https://github.com/jaslawinMs/aspnetcore/issues/211): broadcast copy confirmed, but no representative workload or material gain established; no native buffer-equivalence or performance claim. [Evidence](F240-F268/README.md) |
 | F214 | Rejected, scoped null-guard evidence | [jaslawinMs/aspnetcore#210](https://github.com/jaslawinMs/aspnetcore/issues/210): located string-key producers and inspected .NET 12 native guards do not substantiate the claimed boxing; not a whole-operation allocation or performance claim. [Evidence](F214-F236/README.md) |
 | F236 | Rejected, no material candidate established | [jaslawinMs/aspnetcore#210](https://github.com/jaslawinMs/aspnetcore/issues/210): cached metadata and small reviewed constructor fixture do not justify a replacement; 13 MVC source rows blocked before discovery, not passed. [Evidence](F214-F236/README.md) |
 | F202 | Duplicate generated helper | [jaslawinMs/aspnetcore#209](https://github.com/jaslawinMs/aspnetcore/issues/209): same emitted JSON helper as still-pending F201; no separate fix or performance claim. [Evidence](F201-F203-aliases/README.md) |
