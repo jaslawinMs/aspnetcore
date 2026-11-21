@@ -1,0 +1,24 @@
+commit 4cf89470a7866a963d7118bb1ba90dc35683965c
+Author:     James Newton-King <james@newtonking.com>
+AuthorDate: Mon Jul 22 10:34:10 2024 +0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Jul 22 10:34:10 2024 +0800
+
+    Improve Kestrel connection metrics with error reasons (#55565)
+
+diff --git a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
+index 3ff915a890..260132a41a 100644
+--- a/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
++++ b/src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs
+@@ -77,6 +77,11 @@ internal sealed class TransportConnectionManager
+         {
+             if (kvp.Value.TryGetConnection(out var connection))
+             {
++                // Connection didn't shutdown in allowed time. Force close the connection and set the end reason.
++                KestrelMetrics.AddConnectionEndReason(
++                    connection.TransportConnection.Features.Get<IConnectionMetricsContextFeature>()?.MetricsContext,
++                    ConnectionEndReason.AppShutdownTimeout, overwrite: true);
++
+                 connection.TransportConnection.Abort(new ConnectionAbortedException(CoreStrings.ConnectionAbortedDuringServerShutdown));
+                 abortTasks.Add(connection.ExecutionTask);
+             }

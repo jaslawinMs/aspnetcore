@@ -1,0 +1,43 @@
+{
+  "finding": "F199",
+  "decision": "bounded-source-only-no-material-candidate",
+  "proposedDisposition": "rejected",
+  "premise": "The local List<Task> really is copied before one Task.WhenAll. This is not a nonexistent-copy or necessary-array finding.",
+  "locatedSourceProducer": [
+    "TransportManager.StopAsync and StopEndpointsAsync select transports, unbind listeners and await accept loops.",
+    "StopTransportConnection requests graceful close first; only its unsuccessful result invokes AbortAllConnectionsAsync.",
+    "AbortAllConnectionsAsync resolves live weak references, sets the existing end reason, aborts the real transport and collects each connection.ExecutionTask in a local List<Task>.",
+    "ExecutionTask is the base connection completion-TCS task. The actual connection delegate/finally path disposes the transport then removes it; global ConnectionManager.RemoveConnection calls Complete.",
+    "The source includes endpoint stop/reconfiguration as well as server stop; it is not a per-request path or a server-stop-only claim."
+  ],
+  "declaredDependencySource": {
+    "originalRevision": "dfd6ac738610ea05f42e704be82b386e71052e12",
+    "defaultRevision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+    "wholeTaskSourceGitBlob": "575a9a2051d65c09236c83bafdd8485e446ab062",
+    "wholeTaskSourceBytesPerRole": 379185,
+    "observation": "The complete same Task.cs at both declared revisions special-cases List<Task> with CollectionsMarshal.AsSpan and forwards array/list paths to span-based WhenAll. Do not claim enumerable joining must copy this list again.",
+    "limit": "Declared source/blob provenance, not actual selected/loaded CLR, JIT, allocation or execution evidence."
+  },
+  "materialityDecision": "No material owning transport-stop/fallback workload, connection count or improvement is established. Do not manufacture one with a large connection list, repeated aborts or isolated WhenAll timing. Source-visible avoidability alone is insufficient for a performance PR.",
+  "unchangedBoundaries": [
+    "Neighboring graceful-close ToArray, abort order/end reason and live-weak-reference selection.",
+    "Existing Task.WhenAny with Task.Delay(1000); no measured duration or one-second minimum is asserted.",
+    "Connection/transport lifetime, cancellation, timeout, completion and logging semantics."
+  ],
+  "performed": {
+    "initialSourceGitGithubCommands": 39,
+    "additiveCompletionSourceCommands": 1,
+    "wholeAspNetCoreSourceMemberships": 16,
+    "candidateEditsOrPrivateGraphs": 0,
+    "nativeBuildTestRestoreServerOrRuntimeProbeStarts": 0,
+    "comparisonAuthorizationsOrMeasurements": 0
+  },
+  "history": "Six target-history entries, latest error-reason diff4cf89470a7866a963d7118bb1ba90dc35683965c and empty limit10 TransportConnectionManager ToArray PR search. Not exhaustive history or duplication proof.",
+  "navigation": "Configured Azure index is unrelated; GitHub semantic repo lookup previously404. LSP returned owning symbols but no usable caller/runtime-method boundary; bounded Infrastructure exact-identifier matches then whole pinned source reads establish only the stated source trace, not a complete resolved call graph. Exact Servers/Kestrel/Core ancestor AGENTS lookups returned no matches.",
+  "limits": [
+    "No runtime correctness, server-stop behavior, real connection cardinality or measured no-gain claim.",
+    "No exact hypothetical overload binding, selected runtime or universal immateriality claim.",
+    "No tests selected after the no-candidate gate; no prerequisite availability or passing test implied.",
+    "Only verified fork publication may finalize the pending canonical entry."
+  ]
+}

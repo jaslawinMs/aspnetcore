@@ -1,0 +1,27 @@
+{
+  "id": "F199",
+  "finding": {
+    "card_id": "enumerable-materialized-before-single-use",
+    "file": "src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportConnectionManager.cs",
+    "line_start": 90,
+    "line_end": 90,
+    "project": "Microsoft.AspNetCore.Server.Kestrel.Core",
+    "target_frameworks": [
+      "net12.0"
+    ],
+    "severity": "informational",
+    "confidence": "high",
+    "classification": "informational",
+    "hot_path": "low",
+    "tfm_sensitive": false,
+    "summary": "Connection-abort tasks are copied to an array before a single Task.WhenAll call.",
+    "explanation": "abortTasks is already an enumerable List<Task>, but it is cloned with ToArray solely to pass it to Task.WhenAll, which accepts IEnumerable<Task>. The method is a shutdown-time fallback, so the avoidable materialization is classified informational.",
+    "snippet": "var allAbortedTask = Task.WhenAll(abortTasks.ToArray());",
+    "suppressed": false
+  },
+  "status": "pending",
+  "notes": [],
+  "branch": null,
+  "pr_url": null,
+  "updated_at": null
+}
