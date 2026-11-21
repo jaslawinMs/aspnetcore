@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 245/358 finalized**: 78 drafts, 31 no-gain, 86 rejected and 50 duplicates;
-113 findings remain unfinished.
+**Progress: 246/358 finalized**: 78 drafts, 31 no-gain, 87 rejected and 50 duplicates;
+112 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,7 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F208 | Rejected, materiality not established | [jaslawinMs/aspnetcore#214](https://github.com/jaslawinMs/aspnetcore/issues/214): real-Node private guard has row-level correctness evidence, but no justified natural CLI workload or material performance result; not measured no-gain. [Evidence](F208/README.md) |
 | F192 | Rejected, bounded installer materialization | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): normal tracked scalar inputs2-3 and array-versus-iterator join tradeoff do not justify a candidate; no task-host/runtime measurement. [Evidence](F192-F193-F196/README.md) |
 | F193 | Rejected, header backing and semantics qualified | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): array backing already reused; scalar materiality unestablished and general ToString delimiter semantics differ. No wire/runtime result. [Evidence](F192-F193-F196/README.md) |
 | F196 | Rejected, bounded tag-cloud producer | [jaslawinMs/aspnetcore#213](https://github.com/jaslawinMs/aspnetcore/issues/213): fixed67tags and Index counts20/15/20 establish no material candidate; static expected-HTML check is not rendering/native/performance. [Evidence](F192-F193-F196/README.md) |
