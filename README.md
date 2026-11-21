@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 256/358 finalized**: 78 drafts, 31 no-gain, 97 rejected and 50 duplicates;
-102 findings remain unfinished.
+**Progress: 260/358 finalized**: 78 drafts, 31 no-gain, 101 rejected and 50 duplicates;
+98 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,10 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F150 | Rejected, console-renderer materiality unestablished | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): actual CLI/renderer producers, exact raw-source correction, no material equivalent async replacement. [Evidence](F150-F206-F215-F220/README.md) |
+| F206 | Rejected, eager browser-log join materially unqualified | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): real startup/log snapshot source, actual browser log cardinality and whole-Fact benefit unobserved. [Evidence](F150-F206-F215-F220/README.md) |
+| F215 | Rejected, generator hash workload materially unqualified | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): actual multiply/XOR hash and compiler deduplication consumer, no synthetic collision benchmark. [Evidence](F150-F206-F215-F220/README.md) |
+| F220 | Rejected, link-check materiality unestablished | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): real expected-link producers and separate DOM work; not an F190 implementation duplicate. [Evidence](F150-F206-F215-F220/README.md) |
 | F212 | Rejected, intentional native dispatch/materiality unestablished | [jaslawinMs/aspnetcore#219](https://github.com/jaslawinMs/aspnetcore/issues/219): actual Photino callback and dispatch contract, no equivalent measured replacement. [Evidence](F212-F217-F218-F221/README.md) |
 | F217 | Rejected, named-pipe hash workload unestablished | [jaslawinMs/aspnetcore#219](https://github.com/jaslawinMs/aspnetcore/issues/219): real fixed-server-name producers and bounded consumers, no synthetic collision benchmark. [Evidence](F212-F217-F218-F221/README.md) |
 | F218 | Rejected, library-discovery materiality unestablished | [jaslawinMs/aspnetcore#219](https://github.com/jaslawinMs/aspnetcore/issues/219): actual assembly/Hot Reload refresh producer and first-empty-set correction. [Evidence](F212-F217-F218-F221/README.md) |
