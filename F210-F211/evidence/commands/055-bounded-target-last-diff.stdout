@@ -1,0 +1,26 @@
+commit 46562b1435bf111a7425b40f507b157b42a016a4
+Author:     Andrew Casey <amcasey@users.noreply.github.com>
+AuthorDate: Thu Sep 21 16:47:28 2023 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Sep 21 23:47:28 2023 +0000
+
+    Fix http2cat sample (#50863)
+    
+    * Fix http2cat sample
+    
+    As of #41558, four settings are expected, not three.
+
+diff --git a/src/Servers/Kestrel/samples/http2cat/Program.cs b/src/Servers/Kestrel/samples/http2cat/Program.cs
+index bf1cb5664c..078aa24a5c 100644
+--- a/src/Servers/Kestrel/samples/http2cat/Program.cs
++++ b/src/Servers/Kestrel/samples/http2cat/Program.cs
+@@ -28,7 +28,8 @@ public class Program
+ 
+     internal static async Task RunTestCase(Http2Utilities h2Connection)
+     {
+-        await h2Connection.InitializeConnectionAsync();
++        // Kestrel sends a fourth setting, SETTINGS_ENABLE_CONNECT_PROTOCOL
++        await h2Connection.InitializeConnectionAsync(expectedSettingsCount: 4);
+ 
+         h2Connection.Logger.LogInformation("Initialized http2 connection. Starting stream 1.");
+ 

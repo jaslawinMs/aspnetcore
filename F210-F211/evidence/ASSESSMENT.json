@@ -1,0 +1,46 @@
+{
+  "findings": ["F210", "F211"],
+  "decision": "bounded-source-only-no-material-candidates",
+  "proposedDispositions": {"F210": "rejected", "F211": "rejected"},
+  "producer": [
+    "Program.Main creates one HostBuilder, adds Console logging, configures UseHttp2Cat with one RunTestCase delegate and awaits host.RunAsync.",
+    "The host/service extensions store that delegate/options, register the socket connection factory and one hosted service. StartAsync assigns RunAsync once.",
+    "The actual RunAsync connects once, constructs Http2Utilities with its logger/transport/token, awaits Options.Scenaro and stops the application in finally. There is no scenario retry or stress loop in this located producer.",
+    "The sample sends one stream1 request, receives headers, one intended DATA frame and trailers, logs decoded output and stops the connection. Header/trailer enumeration is not repetition of either retained site."
+  ],
+  "F210": {
+    "premise": "The explicit enum ToString string argument is eager when the TRACE-conditional call is compiled and reached. The declared Trace.Assert bool/string source has Conditional(TRACE), not a lazy handler for this explicit string argument.",
+    "limit": "Actual compiler TRACE defines, selected reference overload/IL, listener behavior, runtime enum conversion/allocation and material cost were not measured or qualified.",
+    "normalSourceCardinality": "One retained enum-message expression on the located successful sample callback path, zero if its call is omitted or never reached.",
+    "decision": "No material owning-sample effect established. Do not fabricate repeated assertions or enum conversion timing."
+  },
+  "F211": {
+    "typeCorrection": "Http2FrameWithPayload.Payload is Memory<byte>, NOT the retained finding's presumed ReadOnlySequence<byte>. PayloadSequence is a separate wrapper.",
+    "ownership": "ReceiveFrameAsync obtains the real pipeline buffer, validates/extracts a frame, copies framePayload into owned memory and advances the pipeline in finally. That upstream ownership copy is not the retained diagnostic copy and must not be deleted based on this finding.",
+    "eagerOperation": "The separate Memory<byte>.ToArray and UTF8 decoding occur before the string-taking LogInformation call. Declared Memory<T>.ToArray delegates to Span.ToArray; no runtime payload length or nonempty allocation is observed.",
+    "normalLogging": "Program explicitly adds Console and no disabling/min-level override. Declared ConfigureLogging calls AddLogging; that source registers DefaultLoggerLevelConfigureOptions(Information), and ConsoleLogger.IsEnabled accepts levels other than None. This qualifies the stated ordinary source configuration, not actual runtime options/selected transitive packages or a universal logger setting.",
+    "frameBound": "The actual ordinary ReceiveFrameAsync defaults to DefaultMaxFrameSize=MinAllowedMaxFrameSize=16*1024; TryReadFrame rejects payloadLength above its passed bound. This is a source acceptance bound, not observed DATA size or an invitation to manufacture a maximum-size frame.",
+    "normalSourceCardinality": "One retained DATA-payload diagnostic per located callback if reached. Header/trailer loops and receive buffering are not a repeated DATA-payload workload.",
+    "decision": "No material discarded-logging case is established in the ordinary source configuration. Real eager copy/decoding remains, but no disabled logger, padded payload, repeated connection or isolated copy/format benchmark is introduced. No blanket claim that a guard/span-based alternative is useless."
+  },
+  "documentationAndHistory": {
+    "documentation": "Captured samples README explicitly describes inner-loop nonproduction development apps; this label alone is not a performance proof.",
+    "history": "Target history limit8 returned5 entries; latest46562b1435bf111a7425b40f507b157b42a016a4 fixes expected settings count. Bounded http2cat logging PR search limit10 returned existing50863. Not an exhaustive history/related-work or duplicate claim.",
+    "sourceNavigation": "Acceptance records actual failed LSP navigation, exact csproj shared-source includes and known-subtree fallback. No complete resolved caller-graph claim."
+  },
+  "performed": {
+    "wholeAspNetCoreMemberships": 28,
+    "rawGitObjects": 34,
+    "wholeDeclaredExternalBlobFingerprints": 16,
+    "sourceGitGithubCommandsWaitedAndDrained": 59,
+    "candidateEditsPrivateGraphs": 0,
+    "nativeBuildTestRestoreServerRuntimeProbeStarts": 0,
+    "comparisonAuthorizationsOrMeasurements": 0
+  },
+  "limits": [
+    "No native reproduction, real socket exchange, selected logger/TRACE/runtime, frame bytes/count or elapsed/allocation result.",
+    "No test selected after no-candidate gate and no test prerequisite/result is claimed.",
+    "No missing-byte workaround, output/protocol change, source rewrite, isolated synthetic workload or universal immateriality assertion.",
+    "Only verified fork publication may finalize the pending entries."
+  ]
+}

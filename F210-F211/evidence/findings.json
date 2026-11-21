@@ -1,0 +1,56 @@
+[
+  {
+    "id": "F210",
+    "finding": {
+      "card_id": "expensive-branch-result-computed-eagerly",
+      "file": "src/Servers/Kestrel/samples/http2cat/Program.cs",
+      "line_start": 40,
+      "line_end": 40,
+      "project": "http2cat",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "medium",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "A Trace.Assert failure message eagerly formats an enum on successful checks.",
+      "explanation": "When TRACE is included, headersFrame.Type.ToString() is evaluated before Trace.Assert inspects the condition, even though the message is only useful when the assertion fails. This occurs in a single-exchange diagnostic sample, so it is informational.",
+      "snippet": "Trace.Assert(headersFrame.Type == Http2FrameType.HEADERS, headersFrame.Type.ToString());",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F211",
+    "finding": {
+      "card_id": "expensive-branch-result-computed-eagerly",
+      "file": "src/Servers/Kestrel/samples/http2cat/Program.cs",
+      "line_start": 60,
+      "line_end": 60,
+      "project": "http2cat",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "A data frame is copied and UTF-8 decoded before Information logging is gated.",
+      "explanation": "The LogInformation argument calls ReadOnlySequence.ToArray and Encoding.UTF8.GetString before the logger can test whether Information is enabled. The sample performs this for its received DATA frame; because the site is a small diagnostic sample rather than a production server path, it is informational.",
+      "snippet": "h2Connection.Logger.LogInformation(Encoding.UTF8.GetString(dataFrame.Payload.ToArray()));",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]
