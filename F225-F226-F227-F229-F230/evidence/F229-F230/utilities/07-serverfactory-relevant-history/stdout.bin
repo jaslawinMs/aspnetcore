@@ -1,0 +1,682 @@
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+index de41e17e4a..9b9a695857 100644
+--- a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
++++ b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+@@ -19,144 +19,143 @@ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.FileProviders;
+ using Microsoft.Extensions.Hosting;
+ 
+-namespace Microsoft.AspNetCore.Identity.FunctionalTests
++namespace Microsoft.AspNetCore.Identity.FunctionalTests;
++
++public class ServerFactory<TStartup, TContext> : WebApplicationFactory<TStartup>
++    where TStartup : class
++    where TContext : DbContext
+ {
+-    public class ServerFactory<TStartup, TContext> : WebApplicationFactory<TStartup>
+-        where TStartup : class
+-        where TContext : DbContext
++    private readonly SqliteConnection _connection
++        = new SqliteConnection($"DataSource=:memory:");
++
++    public ServerFactory()
+     {
+-        private readonly SqliteConnection _connection
+-            = new SqliteConnection($"DataSource=:memory:");
++        _connection.Open();
+ 
+-        public ServerFactory()
+-        {
+-            _connection.Open();
++        ClientOptions.AllowAutoRedirect = false;
++        ClientOptions.BaseAddress = new Uri("https://localhost");
++    }
+ 
+-            ClientOptions.AllowAutoRedirect = false;
+-            ClientOptions.BaseAddress = new Uri("https://localhost");
+-        }
++    public string BootstrapFrameworkVersion { get; set; } = "V5";
+ 
+-        public string BootstrapFrameworkVersion { get; set; } = "V5";
++    protected override IHostBuilder CreateHostBuilder()
++    {
++        return Program.CreateHostBuilder(new[] { "--use-startup=false" });
++    }
+ 
+-        protected override IHostBuilder CreateHostBuilder()
+-        {
+-            return Program.CreateHostBuilder(new[] { "--use-startup=false" });
+-        }
++    protected override void ConfigureWebHost(IWebHostBuilder builder)
++    {
++        base.ConfigureWebHost(builder);
++        builder.UseStartup<TStartup>();
+ 
+-        protected override void ConfigureWebHost(IWebHostBuilder builder)
++        builder.ConfigureServices(sc =>
+         {
+-            base.ConfigureWebHost(builder);
+-            builder.UseStartup<TStartup>();
++            sc.SetupTestDatabase<TContext>(_connection)
++                .AddMvc()
++                // Mark the cookie as essential for right now, as Identity uses it on
++                // several places to pass important data in post-redirect-get flows.
++                .AddCookieTempDataProvider(o => o.Cookie.IsEssential = true);
++        });
+ 
+-            builder.ConfigureServices(sc =>
+-            {
+-                sc.SetupTestDatabase<TContext>(_connection)
+-                    .AddMvc()
+-                    // Mark the cookie as essential for right now, as Identity uses it on
+-                    // several places to pass important data in post-redirect-get flows.
+-                    .AddCookieTempDataProvider(o => o.Cookie.IsEssential = true);
+-            });
++        UpdateApplicationParts(builder);
++    }
+ 
+-            UpdateApplicationParts(builder);
+-        }
++    private void UpdateApplicationParts(IWebHostBuilder builder) =>
++        builder.ConfigureServices(services => AddRelatedParts(services, BootstrapFrameworkVersion));
+ 
+-        private void UpdateApplicationParts(IWebHostBuilder builder) =>
+-            builder.ConfigureServices(services => AddRelatedParts(services, BootstrapFrameworkVersion));
++    protected override IHost CreateHost(IHostBuilder builder)
++    {
++        var result = base.CreateHost(builder);
++        EnsureDatabaseCreated(result.Services);
++        return result;
++    }
+ 
+-        protected override IHost CreateHost(IHostBuilder builder)
+-        {
+-            var result = base.CreateHost(builder);
+-            EnsureDatabaseCreated(result.Services);
+-            return result;
+-        }
++    protected override TestServer CreateServer(IWebHostBuilder builder)
++    {
++        var result = base.CreateServer(builder);
++        EnsureDatabaseCreated(result.Host.Services);
++        return result;
++    }
+ 
+-        protected override TestServer CreateServer(IWebHostBuilder builder)
++    public void EnsureDatabaseCreated(IServiceProvider services)
++    {
++        using (var scope = services.CreateScope())
+         {
+-            var result = base.CreateServer(builder);
+-            EnsureDatabaseCreated(result.Host.Services);
+-            return result;
+-        }
+-
+-        public void EnsureDatabaseCreated(IServiceProvider services)
+-        {
+-            using (var scope = services.CreateScope())
+-            {
+-                scope.ServiceProvider.GetService<TContext>()?.Database?.EnsureCreated();
+-            }
++            scope.ServiceProvider.GetService<TContext>()?.Database?.EnsureCreated();
+         }
++    }
+ 
+-        protected override void Dispose(bool disposing)
+-        {
+-            _connection.Dispose();
++    protected override void Dispose(bool disposing)
++    {
++        _connection.Dispose();
+ 
+-            base.Dispose(disposing);
+-        }
++        base.Dispose(disposing);
++    }
+ 
+-        private static void AddRelatedParts(IServiceCollection services, string framework)
+-        {
+-            var _assemblyMap =
+-                new Dictionary<UIFramework, string>()
+-                {
+-                    [UIFramework.Bootstrap5] = "Microsoft.AspNetCore.Identity.UI.Views.V5",
+-                    [UIFramework.Bootstrap4] = "Microsoft.AspNetCore.Identity.UI.Views.V4",
+-                };
++    private static void AddRelatedParts(IServiceCollection services, string framework)
++    {
++        var _assemblyMap =
++            new Dictionary<UIFramework, string>()
++            {
++                [UIFramework.Bootstrap5] = "Microsoft.AspNetCore.Identity.UI.Views.V5",
++                [UIFramework.Bootstrap4] = "Microsoft.AspNetCore.Identity.UI.Views.V4",
++            };
+ 
+-            var mvcBuilder = services
+-                .AddMvc()
+-                .ConfigureApplicationPartManager(partManager =>
+-                {
+-                    var thisAssembly = typeof(IdentityBuilderUIExtensions).Assembly;
+-                    var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(thisAssembly, throwOnError: true);
+-                    var relatedParts = relatedAssemblies.ToDictionary(
+-                        ra => ra,
+-                        CompiledRazorAssemblyApplicationPartFactory.GetDefaultApplicationParts);
++        var mvcBuilder = services
++            .AddMvc()
++            .ConfigureApplicationPartManager(partManager =>
++            {
++                var thisAssembly = typeof(IdentityBuilderUIExtensions).Assembly;
++                var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(thisAssembly, throwOnError: true);
++                var relatedParts = relatedAssemblies.ToDictionary(
++                    ra => ra,
++                    CompiledRazorAssemblyApplicationPartFactory.GetDefaultApplicationParts);
+ 
+-                    var selectedFrameworkAssembly = _assemblyMap[framework == "V4" ? UIFramework.Bootstrap4 : UIFramework.Bootstrap5];
++                var selectedFrameworkAssembly = _assemblyMap[framework == "V4" ? UIFramework.Bootstrap4 : UIFramework.Bootstrap5];
+ 
+-                    foreach (var kvp in relatedParts)
++                foreach (var kvp in relatedParts)
++                {
++                    var assemblyName = kvp.Key.GetName().Name;
++                    if (!IsAssemblyForFramework(selectedFrameworkAssembly, assemblyName))
+                     {
+-                        var assemblyName = kvp.Key.GetName().Name;
+-                        if (!IsAssemblyForFramework(selectedFrameworkAssembly, assemblyName))
+-                        {
+-                            RemoveParts(partManager, kvp.Value);
+-                        }
+-                        else
+-                        {
+-                            AddParts(partManager, kvp.Value);
+-                        }
++                        RemoveParts(partManager, kvp.Value);
+                     }
+-                    bool IsAssemblyForFramework(string frameworkAssembly, string assemblyName) =>
+-                        string.Equals(assemblyName, frameworkAssembly, StringComparison.OrdinalIgnoreCase);
+-                    void RemoveParts(
+-                        ApplicationPartManager manager,
+-                        IEnumerable<ApplicationPart> partsToRemove)
++                    else
+                     {
+-                        for (var i = 0; i < manager.ApplicationParts.Count; i++)
++                        AddParts(partManager, kvp.Value);
++                    }
++                }
++                bool IsAssemblyForFramework(string frameworkAssembly, string assemblyName) =>
++                    string.Equals(assemblyName, frameworkAssembly, StringComparison.OrdinalIgnoreCase);
++                void RemoveParts(
++                    ApplicationPartManager manager,
++                    IEnumerable<ApplicationPart> partsToRemove)
++                {
++                    for (var i = 0; i < manager.ApplicationParts.Count; i++)
++                    {
++                        var part = manager.ApplicationParts[i];
++                        if (partsToRemove.Any(p => string.Equals(
++                                p.Name,
++                                part.Name,
++                                StringComparison.OrdinalIgnoreCase)))
+                         {
+-                            var part = manager.ApplicationParts[i];
+-                            if (partsToRemove.Any(p => string.Equals(
+-                                    p.Name,
+-                                    part.Name,
+-                                    StringComparison.OrdinalIgnoreCase)))
+-                            {
+-                                manager.ApplicationParts.Remove(part);
+-                            }
++                            manager.ApplicationParts.Remove(part);
+                         }
+                     }
+-                    void AddParts(
+-                        ApplicationPartManager manager,
+-                        IEnumerable<ApplicationPart> partsToAdd)
++                }
++                void AddParts(
++                    ApplicationPartManager manager,
++                    IEnumerable<ApplicationPart> partsToAdd)
++                {
++                    foreach (var part in partsToAdd)
+                     {
+-                        foreach (var part in partsToAdd)
++                        if (!manager.ApplicationParts.Any(p => p.GetType() == part.GetType() &&
++                            string.Equals(p.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
+                         {
+-                            if (!manager.ApplicationParts.Any(p => p.GetType() == part.GetType() &&
+-                                string.Equals(p.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
+-                            {
+-                                manager.ApplicationParts.Add(part);
+-                            }
++                            manager.ApplicationParts.Add(part);
+                         }
+                     }
+-                });
+-        }
++                }
++            });
+     }
+ }
+
+commit 709038b45159227a422807f26d6d41dd7707ea10
+Author:     Hao Kung <HaoK@users.noreply.github.com>
+AuthorDate: Wed Aug 4 09:16:32 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Aug 4 09:16:32 2021 -0700
+
+    Update to bootstrap5 (#34052)
+
+diff --git a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+index 65be32da85..912e817dca 100644
+--- a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
++++ b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+@@ -36,7 +36,7 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+             ClientOptions.BaseAddress = new Uri("https://localhost");
+         }
+ 
+-        public string BootstrapFrameworkVersion { get; set; } = "V4";
++        public string BootstrapFrameworkVersion { get; set; } = "V5";
+ 
+         protected override IHostBuilder CreateHostBuilder()
+         {
+@@ -62,7 +62,7 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+         }
+ 
+         private void UpdateApplicationParts(IWebHostBuilder builder) =>
+-            builder.ConfigureServices(services => services.AddMvc());
++            builder.ConfigureServices(services => AddRelatedParts(services, BootstrapFrameworkVersion));
+ 
+         private void UpdateStaticAssets(IWebHostBuilder builder)
+         {
+@@ -150,5 +150,72 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+ 
+             base.Dispose(disposing);
+         }
++
++        private static void AddRelatedParts(IServiceCollection services, string framework)
++        {
++            var _assemblyMap =
++                new Dictionary<UIFramework, string>()
++                {
++                    [UIFramework.Bootstrap5] = "Microsoft.AspNetCore.Identity.UI.Views.V5",
++                    [UIFramework.Bootstrap4] = "Microsoft.AspNetCore.Identity.UI.Views.V4",
++                };
++
++            var mvcBuilder = services
++                .AddMvc()
++                .ConfigureApplicationPartManager(partManager =>
++                {
++                    var thisAssembly = typeof(IdentityBuilderUIExtensions).Assembly;
++                    var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(thisAssembly, throwOnError: true);
++                    var relatedParts = relatedAssemblies.ToDictionary(
++                        ra => ra,
++                        CompiledRazorAssemblyApplicationPartFactory.GetDefaultApplicationParts);
++
++                    var selectedFrameworkAssembly = _assemblyMap[framework == "V4" ? UIFramework.Bootstrap4 : UIFramework.Bootstrap5];
++
++                    foreach (var kvp in relatedParts)
++                    {
++                        var assemblyName = kvp.Key.GetName().Name;
++                        if (!IsAssemblyForFramework(selectedFrameworkAssembly, assemblyName))
++                        {
++                            RemoveParts(partManager, kvp.Value);
++                        }
++                        else
++                        {
++                            AddParts(partManager, kvp.Value);
++                        }
++                    }
++                    bool IsAssemblyForFramework(string frameworkAssembly, string assemblyName) =>
++                        string.Equals(assemblyName, frameworkAssembly, StringComparison.OrdinalIgnoreCase);
++                    void RemoveParts(
++                        ApplicationPartManager manager,
++                        IEnumerable<ApplicationPart> partsToRemove)
++                    {
++                        for (var i = 0; i < manager.ApplicationParts.Count; i++)
++                        {
++                            var part = manager.ApplicationParts[i];
++                            if (partsToRemove.Any(p => string.Equals(
++                                    p.Name,
++                                    part.Name,
++                                    StringComparison.OrdinalIgnoreCase)))
++                            {
++                                manager.ApplicationParts.Remove(part);
++                            }
++                        }
++                    }
++                    void AddParts(
++                        ApplicationPartManager manager,
++                        IEnumerable<ApplicationPart> partsToAdd)
++                    {
++                        foreach (var part in partsToAdd)
++                        {
++                            if (!manager.ApplicationParts.Any(p => p.GetType() == part.GetType() &&
++                                string.Equals(p.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
++                            {
++                                manager.ApplicationParts.Add(part);
++                            }
++                        }
++                    }
++                });
++        }
+     }
+ }
+
+commit ebbe22f65899b4570e754d1e24c6f190d5b25634
+Author:     Safia Abdalla <safia@microsoft.com>
+AuthorDate: Fri Mar 19 11:36:24 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Mar 19 18:36:24 2021 +0000
+
+    Update SDK to bring unified assembly changes (#31039)
+    
+    * Update SDK to bring unified assembly changes
+    
+    * Update SDK to pick up Razor pages fix
+    
+    * Fixup test
+    
+    Co-authored-by: Pranav K <prkrishn@hotmail.com>
+
+diff --git a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+index c921df9289..adb5ecd6ca 100644
+--- a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
++++ b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+@@ -62,7 +62,7 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+         }
+ 
+         private void UpdateApplicationParts(IWebHostBuilder builder) =>
+-            builder.ConfigureServices(services => AddRelatedParts(services, BootstrapFrameworkVersion));
++            builder.ConfigureServices(services => services.AddMvc());
+ 
+         private void UpdateStaticAssets(IWebHostBuilder builder)
+         {
+@@ -150,75 +150,5 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+ 
+             base.Dispose(disposing);
+         }
+-
+-        private static void AddRelatedParts(IServiceCollection services, string framework)
+-        {
+-            var _assemblyMap =
+-                new Dictionary<UIFramework, string>()
+-                {
+-                    [UIFramework.Bootstrap4] = "Microsoft.AspNetCore.Identity.UI.Views.V4",
+-                };
+-
+-            var mvcBuilder = services
+-                .AddMvc()
+-                .ConfigureApplicationPartManager(partManager =>
+-                {
+-                    var thisAssembly = typeof(IdentityBuilderUIExtensions).Assembly;
+-                    var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(thisAssembly, throwOnError: true);
+-                    var relatedParts = relatedAssemblies.ToDictionary(
+-                        ra => ra,
+-                        CompiledRazorAssemblyApplicationPartFactory.GetDefaultApplicationParts);
+-
+-                    var selectedFrameworkAssembly = _assemblyMap[UIFramework.Bootstrap4];
+-
+-                    foreach (var kvp in relatedParts)
+-                    {
+-                        var assemblyName = kvp.Key.GetName().Name;
+-                        if (!IsAssemblyForFramework(selectedFrameworkAssembly, assemblyName))
+-                        {
+-                            RemoveParts(partManager, kvp.Value);
+-                        }
+-                        else
+-                        {
+-                            AddParts(partManager, kvp.Value);
+-                        }
+-                    }
+-
+-                    bool IsAssemblyForFramework(string frameworkAssembly, string assemblyName) =>
+-                        string.Equals(assemblyName, frameworkAssembly, StringComparison.OrdinalIgnoreCase);
+-
+-                    void RemoveParts(
+-                        ApplicationPartManager manager,
+-                        IEnumerable<ApplicationPart> partsToRemove)
+-                    {
+-                        for (var i = 0; i < manager.ApplicationParts.Count; i++)
+-                        {
+-                            var part = manager.ApplicationParts[i];
+-                            if (partsToRemove.Any(p => string.Equals(
+-                                    p.Name,
+-                                    part.Name,
+-                                    StringComparison.OrdinalIgnoreCase)))
+-                            {
+-                                manager.ApplicationParts.Remove(part);
+-                            }
+-                        }
+-                    }
+-
+-                    void AddParts(
+-                        ApplicationPartManager manager,
+-                        IEnumerable<ApplicationPart> partsToAdd)
+-                    {
+-                        foreach (var part in partsToAdd)
+-                        {
+-                            if (!manager.ApplicationParts.Any(p => p.GetType() == part.GetType() &&
+-                                string.Equals(p.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
+-                            {
+-                                manager.ApplicationParts.Add(part);
+-                            }
+-                        }
+-                    }
+-                });
+-        }
+-
+     }
+ }
+
+commit 143c10169326ea3972fc90950a938c33640777e2
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Thu Jul 25 17:34:45 2019 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Jul 25 17:34:45 2019 +0200
+
+    [Identity] Move to use static web assets support. (#11029)
+    
+    * Moves Identity UI to use Static Web Assets
+      * Removes the static files as embedded content.
+      * Stops plugging the static assets through the embedded file provider.
+      * Selects the UI framework at build time instead of runtime.
+
+diff --git a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+index 7082dfb442..95fafbedd1 100644
+--- a/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
++++ b/src/Identity/test/Identity.FunctionalTests/Infrastructure/ServerFactory.cs
+@@ -2,19 +2,26 @@
+ // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ 
+ using System;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using System.Reflection;
+ using Identity.DefaultUI.WebSite;
+-using Microsoft.AspNetCore.Authentication;
+ using Microsoft.AspNetCore.Hosting;
++using Microsoft.AspNetCore.Hosting.StaticWebAssets;
++using Microsoft.AspNetCore.Identity.UI;
++using Microsoft.AspNetCore.Mvc.ApplicationParts;
+ using Microsoft.AspNetCore.Mvc.Testing;
+ using Microsoft.AspNetCore.TestHost;
+ using Microsoft.Data.Sqlite;
+ using Microsoft.EntityFrameworkCore;
+ using Microsoft.Extensions.DependencyInjection;
++using Microsoft.Extensions.FileProviders;
+ using Microsoft.Extensions.Hosting;
+ 
+ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+ {
+-    public class ServerFactory<TStartup,TContext>: WebApplicationFactory<TStartup>
++    public class ServerFactory<TStartup, TContext> : WebApplicationFactory<TStartup>
+         where TStartup : class
+         where TContext : DbContext
+     {
+@@ -29,6 +36,10 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+             ClientOptions.BaseAddress = new Uri("https://localhost");
+         }
+ 
++        public string BootstrapFrameworkVersion { get; set; } = "V4";
++        private bool IsHelixCI => typeof(ServerFactory<,>).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
++            .Any(a => a.Key == "Microsoft.AspNetCore.Testing.IsHelixCI");
++
+         protected override IHostBuilder CreateHostBuilder()
+         {
+             Program.UseStartup = false;
+@@ -48,6 +59,70 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+                     // several places to pass important data in post-redirect-get flows.
+                     .AddCookieTempDataProvider(o => o.Cookie.IsEssential = true);
+             });
++
++            UpdateStaticAssets(builder);
++            UpdateApplicationParts(builder);
++        }
++
++        private void UpdateApplicationParts(IWebHostBuilder builder) =>
++            builder.ConfigureServices(services => AddRelatedParts(services, BootstrapFrameworkVersion));
++
++        private void UpdateStaticAssets(IWebHostBuilder builder)
++        {
++            var manifestPath = Path.GetDirectoryName(new Uri(typeof(ServerFactory<,>).Assembly.CodeBase).LocalPath);
++            builder.ConfigureAppConfiguration((ctx, cb) =>
++            {
++                if (ctx.HostingEnvironment.WebRootFileProvider is CompositeFileProvider composite)
++                {
++                    var originalWebRoot = composite.FileProviders.First();
++                    ctx.HostingEnvironment.WebRootFileProvider = originalWebRoot;
++                }
++            });
++
++            string versionedPath = Path.Combine(manifestPath, $"Testing.DefaultWebSite.StaticWebAssets.{BootstrapFrameworkVersion}.xml");
++            UpdateManifest(versionedPath);
++
++            builder.ConfigureAppConfiguration((context, configBuilder) =>
++            {
++                using (var manifest = File.OpenRead(versionedPath))
++                {
++                    typeof(StaticWebAssetsLoader)
++                        .GetMethod("UseStaticWebAssetsCore", BindingFlags.NonPublic | BindingFlags.Static)
++                        .Invoke(null, new object[] { context.HostingEnvironment, manifest });
++                }
++            });
++        }
++
++        private void UpdateManifest(string versionedPath)
++        {
++            var content = File.ReadAllText(versionedPath);
++            var path = typeof(ServerFactory<,>).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
++                    .Single(a => a.Key == "Microsoft.AspNetCore.Testing.IdentityUIProjectPath").Value;
++
++            path = Directory.Exists(path) ? Path.Combine(path, "wwwroot") : Path.Combine(FindHelixSlnFileDirectory(), "UI", "wwwroot");
++
++            var updatedContent = content.Replace("{TEST_PLACEHOLDER}", path);
++
++            File.WriteAllText(versionedPath, updatedContent);
++        }
++
++        private string FindHelixSlnFileDirectory()
++        {
++            var applicationPath = Path.GetDirectoryName(typeof(ServerFactory<,>).Assembly.Location);
++            var directoryInfo = new DirectoryInfo(applicationPath);
++            do
++            {
++                var solutionPath = Directory.EnumerateFiles(directoryInfo.FullName, "*.sln").FirstOrDefault();
++                if (solutionPath != null)
++                {
++                    return directoryInfo.FullName;
++                }
++
++                directoryInfo = directoryInfo.Parent;
++            }
++            while (directoryInfo.Parent != null);
++
++            throw new InvalidOperationException($"Solution root could not be located using application root {applicationPath}.");
+         }
+ 
+         protected override IHost CreateHost(IHostBuilder builder)
+@@ -78,5 +153,76 @@ namespace Microsoft.AspNetCore.Identity.FunctionalTests
+ 
+             base.Dispose(disposing);
+         }
++
++        private static void AddRelatedParts(IServiceCollection services, string framework)
++        {
++            var _assemblyMap =
++                new Dictionary<UIFramework, string>()
++                {
++                    [UIFramework.Bootstrap3] = "Microsoft.AspNetCore.Identity.UI.Views.V3",
++                    [UIFramework.Bootstrap4] = "Microsoft.AspNetCore.Identity.UI.Views.V4",
++                };
++
++            var mvcBuilder = services
++                .AddMvc()
++                .ConfigureApplicationPartManager(partManager =>
++                {
++                    var thisAssembly = typeof(IdentityBuilderUIExtensions).Assembly;
++                    var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(thisAssembly, throwOnError: true);
++                    var relatedParts = relatedAssemblies.ToDictionary(
++                        ra => ra,
++                        CompiledRazorAssemblyApplicationPartFactory.GetDefaultApplicationParts);
++
++                    var selectedFrameworkAssembly = _assemblyMap[framework == "V3" ? UIFramework.Bootstrap3 : UIFramework.Bootstrap4];
++
++                    foreach (var kvp in relatedParts)
++                    {
++                        var assemblyName = kvp.Key.GetName().Name;
++                        if (!IsAssemblyForFramework(selectedFrameworkAssembly, assemblyName))
++                        {
++                            RemoveParts(partManager, kvp.Value);
++                        }
++                        else
++                        {
++                            AddParts(partManager, kvp.Value);
++                        }
++                    }
++
++                    bool IsAssemblyForFramework(string frameworkAssembly, string assemblyName) =>
++                        string.Equals(assemblyName, frameworkAssembly, StringComparison.OrdinalIgnoreCase);
++
++                    void RemoveParts(
++                        ApplicationPartManager manager,
++                        IEnumerable<ApplicationPart> partsToRemove)
++                    {
++                        for (var i = 0; i < manager.ApplicationParts.Count; i++)
++                        {
++                            var part = manager.ApplicationParts[i];
++                            if (partsToRemove.Any(p => string.Equals(
++                                    p.Name,
++                                    part.Name,
++                                    StringComparison.OrdinalIgnoreCase)))
++                            {
++                                manager.ApplicationParts.Remove(part);
++                            }
++                        }
++                    }
++
++                    void AddParts(
++                        ApplicationPartManager manager,
++                        IEnumerable<ApplicationPart> partsToAdd)
++                    {
++                        foreach (var part in partsToAdd)
++                        {
++                            if (!manager.ApplicationParts.Any(p => p.GetType() == part.GetType() &&
++                                string.Equals(p.Name, part.Name, StringComparison.OrdinalIgnoreCase)))
++                            {
++                                manager.ApplicationParts.Add(part);
++                            }
++                        }
++                    }
++                });
++        }
++
+     }
+ }

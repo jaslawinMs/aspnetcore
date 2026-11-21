@@ -1,0 +1,940 @@
+452159579e8ee46a8d61a549d0068b1a51c132b3 blob 2094
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+namespace Identity.DefaultUI.WebSite;
+
+public class NoIdentityStartup
+{
+    public NoIdentityStartup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.Configure<CookiePolicyOptions>(options =>
+        {
+            // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+            options.CheckConsentNeeded = context => true;
+        });
+
+        services.AddMvc()
+            .AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Areas/Identity/Pages/Account/Manage");
+                options.Conventions.AuthorizePage("/Areas/Identity/Pages/Account/Logout");
+            })
+            .AddNewtonsoftJson();
+
+        services.AddDatabaseDeveloperPageExceptionFilter();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        StartupBase<IdentityUser, IdentityDbContext>.DisableFilePolling(env);
+
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+            app.UseMigrationsEndPoint();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Error");
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseCookiePolicy();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapDefaultControllerRoute();
+        });
+    }
+}
+
+ff7adbc2203d95713d75c7d6336f1ca1fb8eb882 blob 6982
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Razor.Compilation;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Default UI extensions to <see cref="IdentityBuilder"/>.
+/// </summary>
+public static class IdentityBuilderUIExtensions
+{
+    /// <summary>
+    /// Adds a default, self-contained UI for Identity to the application using
+    /// Razor Pages in an area named Identity.
+    /// </summary>
+    /// <remarks>
+    /// In order to use the default UI, the application must be using <see cref="Microsoft.AspNetCore.Mvc"/>,
+    /// <see cref="Microsoft.AspNetCore.StaticFiles"/> and contain a <c>_LoginPartial</c> partial view that
+    /// can be found by the application.
+    /// </remarks>
+    /// <param name="builder">The <see cref="IdentityBuilder"/>.</param>
+    /// <returns>The <see cref="IdentityBuilder"/>.</returns>
+    public static IdentityBuilder AddDefaultUI(this IdentityBuilder builder)
+    {
+        builder.AddSignInManager();
+        builder.Services
+            .AddMvc()
+            .ConfigureApplicationPartManager(apm =>
+            {
+                // We try to resolve the UI framework that was used by looking at the entry assembly.
+                // When an app runs, the entry assembly will point to the built app. In some rare cases
+                // (functional testing) the app assembly will be different, and we'll try to locate it through
+                // the same mechanism that MVC uses today.
+                // Finally, if for some reason we aren't able to find the assembly, we'll use our default value
+                // (Bootstrap5)
+                if (!TryResolveUIFramework(Assembly.GetEntryAssembly(), out var framework) &&
+                    !TryResolveUIFramework(GetApplicationAssembly(builder), out framework))
+                {
+                    framework = default;
+                }
+
+                var parts = new ConsolidatedAssemblyApplicationPartFactory().GetApplicationParts(typeof(IdentityBuilderUIExtensions).Assembly);
+                foreach (var part in parts)
+                {
+                    apm.ApplicationParts.Add(part);
+                }
+                apm.FeatureProviders.Add(new ViewVersionFeatureProvider(framework));
+            });
+
+        builder.Services.ConfigureOptions(
+            typeof(IdentityDefaultUIConfigureOptions<>)
+                .MakeGenericType(builder.UserType));
+        builder.Services.TryAddTransient<IEmailSender, NoOpEmailSender>();
+        builder.Services.TryAddTransient(typeof(IEmailSender<>), typeof(DefaultMessageEmailSender<>));
+
+        return builder;
+    }
+
+    private static Assembly? GetApplicationAssembly(IdentityBuilder builder)
+    {
+        // This is the same logic that MVC follows to find the application assembly.
+        var environment = builder.Services.Where(d => d.ServiceType == typeof(IWebHostEnvironment)).ToArray();
+        var applicationName = ((IWebHostEnvironment?)environment.LastOrDefault()?.ImplementationInstance)
+            ?.ApplicationName;
+
+        if (applicationName == null)
+        {
+            return null;
+        }
+        var appAssembly = Assembly.Load(applicationName);
+        return appAssembly;
+    }
+
+    private static bool TryResolveUIFramework(Assembly? assembly, out UIFramework uiFramework)
+    {
+        uiFramework = default;
+
+        var metadata = assembly?.GetCustomAttributes<UIFrameworkAttribute>()
+            .SingleOrDefault()?.UIFramework; // Bootstrap5 is the default
+        if (metadata == null)
+        {
+            return false;
+        }
+
+        // If we find the metadata there must be a valid framework here.
+        if (!Enum.TryParse(metadata, ignoreCase: true, out uiFramework))
+        {
+            var enumValues = string.Join(", ", Enum.GetNames(typeof(UIFramework)).Select(v => $"'{v}'"));
+            throw new InvalidOperationException(
+                $"Found an invalid value for the 'IdentityUIFrameworkVersion'. Valid values are {enumValues}");
+        }
+
+        return true;
+    }
+
+    internal sealed class ViewVersionFeatureProvider : IApplicationFeatureProvider<ViewsFeature>
+    {
+        private readonly UIFramework _framework;
+
+        public ViewVersionFeatureProvider(UIFramework framework) => _framework = framework;
+
+        public void PopulateFeature(IEnumerable<ApplicationPart> parts, ViewsFeature feature)
+        {
+            var viewsToRemove = new List<CompiledViewDescriptor>();
+            foreach (var descriptor in feature.ViewDescriptors)
+            {
+                if (IsIdentityUIView(descriptor))
+                {
+                    switch (_framework)
+                    {
+                        case UIFramework.Bootstrap4:
+                            if (descriptor.Type?.FullName?.Contains("V5", StringComparison.Ordinal) is true)
+                            {
+                                // Remove V5 views
+                                viewsToRemove.Add(descriptor);
+                            }
+                            else
+                            {
+                                // Fix up paths to eliminate version subdir
+                                descriptor.RelativePath = descriptor.RelativePath.Replace("V4/", "");
+                            }
+                            break;
+                        case UIFramework.Bootstrap5:
+                            if (descriptor.Type?.FullName?.Contains("V4", StringComparison.Ordinal) is true)
+                            {
+                                // Remove V4 views
+                                viewsToRemove.Add(descriptor);
+                            }
+                            else
+                            {
+                                // Fix up paths to eliminate version subdir
+                                descriptor.RelativePath = descriptor.RelativePath.Replace("V5/", "");
+                            }
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unknown framework: {_framework}");
+                    }
+                }
+            }
+
+            foreach (var descriptorToRemove in viewsToRemove)
+            {
+                feature.ViewDescriptors.Remove(descriptorToRemove);
+            }
+        }
+
+        private static bool IsIdentityUIView(CompiledViewDescriptor desc) => desc.RelativePath.StartsWith("/Areas/Identity", StringComparison.OrdinalIgnoreCase) &&
+            desc.Type?.Assembly == typeof(IdentityBuilderUIExtensions).Assembly;
+    }
+}
+
+250b10ed620dbf5f94adcbdf2266707ece552827 blob 18513
+<!--
+
+  This file defines the versions of external dependencies used by ASP.NET Core.
+
+-->
+<Project>
+
+  <Import Project="Version.Details.props" />
+
+  <PropertyGroup Label="Version settings">
+    <AspNetCoreMajorVersion>12</AspNetCoreMajorVersion>
+    <AspNetCoreMinorVersion>0</AspNetCoreMinorVersion>
+    <AspNetCorePatchVersion>0</AspNetCorePatchVersion>
+    <PreReleaseVersionIteration>1</PreReleaseVersionIteration>
+    <IdentityModelVersion Condition="'$(IsIdentityModelTestJob)' != 'true'">8.19.2</IdentityModelVersion>
+    <IdentityModelVersion Condition="'$(IsIdentityModelTestJob)' == 'true'">*-*</IdentityModelVersion>
+    <PreReleaseVersionLabel>alpha</PreReleaseVersionLabel>
+    <!-- Allowed values: '', 'prerelease', 'release'. Set to 'release' when stabilizing. -->
+    <DotNetFinalVersionKind></DotNetFinalVersionKind>
+    <!--
+      Label and iteration used by packages that intentionally never stabilize. Such projects set
+      SuppressFinalPackageVersion=true and override PreReleaseVersionLabel/PreReleaseVersionIteration with these
+      values, so they keep producing dated prerelease versions (e.g. 12.0.0-preview.7.25580.1) even when the rest of
+      the repo builds RC or RTM versions. Overriding the label is required because Arcade builds the version suffix
+      from PreReleaseVersionLabel, and because the suffix logic is skipped entirely when that label is empty.
+    -->
+    <PreviewOnlyPackagePreReleaseVersionLabel>preview</PreviewOnlyPackagePreReleaseVersionLabel>
+    <PreviewOnlyPackagePreReleaseVersionIteration>7</PreviewOnlyPackagePreReleaseVersionIteration>
+
+    <!-- PreReleaseBrandingLabel is automatically calculated based on PreReleaseVersionLabel -->
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'alpha'">Alpha $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'preview'">Preview $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'rc'">RC $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'rtm'">RTM</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'servicing'">Servicing</PreReleaseBrandingLabel>
+    <IncludePreReleaseLabelInPackageVersion>true</IncludePreReleaseLabelInPackageVersion>
+    <IncludePreReleaseLabelInPackageVersion Condition=" '$(DotNetFinalVersionKind)' == 'release' ">false</IncludePreReleaseLabelInPackageVersion>
+    <AspNetCoreMajorMinorVersion>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion)</AspNetCoreMajorMinorVersion>
+    <!-- Servicing builds have different characteristics for the way dependencies, baselines, and versions are handled. -->
+    <IsServicingBuild Condition=" '$(PreReleaseVersionLabel)' == 'servicing' ">true</IsServicingBuild>
+    <VersionPrefix>$(AspNetCoreMajorMinorVersion).$(AspNetCorePatchVersion)</VersionPrefix>
+    <!--
+      TargetingPackVersionPrefix is used by projects, like .deb and .rpm, which use slightly different version formats.
+      It's also used in root Directory.Build.targets to determine the version of the last-built targeting pack.
+    -->
+    <TargetingPackVersionPrefix>$(VersionPrefix)</TargetingPackVersionPrefix>
+    <ExperimentalVersionPrefix>0.$(AspNetCoreMajorVersion).$(AspNetCorePatchVersion)</ExperimentalVersionPrefix>
+    <!-- ANCM versioning is intentionally 10 + AspNetCoreMajorVersion because earlier versions of ANCM shipped as 8.x. -->
+    <AspNetCoreModuleVersionMajor>$([MSBuild]::Add(10, $(AspNetCoreMajorVersion)))</AspNetCoreModuleVersionMajor>
+    <AspNetCoreModuleVersionMinor>$(AspNetCoreMinorVersion)</AspNetCoreModuleVersionMinor>
+    <AspNetCoreModuleVersionRevision>$(AspNetCorePatchVersion)</AspNetCoreModuleVersionRevision>
+    <!-- This is used for error checking to ensure generated code and baselines are up to date when we increment the patch. -->
+    <PreviousAspNetCoreReleaseVersion Condition=" '$(AspNetCorePatchVersion)' != '0' ">$(AspNetCoreMajorMinorVersion).$([MSBuild]::Subtract($(AspNetCorePatchVersion), 1))</PreviousAspNetCoreReleaseVersion>
+    <!--
+      Update the packages referenced in Microsoft.AspNetCore.AzureAppServices.SiteExtension.csproj,
+      src\Components\WebAssembly\Sdk\testassets\Directory.Build.props, and
+      src\Razor\test\testassets\Directory.Build.props when this changes.
+    -->
+    <DefaultNetCoreTargetFramework>net12.0</DefaultNetCoreTargetFramework>
+    <!-- this should usually match for LTS builds, and be off-by-one otherwise;
+      example use-case here is OOB packages where Aspire wants to be able to consume
+      new features specific to OOB -->
+    <CurrentLtsTargetFramework>net12.0</CurrentLtsTargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Arcade settings">
+    <!-- Opt-in to Arcade tools for building VSIX projects. -->
+    <UsingToolVSSDK>true</UsingToolVSSDK>
+    <!-- Disable XLIFF tasks -->
+    <UsingToolXliff>false</UsingToolXliff>
+    <!-- Targetingpack support -->
+    <TargetingPackCurrentTargetFramework>$(DefaultNetCoreTargetFramework)</TargetingPackCurrentTargetFramework>
+  </PropertyGroup>
+
+  <!--
+    Versions below this comment are not managed by automation and can be changed as needed.
+  -->
+  <PropertyGroup Label="Manual">
+    <!-- Dependencies from maintenance-packages -->
+    <MicrosoftBCLHashCodeVersion>6.0.0</MicrosoftBCLHashCodeVersion>
+    <MicrosoftIoRedistVersion>6.1.3</MicrosoftIoRedistVersion>
+    <SystemBuffersVersion>4.6.1</SystemBuffersVersion>
+    <SystemMemoryVersion>4.6.3</SystemMemoryVersion>
+    <SystemThreadingTasksExtensionsVersion>4.6.3</SystemThreadingTasksExtensionsVersion>
+    <SystemValueTupleVersion>4.6.2</SystemValueTupleVersion>
+    <!-- DiagnosticAdapter package pinned temporarily (??) until migrated/deprecated -->
+    <!-- This is the latest version found in dotnet-public. -->
+    <MicrosoftExtensionsDiagnosticAdapterVersion>5.0.0-preview.3.20215.2</MicrosoftExtensionsDiagnosticAdapterVersion>
+    <!-- Build tool dependencies -->
+    <MicrosoftVSSDKBuildToolsVersion>15.9.3032</MicrosoftVSSDKBuildToolsVersion>
+    <!-- Stable dotnet/corefx packages no longer updated for .NET Core 3 -->
+    <MicrosoftCSharpVersion>4.7.0</MicrosoftCSharpVersion>
+    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
+    <NETStandardLibraryVersion>2.0.3</NETStandardLibraryVersion>
+    <SystemCommandlineExperimentalVersion>0.3.0-alpha.19317.1</SystemCommandlineExperimentalVersion>
+    <SystemComponentModelVersion>4.3.0</SystemComponentModelVersion>
+    <SystemNetHttpVersion>4.3.4</SystemNetHttpVersion>
+    <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
+    <SystemSecurityCryptographyX509CertificatesVersion>4.3.2</SystemSecurityCryptographyX509CertificatesVersion>
+    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
+    <!-- Packages developed by @aspnet, but manually updated as necessary. -->
+    <MicrosoftAspNetWebApiClientVersion>5.2.6</MicrosoftAspNetWebApiClientVersion>
+    <MicrosoftAspNetCoreRazorLanguageVersion>6.0.0</MicrosoftAspNetCoreRazorLanguageVersion>
+    <MicrosoftAspNetCoreMvcRazorExtensionsVersion>6.0.0</MicrosoftAspNetCoreMvcRazorExtensionsVersion>
+    <MicrosoftCodeAnalysisRazorVersion>6.0.0</MicrosoftCodeAnalysisRazorVersion>
+    <!-- Partner teams -->
+    <MicrosoftAzureSignalRVersion>1.2.0</MicrosoftAzureSignalRVersion>
+    <MicrosoftBuildLocatorVersion>1.11.2</MicrosoftBuildLocatorVersion>
+    <!--
+      Versions of Microsoft.CodeAnalysis packages referenced by analyzers shipped in the SDK.
+      This need to be pinned since they're used in 3.1 apps and need to be loadable in VS 2019.
+    -->
+    <Analyzer_MicrosoftCodeAnalysisCSharpVersion>3.3.1</Analyzer_MicrosoftCodeAnalysisCSharpVersion>
+    <Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion>3.3.1</Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion>
+    <!-- Pin the version of the M.CA dependencies that we utilize with a custom version property $(MicrosoftCodeAnalysisVersion_LatestVS) to avoid automatically
+    consuming the newest version of the packages when using the $(MicrosoftCodeAnalysisCSharpVersion) properties in source-build. -->
+    <MicrosoftCodeAnalysisVersion_LatestVS>5.11.0-1.26420.103</MicrosoftCodeAnalysisVersion_LatestVS>
+    <!-- Newer analyzers and code fixes use the latest VS-compatible Roslyn packages rather than the older analyzer defaults. -->
+    <Analyzer_MicrosoftCodeAnalysisCSharpVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisCSharpVersion_LatestVS>
+    <Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion_LatestVS>
+    <Analyzer_MicrosoftCodeAnalysisFeaturesExternalAccessVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisFeaturesExternalAccessVersion_LatestVS>
+    <MicrosoftCodeAnalysisPublicApiAnalyzersVersion>3.3.3</MicrosoftCodeAnalysisPublicApiAnalyzersVersion>
+    <MicrosoftCodeAnalysisCSharpAnalyzerTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpAnalyzerTestingVersion>
+    <MicrosoftCodeAnalysisCSharpCodeFixTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpCodeFixTestingVersion>
+    <MicrosoftCodeAnalysisCSharpSourceGeneratorsTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpSourceGeneratorsTestingVersion>
+    <!-- Specifies the versions of Roslyn packages that should be referenced by source generators.
+         These get overridden by source-build, separately from MicrosoftCodeAnalysisVersion_LatestVS. -->
+    <SourceGenerator_MicrosoftCodeAnalysisCommonVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCommonVersion>
+    <SourceGenerator_MicrosoftCodeAnalysisCSharpVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCSharpVersion>
+    <SourceGenerator_MicrosoftCodeAnalysisCSharpWorkspacesVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCSharpWorkspacesVersion>
+    <MicrosoftCssParserVersion>1.0.0-20230414.1</MicrosoftCssParserVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>$(IdentityModelVersion)</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityModelLoggingVersion>$(IdentityModelVersion)</MicrosoftIdentityModelLoggingVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>$(IdentityModelVersion)</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationVersion>$(IdentityModelVersion)</MicrosoftIdentityModelProtocolsWsFederationVersion>
+    <MicrosoftInternalAspNetCoreH2SpecAllVersion>2.2.1</MicrosoftInternalAspNetCoreH2SpecAllVersion>
+    <MicrosoftOwinSecurityCookiesVersion>3.0.1</MicrosoftOwinSecurityCookiesVersion>
+    <MicrosoftOwinTestingVersion>3.0.1</MicrosoftOwinTestingVersion>
+    <MicrosoftWebAdministrationVersion>11.1.0</MicrosoftWebAdministrationVersion>
+    <SystemIdentityModelTokensJwtVersion>$(IdentityModelVersion)</SystemIdentityModelTokensJwtVersion>
+    <SystemComponentModelAnnotationsVersion>5.0.0</SystemComponentModelAnnotationsVersion>
+    <SystemNetExperimentalMsQuicVersion>5.0.0-alpha.20560.6</SystemNetExperimentalMsQuicVersion>
+    <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
+    <!-- Packages from downlevel branches used for site extension build. -->
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version>10.0.0-rtm-25523-111</MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100x64Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension100x64Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100x86Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension100x86Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version>11.0.0-rtm-26529-118</MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110x64Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension110x64Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110x86Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension110x86Version>
+    <!-- 3rd party dependencies -->
+    <AzureIdentityVersion>1.21.0</AzureIdentityVersion>
+    <AngleSharpVersion>1.5.2</AngleSharpVersion>
+    <BenchmarkDotNetVersion>0.13.0</BenchmarkDotNetVersion>
+    <CastleCoreVersion>5.2.1</CastleCoreVersion>
+    <CommandLineParserVersion>2.4.3</CommandLineParserVersion>
+    <FSharpCoreVersion>6.0.0</FSharpCoreVersion>
+    <GoogleApiCommonProtosVersion>2.15.0</GoogleApiCommonProtosVersion>
+    <GoogleProtobufVersion>3.33.6</GoogleProtobufVersion>
+    <GrpcAspNetCoreVersion>2.83.0</GrpcAspNetCoreVersion>
+    <GrpcAspNetCoreServerVersion>2.83.0</GrpcAspNetCoreServerVersion>
+    <GrpcAuthVersion>2.83.0</GrpcAuthVersion>
+    <GrpcNetClientVersion>2.83.0</GrpcNetClientVersion>
+    <GrpcToolsVersion>2.83.0</GrpcToolsVersion>
+    <MessagePackVersion>2.5.303</MessagePackVersion>
+    <!-- Extensions packages for Blazor WASM Service Defaults -->
+    <MicrosoftExtensionsHttpResilienceVersion>10.0.0</MicrosoftExtensionsHttpResilienceVersion>
+    <MicrosoftIdentityWebVersion>3.16.0</MicrosoftIdentityWebVersion>
+    <MicrosoftIdentityWebGraphServiceClientVersion>3.16.0</MicrosoftIdentityWebGraphServiceClientVersion>
+    <MicrosoftIdentityWebUIVersion>3.16.0</MicrosoftIdentityWebUIVersion>
+    <MicrosoftIdentityWebDownstreamApiVersion>3.16.0</MicrosoftIdentityWebDownstreamApiVersion>
+    <MicrosoftWindowsCsWin32Version>0.3.298</MicrosoftWindowsCsWin32Version>
+    <MessagePackAnalyzerVersion>$(MessagePackVersion)</MessagePackAnalyzerVersion>
+    <ModelContextProtocolVersion>2.1.0</ModelContextProtocolVersion>
+    <ModelContextProtocolAspNetCoreVersion>$(ModelContextProtocolVersion)</ModelContextProtocolAspNetCoreVersion>
+    <MoqVersion>4.20.72</MoqVersion>
+    <MonoCecilVersion>0.11.2</MonoCecilVersion>
+    <MonoTextTemplatingVersion>2.2.1</MonoTextTemplatingVersion>
+    <NewtonsoftJsonBsonVersion>1.0.2</NewtonsoftJsonBsonVersion>
+    <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
+    <NSwagApiDescriptionClientVersion>13.0.4</NSwagApiDescriptionClientVersion>
+    <!-- OpenTelemetry packages for Blazor WASM Service Defaults -->
+    <OpenTelemetryExporterOpenTelemetryProtocolVersion>1.19.1</OpenTelemetryExporterOpenTelemetryProtocolVersion>
+    <OpenTelemetryExtensionsHostingVersion>1.19.1</OpenTelemetryExtensionsHostingVersion>
+    <OpenTelemetryInstrumentationHttpVersion>1.19.0</OpenTelemetryInstrumentationHttpVersion>
+    <OpenTelemetryInstrumentationAspNetCoreVersion>1.19.0</OpenTelemetryInstrumentationAspNetCoreVersion>
+    <OpenTelemetryInstrumentationRuntimeVersion>1.19.0</OpenTelemetryInstrumentationRuntimeVersion>
+    <PhotinoNETVersion>2.5.2</PhotinoNETVersion>
+    <MicrosoftPlaywrightVersion>1.62.0</MicrosoftPlaywrightVersion>
+    <MicrosoftPlaywrightTestAdapterVersion>$(MicrosoftPlaywrightVersion)</MicrosoftPlaywrightTestAdapterVersion>
+    <PollyExtensionsHttpVersion>3.0.0</PollyExtensionsHttpVersion>
+    <PollyVersion>7.2.4</PollyVersion>
+    <SeleniumSupportVersion>4.48.0</SeleniumSupportVersion>
+    <SeleniumWebDriverVersion>4.48.0</SeleniumWebDriverVersion>
+    <SerilogExtensionsLoggingVersion>1.4.0</SerilogExtensionsLoggingVersion>
+    <SerilogSinksFileVersion>4.0.0</SerilogSinksFileVersion>
+    <SharpFuzzVersion>2.2.0</SharpFuzzVersion>
+    <StackExchangeRedisVersion>2.7.27</StackExchangeRedisVersion>
+    <SystemReactiveLinqVersion>5.0.0</SystemReactiveLinqVersion>
+    <SwashbuckleAspNetCoreVersion>6.6.2</SwashbuckleAspNetCoreVersion>
+    <VerifySourceGeneratorsVersion>2.2.0</VerifySourceGeneratorsVersion>
+    <VerifyXunitVersion>19.14.0</VerifyXunitVersion>
+    <XunitAbstractionsVersion>2.0.3</XunitAbstractionsVersion>
+    <XunitAnalyzersVersion>1.27.0</XunitAnalyzersVersion>
+    <XunitVersion>2.9.2</XunitVersion>
+    <XunitAssertVersion>$(XunitVersion)</XunitAssertVersion>
+    <XunitExtensibilityCoreVersion>$(XunitVersion)</XunitExtensibilityCoreVersion>
+    <XunitExtensibilityExecutionVersion>$(XunitVersion)</XunitExtensibilityExecutionVersion>
+    <XUnitRunnerVisualStudioVersion>3.1.3</XUnitRunnerVisualStudioVersion>
+    <!-- xUnit v3 packages (used by Components.Testing library unit tests) -->
+    <XunitV3Version>3.2.2</XunitV3Version>
+    <XunitV3ExtensibilityCoreVersion>$(XunitV3Version)</XunitV3ExtensibilityCoreVersion>
+    <!-- MSTest + MTP packages (used by Components.Testing E2E infrastructure) -->
+    <MSTestVersion>4.2.3</MSTestVersion>
+    <MSTestTestFrameworkVersion>$(MSTestVersion)</MSTestTestFrameworkVersion>
+    <MicrosoftTestingExtensionsTrxReportVersion>2.2.3</MicrosoftTestingExtensionsTrxReportVersion>
+    <!-- Components.Testing dependencies -->
+    <YarpReverseProxyVersion>2.3.0</YarpReverseProxyVersion>
+    <MicrosoftDataSqlClientVersion>7.1.1</MicrosoftDataSqlClientVersion>
+    <MicrosoftDataSqlClientExtensionsAzureVersion>1.0.0</MicrosoftDataSqlClientExtensionsAzureVersion>
+    <MicrosoftOpenApiVersion>[3.11.0,4.0.0)</MicrosoftOpenApiVersion>
+    <MicrosoftOpenApiYamlReaderVersion>[3.11.0,4.0.0)</MicrosoftOpenApiYamlReaderVersion>
+    <!-- Components.AI dependencies (Microsoft.Extensions.AI) -->
+    <MicrosoftExtensionsAIVersion>10.6.0</MicrosoftExtensionsAIVersion>
+    <MicrosoftExtensionsAIAbstractionsVersion>$(MicrosoftExtensionsAIVersion)</MicrosoftExtensionsAIAbstractionsVersion>
+    <MicrosoftExtensionsAIOpenAIVersion>$(MicrosoftExtensionsAIVersion)</MicrosoftExtensionsAIOpenAIVersion>
+    <!-- AG-UI packages (used by the Components.AI dojo test assets) -->
+    <AGUIVersion>0.0.5</AGUIVersion>
+    <AGUIAbstractionsVersion>$(AGUIVersion)</AGUIAbstractionsVersion>
+    <AGUIClientVersion>$(AGUIVersion)</AGUIClientVersion>
+    <AGUIFormattingVersion>$(AGUIVersion)</AGUIFormattingVersion>
+    <AGUIServerVersion>$(AGUIVersion)</AGUIServerVersion>
+    <!-- Playwright CLI version -->
+    <MicrosoftPlaywrightCLIVersion>1.2.3</MicrosoftPlaywrightCLIVersion>
+  </PropertyGroup>
+
+</Project>
+
+452159579e8ee46a8d61a549d0068b1a51c132b3 blob 2094
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+namespace Identity.DefaultUI.WebSite;
+
+public class NoIdentityStartup
+{
+    public NoIdentityStartup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.Configure<CookiePolicyOptions>(options =>
+        {
+            // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+            options.CheckConsentNeeded = context => true;
+        });
+
+        services.AddMvc()
+            .AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Areas/Identity/Pages/Account/Manage");
+                options.Conventions.AuthorizePage("/Areas/Identity/Pages/Account/Logout");
+            })
+            .AddNewtonsoftJson();
+
+        services.AddDatabaseDeveloperPageExceptionFilter();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        StartupBase<IdentityUser, IdentityDbContext>.DisableFilePolling(env);
+
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+            app.UseMigrationsEndPoint();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Error");
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseCookiePolicy();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapDefaultControllerRoute();
+        });
+    }
+}
+
+ff7adbc2203d95713d75c7d6336f1ca1fb8eb882 blob 6982
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Razor.Compilation;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Default UI extensions to <see cref="IdentityBuilder"/>.
+/// </summary>
+public static class IdentityBuilderUIExtensions
+{
+    /// <summary>
+    /// Adds a default, self-contained UI for Identity to the application using
+    /// Razor Pages in an area named Identity.
+    /// </summary>
+    /// <remarks>
+    /// In order to use the default UI, the application must be using <see cref="Microsoft.AspNetCore.Mvc"/>,
+    /// <see cref="Microsoft.AspNetCore.StaticFiles"/> and contain a <c>_LoginPartial</c> partial view that
+    /// can be found by the application.
+    /// </remarks>
+    /// <param name="builder">The <see cref="IdentityBuilder"/>.</param>
+    /// <returns>The <see cref="IdentityBuilder"/>.</returns>
+    public static IdentityBuilder AddDefaultUI(this IdentityBuilder builder)
+    {
+        builder.AddSignInManager();
+        builder.Services
+            .AddMvc()
+            .ConfigureApplicationPartManager(apm =>
+            {
+                // We try to resolve the UI framework that was used by looking at the entry assembly.
+                // When an app runs, the entry assembly will point to the built app. In some rare cases
+                // (functional testing) the app assembly will be different, and we'll try to locate it through
+                // the same mechanism that MVC uses today.
+                // Finally, if for some reason we aren't able to find the assembly, we'll use our default value
+                // (Bootstrap5)
+                if (!TryResolveUIFramework(Assembly.GetEntryAssembly(), out var framework) &&
+                    !TryResolveUIFramework(GetApplicationAssembly(builder), out framework))
+                {
+                    framework = default;
+                }
+
+                var parts = new ConsolidatedAssemblyApplicationPartFactory().GetApplicationParts(typeof(IdentityBuilderUIExtensions).Assembly);
+                foreach (var part in parts)
+                {
+                    apm.ApplicationParts.Add(part);
+                }
+                apm.FeatureProviders.Add(new ViewVersionFeatureProvider(framework));
+            });
+
+        builder.Services.ConfigureOptions(
+            typeof(IdentityDefaultUIConfigureOptions<>)
+                .MakeGenericType(builder.UserType));
+        builder.Services.TryAddTransient<IEmailSender, NoOpEmailSender>();
+        builder.Services.TryAddTransient(typeof(IEmailSender<>), typeof(DefaultMessageEmailSender<>));
+
+        return builder;
+    }
+
+    private static Assembly? GetApplicationAssembly(IdentityBuilder builder)
+    {
+        // This is the same logic that MVC follows to find the application assembly.
+        var environment = builder.Services.Where(d => d.ServiceType == typeof(IWebHostEnvironment)).ToArray();
+        var applicationName = ((IWebHostEnvironment?)environment.LastOrDefault()?.ImplementationInstance)
+            ?.ApplicationName;
+
+        if (applicationName == null)
+        {
+            return null;
+        }
+        var appAssembly = Assembly.Load(applicationName);
+        return appAssembly;
+    }
+
+    private static bool TryResolveUIFramework(Assembly? assembly, out UIFramework uiFramework)
+    {
+        uiFramework = default;
+
+        var metadata = assembly?.GetCustomAttributes<UIFrameworkAttribute>()
+            .SingleOrDefault()?.UIFramework; // Bootstrap5 is the default
+        if (metadata == null)
+        {
+            return false;
+        }
+
+        // If we find the metadata there must be a valid framework here.
+        if (!Enum.TryParse(metadata, ignoreCase: true, out uiFramework))
+        {
+            var enumValues = string.Join(", ", Enum.GetNames(typeof(UIFramework)).Select(v => $"'{v}'"));
+            throw new InvalidOperationException(
+                $"Found an invalid value for the 'IdentityUIFrameworkVersion'. Valid values are {enumValues}");
+        }
+
+        return true;
+    }
+
+    internal sealed class ViewVersionFeatureProvider : IApplicationFeatureProvider<ViewsFeature>
+    {
+        private readonly UIFramework _framework;
+
+        public ViewVersionFeatureProvider(UIFramework framework) => _framework = framework;
+
+        public void PopulateFeature(IEnumerable<ApplicationPart> parts, ViewsFeature feature)
+        {
+            var viewsToRemove = new List<CompiledViewDescriptor>();
+            foreach (var descriptor in feature.ViewDescriptors)
+            {
+                if (IsIdentityUIView(descriptor))
+                {
+                    switch (_framework)
+                    {
+                        case UIFramework.Bootstrap4:
+                            if (descriptor.Type?.FullName?.Contains("V5", StringComparison.Ordinal) is true)
+                            {
+                                // Remove V5 views
+                                viewsToRemove.Add(descriptor);
+                            }
+                            else
+                            {
+                                // Fix up paths to eliminate version subdir
+                                descriptor.RelativePath = descriptor.RelativePath.Replace("V4/", "");
+                            }
+                            break;
+                        case UIFramework.Bootstrap5:
+                            if (descriptor.Type?.FullName?.Contains("V4", StringComparison.Ordinal) is true)
+                            {
+                                // Remove V4 views
+                                viewsToRemove.Add(descriptor);
+                            }
+                            else
+                            {
+                                // Fix up paths to eliminate version subdir
+                                descriptor.RelativePath = descriptor.RelativePath.Replace("V5/", "");
+                            }
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unknown framework: {_framework}");
+                    }
+                }
+            }
+
+            foreach (var descriptorToRemove in viewsToRemove)
+            {
+                feature.ViewDescriptors.Remove(descriptorToRemove);
+            }
+        }
+
+        private static bool IsIdentityUIView(CompiledViewDescriptor desc) => desc.RelativePath.StartsWith("/Areas/Identity", StringComparison.OrdinalIgnoreCase) &&
+            desc.Type?.Assembly == typeof(IdentityBuilderUIExtensions).Assembly;
+    }
+}
+
+ef31ed3a049aa5d0bc4954002c20909d5a5f3ba1 blob 18547
+<!--
+
+  This file defines the versions of external dependencies used by ASP.NET Core.
+
+-->
+<Project>
+
+  <Import Project="Version.Details.props" />
+
+  <PropertyGroup Label="Version settings">
+    <AspNetCoreMajorVersion>12</AspNetCoreMajorVersion>
+    <AspNetCoreMinorVersion>0</AspNetCoreMinorVersion>
+    <AspNetCorePatchVersion>0</AspNetCorePatchVersion>
+    <PreReleaseVersionIteration>1</PreReleaseVersionIteration>
+    <IdentityModelVersion Condition="'$(IsIdentityModelTestJob)' != 'true'">8.19.2</IdentityModelVersion>
+    <IdentityModelVersion Condition="'$(IsIdentityModelTestJob)' == 'true'">*-*</IdentityModelVersion>
+    <PreReleaseVersionLabel>alpha</PreReleaseVersionLabel>
+    <!-- Allowed values: '', 'prerelease', 'release'. Set to 'release' when stabilizing. -->
+    <DotNetFinalVersionKind></DotNetFinalVersionKind>
+    <!--
+      Label and iteration used by packages that intentionally never stabilize. Such projects set
+      SuppressFinalPackageVersion=true and override PreReleaseVersionLabel/PreReleaseVersionIteration with these
+      values, so they keep producing dated prerelease versions (e.g. 12.0.0-preview.7.25580.1) even when the rest of
+      the repo builds RC or RTM versions. Overriding the label is required because Arcade builds the version suffix
+      from PreReleaseVersionLabel, and because the suffix logic is skipped entirely when that label is empty.
+    -->
+    <PreviewOnlyPackagePreReleaseVersionLabel>preview</PreviewOnlyPackagePreReleaseVersionLabel>
+    <PreviewOnlyPackagePreReleaseVersionIteration>7</PreviewOnlyPackagePreReleaseVersionIteration>
+
+    <!-- PreReleaseBrandingLabel is automatically calculated based on PreReleaseVersionLabel -->
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'alpha'">Alpha $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'preview'">Preview $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'rc'">RC $(PreReleaseVersionIteration)</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'rtm'">RTM</PreReleaseBrandingLabel>
+    <PreReleaseBrandingLabel Condition="'$(PreReleaseVersionLabel)' == 'servicing'">Servicing</PreReleaseBrandingLabel>
+    <IncludePreReleaseLabelInPackageVersion>true</IncludePreReleaseLabelInPackageVersion>
+    <IncludePreReleaseLabelInPackageVersion Condition=" '$(DotNetFinalVersionKind)' == 'release' ">false</IncludePreReleaseLabelInPackageVersion>
+    <AspNetCoreMajorMinorVersion>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion)</AspNetCoreMajorMinorVersion>
+    <!-- Servicing builds have different characteristics for the way dependencies, baselines, and versions are handled. -->
+    <IsServicingBuild Condition=" '$(PreReleaseVersionLabel)' == 'servicing' ">true</IsServicingBuild>
+    <VersionPrefix>$(AspNetCoreMajorMinorVersion).$(AspNetCorePatchVersion)</VersionPrefix>
+    <!--
+      TargetingPackVersionPrefix is used by projects, like .deb and .rpm, which use slightly different version formats.
+      It's also used in root Directory.Build.targets to determine the version of the last-built targeting pack.
+    -->
+    <TargetingPackVersionPrefix>$(VersionPrefix)</TargetingPackVersionPrefix>
+    <ExperimentalVersionPrefix>0.$(AspNetCoreMajorVersion).$(AspNetCorePatchVersion)</ExperimentalVersionPrefix>
+    <!-- ANCM versioning is intentionally 10 + AspNetCoreMajorVersion because earlier versions of ANCM shipped as 8.x. -->
+    <AspNetCoreModuleVersionMajor>$([MSBuild]::Add(10, $(AspNetCoreMajorVersion)))</AspNetCoreModuleVersionMajor>
+    <AspNetCoreModuleVersionMinor>$(AspNetCoreMinorVersion)</AspNetCoreModuleVersionMinor>
+    <AspNetCoreModuleVersionRevision>$(AspNetCorePatchVersion)</AspNetCoreModuleVersionRevision>
+    <!-- This is used for error checking to ensure generated code and baselines are up to date when we increment the patch. -->
+    <PreviousAspNetCoreReleaseVersion Condition=" '$(AspNetCorePatchVersion)' != '0' ">$(AspNetCoreMajorMinorVersion).$([MSBuild]::Subtract($(AspNetCorePatchVersion), 1))</PreviousAspNetCoreReleaseVersion>
+    <!--
+      Update the packages referenced in Microsoft.AspNetCore.AzureAppServices.SiteExtension.csproj,
+      src\Components\WebAssembly\Sdk\testassets\Directory.Build.props, and
+      src\Razor\test\testassets\Directory.Build.props when this changes.
+    -->
+    <DefaultNetCoreTargetFramework>net12.0</DefaultNetCoreTargetFramework>
+    <!-- this should usually match for LTS builds, and be off-by-one otherwise;
+      example use-case here is OOB packages where Aspire wants to be able to consume
+      new features specific to OOB -->
+    <CurrentLtsTargetFramework>net12.0</CurrentLtsTargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Arcade settings">
+    <!-- Opt-in to Arcade tools for building VSIX projects. -->
+    <UsingToolVSSDK>true</UsingToolVSSDK>
+    <!-- Disable XLIFF tasks -->
+    <UsingToolXliff>false</UsingToolXliff>
+    <!-- Targetingpack support -->
+    <TargetingPackCurrentTargetFramework>$(DefaultNetCoreTargetFramework)</TargetingPackCurrentTargetFramework>
+  </PropertyGroup>
+
+  <!--
+    Versions below this comment are not managed by automation and can be changed as needed.
+  -->
+  <PropertyGroup Label="Manual">
+    <!-- Dependencies from maintenance-packages -->
+    <MicrosoftBCLHashCodeVersion>6.0.0</MicrosoftBCLHashCodeVersion>
+    <MicrosoftIoRedistVersion>6.1.3</MicrosoftIoRedistVersion>
+    <SystemBuffersVersion>4.6.1</SystemBuffersVersion>
+    <SystemMemoryVersion>4.6.3</SystemMemoryVersion>
+    <SystemThreadingTasksExtensionsVersion>4.6.3</SystemThreadingTasksExtensionsVersion>
+    <SystemValueTupleVersion>4.6.2</SystemValueTupleVersion>
+    <!-- DiagnosticAdapter package pinned temporarily (??) until migrated/deprecated -->
+    <!-- This is the latest version found in dotnet-public. -->
+    <MicrosoftExtensionsDiagnosticAdapterVersion>5.0.0-preview.3.20215.2</MicrosoftExtensionsDiagnosticAdapterVersion>
+    <!-- Build tool dependencies -->
+    <MicrosoftVSSDKBuildToolsVersion>15.9.3032</MicrosoftVSSDKBuildToolsVersion>
+    <!-- Stable dotnet/corefx packages no longer updated for .NET Core 3 -->
+    <MicrosoftCSharpVersion>4.7.0</MicrosoftCSharpVersion>
+    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
+    <NETStandardLibraryVersion>2.0.3</NETStandardLibraryVersion>
+    <SystemCommandlineExperimentalVersion>0.3.0-alpha.19317.1</SystemCommandlineExperimentalVersion>
+    <SystemComponentModelVersion>4.3.0</SystemComponentModelVersion>
+    <SystemNetHttpVersion>4.3.4</SystemNetHttpVersion>
+    <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
+    <SystemSecurityCryptographyX509CertificatesVersion>4.3.2</SystemSecurityCryptographyX509CertificatesVersion>
+    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
+    <!-- Packages developed by @aspnet, but manually updated as necessary. -->
+    <MicrosoftAspNetWebApiClientVersion>5.2.6</MicrosoftAspNetWebApiClientVersion>
+    <MicrosoftAspNetCoreRazorLanguageVersion>6.0.0</MicrosoftAspNetCoreRazorLanguageVersion>
+    <MicrosoftAspNetCoreMvcRazorExtensionsVersion>6.0.0</MicrosoftAspNetCoreMvcRazorExtensionsVersion>
+    <MicrosoftCodeAnalysisRazorVersion>6.0.0</MicrosoftCodeAnalysisRazorVersion>
+    <!-- Partner teams -->
+    <MicrosoftAzureSignalRVersion>1.2.0</MicrosoftAzureSignalRVersion>
+    <MicrosoftBuildLocatorVersion>1.11.2</MicrosoftBuildLocatorVersion>
+    <!--
+      Versions of Microsoft.CodeAnalysis packages referenced by analyzers shipped in the SDK.
+      This need to be pinned since they're used in 3.1 apps and need to be loadable in VS 2019.
+    -->
+    <Analyzer_MicrosoftCodeAnalysisCSharpVersion>3.3.1</Analyzer_MicrosoftCodeAnalysisCSharpVersion>
+    <Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion>3.3.1</Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion>
+    <!-- Pin the version of the M.CA dependencies that we utilize with a custom version property $(MicrosoftCodeAnalysisVersion_LatestVS) to avoid automatically
+    consuming the newest version of the packages when using the $(MicrosoftCodeAnalysisCSharpVersion) properties in source-build. -->
+    <MicrosoftCodeAnalysisVersion_LatestVS>5.11.0-1.26420.103</MicrosoftCodeAnalysisVersion_LatestVS>
+    <!-- Newer analyzers and code fixes use the latest VS-compatible Roslyn packages rather than the older analyzer defaults. -->
+    <Analyzer_MicrosoftCodeAnalysisCSharpVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisCSharpVersion_LatestVS>
+    <Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisCSharpWorkspacesVersion_LatestVS>
+    <Analyzer_MicrosoftCodeAnalysisFeaturesExternalAccessVersion_LatestVS>$(MicrosoftCodeAnalysisVersion_LatestVS)</Analyzer_MicrosoftCodeAnalysisFeaturesExternalAccessVersion_LatestVS>
+    <MicrosoftCodeAnalysisPublicApiAnalyzersVersion>3.3.3</MicrosoftCodeAnalysisPublicApiAnalyzersVersion>
+    <MicrosoftCodeAnalysisCSharpAnalyzerTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpAnalyzerTestingVersion>
+    <MicrosoftCodeAnalysisCSharpCodeFixTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpCodeFixTestingVersion>
+    <MicrosoftCodeAnalysisCSharpSourceGeneratorsTestingVersion>1.1.2</MicrosoftCodeAnalysisCSharpSourceGeneratorsTestingVersion>
+    <!-- Specifies the versions of Roslyn packages that should be referenced by source generators.
+         These get overridden by source-build, separately from MicrosoftCodeAnalysisVersion_LatestVS. -->
+    <SourceGenerator_MicrosoftCodeAnalysisCommonVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCommonVersion>
+    <SourceGenerator_MicrosoftCodeAnalysisCSharpVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCSharpVersion>
+    <SourceGenerator_MicrosoftCodeAnalysisCSharpWorkspacesVersion>$(MicrosoftCodeAnalysisVersion_LatestVS)</SourceGenerator_MicrosoftCodeAnalysisCSharpWorkspacesVersion>
+    <MicrosoftCssParserVersion>1.0.0-20230414.1</MicrosoftCssParserVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>$(IdentityModelVersion)</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityModelLoggingVersion>$(IdentityModelVersion)</MicrosoftIdentityModelLoggingVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>$(IdentityModelVersion)</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationVersion>$(IdentityModelVersion)</MicrosoftIdentityModelProtocolsWsFederationVersion>
+    <MicrosoftInternalAspNetCoreH2SpecAllVersion>2.2.1</MicrosoftInternalAspNetCoreH2SpecAllVersion>
+    <MicrosoftOwinSecurityCookiesVersion>3.0.1</MicrosoftOwinSecurityCookiesVersion>
+    <MicrosoftOwinTestingVersion>3.0.1</MicrosoftOwinTestingVersion>
+    <MicrosoftWebAdministrationVersion>11.1.0</MicrosoftWebAdministrationVersion>
+    <SystemIdentityModelTokensJwtVersion>$(IdentityModelVersion)</SystemIdentityModelTokensJwtVersion>
+    <SystemComponentModelAnnotationsVersion>5.0.0</SystemComponentModelAnnotationsVersion>
+    <SystemNetExperimentalMsQuicVersion>5.0.0-alpha.20560.6</SystemNetExperimentalMsQuicVersion>
+    <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
+    <!-- Packages from downlevel branches used for site extension build. -->
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version>10.0.0-rtm-25523-111</MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100x64Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension100x64Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension100x86Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension100Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension100x86Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version>11.0.0-rtm-26529-118</MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110x64Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension110x64Version>
+    <MicrosoftAspNetCoreAzureAppServicesSiteExtension110x86Version>$(MicrosoftAspNetCoreAzureAppServicesSiteExtension110Version)</MicrosoftAspNetCoreAzureAppServicesSiteExtension110x86Version>
+    <!-- 3rd party dependencies -->
+    <AzureIdentityVersion>1.21.0</AzureIdentityVersion>
+    <AngleSharpVersion>1.5.2</AngleSharpVersion>
+    <BenchmarkDotNetVersion>0.13.0</BenchmarkDotNetVersion>
+    <CastleCoreVersion>5.2.1</CastleCoreVersion>
+    <CommandLineParserVersion>2.4.3</CommandLineParserVersion>
+    <FSharpCoreVersion>6.0.0</FSharpCoreVersion>
+    <GoogleApiCommonProtosVersion>2.15.0</GoogleApiCommonProtosVersion>
+    <GoogleProtobufVersion>3.33.6</GoogleProtobufVersion>
+    <GrpcAspNetCoreVersion>2.83.0</GrpcAspNetCoreVersion>
+    <GrpcAspNetCoreServerVersion>2.83.0</GrpcAspNetCoreServerVersion>
+    <GrpcAuthVersion>2.83.0</GrpcAuthVersion>
+    <GrpcNetClientVersion>2.83.0</GrpcNetClientVersion>
+    <GrpcToolsVersion>2.83.0</GrpcToolsVersion>
+    <MessagePackVersion>2.5.303</MessagePackVersion>
+    <!-- Extensions packages for Blazor WASM Service Defaults -->
+    <MicrosoftExtensionsHttpResilienceVersion>10.0.0</MicrosoftExtensionsHttpResilienceVersion>
+    <MicrosoftIdentityWebVersion>3.16.0</MicrosoftIdentityWebVersion>
+    <MicrosoftIdentityWebGraphServiceClientVersion>3.16.0</MicrosoftIdentityWebGraphServiceClientVersion>
+    <MicrosoftIdentityWebUIVersion>3.16.0</MicrosoftIdentityWebUIVersion>
+    <MicrosoftIdentityWebDownstreamApiVersion>3.16.0</MicrosoftIdentityWebDownstreamApiVersion>
+    <MicrosoftWindowsCsWin32Version>0.3.298</MicrosoftWindowsCsWin32Version>
+    <MessagePackAnalyzerVersion>$(MessagePackVersion)</MessagePackAnalyzerVersion>
+    <ModelContextProtocolVersion>2.1.0</ModelContextProtocolVersion>
+    <ModelContextProtocolAspNetCoreVersion>$(ModelContextProtocolVersion)</ModelContextProtocolAspNetCoreVersion>
+    <MoqVersion>4.20.72</MoqVersion>
+    <MonoCecilVersion>0.11.2</MonoCecilVersion>
+    <MonoTextTemplatingVersion>2.2.1</MonoTextTemplatingVersion>
+    <NewtonsoftJsonBsonVersion>1.0.2</NewtonsoftJsonBsonVersion>
+    <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
+    <NSwagApiDescriptionClientVersion>13.0.4</NSwagApiDescriptionClientVersion>
+    <!-- OpenTelemetry packages for Blazor WASM Service Defaults -->
+    <OpenTelemetryExporterOpenTelemetryProtocolVersion>1.19.1</OpenTelemetryExporterOpenTelemetryProtocolVersion>
+    <OpenTelemetryExtensionsHostingVersion>1.19.1</OpenTelemetryExtensionsHostingVersion>
+    <OpenTelemetryInstrumentationHttpVersion>1.19.0</OpenTelemetryInstrumentationHttpVersion>
+    <OpenTelemetryInstrumentationAspNetCoreVersion>1.19.0</OpenTelemetryInstrumentationAspNetCoreVersion>
+    <OpenTelemetryInstrumentationRuntimeVersion>1.19.0</OpenTelemetryInstrumentationRuntimeVersion>
+    <PhotinoNETVersion>2.5.2</PhotinoNETVersion>
+    <MicrosoftPlaywrightVersion>1.62.0</MicrosoftPlaywrightVersion>
+    <MicrosoftPlaywrightTestAdapterVersion>$(MicrosoftPlaywrightVersion)</MicrosoftPlaywrightTestAdapterVersion>
+    <PollyExtensionsHttpVersion>3.0.0</PollyExtensionsHttpVersion>
+    <PollyVersion>7.2.4</PollyVersion>
+    <SeleniumSupportVersion>4.48.0</SeleniumSupportVersion>
+    <SeleniumWebDriverVersion>4.48.0</SeleniumWebDriverVersion>
+    <SerilogExtensionsLoggingVersion>1.4.0</SerilogExtensionsLoggingVersion>
+    <SerilogSinksFileVersion>4.0.0</SerilogSinksFileVersion>
+    <SharpFuzzVersion>2.2.0</SharpFuzzVersion>
+    <StackExchangeRedisVersion>2.7.27</StackExchangeRedisVersion>
+    <SystemReactiveLinqVersion>5.0.0</SystemReactiveLinqVersion>
+    <SwashbuckleAspNetCoreVersion>6.6.2</SwashbuckleAspNetCoreVersion>
+    <VerifySourceGeneratorsVersion>2.2.0</VerifySourceGeneratorsVersion>
+    <VerifyXunitVersion>19.14.0</VerifyXunitVersion>
+    <XunitAbstractionsVersion>2.0.3</XunitAbstractionsVersion>
+    <XunitAnalyzersVersion>1.27.0</XunitAnalyzersVersion>
+    <XunitVersion>2.9.2</XunitVersion>
+    <XunitAssertVersion>$(XunitVersion)</XunitAssertVersion>
+    <XunitExtensibilityCoreVersion>$(XunitVersion)</XunitExtensibilityCoreVersion>
+    <XunitExtensibilityExecutionVersion>$(XunitVersion)</XunitExtensibilityExecutionVersion>
+    <XUnitRunnerVisualStudioVersion>3.1.3</XUnitRunnerVisualStudioVersion>
+    <!-- xUnit v3 packages (used by Components.Testing library unit tests) -->
+    <XunitV3Version>3.2.2</XunitV3Version>
+    <XunitV3ExtensibilityCoreVersion>$(XunitV3Version)</XunitV3ExtensibilityCoreVersion>
+    <!-- MSTest + MTP packages (used by Components.Testing E2E infrastructure) -->
+    <MSTestVersion>4.2.3</MSTestVersion>
+    <MSTestTestFrameworkVersion>$(MSTestVersion)</MSTestTestFrameworkVersion>
+    <MicrosoftTestingExtensionsTrxReportVersion>2.2.3</MicrosoftTestingExtensionsTrxReportVersion>
+    <!-- Components.Testing dependencies -->
+    <YarpReverseProxyVersion>2.3.0</YarpReverseProxyVersion>
+    <MicrosoftDataSqlClientVersion>8.0.0-preview1.26313.4</MicrosoftDataSqlClientVersion>
+    <MicrosoftDataSqlClientExtensionsAzureVersion>8.0.0-preview1.26313.4</MicrosoftDataSqlClientExtensionsAzureVersion>
+    <MicrosoftOpenApiVersion>[3.11.0,4.0.0)</MicrosoftOpenApiVersion>
+    <MicrosoftOpenApiYamlReaderVersion>[3.11.0,4.0.0)</MicrosoftOpenApiYamlReaderVersion>
+    <!-- Components.AI dependencies (Microsoft.Extensions.AI) -->
+    <MicrosoftExtensionsAIVersion>10.6.0</MicrosoftExtensionsAIVersion>
+    <MicrosoftExtensionsAIAbstractionsVersion>$(MicrosoftExtensionsAIVersion)</MicrosoftExtensionsAIAbstractionsVersion>
+    <MicrosoftExtensionsAIOpenAIVersion>$(MicrosoftExtensionsAIVersion)</MicrosoftExtensionsAIOpenAIVersion>
+    <!-- AG-UI packages (used by the Components.AI dojo test assets) -->
+    <AGUIVersion>0.0.5</AGUIVersion>
+    <AGUIAbstractionsVersion>$(AGUIVersion)</AGUIAbstractionsVersion>
+    <AGUIClientVersion>$(AGUIVersion)</AGUIClientVersion>
+    <AGUIFormattingVersion>$(AGUIVersion)</AGUIFormattingVersion>
+    <AGUIServerVersion>$(AGUIVersion)</AGUIServerVersion>
+    <!-- Playwright CLI version -->
+    <MicrosoftPlaywrightCLIVersion>1.2.3</MicrosoftPlaywrightCLIVersion>
+  </PropertyGroup>
+
+</Project>
+

@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "ownerId": "d7e83912-457a-4897-a3af-0b27b2b3fc88",
+  "authorization": "GO259",
+  "decision": "source-only-no-material-candidate-established",
+  "canonicalState": {
+    "F229": "pending",
+    "F230": "pending",
+    "authority": "Parent alone independently accepts, publishes or retires."
+  },
+  "summary": "Retain two distinct informational, high-confidence source shapes. Their actual factory yields one part per successful enumeration, not a many-part list. F229 can re-enumerate that deferred producer for every visited manager entry; F230 scans the live manager once for that one yielded part per selected assembly. Real related-assembly and manager cardinalities remain unobserved, and no material performance candidate is justified by this bounded source evidence.",
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "main",
+    "resolution": "Fresh read-only gh API GETs; exact commands, raw streams and actual process identities retained in utilities 01 and 02.",
+    "reservedCheckout": "Navigation/object-store only, never substituted for Default.",
+    "comparison": "ServerFactory and the relevant part/Identity producers, projects, guidance and chosen real test/startup are byte-identical across roles. Thirteen of fifteen captured paths match; WebApplicationFactory and eng\\Versions.props differ. Relevant lazy-start, derived-factory, disposal and net12.0 declarations were inspected in both differing role files."
+  },
+  "findings": [
+    {
+      "findingId": "F229",
+      "cardId": "linear-contains-inside-loop",
+      "repositoryPath": "src\\Identity\\test\\Identity.FunctionalTests\\Infrastructure\\ServerFactory.cs",
+      "retainedLines": [128, 135],
+      "classification": "informational",
+      "confidence": "high",
+      "hotPath": "low",
+      "project": "Microsoft.AspNetCore.Identity.FunctionalTests",
+      "targetFramework": "net12.0",
+      "shape": "RemoveParts indexes the live ApplicationParts list and calls partsToRemove.Any using name-only OrdinalIgnoreCase equality.",
+      "producer": "relatedAssemblies.ToDictionary maps each Assembly to the deferred GetDefaultApplicationParts iterator, then passes that value to RemoveParts for a nonselected assembly.",
+      "normalPerProducerCardinality": "Exactly one new CompiledRazorAssemblyPart for each successful enumeration; the count of enumerations depends on the live removal loop, and the number of related assemblies is not established.",
+      "costBoundary": "Re-enumeration re-executes yield return new, so repeated temporary part construction and Name access are real source-supported potential costs. List.Remove also performs its own removal/search/shift work. No allocations, durations, high-cardinality producer or material impact were observed.",
+      "materialityDecision": "No material candidate established under the source-only scope; not measured no-gain, not false-positive, and not universally costless.",
+      "duplicateOf": null
+    },
+    {
+      "findingId": "F230",
+      "cardId": "linear-contains-inside-loop",
+      "repositoryPath": "src\\Identity\\test\\Identity.FunctionalTests\\Infrastructure\\ServerFactory.cs",
+      "retainedLines": [144, 150],
+      "classification": "informational",
+      "confidence": "high",
+      "hotPath": "low",
+      "project": "Microsoft.AspNetCore.Identity.FunctionalTests",
+      "targetFramework": "net12.0",
+      "shape": "AddParts enumerates partsToAdd and calls ApplicationParts.Any with exact runtime Type identity followed by OrdinalIgnoreCase name equality.",
+      "producer": "The selected related assembly receives the same one-yield deferred factory result, not a synthesized many-part collection.",
+      "normalPerProducerCardinality": "One yielded CompiledRazorAssemblyPart and therefore one live manager membership scan per successful AddParts call; the number of selected related-assembly calls is not established.",
+      "costBoundary": "A real nested syntax shape does not establish a many-by-many normal workload. The actual live manager size, scan hit position, branch reachability and material effect remain unobserved.",
+      "materialityDecision": "No material candidate established under the source-only scope; not measured no-gain, not false-positive, and not universally costless.",
+      "duplicateOf": null
+    }
+  ],
+  "producerAndCardinalityEvidence": [
+    {
+      "source": "src\\Identity\\test\\Identity.FunctionalTests\\Infrastructure\\ServerFactory.cs",
+      "owner": "AddRelatedParts",
+      "observation": "The two-entry UIFramework-to-assembly-name dictionary selects a target string; it does not produce related assemblies. framework == \"V4\" selects V4 exactly; all other values select V5."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ApplicationParts\\RelatedAssemblyAttribute.cs",
+      "owner": "GetRelatedAssemblies",
+      "observation": "Reads actual RelatedAssemblyAttribute metadata, returns Array.Empty<Assembly>() for documented source branches with no attributes/dynamic/no directory, otherwise accumulates loaded assemblies in List<Assembly>. The ServerFactory caller requests throwOnError: true. Attribute count and loaded results were not inspected."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Razor\\src\\ApplicationParts\\CompiledRazorAssemblyApplicationPartFactory.cs",
+      "owner": "GetDefaultApplicationParts",
+      "observation": "A compiler-generated deferred iterator, with one yield return new CompiledRazorAssemblyPart(assembly), no many-part producer loop. ToDictionary creates iterator values without materializing their yielded parts."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Razor\\src\\ApplicationParts\\CompiledRazorAssemblyPart.cs",
+      "owner": "CompiledRazorAssemblyPart",
+      "observation": "The produced runtime type is exactly CompiledRazorAssemblyPart, retaining its Assembly. Its Name getter returns Assembly.GetName().Name; distinct yielded objects can therefore have the same name."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ApplicationParts\\ApplicationPartManager.cs",
+      "owner": "ApplicationParts / PopulateDefaultParts",
+      "observation": "IList<ApplicationPart> backed by List<ApplicationPart>. Initial parts derive from entry-assembly ApplicationPartAttribute metadata, related assembly closure, unique Assembly tracking and each assembly's selected factory. Existing list cardinality and concrete type multiset are not statically established here. XML documentation makes earlier entries higher precedence."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\DependencyInjection\\MvcCoreServiceCollectionExtensions.cs",
+      "owner": "AddMvcCore / GetApplicationPartManager",
+      "observation": "Reuses an existing manager ImplementationInstance, otherwise creates/populates it from IWebHostEnvironment.ApplicationName, and TryAddSingleton registers it. Repeated AddMvc setup is not evidence that the whole application-part discovery is repeated per request."
+    },
+    {
+      "source": "src\\Identity\\UI\\src\\Microsoft.AspNetCore.Identity.UI.csproj",
+      "owner": "Project configuration",
+      "observation": "Current captured project compiles unified Areas\\Identity\\Pages inputs and selects NullApplicationPartFactory. It does not declare the old separate Views.V4/Views.V5 outputs itself. Narrow token search is not proof that generated assembly metadata has zero RelatedAssemblyAttribute values."
+    },
+    {
+      "source": "src\\Identity\\UI\\src\\IdentityBuilderUIExtensions.cs",
+      "owner": "AddDefaultUI",
+      "observation": "Actual UI registration enumerates ConsolidatedAssemblyApplicationPartFactory for the Identity.UI assembly, appends its parts, and adds a ViewVersionFeatureProvider. This is a separate producer from ServerFactory's related-assembly enumerables; its yielded count was not guessed or substituted."
+    }
+  ],
+  "frequencyAndLifetime": {
+    "sourcePath": "ConfigureWebHost -> UpdateApplicationParts -> ConfigureServices(AddRelatedParts) -> ConfigureApplicationPartManager",
+    "executionBoundary": "ConfigureApplicationPartManager invokes setupAction(builder.PartManager) immediately during service setup. This is host setup, not an HTTP request predicate.",
+    "factoryBoundary": "WebApplicationFactory.WithWebHostBuilder creates a new delegated factory; CreateClient reaches StartServer, whose existing-host/server guard avoids rebuilding an already started instance.",
+    "realTest": "NoIdentityAddedTests.QueryingIdentityEndpointsReturnsNotFoundWhenIdentityIsNotPresent",
+    "realTestSource": "src\\Identity\\test\\Identity.FunctionalTests\\NoIdentityAddedTests.cs",
+    "realStartupSource": "src\\Identity\\testassets\\Identity.DefaultUI.WebSite\\NoIdentityStartup.cs",
+    "fixture": "IClassFixture<ServerFactory<NoIdentityStartup, IdentityDbContext>>",
+    "sourceSupportedCount": "The actual MemberData property contains 26 endpoint rows, and each successful case creates one derived factory and one client before issuing its request. That supports repeated per-case host setup in this real theory, not invented server repetition or 26 executions observed here.",
+    "executedTestsOrHosts": 0,
+    "broaderFrequency": "No complete suite-wide execution/fixture count claimed. Other LSP and exact-token matches are leads only.",
+    "lifetime": "Manager registration is per host service collection. relatedParts and its iterator values are local to each AddRelatedParts setup call; yielded parts retain their assembly, and successful additions remain in the manager. Any/foreach dispose their enumerations. No global cache or altered assembly-load lifetime is proposed.",
+    "fixtureDisposal": "ServerFactory owns/disposes the SQLite connection; the base factory tracks derived factories and clients and disposes hosts/servers. Existing lifetime order is unchanged."
+  },
+  "contracts": {
+    "removal": [
+      "Name-only string.Equals with StringComparison.OrdinalIgnoreCase; no runtime-type condition.",
+      "Iterates live Count/index values, calls Remove(part), then increments i. When an entry at i is removed, shifted contents can be skipped; do not silently turn this into remove-all or reverse iteration.",
+      "Remove(part) is List.Remove, not RemoveAt(i). Preserve removal choice under existing equality semantics rather than assuming these APIs are interchangeable.",
+      "Preserve surviving entry identities and relative precedence order. No adjacent-match runtime reproduction or separate correctness defect is claimed."
+    ],
+    "addition": [
+      "Requires exact p.GetType() == part.GetType(), not assignability, plus OrdinalIgnoreCase name equality.",
+      "Same name with a different runtime type is not an existing equivalent part for this predicate. Existing equivalent duplicates are not removed.",
+      "Scans the live list, so an earlier successful append is visible to later producer items. Appends missing parts in producer order; an existing match is not reordered or replaced.",
+      "Preserve GetType-before-Name short-circuit evaluation; do not pre-read every existing Name or conflate addition and removal keys."
+    ],
+    "common": [
+      "Part-list order has documented precedence and is not replaceable with unordered collection iteration.",
+      "Related assembly loading with throwOnError: true can throw before dictionary construction or list mutation; self-reference is explicitly rejected.",
+      "ToDictionary uses Assembly keys and materializes keys/iterator values before part mutation; duplicate keys fail there rather than being silently deduplicated.",
+      "The factory's null check is in the iterator body and is deferred until enumeration. Do not eagerly enumerate or change exception ordering under the guise of membership preparation.",
+      "No exception suppression, default selection change, new cache, public API, assembly boundary change or other cleanup is authorized."
+    ]
+  },
+  "history": [
+    {
+      "commit": "143c10169326ea3972fc90950a938c33640777e2",
+      "meaning": "2019 static-web-assets change introduced framework selection and related-part mutation in the test factory.",
+      "evidence": "utilities\\07-serverfactory-relevant-history\\stdout.bin"
+    },
+    {
+      "commit": "ebbe22f65899b4570e754d1e24c6f190d5b25634",
+      "meaning": "2021 unified-assembly change removed the old ServerFactory related-part helper and the UI project's old RazorTargetName.",
+      "evidence": "utilities\\07-serverfactory-relevant-history\\stdout.bin and utilities\\11-identity-ui-project-history\\stdout.bin"
+    },
+    {
+      "commit": "709038b45159227a422807f26d6d41dd7707ea10",
+      "meaning": "Bootstrap5 update reintroduced the helper with V4/V5 name selection. This history explains the legacy shape, but does not establish today's loaded related-assembly count.",
+      "evidence": "utilities\\07-serverfactory-relevant-history\\stdout.bin"
+    },
+    {
+      "commit": "b45fc40dfa10c4e4287ac185c9ebb09a29271317",
+      "meaning": "2022 side-by-side support project change uses unified page input and NullApplicationPartFactory, consistent with the currently captured project and AddDefaultUI source.",
+      "evidence": "utilities\\11-identity-ui-project-history\\stdout.bin"
+    }
+  ],
+  "observedBoundary": {
+    "proved": "Immutable source shape, one-yield part producer, list backing type/precedence, service-setup invocation, actual 26-row source theory and distinct equality/mutation contracts.",
+    "unverified": "Loaded related-assembly metadata/count, actual manager contents/count/order, whether either branch runs for the current built test assets, complete suite-wide frequency, runtime correctness, allocations, elapsed cost or material benefit.",
+    "notAFalsePositiveDecision": true,
+    "notAMeasuredNoGainDecision": true,
+    "notAUniversalCostlessnessClaim": true,
+    "noDuplicateInferenceFromSharedFile": true
+  },
+  "budgetAndApproval": {
+    "wholeFilesPerRole": 15,
+    "wholeRoleSourceFilesTotal": 30,
+    "directGitGhRoots": 12,
+    "wholeFileBudgetClosed": true,
+    "additionalSourceReadApproval": "EVIDENCE-GAP-PROPOSAL-259.json is finite, optional, unapproved and unexecuted.",
+    "candidateEditsOrNativeCorrectness": "None proposed for immediate execution; separate finite proposal and explicit parent approval required first."
+  },
+  "validation": {
+    "boundary": "Read-only source qualification only.",
+    "automatedTestNamedButNotRun": "NoIdentityAddedTests.QueryingIdentityEndpointsReturnsNotFoundWhenIdentityIsNotPresent",
+    "whyNotRun": "GO259 explicitly prohibits SDK activation and test/runtime/host execution; this was not a failed build or missing-package diagnosis.",
+    "redGreenEvidence": "Not attempted or claimed.",
+    "productSourceEdits": 0,
+    "candidateEdits": 0,
+    "sdkActivationsBuildsTestsRestoresRuntimeStartsTimings": 0,
+    "remoteWritesPublicationsLedgerPolicyLeaseEdits": 0,
+    "nestedDelegation": 0
+  },
+  "evidenceNavigation": {
+    "wholeSourcesAndObjects": "SOURCE-MANIFEST.json",
+    "perRoleByteComparison": "ROLE-COMPARISON.json",
+    "exactSymbolLineAnchors": "SOURCE-ANCHORS.json",
+    "sourceCounts": "SOURCE-CARDINALITIES.json",
+    "applicableGuidance": "GUIDANCE-MANIFEST.json and captured docs\\CrossCuttingGuidance.md",
+    "nativeRawEvidence": "utilities\\01-default-branch through utilities\\12-final-whole-sources",
+    "toolFailureAndObservedCompletions": "TOOL-OBSERVATIONS-259.json",
+    "processClosure": "PROCESS-CLOSURE-259.json is generated by the one-shot sealer from actual completed native receipts."
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "finding": "F227",
+  "scope": "257",
+  "ownerBackgroundId": "00adc6df-1668-4375-a1fc-73d696e28c58",
+  "decision": "SOURCE_ONLY_MATERIALITY_UNESTABLISHED_NO_CANDIDATE",
+  "qualificationBoundary": "Completed bounded source qualification, not product/runtime correctness or performance verification. Parent alone accepts this evidence and updates the pending ledger.",
+  "classification": {
+    "card": "linear-contains-inside-loop",
+    "classification": "informational",
+    "confidence": "high",
+    "confidenceAppliesTo": "The retained source pattern, actual startup ownership, and source-qualified materiality decision; not a measured performance result.",
+    "hotPath": "low",
+    "sourceTargetFramework": "net12.0",
+    "targetFrameworkBoundary": "Both captured project files use DefaultNetCoreTargetFramework; both immutable Versions.props files define net12.0. No MSBuild evaluation, SDK activation, runtime/binary selection or execution occurred."
+  },
+  "identities": {
+    "repository": "dotnet/aspnetcore",
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "main",
+    "defaultObservation": "Fresh guarded repository metadata and immutable branch-ref requests in commands-source-v1\\01-default-repository-metadata.* and 02-default-immutable-ref.*; not inferred from the reserved checkout.",
+    "reservedNavigationHeadNotDefault": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "commonRuntimeReferenceCommit": "a42ac8daf4b86e8d41ed01518bf6b3e1a35b5071",
+    "commonRuntimeReferenceBoundary": "Fresh immutable dotnet/runtime reference witnesses only. This revision is not established as the runtime selected for either ASP.NET role.",
+    "providerWholeBytes": 5272,
+    "providerWholeSha256BothImmutableRoles": "F54EB0D32586F21A83060D607476975F762EA124DF6AD253C412E8347835AFC8",
+    "wholeRolePairs": 9,
+    "exactByteIdenticalRolePairs": 7,
+    "differentWholeRoleFiles": [
+      "eng\\Versions.props",
+      "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyHost.cs"
+    ],
+    "differenceBoundary": "No whole-host or whole-framework/runtime equivalence claim. The relevant culture-startup seam was inspected in both whole host files; the host difference is later in the file."
+  },
+  "sourceBindings": {
+    "primary": "collection-source-v1.json",
+    "historyAndContracts": "collection-contract-history-v1.json",
+    "postCaptureFingerprintVerification": "inspection-source-bindings-v1.json",
+    "roleSourceRoot": "source\\{Original,Default}",
+    "guidanceRoot": "guidance-navigation",
+    "guidanceBoundary": "Whole observed navigation guidance: Components AGENTS, three applicable instruction files, BlazorComponentsGuidance and CrossCuttingGuidance. These are navigation bytes, not relabeled immutable-role content.",
+    "acceptedReuse": {
+      "acceptedFinding": "F206",
+      "acceptedVersion": "245",
+      "parentAcceptance": "reused-inputs\\accepted-terminals-255.json",
+      "acceptedIndex": "reused-inputs\\F206-WHOLE-SEAL-v1.json",
+      "acceptedIndexSha256": "6A0A5162A3B6BDF7E312025842E6C1EC1DECFFCC9477E3242E3A057B74F690EC",
+      "acceptedIndexedFiles": 331,
+      "rule": "Only exact same-commit/path whole source or administrative inputs were reused after binding to the accepted index/closure fingerprints. Old245 evidence was not changed.",
+      "notBorrowed": "F206 did no SDK, browser, test or runtime qualification. Its eager browser-log diagnostic is not this GetCultures membership pattern. No duplicate classification is inferred from the shared provider file."
+    }
+  },
+  "actualInputProducers": [
+    {
+      "source": "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyCultureProvider.cs:54-68",
+      "fact": "LoadCurrentCultureResourcesAsync checks OperatingSystem.IsBrowser, then reads the actual CultureInfo.CurrentCulture and CurrentUICulture at this call and passes them to GetCultures. Non-browser execution fails before the target membership loop.",
+      "boundary": "No browser, culture values or actual call were observed."
+    },
+    {
+      "source": "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyHost.cs:128-162; src\\Components\\Shared\\src\\CultureStateProvider.cs:15-52",
+      "fact": "Host startup restores persistent component state and applies CultureStateProvider's stored culture before loading resources. The state provider captures current/current-UI Names, obtains stored nonempty changed names via CultureInfo.GetCultureInfo, catches CultureNotFoundException, and assigns the corresponding CurrentCulture/DefaultThreadCurrentCulture or UI properties.",
+      "boundary": "These are real product producers, not a harness-injected hierarchy or fabricated assembly count. No persisted state or application culture was executed or observed."
+    },
+    {
+      "source": "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyHostBuilder.cs; src\\Components\\Web.JS\\src\\Platform\\Mono\\MonoPlatform.ts",
+      "fact": "Builder initialization installs the culture provider and shared culture-state service. The Mono platform passes applicationCulture through dotnet.withApplicationCulture and exposes loaded application-culture configuration through Blazor._internal.getApplicationCulture. Provider Initialize derives its InitialCulture from that interop with invariant fallback.",
+      "boundary": "InitialCulture is not the direct argument to GetCultures at loading time. Actual browser/default culture realization is runtime-owned and not established by these ASP.NET sources."
+    },
+    {
+      "source": "source\\ReferenceContract\\dotnet-runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\Globalization\\CultureInfo.cs:158-170,358-402,456-539,1027-1061",
+      "fact": "The common reference source shows named CultureInfo construction through CultureData, CurrentCulture/CurrentUICulture thread/async-local and default fallbacks, and GetCultureInfo named-cache construction. Parent follows culture data and compatibility rules, eventually using invariant fallback in the shown ordinary implementation; Name returns the non-sort culture-data name. GetCultures follows Parent, not a split of hyphenated culture strings.",
+      "boundary": "CultureData, platform default-culture implementations and the selected role runtime were not captured. Name and Parent are virtual. This does not establish a universal depth, arbitrary-custom-culture behavior or runtime completion."
+    }
+  ],
+  "getCulturesSemantics": {
+    "source": "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyCultureProvider.cs:71-110",
+    "currentHierarchy": "A deferred GetCultureHierarchy(cultureInfo) sequence is the initial culturesToLoad; it is not first materialized or globally deduplicated.",
+    "hierarchyIteration": "The iterator excludes the invariant singleton and null, yields the current CultureInfo.Name, checks culture == culture.Parent to break on the same-reference parent, then advances to culture.Parent. It preserves the producer's child-to-parent traversal.",
+    "uiGate": "cultureInfo != uiCultureInfo compares CultureInfo references, not name strings or CultureInfo.Equals. The same object skips the UI loop. A null UI value supplies an empty hierarchy. Distinct objects are not presumed to have distinct names.",
+    "membership": "For each yielded UI name, Contains tests the accumulated string sequence with default string equality. The common BCL witnesses show EqualityComparer<string>.Default and ordinal, case-sensitive string Equals semantics, not culture-sensitive name matching.",
+    "order": "Previously unseen UI names are logically appended after all current-culture names, in UI child-to-parent order. At the first UI name already present, the product breaks out of the UI loop. It does not continue to test every remaining ancestor.",
+    "deduplication": "Membership avoids appending an already-present UI name and triggers the first-common-name break. It does not remove any duplicate Names supplied within the initial current-culture hierarchy or perform a general whole-sequence Distinct operation.",
+    "deferral": "GetCultureHierarchy is a yield iterator. The common Append source retains its original source and returns append iterators without eagerly enumerating the hierarchy. Membership requests can enumerate it. GetCultures finally materializes ToArray before returning; resource-loading interop receives that array, not the deferred hierarchy.",
+    "exceptionAndSideEffectTiming": "Name/Parent accesses occur when hierarchy iterators advance, not when the iterator object is obtained. Current/UI values are read before GetCultures is called. Contains can observe the current hierarchy while the UI loop is in progress; final materialization occurs before the interop call. There is no catch in GetCultures that suppresses getter/enumerator/materialization failures. This is not a promise of exact getter/comparison counts or arbitrary overridden-member behavior.",
+    "commonReferenceWitnesses": [
+      "source\\ReferenceContract\\dotnet-runtime\\src\\libraries\\System.Linq\\src\\System\\Linq\\Contains.cs",
+      "source\\ReferenceContract\\dotnet-runtime\\src\\libraries\\System.Linq\\src\\System\\Linq\\AppendPrepend.cs",
+      "source\\ReferenceContract\\dotnet-runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Comparison.cs:24-33,550-585",
+      "source\\ReferenceContract\\dotnet-runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\Globalization\\CultureInfo.cs:456-539,634-650"
+    ],
+    "dispatchBoundary": "The common Contains source checks ICollection and can dispatch Iterator<T>.Contains. Its optimized append-iterator partial implementation and the selected role runtime are not captured. Repeated membership requests are evident, but no exact number/order of source traversals, comparisons, allocations or selected-runtime cost is asserted.",
+    "candidate": null
+  },
+  "resourceLoadingAndFrequency": {
+    "caller": "WebAssemblyHost.RunAsyncCore -> WebAssemblyCultureProvider.LoadCurrentCultureResourcesAsync -> GetCultures",
+    "frequencySupported": "One direct load call per admitted host startup reaching that call in the inspected source. The host checks _started and sets it before awaits. This is not a measured startup frequency or a claim about all external calls to the virtual provider.",
+    "ordering": "The call is after state restoration/stored-culture application and before hosted-service startup and initial root rendering.",
+    "interop": "An empty array returns without the satellite-loading import. A nonempty array is passed to the awaited generated import INTERNAL.loadSatelliteAssemblies.",
+    "notAGetCulturesInput": "The provider does not iterate an assembly list here. An assembly count cannot be substituted for the number of current/UI culture ancestors.",
+    "notEstablished": [
+      "Any executed host/browser/resource load",
+      "A per-render, per-request or per-assembly frequency",
+      "Actual satellite assembly counts, downloads, latency, throughput, startup time or allocation impact",
+      "A repeated-startup/stress workload or unusually deep culture chain"
+    ]
+  },
+  "existingUnitSource": {
+    "path": "src\\Components\\WebAssembly\\WebAssembly\\test\\Hosting\\WebAssemblyCultureProviderTest.cs",
+    "roles": ["Original", "Default"],
+    "wholeFileByteIdentical": true,
+    "execution": "NOT_RUN_SOURCE_ONLY_AUTHORIZATION",
+    "tests": [
+      {
+        "name": "GetCultures_ReturnsCultureClosure",
+        "lines": "12-25",
+        "rows": [
+          { "current": "fr-FR", "ui": null, "expected": ["fr-FR", "fr"], "declaredOutputCount": 2, "containsLoop": "No UI names; omitted UI argument." },
+          { "current": "tzm-Latn-DZ", "ui": null, "expected": ["tzm-Latn-DZ", "tzm-Latn", "tzm"], "declaredOutputCount": 3, "containsLoop": "No UI names; omitted UI argument." }
+        ]
+      },
+      {
+        "name": "GetCultures_ReturnCultureClosureWithUICulture",
+        "lines": "27-41",
+        "rows": [
+          { "current": "fr-FR", "ui": "tzm-Latn-DZ", "expected": ["fr-FR", "fr", "tzm-Latn-DZ", "tzm-Latn", "tzm"], "declaredOutputCount": 5, "containsLoop": "Disjoint source-declared current/UI hierarchies; UI additions preserve order." },
+          { "current": "en-US", "ui": "en-GB", "expected": ["en-US", "en", "en-GB"], "declaredOutputCount": 3, "containsLoop": "Adds en-GB, then breaks at shared en." },
+          { "current": "fr-FR", "ui": null, "expected": ["fr-FR", "fr"], "declaredOutputCount": 2, "containsLoop": "Explicit null UI; no membership iteration." }
+        ]
+      }
+    ],
+    "cardinalityConclusion": "Five existing source-declared cases have output counts 2,3,5,3,2; maximum 5 in this finite set only. Two rows supply a nonempty distinct UI hierarchy; three are no-UI controls. These assertions and constructor calls are source expectations, not passing test results or a universal bound.",
+    "untestedBoundaries": "No execution of any row, no browser/selected-runtime culture data, no same-reference versus equal-name-distinct-instance runtime proof, no custom CultureInfo semantics or exhaustive culture universe.",
+    "blockedPrerequisite": "The source-only authorization expressly excludes SDK activation and test/runtime execution. Neither named theory was invoked, and no assertion was reached by this work. No failure/pass, red/green or product-native correctness verification is claimed.",
+    "faithfulBoundaryUsedInstead": "Whole immutable product producer/caller/hierarchy source plus the existing real CultureInfo-based unit-test declarations, with separately qualified common BCL source witnesses. This establishes source behavior and intended cases, not runtime outcomes.",
+    "otherTestBoundary": "The same class's sharding-exception Fact was not run or requalified. F206's separate browser-log diagnostic was not rechecked.",
+    "newTests": 0
+  },
+  "boundedHistory": {
+    "providerPatchEvidence": "commands-contract-history-v1\\15-original-GetCultures-filtered-history.stdout.bin",
+    "defaultHistoryMetadata": "commands-contract-history-v1\\16-default-provider-history-metadata.stdout.bin",
+    "unitPatchEvidence": "commands-contract-history-v1\\17-original-culture-test-history.stdout.bin",
+    "changeIntroducingPattern": {
+      "commit": "6b15190a3fe57dbc3dd784600faa7f717fb5f3ad",
+      "date": "2025-07-31",
+      "subject": "Make Blazor WASM respect current UI culture (#62905)",
+      "fact": "Added CurrentUICulture to this loading path, the separate hierarchy iterator, Contains/Append UI union and shared-ancestor break. Added all three current/UI theory rows."
+    },
+    "laterProviderHistory": {
+      "commit": "73ee485ee118d57655de427b67b574fef6f442f9",
+      "date": "2025-09-22",
+      "subject": "Changed initial culture detection (#63507)",
+      "boundary": "This is bounded provider history metadata. The target provider is byte-identical between the two inspected immutable roles."
+    },
+    "olderContext": "The bounded 2023 history shows generated JS import/browser-guard work and satellite loading delegated to the runtime. Old mocked satellite-loading tests in historical patches are not current tests or executed validation.",
+    "completenessBoundary": "Four filtered Original provider history entries, six Default provider metadata entries and three Original unit history entries; not an exhaustive repository or runtime history."
+  },
+  "materiality": {
+    "patternPresent": true,
+    "whyNoCandidate": [
+      "The real owner is an admitted host-startup culture-loading seam, not a per-render/request/assembly hot loop.",
+      "The existing source-declared culture cases are small and include an early common-ancestor break. They provide no material-cost evidence.",
+      "No real product-native culture/resource workload, selected-runtime cost or contract-relevant measurable effect was established.",
+      "Neither small finite chains nor an abstract repeated-Contains argument justifies replacing this deferred ordered union.",
+      "A faithful change would have to preserve reference gates, ordinal membership, current-then-UI order, first-common-name break, no-UI behavior, deferral and exception/side-effect timing; none is proposed or implemented."
+    ],
+    "notAFalsePositiveRuling": true,
+    "notAMeasuredNoGainRuling": true,
+    "notAVerifiedRuntimeImprovement": true,
+    "noClaimOfUniversalSmallDepthOrCompletion": true
+  },
+  "navigationAndIndexLimitations": {
+    "lsp": "GetCultures references omitted tests; a bounded exact Git fallback found them. Two Contains hovers returned no information. These misses remain in tool-observations-v1.json and are not treated as absence or resolution proof.",
+    "rawNavigationMismatches": "Both inspected navigation source files differ from immutable role bytes. Exact raw copies and original mismatch observations are retained. Secondary CRLF-to-LF-only comparison matches both roles: provider 120 CRLF pairs, CultureStateProvider 54. No raw bytes were rewritten or relabeled identical.",
+    "navigationReceipt": "navigation-mismatch-bindings-v1.json",
+    "selectedRuntimeGap": "The four common BCL files do not establish which implementation/binaries either role would execute. Optimized LINQ partials and platform culture-data/default producers remain outside the finite capture.",
+    "runtimeOutcomeGap": "No source statement proves actual browser culture, resource loading, test passage, performance materiality or universal process/runtime completion."
+  },
+  "boundsAtSourceClosure": {
+    "directGitGhSourceUtilityStarts": 22,
+    "wholeProductTestConfigurationFilesPerImmutableRole": 9,
+    "commonWholeReferenceContractFiles": 4,
+    "wholeNavigationGuidanceDocuments": 2,
+    "navigationInstructionFiles": 4,
+    "conservativeImmutableRoleCountIncludingCommonContractsAndGuidanceDocuments": 15,
+    "additionalNavigationRawSnapshots": 2,
+    "navigationSnapshotBoundary": "Already-counted logical product paths, retained solely to preserve observed raw-byte mismatches. Navigation is a separate observed role, not an extra immutable-role source input.",
+    "finalPreservationChecks": "Three planned guarded read-only Git roots (HEAD, symbolic branch, status) make 25 total if all actually start. The final receipt/index must report actual starts and outcomes, not this plan."
+  },
+  "finiteEvidenceGapGate": {
+    "status": "NOT_AUTHORIZED_OR_STARTED",
+    "currentRecommendation": "Stop source-only with no material candidate; no further source or runtime work is needed to justify that bounded decision.",
+    "beforeAnyBroadening": "Parent must separately review a finite proposal and replace the registration scope/budgets. Current source count is at its conservative per-role bound.",
+    "optionalSourceOnlyContinuationCeilingIfLaterReviewed": {
+      "additionalWholeFilesPerRole": 4,
+      "directGitGhReadRoots": 8,
+      "objectives": ["Bind an explicitly identified product runtime revision using immutable build provenance.", "Within that revision, resolve only the relevant Contains/Append optimized dispatch and culture-equality/producer contract gaps."],
+      "stopCondition": "Stop at the ceiling or when runtime identity cannot be bound; no materiality or performance claim follows merely from reading these files."
+    },
+    "beforeProductNativeOrCandidateWork": "A separately reviewed finite proposal must identify a real, unamplified product-native workload and correctness boundary; obtain SDK/test/browser/runtime and any measurement authority explicitly. No synthetic deep cultures, assembly substitution, repeated startup or isolated Contains loop is proposed.",
+    "actionsTakenUnderThisGate": 0
+  },
+  "scopeCompliance": {
+    "candidateFiles": 0,
+    "productSourceEdits": 0,
+    "sdkActivations": 0,
+    "dotnetBuildTestRestoreRuns": 0,
+    "runtimeBrowserServerScenarioRuns": 0,
+    "measurementsOrProfiling": 0,
+    "delegationsOrRemoteExecutions": 0,
+    "publicationOrCampaignLedgerChanges": 0,
+    "sharedCheckoutPolicyLeaseOrReportWrites": 0,
+    "noF206DiagnosticRequalification": true,
+    "newOutputsOnly": "finding-F227-257"
+  },
+  "terminalEvidence": {
+    "sourceCollector": "collection-source-v1.json",
+    "sourceOutsideObserver": "observer-source-v1.json",
+    "contractHistoryCollector": "collection-contract-history-v1.json",
+    "contractHistoryOutsideObserver": "observer-contract-history-v1.json",
+    "nativeRawStreams": ["commands-source-v1", "commands-contract-history-v1"],
+    "renderedNonNativeObservations": ["tool-observations-v1.json", "outer-tool-return-observations-v1.json"],
+    "finalSealBoundary": "The final outside observer must wait for the final collector, finish both raw stream drains and retain observed-child terminal receipts before indexing its own completed receipt. Actual final enclosing-tool completion is reported only after it returns."
+  }
+}

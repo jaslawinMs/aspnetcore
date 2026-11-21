@@ -1,0 +1,289 @@
+commit 6b15190a3fe57dbc3dd784600faa7f717fb5f3ad
+Author:     Daria Tiurina <dariatiurina@microsoft.com>
+AuthorDate: Thu Jul 31 12:25:21 2025 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Jul 31 12:25:21 2025 +0200
+
+    Make Blazor WASM respect current UI culture (#62905)
+
+diff --git a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+index 4e4d0dc943..22ad7d18ff 100644
+--- a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
++++ b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+@@ -24,6 +24,21 @@ public class WebAssemblyCultureProviderTest
+         Assert.Equal(expected, actual);
+     }
+ 
++    [Theory]
++    [InlineData("fr-FR", "tzm-Latn-DZ", new[] { "fr-FR", "fr", "tzm-Latn-DZ", "tzm-Latn", "tzm" })]
++    [InlineData("en-US", "en-GB", new[] { "en-US", "en", "en-GB" })]
++    [InlineData("fr-FR", null, new[] { "fr-FR", "fr" })]
++    public void GetCultures_ReturnCultureClosureWithUICulture(string cultureName, string uiCultureName, string[] expected)
++    {
++        // Arrange
++        var culture = cultureName != null ? new CultureInfo(cultureName) : null;
++        var uiCulture = uiCultureName != null ? new CultureInfo(uiCultureName) : null;
++        // Act
++        var actual = WebAssemblyCultureProvider.GetCultures(culture, uiCulture);
++        // Assert
++        Assert.Equal(expected, actual);
++    }
++
+     [Fact]
+     public void ThrowIfCultureChangeIsUnsupported_ThrowsIfCulturesAreDifferentAndICUShardingIsUsed()
+     {
+
+commit cec7fbf64e63af88a9165cbbf14aa4ab6f8cc76d
+Author:     Pavel Savara <pavel.savara@gmail.com>
+AuthorDate: Tue Feb 7 14:50:23 2023 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Feb 7 14:50:23 2023 +0100
+
+    [blazor] Use JSImport for loading satellite assemblies (#46477)
+    
+     * use new generated JavaScript interop with [JSImport]
+    
+    Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+    Co-authored-by: Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+
+diff --git a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+index 9f182ef17a..50d798e01c 100644
+--- a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
++++ b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+@@ -4,9 +4,6 @@
+ using System.Globalization;
+ using Microsoft.AspNetCore.Components.WebAssembly.Services;
+ using Microsoft.AspNetCore.Testing;
+-using Microsoft.JSInterop;
+-using Moq;
+-using static Microsoft.AspNetCore.Components.WebAssembly.Hosting.WebAssemblyCultureProvider;
+ 
+ namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+ 
+@@ -27,54 +24,6 @@ public class WebAssemblyCultureProviderTest
+         Assert.Equal(expected, actual);
+     }
+ 
+-    [Fact]
+-    public async Task LoadCurrentCultureResourcesAsync_ReadsAssemblies()
+-    {
+-        // Arrange
+-        using var cultureReplacer = new CultureReplacer("en-GB");
+-        var invoker = new Mock<IJSUnmarshalledRuntime>();
+-#pragma warning disable CS0618 // Type or member is obsolete
+-        invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
+-            .Returns(Task.FromResult<object>(1))
+-            .Verifiable();
+-
+-        invoker.Setup(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null))
+-            .Returns(new object[] { File.ReadAllBytes(GetType().Assembly.Location) })
+-            .Verifiable();
+-#pragma warning restore CS0618 // Type or member is obsolete
+-
+-        var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+-
+-        // Act
+-        await loader.LoadCurrentCultureResourcesAsync();
+-
+-        // Assert
+-        invoker.Verify();
+-    }
+-
+-    [Fact]
+-    public async Task LoadCurrentCultureResourcesAsync_DoesNotReadAssembliesWhenThereAreNone()
+-    {
+-        // Arrange
+-        using var cultureReplacer = new CultureReplacer("en-GB");
+-        var invoker = new Mock<IJSUnmarshalledRuntime>();
+-#pragma warning disable CS0618 // Type or member is obsolete
+-        invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
+-            .Returns(Task.FromResult<object>(0))
+-            .Verifiable();
+-#pragma warning restore CS0618 // Type or member is obsolete
+-
+-        var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+-
+-        // Act
+-        await loader.LoadCurrentCultureResourcesAsync();
+-
+-#pragma warning disable CS0618 // Type or member is obsolete
+-        // Assert
+-        invoker.Verify(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null), Times.Never());
+-#pragma warning restore CS0618 // Type or member is obsolete
+-    }
+-
+     [Fact]
+     public void ThrowIfCultureChangeIsUnsupported_ThrowsIfCulturesAreDifferentAndICUShardingIsUsed()
+     {
+
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+index d1a7fe79da..32ddcc3608 100644
+--- a/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
++++ b/src/Components/WebAssembly/WebAssembly/test/Hosting/WebAssemblyCultureProviderTest.cs
+@@ -13,89 +13,88 @@ using Moq;
+ using Xunit;
+ using static Microsoft.AspNetCore.Components.WebAssembly.Hosting.WebAssemblyCultureProvider;
+ 
+-namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting
++namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
++
++public class WebAssemblyCultureProviderTest
+ {
+-    public class WebAssemblyCultureProviderTest
++    [Theory]
++    [InlineData("fr-FR", new[] { "fr-FR", "fr" })]
++    [InlineData("tzm-Latn-DZ", new[] { "tzm-Latn-DZ", "tzm-Latn", "tzm" })]
++    public void GetCultures_ReturnsCultureClosure(string cultureName, string[] expected)
+     {
+-        [Theory]
+-        [InlineData("fr-FR", new[] { "fr-FR", "fr" })]
+-        [InlineData("tzm-Latn-DZ", new[] { "tzm-Latn-DZ", "tzm-Latn", "tzm" })]
+-        public void GetCultures_ReturnsCultureClosure(string cultureName, string[] expected)
+-        {
+-            // Arrange
+-            var culture = new CultureInfo(cultureName);
++        // Arrange
++        var culture = new CultureInfo(cultureName);
+ 
+-            // Act
+-            var actual = WebAssemblyCultureProvider.GetCultures(culture);
++        // Act
++        var actual = WebAssemblyCultureProvider.GetCultures(culture);
+ 
+-            // Assert
+-            Assert.Equal(expected, actual);
+-        }
++        // Assert
++        Assert.Equal(expected, actual);
++    }
+ 
+-        [Fact]
+-        public async Task LoadCurrentCultureResourcesAsync_ReadsAssemblies()
+-        {
+-            // Arrange
+-            using var cultureReplacer = new CultureReplacer("en-GB");
+-            var invoker = new Mock<IJSUnmarshalledRuntime>();
+-            invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
+-                .Returns(Task.FromResult<object>(1))
+-                .Verifiable();
++    [Fact]
++    public async Task LoadCurrentCultureResourcesAsync_ReadsAssemblies()
++    {
++        // Arrange
++        using var cultureReplacer = new CultureReplacer("en-GB");
++        var invoker = new Mock<IJSUnmarshalledRuntime>();
++        invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
++            .Returns(Task.FromResult<object>(1))
++            .Verifiable();
+ 
+-            invoker.Setup(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null))
+-                .Returns(new object[] { File.ReadAllBytes(GetType().Assembly.Location) })
+-                .Verifiable();
++        invoker.Setup(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null))
++            .Returns(new object[] { File.ReadAllBytes(GetType().Assembly.Location) })
++            .Verifiable();
+ 
+-            var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
++        var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+ 
+-            // Act
+-            await loader.LoadCurrentCultureResourcesAsync();
++        // Act
++        await loader.LoadCurrentCultureResourcesAsync();
+ 
+-            // Assert
+-            invoker.Verify();
+-        }
++        // Assert
++        invoker.Verify();
++    }
+ 
+-        [Fact]
+-        public async Task LoadCurrentCultureResourcesAsync_DoesNotReadAssembliesWhenThereAreNone()
+-        {
+-            // Arrange
+-            using var cultureReplacer = new CultureReplacer("en-GB");
+-            var invoker = new Mock<IJSUnmarshalledRuntime>();
+-            invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
+-                .Returns(Task.FromResult<object>(0))
+-                .Verifiable();
++    [Fact]
++    public async Task LoadCurrentCultureResourcesAsync_DoesNotReadAssembliesWhenThereAreNone()
++    {
++        // Arrange
++        using var cultureReplacer = new CultureReplacer("en-GB");
++        var invoker = new Mock<IJSUnmarshalledRuntime>();
++        invoker.Setup(i => i.InvokeUnmarshalled<string[], object, object, Task<object>>(GetSatelliteAssemblies, new[] { "en-GB", "en" }, null, null))
++            .Returns(Task.FromResult<object>(0))
++            .Verifiable();
+ 
+-            var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
++        var loader = new WebAssemblyCultureProvider(invoker.Object, CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+ 
+-            // Act
+-            await loader.LoadCurrentCultureResourcesAsync();
++        // Act
++        await loader.LoadCurrentCultureResourcesAsync();
+ 
+-            // Assert
+-            invoker.Verify(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null), Times.Never());
+-        }
++        // Assert
++        invoker.Verify(i => i.InvokeUnmarshalled<object, object, object, object[]>(ReadSatelliteAssemblies, null, null, null), Times.Never());
++    }
++
++    [Fact]
++    public void ThrowIfCultureChangeIsUnsupported_ThrowsIfCulturesAreDifferentAndICUShardingIsUsed()
++    {
++        // Arrange
++        Environment.SetEnvironmentVariable("__BLAZOR_SHARDED_ICU", "1");
++        try
++        {
++            // WebAssembly is initialized with en-US
++            var cultureProvider = new WebAssemblyCultureProvider(DefaultWebAssemblyJSRuntime.Instance, new CultureInfo("en-US"), new CultureInfo("en-US"));
+ 
+-        [Fact]
+-        public void ThrowIfCultureChangeIsUnsupported_ThrowsIfCulturesAreDifferentAndICUShardingIsUsed()
++            // Culture is changed to fr-FR as part of the app
++            using var cultureReplacer = new CultureReplacer("fr-FR");
++
++            var ex = Assert.Throws<InvalidOperationException>(() => cultureProvider.ThrowIfCultureChangeIsUnsupported());
++            Assert.Equal("Blazor detected a change in the application's culture that is not supported with the current project configuration. " +
++                "To change culture dynamically during startup, set <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData> in the application's project file.",
++                ex.Message);
++        }
++        finally
+         {
+-            // Arrange
+-            Environment.SetEnvironmentVariable("__BLAZOR_SHARDED_ICU", "1");
+-            try
+-            {
+-                // WebAssembly is initialized with en-US
+-                var cultureProvider = new WebAssemblyCultureProvider(DefaultWebAssemblyJSRuntime.Instance, new CultureInfo("en-US"), new CultureInfo("en-US"));
+-
+-                // Culture is changed to fr-FR as part of the app
+-                using var cultureReplacer = new CultureReplacer("fr-FR");
+-
+-                var ex = Assert.Throws<InvalidOperationException>(() => cultureProvider.ThrowIfCultureChangeIsUnsupported());
+-                Assert.Equal("Blazor detected a change in the application's culture that is not supported with the current project configuration. " +
+-                    "To change culture dynamically during startup, set <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData> in the application's project file.",
+-                    ex.Message);
+-            }
+-            finally
+-            {
+-                Environment.SetEnvironmentVariable("__BLAZOR_SHARDED_ICU", null);
+-            }
++            Environment.SetEnvironmentVariable("__BLAZOR_SHARDED_ICU", null);
+         }
+     }
+ }

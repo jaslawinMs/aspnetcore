@@ -1,0 +1,87 @@
+{
+  "finding": "F227",
+  "scope": "257",
+  "boundary": "Rendered tool observations, not independently captured transport bytes. Git/gh stdout/stderr and helper byte provenance are independently retained by the collectors.",
+  "registration": {
+    "firstTurn": "Ready. Zero work performed. Awaiting explicit GO257 after F227 registration.",
+    "GOReceived": "2026-11-21T03:13:05.230Z",
+    "backgroundId": "00adc6df-1668-4375-a1fc-73d696e28c58"
+  },
+  "skills": {
+    "loaded": "common-anti-pattern-scan",
+    "executedScanWorkflow": false,
+    "reason": "The explicit retained-finding, source-only authorization supersedes its broad scan/SDK/telemetry/publication workflow."
+  },
+  "viewReadLimitsPreserved": [
+    { "path": "..\\policy.json", "firstResult": "File too large to read at once (31.1 KB).", "followUp": "Whole forceReadLargeFiles view succeeded before acceptance was written." },
+    { "path": "C:\\src\\aspnetcore\\src\\Components\\AGENTS.md", "firstResult": "File too large to read at once (31.7 KB).", "followUp": "Whole forceReadLargeFiles view succeeded; explicit source-only scope honored." },
+    { "path": "..\\finding-F206-245\\WHOLE-SEAL-v1.json", "firstResult": "File too large to read at once (62.4 KB).", "followUp": "Header lines 1-35 inspected. The collector subsequently retained and hash-bound the complete accepted index, not just the rendered header." }
+  ],
+  "lsp": [
+    {
+      "operation": "documentSymbol",
+      "file": "C:\\src\\aspnetcore\\src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyCultureProvider.cs",
+      "result": "GetCultures(CultureInfo, CultureInfo?) line 71; GetCultureHierarchy(CultureInfo?) line 99; LoadCurrentCultureResourcesAsync line 54; Initialize line 29.",
+      "boundary": "Navigation metadata; local bytes are bound separately. Not a current-default or runtime observation."
+    },
+    {
+      "operation": "workspaceSymbol",
+      "query": "CultureStateProvider",
+      "result": "One class at src\\Components\\Shared\\src\\CultureStateProvider.cs:7:16, surfaced in Microsoft.AspNetCore.Components.Endpoints (net12.0).",
+      "boundary": "The real WebAssembly project file was subsequently captured and inspected to establish its shared-source compilation. The LSP project label alone is not ownership proof."
+    },
+    {
+      "operation": "findReferences",
+      "symbol": "GetCultures",
+      "position": "WebAssemblyCultureProvider.cs:71:30",
+      "returned": ["WebAssemblyCultureProvider.cs:71:30", "WebAssemblyCultureProvider.cs:61:30"],
+      "boundary": "Partial index result: it omitted the unit-test references later found by one bounded exact Git grep. Not an absence proof."
+    },
+    {
+      "operation": "findReferences",
+      "symbol": "LoadCurrentCultureResourcesAsync",
+      "position": "WebAssemblyCultureProvider.cs:54:36",
+      "returned": ["WebAssemblyCultureProvider.cs:54:36", "WebAssemblyHost.cs:157:31"],
+      "boundary": "Source navigation lead, independently followed using whole immutable role files."
+    },
+    {
+      "operation": "hover",
+      "symbol": "Contains",
+      "position": "WebAssemblyCultureProvider.cs:84:37",
+      "result": "No hover information available at this position.",
+      "usedAsEvidence": false
+    },
+    {
+      "operation": "hover",
+      "symbol": "Contains",
+      "position": "WebAssemblyCultureProvider.cs:84:40",
+      "result": "No hover information available at this position.",
+      "usedAsEvidence": false
+    }
+  ],
+  "actualCompletedOuterTools": [
+    {
+      "shellId": "f227-257-source-v1",
+      "actualToolResult": "completed with exit code 0",
+      "observerPid": 40312,
+      "collectorPid": 10908,
+      "actualObservedCollectorExitCode": 0,
+      "bothRawCollectorStreamDrainsCompleted": true
+    },
+    {
+      "shellId": "f227-257-contract-history-v1",
+      "actualToolResult": "completed with exit code 0",
+      "observerPid": 11048,
+      "collectorPid": 33588,
+      "actualObservedCollectorExitCode": 0,
+      "bothRawCollectorStreamDrainsCompleted": true
+    }
+  ],
+  "notPerformed": [
+    "The skill's prepare_scan.py or finalize_scan.py",
+    "SDK activation, dotnet, build, restore, test, browser/server/app/runtime/scenario execution",
+    "Synthetic CultureInfo probes or culture/assembly/stress/repetition datasets",
+    "Any candidate, product source, reserved checkout, campaign, policy, lease or publication edit",
+    "Remote host execution or delegation"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "mode": "agent-observed-tool-results",
+  "completedSourceCaptureTools": [
+    {
+      "tool": "functions.powershell",
+      "shellId": "f229-259-initial",
+      "entrypoint": "capture-initial-259.ps1",
+      "observedExitCode": 0,
+      "observedObserverPid": 10324,
+      "output": "{\"stage\":\"capture-initial-259\",\"observerPid\":10324,\"defaultBranch\":\"main\",\"defaultCommit\":\"d3483989953ae3cccd773aea5ea04cb0c7198531\",\"wholeFilesPerRole\":3,\"nativeRoots\":3}",
+      "diagnostic": "PowerShell emitted an unapproved-verb import warning; capture completed with exit 0."
+    },
+    {
+      "tool": "functions.powershell",
+      "shellId": "f229-259-producers",
+      "entrypoint": "capture-producers-259.ps1",
+      "observedExitCode": 0,
+      "observedObserverPid": 51280,
+      "newNativeRoots": 4
+    },
+    {
+      "tool": "functions.powershell",
+      "shellId": "f229-259-lifecycle",
+      "entrypoint": "capture-lifecycle-259.ps1",
+      "observedExitCode": 0,
+      "observedObserverPid": 34652,
+      "newNativeRoots": 4
+    },
+    {
+      "tool": "functions.powershell",
+      "shellId": "f229-259-final-sources",
+      "entrypoint": "capture-final-sources-259.ps1",
+      "observedExitCode": 0,
+      "observedObserverPid": 46804,
+      "newNativeRoots": 1
+    },
+    {
+      "tool": "functions.powershell",
+      "shellId": "f229-259-inspect",
+      "entrypoint": "inspect-captured-259.ps1",
+      "observedExitCode": 0,
+      "observedObserverPid": 24784,
+      "newNativeRoots": 0,
+      "observedResult": "15 paths compared; 13 byte-identical, only eng\\Versions.props and WebApplicationFactory.cs differ. Actual source theory rows 26; 12 native roots exit 0 with both streams complete and all 14 observed children terminal."
+    }
+  ],
+  "nonNativeReadFailure": {
+    "tool": "functions.view",
+    "source": "sources\\Default\\src\\Mvc\\Mvc.Testing\\src\\WebApplicationFactory.cs",
+    "requestedRange": [1081, 1450],
+    "verbatimResult": "Invalid view_range: start line (1081) is beyond the end of the file. The file has 980 lines.",
+    "effect": "No missing source bytes: the whole 980-line blob was already captured, and the independent 701-1080 read returned through EOF.",
+    "replayedHelper": false
+  },
+  "nativeFailureEvidence": "Every native utility has its own complete stdout.bin, stderr.bin, stdin.bin, launch-intent.json, fresh policy/guard snapshots and terminal receipt.json. Any native failure.json is retained and must fail sealing.",
+  "libraryReuseBoundary": "SourceCapture-259.psm1 is an immutable function-only library; distinct one-shot entrypoints are never replayed and the library starts no utility on import.",
+  "genericScanWorkflow": "Loaded classification guidance only. No package preparation, SDK activation, generic scan finalization, telemetry, remote write or publication was run because GO259 authorizes only this bounded source qualification.",
+  "lastSealerCompletion": "Not yet observed. This record makes no future assertion about the final enclosing tool."
+}

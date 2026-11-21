@@ -1,0 +1,1282 @@
+a364482bb640751aee5441ce98744a932579f27d blob 1281
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Reflection;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Configures an assembly as a <see cref="CompiledRazorAssemblyPart"/>.
+/// </summary>
+public class CompiledRazorAssemblyApplicationPartFactory : ApplicationPartFactory
+{
+    /// <summary>
+    /// Gets the sequence of <see cref="ApplicationPart"/> instances that are created by this instance of <see cref="DefaultApplicationPartFactory"/>.
+    /// <para>
+    /// Applications may use this method to get the same behavior as this factory produces during MVC's default part discovery.
+    /// </para>
+    /// </summary>
+    /// <param name="assembly">The <see cref="Assembly"/>.</param>
+    /// <returns>The sequence of <see cref="ApplicationPart"/> instances.</returns>
+    public static IEnumerable<ApplicationPart> GetDefaultApplicationParts(Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        yield return new CompiledRazorAssemblyPart(assembly);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<ApplicationPart> GetApplicationParts(Assembly assembly) => GetDefaultApplicationParts(assembly);
+}
+
+d1fb81d87a80f4aed32dca2551ae51d7a157242d blob 5169
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+using Microsoft.AspNetCore.Mvc.Core;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Specifies a assembly to load as part of MVC's assembly discovery mechanism.
+/// </summary>
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public sealed class RelatedAssemblyAttribute : Attribute
+{
+    /// <summary>
+    /// Initializes a new instance of <see cref="RelatedAssemblyAttribute"/>.
+    /// </summary>
+    /// <param name="assemblyFileName">The file name, without extension, of the related assembly.</param>
+    public RelatedAssemblyAttribute(string assemblyFileName)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(assemblyFileName);
+
+        AssemblyFileName = assemblyFileName;
+    }
+
+    /// <summary>
+    /// Gets the assembly file name without extension.
+    /// </summary>
+    public string AssemblyFileName { get; }
+
+    /// <summary>
+    /// Gets <see cref="Assembly"/> instances specified by <see cref="RelatedAssemblyAttribute"/>.
+    /// </summary>
+    /// <param name="assembly">The assembly containing <see cref="RelatedAssemblyAttribute"/> instances.</param>
+    /// <param name="throwOnError">Determines if the method throws if a related assembly could not be located.</param>
+    /// <returns>Related <see cref="Assembly"/> instances.</returns>
+    public static IReadOnlyList<Assembly> GetRelatedAssemblies(Assembly assembly, bool throwOnError)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        var loadContext = AssemblyLoadContext.GetLoadContext(assembly) ?? AssemblyLoadContext.Default;
+        return GetRelatedAssemblies(assembly, throwOnError, File.Exists, new AssemblyLoadContextWrapper(loadContext));
+    }
+
+    internal static IReadOnlyList<Assembly> GetRelatedAssemblies(
+        Assembly assembly,
+        bool throwOnError,
+        Func<string, bool> fileExists,
+        AssemblyLoadContextWrapper assemblyLoadContext)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        // MVC will specifically look for related parts in the same physical directory as the assembly.
+        // No-op if the assembly does not have a location.
+        if (assembly.IsDynamic)
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var attributes = assembly.GetCustomAttributes<RelatedAssemblyAttribute>().ToArray();
+        if (attributes.Length == 0)
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var assemblyName = assembly.GetName().Name;
+        // Assembly.Location may be null for a single-file exe. In this case, attempt to look for related parts in the app's base directory
+        var assemblyDirectory = string.IsNullOrEmpty(assembly.Location) ?
+            AppContext.BaseDirectory :
+            Path.GetDirectoryName(assembly.Location);
+
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var relatedAssemblies = new List<Assembly>();
+        for (var i = 0; i < attributes.Length; i++)
+        {
+            var attribute = attributes[i];
+            if (string.Equals(assemblyName, attribute.AssemblyFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    Resources.FormatRelatedAssemblyAttribute_AssemblyCannotReferenceSelf(nameof(RelatedAssemblyAttribute), assemblyName));
+            }
+
+            Assembly relatedAssembly;
+            var relatedAssemblyLocation = Path.Combine(assemblyDirectory, attribute.AssemblyFileName + ".dll");
+            if (fileExists(relatedAssemblyLocation))
+            {
+                relatedAssembly = assemblyLoadContext.LoadFromAssemblyPath(relatedAssemblyLocation);
+            }
+            else
+            {
+                try
+                {
+                    var relatedAssemblyName = new AssemblyName(attribute.AssemblyFileName);
+                    relatedAssembly = assemblyLoadContext.LoadFromAssemblyName(relatedAssemblyName);
+                }
+                catch when (!throwOnError)
+                {
+                    // Ignore assembly load failures when throwOnError = false.
+                    continue;
+                }
+            }
+
+            relatedAssemblies.Add(relatedAssembly);
+        }
+
+        return relatedAssemblies;
+    }
+
+#pragma warning disable CA1852 // Seal internal types
+    internal class AssemblyLoadContextWrapper
+#pragma warning restore CA1852 // Seal internal types
+    {
+        private readonly AssemblyLoadContext _loadContext;
+
+        public AssemblyLoadContextWrapper(AssemblyLoadContext loadContext)
+        {
+            _loadContext = loadContext;
+        }
+
+        public virtual Assembly LoadFromAssemblyName(AssemblyName assemblyName)
+            => _loadContext.LoadFromAssemblyName(assemblyName);
+
+        public virtual Assembly LoadFromAssemblyPath(string assemblyPath)
+            => _loadContext.LoadFromAssemblyPath(assemblyPath);
+    }
+}
+
+9d8723e177dcb8a984be13d2b66d2eb47ddc0219 blob 4163
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Manages the parts and features of an MVC application.
+/// </summary>
+public class ApplicationPartManager
+{
+    /// <summary>
+    /// Gets the list of <see cref="IApplicationFeatureProvider"/>s.
+    /// </summary>
+    public IList<IApplicationFeatureProvider> FeatureProviders { get; } =
+        new List<IApplicationFeatureProvider>();
+
+    /// <summary>
+    /// Gets the list of <see cref="ApplicationPart"/> instances.
+    /// <para>
+    /// Instances in this collection are stored in precedence order. An <see cref="ApplicationPart"/> that appears
+    /// earlier in the list has a higher precedence.
+    /// An <see cref="IApplicationFeatureProvider"/> may choose to use this an interface as a way to resolve conflicts when
+    /// multiple <see cref="ApplicationPart"/> instances resolve equivalent feature values.
+    /// </para>
+    /// </summary>
+    public IList<ApplicationPart> ApplicationParts { get; } = new List<ApplicationPart>();
+
+    /// <summary>
+    /// Populates the given <paramref name="feature"/> using the list of
+    /// <see cref="IApplicationFeatureProvider{TFeature}"/>s configured on the
+    /// <see cref="ApplicationPartManager"/>.
+    /// </summary>
+    /// <typeparam name="TFeature">The type of the feature.</typeparam>
+    /// <param name="feature">The feature instance to populate.</param>
+    public void PopulateFeature<TFeature>(TFeature feature)
+    {
+        if (feature == null)
+        {
+            throw new ArgumentNullException(nameof(feature));
+        }
+
+        foreach (var provider in FeatureProviders.OfType<IApplicationFeatureProvider<TFeature>>())
+        {
+            provider.PopulateFeature(ApplicationParts, feature);
+        }
+    }
+
+    internal void PopulateDefaultParts(string entryAssemblyName)
+    {
+        var assemblies = GetApplicationPartAssemblies(entryAssemblyName);
+
+        var seenAssemblies = new HashSet<Assembly>();
+
+        foreach (var assembly in assemblies)
+        {
+            if (!seenAssemblies.Add(assembly))
+            {
+                // "assemblies" may contain duplicate values, but we want unique ApplicationPart instances.
+                // Note that we prefer using a HashSet over Distinct since the latter isn't
+                // guaranteed to preserve the original ordering.
+                continue;
+            }
+
+            var partFactory = ApplicationPartFactory.GetApplicationPartFactory(assembly);
+            foreach (var applicationPart in partFactory.GetApplicationParts(assembly))
+            {
+                ApplicationParts.Add(applicationPart);
+            }
+        }
+    }
+
+    private static IEnumerable<Assembly> GetApplicationPartAssemblies(string entryAssemblyName)
+    {
+        var entryAssembly = Assembly.Load(new AssemblyName(entryAssemblyName));
+
+        // Use ApplicationPartAttribute to get the closure of direct or transitive dependencies
+        // that reference MVC.
+        var assembliesFromAttributes = entryAssembly.GetCustomAttributes<ApplicationPartAttribute>()
+            .Select(name => Assembly.Load(name.AssemblyName))
+            .OrderBy(assembly => assembly.FullName, StringComparer.Ordinal)
+            .SelectMany(GetAssemblyClosure);
+
+        // The SDK will not include the entry assembly as an application part. We'll explicitly list it
+        // and have it appear before all other assemblies \ ApplicationParts.
+        return GetAssemblyClosure(entryAssembly)
+            .Concat(assembliesFromAttributes);
+    }
+
+    private static IEnumerable<Assembly> GetAssemblyClosure(Assembly assembly)
+    {
+        yield return assembly;
+
+        var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(assembly, throwOnError: false)
+            .OrderBy(assembly => assembly.FullName, StringComparer.Ordinal);
+
+        foreach (var relatedAssembly in relatedAssemblies)
+        {
+            yield return relatedAssembly;
+        }
+    }
+}
+
+370648fd801da2f448152401569e316bdacbcccb blob 5268
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <Description>ASP.NET Core Identity UI is the default Razor Pages built-in UI for the ASP.NET Core Identity framework.</Description>
+    <RazorAssemblyDescription>Compiled Razor views assembly for the ASP.NET Core Identity UI package.</RazorAssemblyDescription>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>aspnetcore;identity;membership;razorpages</PackageTags>
+    <EnableDefaultRazorGenerateItems>false</EnableDefaultRazorGenerateItems>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <PackageThirdPartyNoticesFile>$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
+
+    <StaticWebAssetBasePath>Identity</StaticWebAssetBasePath>
+    <ProvideApplicationPartFactoryAttributeTypeName>Microsoft.AspNetCore.Mvc.ApplicationParts.NullApplicationPartFactory, Microsoft.AspNetCore.Mvc.Core</ProvideApplicationPartFactoryAttributeTypeName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SharedSourceRoot)DefaultMessageEmailSender.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\**\*" Link="wwwroot\%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <StaticWebAssetGroupDefinition Include="BootstrapVersion"
+      Value="V4" SourceId="$(PackageId)" Order="0"
+      IncludePattern="V4/**" RelativePathPattern="V4/**"
+      RelativePathPrefix="#[{BootstrapVersion}/]~"
+      ContentRootSuffix="V4" />
+    <StaticWebAssetGroupDefinition Include="BootstrapVersion"
+      Value="V5" SourceId="$(PackageId)" Order="1"
+      IncludePattern="V5/**" RelativePathPattern="V5/**"
+      RelativePathPrefix="#[{BootstrapVersion}/]~"
+      ContentRootSuffix="V5" />
+  </ItemGroup>
+
+  <!-- Default group selection for the library's own build (endpoints/dev manifests).
+       The build manifest retains all variants for consumers to select from. -->
+  <ItemGroup>
+    <StaticWebAssetGroup Include="BootstrapVersion"
+      Value="V5" SourceId="$(PackageId)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\FileProviders\Embedded\src\Microsoft.Extensions.FileProviders.Embedded.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Html.Abstractions\src\Microsoft.AspNetCore.Html.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Abstractions\src\Microsoft.AspNetCore.Authentication.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Core\src\Microsoft.AspNetCore.Identity.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Extensions.Stores\src\Microsoft.Extensions.Identity.Stores.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\StaticFiles\src\Microsoft.AspNetCore.StaticFiles.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Abstractions\src\Microsoft.AspNetCore.Mvc.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.TagHelpers\src\Microsoft.AspNetCore.Mvc.TagHelpers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.ViewFeatures\src\Microsoft.AspNetCore.Mvc.ViewFeatures.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc\src\Microsoft.AspNetCore.Mvc.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor.Runtime\src\Microsoft.AspNetCore.Razor.Runtime.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Cookies\src\Microsoft.AspNetCore.Authentication.Cookies.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Core\src\Microsoft.AspNetCore.Authentication.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authorization\Core\src\Microsoft.AspNetCore.Authorization.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Servers\HttpSys\src\Microsoft.AspNetCore.Server.HttpSys.csproj" />
+  </ItemGroup>
+
+  <Target Name="SetupRazorInputs" BeforeTargets="ResolveRazorGenerateInputs">
+    <ItemGroup>
+      <_RazorGenerate Include="Areas\Identity\Pages\**\*.cshtml" />
+
+      <RazorGenerate Include="@(_RazorGenerate)" Link="Areas\Identity\Pages\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
+
+7a255af79f0618534dd5f3109ccb6b5d93a2e6a6 blob 14304
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Buffers;
+using System.Linq;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Extension methods for setting up essential MVC services in an <see cref="IServiceCollection" />.
+/// </summary>
+public static class MvcCoreServiceCollectionExtensions
+{
+    /// <summary>
+    /// Adds the minimum essential MVC services to the specified <see cref="IServiceCollection" />. Additional services
+    /// including MVC's support for authorization, formatters, and validation must be added separately using the
+    /// <see cref="IMvcCoreBuilder"/> returned from this method.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <returns>An <see cref="IMvcCoreBuilder"/> that can be used to further configure the MVC services.</returns>
+    /// <remarks>
+    /// The <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> approach for configuring
+    /// MVC is provided for experienced MVC developers who wish to have full control over the set of default services
+    /// registered. <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> will register
+    /// the minimum set of services necessary to route requests and invoke controllers. It is not expected that any
+    /// application will satisfy its requirements with just a call to
+    /// <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/>. Additional configuration using the
+    /// <see cref="IMvcCoreBuilder"/> will be required.
+    /// </remarks>
+    public static IMvcCoreBuilder AddMvcCore(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        var environment = GetServiceFromCollection<IWebHostEnvironment>(services);
+        var partManager = GetApplicationPartManager(services, environment);
+        services.TryAddSingleton(partManager);
+
+        ConfigureDefaultFeatureProviders(partManager);
+        ConfigureDefaultServices(services);
+        AddMvcCoreServices(services);
+
+        var builder = new MvcCoreBuilder(services, partManager);
+
+        return builder;
+    }
+
+    private static void ConfigureDefaultFeatureProviders(ApplicationPartManager manager)
+    {
+        if (!manager.FeatureProviders.OfType<ControllerFeatureProvider>().Any())
+        {
+            manager.FeatureProviders.Add(new ControllerFeatureProvider());
+        }
+    }
+
+    private static ApplicationPartManager GetApplicationPartManager(IServiceCollection services, IWebHostEnvironment? environment)
+    {
+        var manager = GetServiceFromCollection<ApplicationPartManager>(services);
+        if (manager == null)
+        {
+            manager = new ApplicationPartManager();
+
+            var entryAssemblyName = environment?.ApplicationName;
+            if (string.IsNullOrEmpty(entryAssemblyName))
+            {
+                return manager;
+            }
+
+            manager.PopulateDefaultParts(entryAssemblyName);
+        }
+
+        return manager;
+    }
+
+    private static T? GetServiceFromCollection<T>(IServiceCollection services)
+    {
+        return (T?)services
+            .LastOrDefault(d => d.ServiceType == typeof(T))
+            ?.ImplementationInstance;
+    }
+
+    /// <summary>
+    /// Adds the minimum essential MVC services to the specified <see cref="IServiceCollection" />. Additional services
+    /// including MVC's support for authorization, formatters, and validation must be added separately using the
+    /// <see cref="IMvcCoreBuilder"/> returned from this method.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <param name="setupAction">An <see cref="Action{MvcOptions}"/> to configure the provided <see cref="MvcOptions"/>.</param>
+    /// <returns>An <see cref="IMvcCoreBuilder"/> that can be used to further configure the MVC services.</returns>
+    /// <remarks>
+    /// The <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> approach for configuring
+    /// MVC is provided for experienced MVC developers who wish to have full control over the set of default services
+    /// registered. <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> will register
+    /// the minimum set of services necessary to route requests and invoke controllers. It is not expected that any
+    /// application will satisfy its requirements with just a call to
+    /// <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/>. Additional configuration using the
+    /// <see cref="IMvcCoreBuilder"/> will be required.
+    /// </remarks>
+    public static IMvcCoreBuilder AddMvcCore(
+        this IServiceCollection services,
+        Action<MvcOptions> setupAction)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(setupAction);
+
+        var builder = services.AddMvcCore();
+        services.Configure(setupAction);
+
+        return builder;
+    }
+
+    // To enable unit testing
+    internal static void AddMvcCoreServices(IServiceCollection services)
+    {
+        //
+        // Options
+        //
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, MvcCoreMvcOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IPostConfigureOptions<MvcOptions>, MvcCoreMvcOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<ApiBehaviorOptions>, ApiBehaviorOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<RouteOptions>, MvcCoreRouteOptionsSetup>());
+
+        //
+        // Action Discovery
+        //
+        // These are consumed only when creating action descriptors, then they can be deallocated
+        services.TryAddSingleton<ApplicationModelFactory>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IApplicationModelProvider, DefaultApplicationModelProvider>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IApplicationModelProvider, ApiBehaviorApplicationModelProvider>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IActionDescriptorProvider, ControllerActionDescriptorProvider>());
+
+        services.TryAddSingleton<IActionDescriptorCollectionProvider, DefaultActionDescriptorCollectionProvider>();
+
+        //
+        // Action Selection
+        //
+        services.TryAddSingleton<IActionSelector, ActionSelector>();
+        services.TryAddSingleton<ActionConstraintCache>();
+
+        // Will be cached by the DefaultActionSelector
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IActionConstraintProvider, DefaultActionConstraintProvider>());
+
+        // Policies for Endpoints
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ActionConstraintMatcherPolicy>());
+
+        //
+        // Controller Factory
+        //
+        // This has a cache, so it needs to be a singleton
+        services.TryAddSingleton<IControllerFactory, DefaultControllerFactory>();
+
+        // Will be cached by the DefaultControllerFactory
+        services.TryAddTransient<IControllerActivator, DefaultControllerActivator>();
+
+        services.TryAddSingleton<IControllerFactoryProvider, ControllerFactoryProvider>();
+        services.TryAddSingleton<IControllerActivatorProvider, ControllerActivatorProvider>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IControllerPropertyActivator, DefaultControllerPropertyActivator>());
+
+        //
+        // Action Invoker
+        //
+        // The IActionInvokerFactory is cacheable
+        services.TryAddSingleton<IActionInvokerFactory, ActionInvokerFactory>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IActionInvokerProvider, ControllerActionInvokerProvider>());
+
+        // These are stateless
+        services.TryAddSingleton<ControllerActionInvokerCache>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IFilterProvider, DefaultFilterProvider>());
+        services.TryAddSingleton<IActionResultTypeMapper, ActionResultTypeMapper>();
+
+        //
+        // Request body limit filters
+        //
+        services.TryAddTransient<RequestSizeLimitFilter>();
+        services.TryAddTransient<DisableRequestSizeLimitFilter>();
+        services.TryAddTransient<RequestFormLimitsFilter>();
+
+        //
+        // ModelBinding, Validation
+        //
+        // The DefaultModelMetadataProvider does significant caching and should be a singleton.
+        services.TryAddSingleton<IModelMetadataProvider, DefaultModelMetadataProvider>();
+        services.TryAdd(ServiceDescriptor.Transient<ICompositeMetadataDetailsProvider>(s =>
+        {
+            var options = s.GetRequiredService<IOptions<MvcOptions>>().Value;
+            return new DefaultCompositeMetadataDetailsProvider(options.ModelMetadataDetailsProviders);
+        }));
+        services.TryAddSingleton<IModelBinderFactory, ModelBinderFactory>();
+        services.TryAddSingleton<IObjectModelValidator>(s =>
+        {
+            var options = s.GetRequiredService<IOptions<MvcOptions>>().Value;
+            var metadataProvider = s.GetRequiredService<IModelMetadataProvider>();
+            return new DefaultObjectValidator(metadataProvider, options.ModelValidatorProviders, options);
+        });
+        services.TryAddSingleton<ClientValidatorCache>();
+        services.TryAddSingleton<ParameterBinder>();
+
+        //
+        // Random Infrastructure
+        //
+        services.TryAddSingleton<MvcMarkerService, MvcMarkerService>();
+        services.TryAddSingleton<ITypeActivatorCache, TypeActivatorCache>();
+        services.TryAddSingleton<IUrlHelperFactory, UrlHelperFactory>();
+        services.TryAddSingleton<IHttpRequestStreamReaderFactory, MemoryPoolHttpRequestStreamReaderFactory>();
+        services.TryAddSingleton<IHttpResponseStreamWriterFactory, MemoryPoolHttpResponseStreamWriterFactory>();
+        services.TryAddSingleton(ArrayPool<byte>.Shared);
+        services.TryAddSingleton(ArrayPool<char>.Shared);
+        services.TryAddSingleton<OutputFormatterSelector, DefaultOutputFormatterSelector>();
+        services.TryAddSingleton<IActionResultExecutor<ObjectResult>, ObjectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<PhysicalFileResult>, PhysicalFileResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<VirtualFileResult>, VirtualFileResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<FileStreamResult>, FileStreamResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<FileContentResult>, FileContentResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectResult>, RedirectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<LocalRedirectResult>, LocalRedirectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToActionResult>, RedirectToActionResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToRouteResult>, RedirectToRouteResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToPageResult>, RedirectToPageResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<ContentResult>, ContentResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<JsonResult>, SystemTextJsonResultExecutor>();
+        services.TryAddSingleton<IClientErrorFactory, ProblemDetailsClientErrorFactory>();
+
+        //
+        // Route Handlers
+        //
+        services.TryAddSingleton<MvcRouteHandler>(); // Only one per app
+        services.TryAddTransient<MvcAttributeRouteHandler>(); // Many per app
+
+        //
+        // Endpoint Routing / Endpoints
+        //
+        services.TryAddSingleton<ControllerActionEndpointDataSourceFactory>();
+        services.TryAddSingleton<OrderedEndpointsSequenceProviderCache>();
+        services.TryAddSingleton<ControllerActionEndpointDataSourceIdProvider>();
+        services.TryAddSingleton<ActionEndpointFactory>();
+        services.TryAddSingleton<DynamicControllerEndpointSelectorCache>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, DynamicControllerEndpointMatcherPolicy>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRequestDelegateFactory, ControllerRequestDelegateFactory>());
+
+        //
+        // Middleware pipeline filter related
+        //
+        services.TryAddSingleton<MiddlewareFilterConfigurationProvider>();
+        // This maintains a cache of middleware pipelines, so it needs to be a singleton
+        services.TryAddSingleton<MiddlewareFilterBuilder>();
+        // Sets ApplicationBuilder on MiddlewareFilterBuilder
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupFilter, MiddlewareFilterBuilderStartupFilter>());
+
+        // ProblemDetails
+        services.TryAddSingleton<ProblemDetailsFactory, DefaultProblemDetailsFactory>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IProblemDetailsWriter, DefaultApiProblemDetailsWriter>());
+    }
+
+    private static void ConfigureDefaultServices(IServiceCollection services)
+    {
+        services.AddRouting();
+    }
+}
+
+a364482bb640751aee5441ce98744a932579f27d blob 1281
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Reflection;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Configures an assembly as a <see cref="CompiledRazorAssemblyPart"/>.
+/// </summary>
+public class CompiledRazorAssemblyApplicationPartFactory : ApplicationPartFactory
+{
+    /// <summary>
+    /// Gets the sequence of <see cref="ApplicationPart"/> instances that are created by this instance of <see cref="DefaultApplicationPartFactory"/>.
+    /// <para>
+    /// Applications may use this method to get the same behavior as this factory produces during MVC's default part discovery.
+    /// </para>
+    /// </summary>
+    /// <param name="assembly">The <see cref="Assembly"/>.</param>
+    /// <returns>The sequence of <see cref="ApplicationPart"/> instances.</returns>
+    public static IEnumerable<ApplicationPart> GetDefaultApplicationParts(Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        yield return new CompiledRazorAssemblyPart(assembly);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<ApplicationPart> GetApplicationParts(Assembly assembly) => GetDefaultApplicationParts(assembly);
+}
+
+d1fb81d87a80f4aed32dca2551ae51d7a157242d blob 5169
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+using Microsoft.AspNetCore.Mvc.Core;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Specifies a assembly to load as part of MVC's assembly discovery mechanism.
+/// </summary>
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public sealed class RelatedAssemblyAttribute : Attribute
+{
+    /// <summary>
+    /// Initializes a new instance of <see cref="RelatedAssemblyAttribute"/>.
+    /// </summary>
+    /// <param name="assemblyFileName">The file name, without extension, of the related assembly.</param>
+    public RelatedAssemblyAttribute(string assemblyFileName)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(assemblyFileName);
+
+        AssemblyFileName = assemblyFileName;
+    }
+
+    /// <summary>
+    /// Gets the assembly file name without extension.
+    /// </summary>
+    public string AssemblyFileName { get; }
+
+    /// <summary>
+    /// Gets <see cref="Assembly"/> instances specified by <see cref="RelatedAssemblyAttribute"/>.
+    /// </summary>
+    /// <param name="assembly">The assembly containing <see cref="RelatedAssemblyAttribute"/> instances.</param>
+    /// <param name="throwOnError">Determines if the method throws if a related assembly could not be located.</param>
+    /// <returns>Related <see cref="Assembly"/> instances.</returns>
+    public static IReadOnlyList<Assembly> GetRelatedAssemblies(Assembly assembly, bool throwOnError)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        var loadContext = AssemblyLoadContext.GetLoadContext(assembly) ?? AssemblyLoadContext.Default;
+        return GetRelatedAssemblies(assembly, throwOnError, File.Exists, new AssemblyLoadContextWrapper(loadContext));
+    }
+
+    internal static IReadOnlyList<Assembly> GetRelatedAssemblies(
+        Assembly assembly,
+        bool throwOnError,
+        Func<string, bool> fileExists,
+        AssemblyLoadContextWrapper assemblyLoadContext)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        // MVC will specifically look for related parts in the same physical directory as the assembly.
+        // No-op if the assembly does not have a location.
+        if (assembly.IsDynamic)
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var attributes = assembly.GetCustomAttributes<RelatedAssemblyAttribute>().ToArray();
+        if (attributes.Length == 0)
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var assemblyName = assembly.GetName().Name;
+        // Assembly.Location may be null for a single-file exe. In this case, attempt to look for related parts in the app's base directory
+        var assemblyDirectory = string.IsNullOrEmpty(assembly.Location) ?
+            AppContext.BaseDirectory :
+            Path.GetDirectoryName(assembly.Location);
+
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            return Array.Empty<Assembly>();
+        }
+
+        var relatedAssemblies = new List<Assembly>();
+        for (var i = 0; i < attributes.Length; i++)
+        {
+            var attribute = attributes[i];
+            if (string.Equals(assemblyName, attribute.AssemblyFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    Resources.FormatRelatedAssemblyAttribute_AssemblyCannotReferenceSelf(nameof(RelatedAssemblyAttribute), assemblyName));
+            }
+
+            Assembly relatedAssembly;
+            var relatedAssemblyLocation = Path.Combine(assemblyDirectory, attribute.AssemblyFileName + ".dll");
+            if (fileExists(relatedAssemblyLocation))
+            {
+                relatedAssembly = assemblyLoadContext.LoadFromAssemblyPath(relatedAssemblyLocation);
+            }
+            else
+            {
+                try
+                {
+                    var relatedAssemblyName = new AssemblyName(attribute.AssemblyFileName);
+                    relatedAssembly = assemblyLoadContext.LoadFromAssemblyName(relatedAssemblyName);
+                }
+                catch when (!throwOnError)
+                {
+                    // Ignore assembly load failures when throwOnError = false.
+                    continue;
+                }
+            }
+
+            relatedAssemblies.Add(relatedAssembly);
+        }
+
+        return relatedAssemblies;
+    }
+
+#pragma warning disable CA1852 // Seal internal types
+    internal class AssemblyLoadContextWrapper
+#pragma warning restore CA1852 // Seal internal types
+    {
+        private readonly AssemblyLoadContext _loadContext;
+
+        public AssemblyLoadContextWrapper(AssemblyLoadContext loadContext)
+        {
+            _loadContext = loadContext;
+        }
+
+        public virtual Assembly LoadFromAssemblyName(AssemblyName assemblyName)
+            => _loadContext.LoadFromAssemblyName(assemblyName);
+
+        public virtual Assembly LoadFromAssemblyPath(string assemblyPath)
+            => _loadContext.LoadFromAssemblyPath(assemblyPath);
+    }
+}
+
+9d8723e177dcb8a984be13d2b66d2eb47ddc0219 blob 4163
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Linq;
+using System.Reflection;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationParts;
+
+/// <summary>
+/// Manages the parts and features of an MVC application.
+/// </summary>
+public class ApplicationPartManager
+{
+    /// <summary>
+    /// Gets the list of <see cref="IApplicationFeatureProvider"/>s.
+    /// </summary>
+    public IList<IApplicationFeatureProvider> FeatureProviders { get; } =
+        new List<IApplicationFeatureProvider>();
+
+    /// <summary>
+    /// Gets the list of <see cref="ApplicationPart"/> instances.
+    /// <para>
+    /// Instances in this collection are stored in precedence order. An <see cref="ApplicationPart"/> that appears
+    /// earlier in the list has a higher precedence.
+    /// An <see cref="IApplicationFeatureProvider"/> may choose to use this an interface as a way to resolve conflicts when
+    /// multiple <see cref="ApplicationPart"/> instances resolve equivalent feature values.
+    /// </para>
+    /// </summary>
+    public IList<ApplicationPart> ApplicationParts { get; } = new List<ApplicationPart>();
+
+    /// <summary>
+    /// Populates the given <paramref name="feature"/> using the list of
+    /// <see cref="IApplicationFeatureProvider{TFeature}"/>s configured on the
+    /// <see cref="ApplicationPartManager"/>.
+    /// </summary>
+    /// <typeparam name="TFeature">The type of the feature.</typeparam>
+    /// <param name="feature">The feature instance to populate.</param>
+    public void PopulateFeature<TFeature>(TFeature feature)
+    {
+        if (feature == null)
+        {
+            throw new ArgumentNullException(nameof(feature));
+        }
+
+        foreach (var provider in FeatureProviders.OfType<IApplicationFeatureProvider<TFeature>>())
+        {
+            provider.PopulateFeature(ApplicationParts, feature);
+        }
+    }
+
+    internal void PopulateDefaultParts(string entryAssemblyName)
+    {
+        var assemblies = GetApplicationPartAssemblies(entryAssemblyName);
+
+        var seenAssemblies = new HashSet<Assembly>();
+
+        foreach (var assembly in assemblies)
+        {
+            if (!seenAssemblies.Add(assembly))
+            {
+                // "assemblies" may contain duplicate values, but we want unique ApplicationPart instances.
+                // Note that we prefer using a HashSet over Distinct since the latter isn't
+                // guaranteed to preserve the original ordering.
+                continue;
+            }
+
+            var partFactory = ApplicationPartFactory.GetApplicationPartFactory(assembly);
+            foreach (var applicationPart in partFactory.GetApplicationParts(assembly))
+            {
+                ApplicationParts.Add(applicationPart);
+            }
+        }
+    }
+
+    private static IEnumerable<Assembly> GetApplicationPartAssemblies(string entryAssemblyName)
+    {
+        var entryAssembly = Assembly.Load(new AssemblyName(entryAssemblyName));
+
+        // Use ApplicationPartAttribute to get the closure of direct or transitive dependencies
+        // that reference MVC.
+        var assembliesFromAttributes = entryAssembly.GetCustomAttributes<ApplicationPartAttribute>()
+            .Select(name => Assembly.Load(name.AssemblyName))
+            .OrderBy(assembly => assembly.FullName, StringComparer.Ordinal)
+            .SelectMany(GetAssemblyClosure);
+
+        // The SDK will not include the entry assembly as an application part. We'll explicitly list it
+        // and have it appear before all other assemblies \ ApplicationParts.
+        return GetAssemblyClosure(entryAssembly)
+            .Concat(assembliesFromAttributes);
+    }
+
+    private static IEnumerable<Assembly> GetAssemblyClosure(Assembly assembly)
+    {
+        yield return assembly;
+
+        var relatedAssemblies = RelatedAssemblyAttribute.GetRelatedAssemblies(assembly, throwOnError: false)
+            .OrderBy(assembly => assembly.FullName, StringComparer.Ordinal);
+
+        foreach (var relatedAssembly in relatedAssemblies)
+        {
+            yield return relatedAssembly;
+        }
+    }
+}
+
+370648fd801da2f448152401569e316bdacbcccb blob 5268
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <Description>ASP.NET Core Identity UI is the default Razor Pages built-in UI for the ASP.NET Core Identity framework.</Description>
+    <RazorAssemblyDescription>Compiled Razor views assembly for the ASP.NET Core Identity UI package.</RazorAssemblyDescription>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>aspnetcore;identity;membership;razorpages</PackageTags>
+    <EnableDefaultRazorGenerateItems>false</EnableDefaultRazorGenerateItems>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <PackageThirdPartyNoticesFile>$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.TXT</PackageThirdPartyNoticesFile>
+
+    <StaticWebAssetBasePath>Identity</StaticWebAssetBasePath>
+    <ProvideApplicationPartFactoryAttributeTypeName>Microsoft.AspNetCore.Mvc.ApplicationParts.NullApplicationPartFactory, Microsoft.AspNetCore.Mvc.Core</ProvideApplicationPartFactoryAttributeTypeName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SharedSourceRoot)DefaultMessageEmailSender.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\**\*" Link="wwwroot\%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <StaticWebAssetGroupDefinition Include="BootstrapVersion"
+      Value="V4" SourceId="$(PackageId)" Order="0"
+      IncludePattern="V4/**" RelativePathPattern="V4/**"
+      RelativePathPrefix="#[{BootstrapVersion}/]~"
+      ContentRootSuffix="V4" />
+    <StaticWebAssetGroupDefinition Include="BootstrapVersion"
+      Value="V5" SourceId="$(PackageId)" Order="1"
+      IncludePattern="V5/**" RelativePathPattern="V5/**"
+      RelativePathPrefix="#[{BootstrapVersion}/]~"
+      ContentRootSuffix="V5" />
+  </ItemGroup>
+
+  <!-- Default group selection for the library's own build (endpoints/dev manifests).
+       The build manifest retains all variants for consumers to select from. -->
+  <ItemGroup>
+    <StaticWebAssetGroup Include="BootstrapVersion"
+      Value="V5" SourceId="$(PackageId)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\FileProviders\Embedded\src\Microsoft.Extensions.FileProviders.Embedded.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Html.Abstractions\src\Microsoft.AspNetCore.Html.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Abstractions\src\Microsoft.AspNetCore.Authentication.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Core\src\Microsoft.AspNetCore.Identity.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Extensions.Stores\src\Microsoft.Extensions.Identity.Stores.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\StaticFiles\src\Microsoft.AspNetCore.StaticFiles.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Abstractions\src\Microsoft.AspNetCore.Mvc.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.TagHelpers\src\Microsoft.AspNetCore.Mvc.TagHelpers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.ViewFeatures\src\Microsoft.AspNetCore.Mvc.ViewFeatures.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc\src\Microsoft.AspNetCore.Mvc.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor.Runtime\src\Microsoft.AspNetCore.Razor.Runtime.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Cookies\src\Microsoft.AspNetCore.Authentication.Cookies.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Core\src\Microsoft.AspNetCore.Authentication.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authorization\Core\src\Microsoft.AspNetCore.Authorization.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Servers\HttpSys\src\Microsoft.AspNetCore.Server.HttpSys.csproj" />
+  </ItemGroup>
+
+  <Target Name="SetupRazorInputs" BeforeTargets="ResolveRazorGenerateInputs">
+    <ItemGroup>
+      <_RazorGenerate Include="Areas\Identity\Pages\**\*.cshtml" />
+
+      <RazorGenerate Include="@(_RazorGenerate)" Link="Areas\Identity\Pages\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
+
+7a255af79f0618534dd5f3109ccb6b5d93a2e6a6 blob 14304
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Buffers;
+using System.Linq;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Extension methods for setting up essential MVC services in an <see cref="IServiceCollection" />.
+/// </summary>
+public static class MvcCoreServiceCollectionExtensions
+{
+    /// <summary>
+    /// Adds the minimum essential MVC services to the specified <see cref="IServiceCollection" />. Additional services
+    /// including MVC's support for authorization, formatters, and validation must be added separately using the
+    /// <see cref="IMvcCoreBuilder"/> returned from this method.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <returns>An <see cref="IMvcCoreBuilder"/> that can be used to further configure the MVC services.</returns>
+    /// <remarks>
+    /// The <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> approach for configuring
+    /// MVC is provided for experienced MVC developers who wish to have full control over the set of default services
+    /// registered. <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> will register
+    /// the minimum set of services necessary to route requests and invoke controllers. It is not expected that any
+    /// application will satisfy its requirements with just a call to
+    /// <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/>. Additional configuration using the
+    /// <see cref="IMvcCoreBuilder"/> will be required.
+    /// </remarks>
+    public static IMvcCoreBuilder AddMvcCore(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        var environment = GetServiceFromCollection<IWebHostEnvironment>(services);
+        var partManager = GetApplicationPartManager(services, environment);
+        services.TryAddSingleton(partManager);
+
+        ConfigureDefaultFeatureProviders(partManager);
+        ConfigureDefaultServices(services);
+        AddMvcCoreServices(services);
+
+        var builder = new MvcCoreBuilder(services, partManager);
+
+        return builder;
+    }
+
+    private static void ConfigureDefaultFeatureProviders(ApplicationPartManager manager)
+    {
+        if (!manager.FeatureProviders.OfType<ControllerFeatureProvider>().Any())
+        {
+            manager.FeatureProviders.Add(new ControllerFeatureProvider());
+        }
+    }
+
+    private static ApplicationPartManager GetApplicationPartManager(IServiceCollection services, IWebHostEnvironment? environment)
+    {
+        var manager = GetServiceFromCollection<ApplicationPartManager>(services);
+        if (manager == null)
+        {
+            manager = new ApplicationPartManager();
+
+            var entryAssemblyName = environment?.ApplicationName;
+            if (string.IsNullOrEmpty(entryAssemblyName))
+            {
+                return manager;
+            }
+
+            manager.PopulateDefaultParts(entryAssemblyName);
+        }
+
+        return manager;
+    }
+
+    private static T? GetServiceFromCollection<T>(IServiceCollection services)
+    {
+        return (T?)services
+            .LastOrDefault(d => d.ServiceType == typeof(T))
+            ?.ImplementationInstance;
+    }
+
+    /// <summary>
+    /// Adds the minimum essential MVC services to the specified <see cref="IServiceCollection" />. Additional services
+    /// including MVC's support for authorization, formatters, and validation must be added separately using the
+    /// <see cref="IMvcCoreBuilder"/> returned from this method.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <param name="setupAction">An <see cref="Action{MvcOptions}"/> to configure the provided <see cref="MvcOptions"/>.</param>
+    /// <returns>An <see cref="IMvcCoreBuilder"/> that can be used to further configure the MVC services.</returns>
+    /// <remarks>
+    /// The <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> approach for configuring
+    /// MVC is provided for experienced MVC developers who wish to have full control over the set of default services
+    /// registered. <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/> will register
+    /// the minimum set of services necessary to route requests and invoke controllers. It is not expected that any
+    /// application will satisfy its requirements with just a call to
+    /// <see cref="MvcCoreServiceCollectionExtensions.AddMvcCore(IServiceCollection)"/>. Additional configuration using the
+    /// <see cref="IMvcCoreBuilder"/> will be required.
+    /// </remarks>
+    public static IMvcCoreBuilder AddMvcCore(
+        this IServiceCollection services,
+        Action<MvcOptions> setupAction)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(setupAction);
+
+        var builder = services.AddMvcCore();
+        services.Configure(setupAction);
+
+        return builder;
+    }
+
+    // To enable unit testing
+    internal static void AddMvcCoreServices(IServiceCollection services)
+    {
+        //
+        // Options
+        //
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, MvcCoreMvcOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IPostConfigureOptions<MvcOptions>, MvcCoreMvcOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<ApiBehaviorOptions>, ApiBehaviorOptionsSetup>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IConfigureOptions<RouteOptions>, MvcCoreRouteOptionsSetup>());
+
+        //
+        // Action Discovery
+        //
+        // These are consumed only when creating action descriptors, then they can be deallocated
+        services.TryAddSingleton<ApplicationModelFactory>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IApplicationModelProvider, DefaultApplicationModelProvider>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IApplicationModelProvider, ApiBehaviorApplicationModelProvider>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IActionDescriptorProvider, ControllerActionDescriptorProvider>());
+
+        services.TryAddSingleton<IActionDescriptorCollectionProvider, DefaultActionDescriptorCollectionProvider>();
+
+        //
+        // Action Selection
+        //
+        services.TryAddSingleton<IActionSelector, ActionSelector>();
+        services.TryAddSingleton<ActionConstraintCache>();
+
+        // Will be cached by the DefaultActionSelector
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IActionConstraintProvider, DefaultActionConstraintProvider>());
+
+        // Policies for Endpoints
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ActionConstraintMatcherPolicy>());
+
+        //
+        // Controller Factory
+        //
+        // This has a cache, so it needs to be a singleton
+        services.TryAddSingleton<IControllerFactory, DefaultControllerFactory>();
+
+        // Will be cached by the DefaultControllerFactory
+        services.TryAddTransient<IControllerActivator, DefaultControllerActivator>();
+
+        services.TryAddSingleton<IControllerFactoryProvider, ControllerFactoryProvider>();
+        services.TryAddSingleton<IControllerActivatorProvider, ControllerActivatorProvider>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IControllerPropertyActivator, DefaultControllerPropertyActivator>());
+
+        //
+        // Action Invoker
+        //
+        // The IActionInvokerFactory is cacheable
+        services.TryAddSingleton<IActionInvokerFactory, ActionInvokerFactory>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IActionInvokerProvider, ControllerActionInvokerProvider>());
+
+        // These are stateless
+        services.TryAddSingleton<ControllerActionInvokerCache>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IFilterProvider, DefaultFilterProvider>());
+        services.TryAddSingleton<IActionResultTypeMapper, ActionResultTypeMapper>();
+
+        //
+        // Request body limit filters
+        //
+        services.TryAddTransient<RequestSizeLimitFilter>();
+        services.TryAddTransient<DisableRequestSizeLimitFilter>();
+        services.TryAddTransient<RequestFormLimitsFilter>();
+
+        //
+        // ModelBinding, Validation
+        //
+        // The DefaultModelMetadataProvider does significant caching and should be a singleton.
+        services.TryAddSingleton<IModelMetadataProvider, DefaultModelMetadataProvider>();
+        services.TryAdd(ServiceDescriptor.Transient<ICompositeMetadataDetailsProvider>(s =>
+        {
+            var options = s.GetRequiredService<IOptions<MvcOptions>>().Value;
+            return new DefaultCompositeMetadataDetailsProvider(options.ModelMetadataDetailsProviders);
+        }));
+        services.TryAddSingleton<IModelBinderFactory, ModelBinderFactory>();
+        services.TryAddSingleton<IObjectModelValidator>(s =>
+        {
+            var options = s.GetRequiredService<IOptions<MvcOptions>>().Value;
+            var metadataProvider = s.GetRequiredService<IModelMetadataProvider>();
+            return new DefaultObjectValidator(metadataProvider, options.ModelValidatorProviders, options);
+        });
+        services.TryAddSingleton<ClientValidatorCache>();
+        services.TryAddSingleton<ParameterBinder>();
+
+        //
+        // Random Infrastructure
+        //
+        services.TryAddSingleton<MvcMarkerService, MvcMarkerService>();
+        services.TryAddSingleton<ITypeActivatorCache, TypeActivatorCache>();
+        services.TryAddSingleton<IUrlHelperFactory, UrlHelperFactory>();
+        services.TryAddSingleton<IHttpRequestStreamReaderFactory, MemoryPoolHttpRequestStreamReaderFactory>();
+        services.TryAddSingleton<IHttpResponseStreamWriterFactory, MemoryPoolHttpResponseStreamWriterFactory>();
+        services.TryAddSingleton(ArrayPool<byte>.Shared);
+        services.TryAddSingleton(ArrayPool<char>.Shared);
+        services.TryAddSingleton<OutputFormatterSelector, DefaultOutputFormatterSelector>();
+        services.TryAddSingleton<IActionResultExecutor<ObjectResult>, ObjectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<PhysicalFileResult>, PhysicalFileResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<VirtualFileResult>, VirtualFileResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<FileStreamResult>, FileStreamResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<FileContentResult>, FileContentResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectResult>, RedirectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<LocalRedirectResult>, LocalRedirectResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToActionResult>, RedirectToActionResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToRouteResult>, RedirectToRouteResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<RedirectToPageResult>, RedirectToPageResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<ContentResult>, ContentResultExecutor>();
+        services.TryAddSingleton<IActionResultExecutor<JsonResult>, SystemTextJsonResultExecutor>();
+        services.TryAddSingleton<IClientErrorFactory, ProblemDetailsClientErrorFactory>();
+
+        //
+        // Route Handlers
+        //
+        services.TryAddSingleton<MvcRouteHandler>(); // Only one per app
+        services.TryAddTransient<MvcAttributeRouteHandler>(); // Many per app
+
+        //
+        // Endpoint Routing / Endpoints
+        //
+        services.TryAddSingleton<ControllerActionEndpointDataSourceFactory>();
+        services.TryAddSingleton<OrderedEndpointsSequenceProviderCache>();
+        services.TryAddSingleton<ControllerActionEndpointDataSourceIdProvider>();
+        services.TryAddSingleton<ActionEndpointFactory>();
+        services.TryAddSingleton<DynamicControllerEndpointSelectorCache>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, DynamicControllerEndpointMatcherPolicy>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRequestDelegateFactory, ControllerRequestDelegateFactory>());
+
+        //
+        // Middleware pipeline filter related
+        //
+        services.TryAddSingleton<MiddlewareFilterConfigurationProvider>();
+        // This maintains a cache of middleware pipelines, so it needs to be a singleton
+        services.TryAddSingleton<MiddlewareFilterBuilder>();
+        // Sets ApplicationBuilder on MiddlewareFilterBuilder
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupFilter, MiddlewareFilterBuilderStartupFilter>());
+
+        // ProblemDetails
+        services.TryAddSingleton<ProblemDetailsFactory, DefaultProblemDetailsFactory>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IProblemDetailsWriter, DefaultApiProblemDetailsWriter>());
+    }
+
+    private static void ConfigureDefaultServices(IServiceCollection services)
+    {
+        services.AddRouting();
+    }
+}
+

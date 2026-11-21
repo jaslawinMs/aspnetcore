@@ -1,0 +1,479 @@
+commit 6b15190a3fe57dbc3dd784600faa7f717fb5f3ad
+Author:     Daria Tiurina <dariatiurina@microsoft.com>
+AuthorDate: Thu Jul 31 12:25:21 2025 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Jul 31 12:25:21 2025 +0200
+
+    Make Blazor WASM respect current UI culture (#62905)
+
+diff --git a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+index 060bd827b9..99d1476dc1 100644
+--- a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
++++ b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+@@ -3,6 +3,7 @@
+ 
+ using System.Diagnostics.CodeAnalysis;
+ using System.Globalization;
++using System.Linq;
+ using System.Runtime.InteropServices.JavaScript;
+ 
+ namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+@@ -62,7 +63,7 @@ internal partial class WebAssemblyCultureProvider
+             throw new PlatformNotSupportedException("This method is only supported in the browser.");
+         }
+ 
+-        var culturesToLoad = GetCultures(CultureInfo.CurrentCulture);
++        var culturesToLoad = GetCultures(CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+ 
+         if (culturesToLoad.Length == 0)
+         {
+@@ -72,30 +73,47 @@ internal partial class WebAssemblyCultureProvider
+         await WebAssemblyCultureProviderInterop.LoadSatelliteAssemblies(culturesToLoad);
+     }
+ 
+-    internal static string[] GetCultures(CultureInfo cultureInfo)
++    internal static string[] GetCultures(CultureInfo cultureInfo, CultureInfo? uiCultureInfo = null)
+     {
+-        var culturesToLoad = new List<string>();
+-
+         // Once WASM is ready, we have to use .NET's assembly loading to load additional assemblies.
+         // First calculate all possible cultures that the application might want to load. We do this by
+         // starting from the current culture and walking up the graph of parents.
+         // At the end of the the walk, we'll have a list of culture names that look like
+         // [ "fr-FR", "fr" ]
+-        while (cultureInfo != null && cultureInfo != CultureInfo.InvariantCulture)
+-        {
+-            culturesToLoad.Add(cultureInfo.Name);
+ 
+-            if (cultureInfo.Parent == cultureInfo)
++        var culturesToLoad = GetCultureHierarchy(cultureInfo);
++        if (cultureInfo != uiCultureInfo)
++        {
++            foreach (var culture in GetCultureHierarchy(uiCultureInfo))
+             {
+-                break;
++                if (!culturesToLoad.Contains(culture))
++                {
++                    culturesToLoad = culturesToLoad.Append(culture);
++                }
++                // If the culture is in the list, we can break because we found the common parent.
++                else
++                {
++                    break;
++                }
+             }
+-
+-            cultureInfo = cultureInfo.Parent;
+         }
+ 
+         return culturesToLoad.ToArray();
+     }
+ 
++    private static IEnumerable<string> GetCultureHierarchy(CultureInfo? culture)
++    {
++        while (culture != CultureInfo.InvariantCulture && culture != null)
++        {
++            yield return culture.Name;
++            if (culture == culture.Parent)
++            {
++                break;
++            }
++            culture = culture.Parent;
++        }
++    }
++
+     private partial class WebAssemblyCultureProviderInterop
+     {
+         [JSImport("INTERNAL.loadSatelliteAssemblies")]
+
+commit 2c9198f86dcd5ccef3d87436a7318ec002224ba1
+Author:     Marek Fišera <mara@neptuo.com>
+AuthorDate: Fri Jul 14 18:35:29 2023 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Jul 14 18:35:29 2023 +0200
+
+    [Blazor] Finalize the integration between runtime and Blazor (#49385)
+    
+    * Drop extra download of boot config
+    * Move lazy assembly loading to runtime
+    * Move library initializers loading to runtime
+    * Move library initializers loading to runtime
+
+diff --git a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+index dcf08f581b..060bd827b9 100644
+--- a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
++++ b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+@@ -4,8 +4,6 @@
+ using System.Diagnostics.CodeAnalysis;
+ using System.Globalization;
+ using System.Runtime.InteropServices.JavaScript;
+-using System.Runtime.Loader;
+-using System.Runtime.Versioning;
+ 
+ namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+ 
+@@ -71,16 +69,7 @@ internal partial class WebAssemblyCultureProvider
+             return;
+         }
+ 
+-        await WebAssemblyCultureProviderInterop.LoadSatelliteAssemblies(culturesToLoad, LoadSatelliteAssembly);
+-    }
+-
+-    [SupportedOSPlatform("browser")]
+-    private void LoadSatelliteAssembly(JSObject wrapper)
+-    {
+-        var dllBytes = wrapper.GetPropertyAsByteArray("dll")!;
+-        using var stream = new MemoryStream(dllBytes);
+-        AssemblyLoadContext.Default.LoadFromStream(stream);
+-        wrapper.Dispose();
++        await WebAssemblyCultureProviderInterop.LoadSatelliteAssemblies(culturesToLoad);
+     }
+ 
+     internal static string[] GetCultures(CultureInfo cultureInfo)
+@@ -109,8 +98,7 @@ internal partial class WebAssemblyCultureProvider
+ 
+     private partial class WebAssemblyCultureProviderInterop
+     {
+-        [JSImport("Blazor._internal.loadSatelliteAssemblies", "blazor-internal")]
+-        public static partial Task<JSObject> LoadSatelliteAssemblies(string[] culturesToLoad,
+-        [JSMarshalAs<JSType.Function<JSType.Object>>] Action<JSObject> assemblyLoader);
++        [JSImport("INTERNAL.loadSatelliteAssemblies")]
++        public static partial Task LoadSatelliteAssemblies(string[] culturesToLoad);
+     }
+ }
+
+commit cec7fbf64e63af88a9165cbbf14aa4ab6f8cc76d
+Author:     Pavel Savara <pavel.savara@gmail.com>
+AuthorDate: Tue Feb 7 14:50:23 2023 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Feb 7 14:50:23 2023 +0100
+
+    [blazor] Use JSImport for loading satellite assemblies (#46477)
+    
+     * use new generated JavaScript interop with [JSImport]
+    
+    Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+    Co-authored-by: Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+
+diff --git a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+index 331cbb8e7a..cdbdb9be7e 100644
+--- a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
++++ b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+@@ -3,7 +3,9 @@
+ 
+ using System.Diagnostics.CodeAnalysis;
+ using System.Globalization;
++using System.Runtime.InteropServices.JavaScript;
+ using System.Runtime.Loader;
++using System.Runtime.Versioning;
+ using Microsoft.AspNetCore.Components.WebAssembly.Services;
+ using Microsoft.JSInterop;
+ 
+@@ -11,7 +13,7 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+ 
+ [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "This type loads resx files. We don't expect it's dependencies to be trimmed in the ordinary case.")]
+ #pragma warning disable CA1852 // Seal internal types
+-internal class WebAssemblyCultureProvider
++internal partial class WebAssemblyCultureProvider
+ #pragma warning restore CA1852 // Seal internal types
+ {
+     internal const string GetSatelliteAssemblies = "window.Blazor._internal.getSatelliteAssemblies";
+@@ -63,45 +65,31 @@ internal class WebAssemblyCultureProvider
+ 
+     public virtual async ValueTask LoadCurrentCultureResourcesAsync()
+     {
+-        var culturesToLoad = GetCultures(CultureInfo.CurrentCulture);
+-
+-        if (culturesToLoad.Count == 0)
++        if (!OperatingSystem.IsBrowser())
+         {
+-            return;
++            throw new PlatformNotSupportedException("This method is only supported in the browser.");
+         }
+ 
+-        // Now that we know the cultures we care about, let WebAssemblyResourceLoader (in JavaScript) load these
+-        // assemblies. We effectively want to resovle a Task<byte[][]> but there is no way to express this
+-        // using interop. We'll instead do this in two parts:
+-        // getSatelliteAssemblies resolves when all satellite assemblies to be loaded in .NET are fetched and available in memory.
+-#pragma warning disable CS0618 // Type or member is obsolete
+-        var count = (int)await _invoker.InvokeUnmarshalled<string[], object?, object?, Task<object>>(
+-            GetSatelliteAssemblies,
+-            culturesToLoad.ToArray(),
+-            null,
+-            null);
+-
+-        if (count == 0)
++        var culturesToLoad = GetCultures(CultureInfo.CurrentCulture);
++
++        if (culturesToLoad.Length == 0)
+         {
+             return;
+         }
+ 
+-        // readSatelliteAssemblies resolves the assembly bytes
+-        var assemblies = _invoker.InvokeUnmarshalled<object?, object?, object?, object[]>(
+-            ReadSatelliteAssemblies,
+-            null,
+-            null,
+-            null);
+-#pragma warning restore CS0618 // Type or member is obsolete
++        await WebAssemblyCultureProviderInterop.LoadSatelliteAssemblies(culturesToLoad, LoadSatelliteAssembly);
++    }
+ 
+-        for (var i = 0; i < assemblies.Length; i++)
+-        {
+-            using var stream = new MemoryStream((byte[])assemblies[i]);
+-            AssemblyLoadContext.Default.LoadFromStream(stream);
+-        }
++    [SupportedOSPlatform("browser")]
++    private void LoadSatelliteAssembly(JSObject wrapper)
++    {
++        var dllBytes = wrapper.GetPropertyAsByteArray("dll")!;
++        using var stream = new MemoryStream(dllBytes);
++        AssemblyLoadContext.Default.LoadFromStream(stream);
++        wrapper.Dispose();
+     }
+ 
+-    internal static List<string> GetCultures(CultureInfo cultureInfo)
++    internal static string[] GetCultures(CultureInfo cultureInfo)
+     {
+         var culturesToLoad = new List<string>();
+ 
+@@ -122,6 +110,13 @@ internal class WebAssemblyCultureProvider
+             cultureInfo = cultureInfo.Parent;
+         }
+ 
+-        return culturesToLoad;
++        return culturesToLoad.ToArray();
++    }
++
++    private partial class WebAssemblyCultureProviderInterop
++    {
++        [JSImport("Blazor._internal.loadSatelliteAssemblies", "blazor-internal")]
++        public static partial Task<JSObject> LoadSatelliteAssemblies(string[] culturesToLoad,
++        [JSMarshalAs<JSType.Function<JSType.Object>>] Action<JSObject> assemblyLoader);
+     }
+ }
+
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+index d7f9002aeb..3af500066f 100644
+--- a/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
++++ b/src/Components/WebAssembly/WebAssembly/src/Hosting/WebAssemblyCultureProvider.cs
+@@ -11,118 +11,117 @@ using System.Threading.Tasks;
+ using Microsoft.AspNetCore.Components.WebAssembly.Services;
+ using Microsoft.JSInterop;
+ 
+-namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting
++namespace Microsoft.AspNetCore.Components.WebAssembly.Hosting;
++
++[UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "This type loads resx files. We don't expect it's dependencies to be trimmed in the ordinary case.")]
++internal class WebAssemblyCultureProvider
+ {
+-    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "This type loads resx files. We don't expect it's dependencies to be trimmed in the ordinary case.")]
+-    internal class WebAssemblyCultureProvider
+-    {
+-        internal const string GetSatelliteAssemblies = "window.Blazor._internal.getSatelliteAssemblies";
+-        internal const string ReadSatelliteAssemblies = "window.Blazor._internal.readSatelliteAssemblies";
++    internal const string GetSatelliteAssemblies = "window.Blazor._internal.getSatelliteAssemblies";
++    internal const string ReadSatelliteAssemblies = "window.Blazor._internal.readSatelliteAssemblies";
+ 
+-        private readonly IJSUnmarshalledRuntime _invoker;
++    private readonly IJSUnmarshalledRuntime _invoker;
+ 
+-        // For unit testing.
+-        internal WebAssemblyCultureProvider(IJSUnmarshalledRuntime invoker, CultureInfo initialCulture, CultureInfo initialUICulture)
+-        {
+-            _invoker = invoker;
+-            InitialCulture = initialCulture;
+-            InitialUICulture = initialUICulture;
+-        }
++    // For unit testing.
++    internal WebAssemblyCultureProvider(IJSUnmarshalledRuntime invoker, CultureInfo initialCulture, CultureInfo initialUICulture)
++    {
++        _invoker = invoker;
++        InitialCulture = initialCulture;
++        InitialUICulture = initialUICulture;
++    }
+ 
+-        public static WebAssemblyCultureProvider? Instance { get; private set; }
++    public static WebAssemblyCultureProvider? Instance { get; private set; }
+ 
+-        public CultureInfo InitialCulture { get; }
++    public CultureInfo InitialCulture { get; }
+ 
+-        public CultureInfo InitialUICulture { get; }
++    public CultureInfo InitialUICulture { get; }
++
++    internal static void Initialize()
++    {
++        Instance = new WebAssemblyCultureProvider(
++            DefaultWebAssemblyJSRuntime.Instance,
++            initialCulture: CultureInfo.CurrentCulture,
++            initialUICulture: CultureInfo.CurrentUICulture);
++    }
+ 
+-        internal static void Initialize()
++    public void ThrowIfCultureChangeIsUnsupported()
++    {
++        // With ICU sharding enabled, bootstrapping WebAssembly will download a ICU shard based on the browser language.
++        // If the application author was to change the culture as part of their Program.MainAsync, we might have
++        // incomplete icu data for their culture. We would like to flag this as an error and notify the author to
++        // use the combined icu data file instead.
++        //
++        // The Initialize method is invoked as one of the first steps bootstrapping the app within WebAssemblyHostBuilder.CreateDefault.
++        // It allows us to capture the initial .NET culture that is configured based on the browser language.
++        // The current method is invoked as part of WebAssemblyHost.RunAsync i.e. after user code in Program.MainAsync has run
++        // thus allows us to detect if the culture was changed by user code.
++        if (Environment.GetEnvironmentVariable("__BLAZOR_SHARDED_ICU") == "1" &&
++            ((!CultureInfo.CurrentCulture.Name.Equals(InitialCulture.Name, StringComparison.Ordinal) ||
++              !CultureInfo.CurrentUICulture.Name.Equals(InitialUICulture.Name, StringComparison.Ordinal))))
+         {
+-            Instance = new WebAssemblyCultureProvider(
+-                DefaultWebAssemblyJSRuntime.Instance,
+-                initialCulture: CultureInfo.CurrentCulture,
+-                initialUICulture: CultureInfo.CurrentUICulture);
++            throw new InvalidOperationException("Blazor detected a change in the application's culture that is not supported with the current project configuration. " +
++                "To change culture dynamically during startup, set <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData> in the application's project file.");
+         }
++    }
++
++    public virtual async ValueTask LoadCurrentCultureResourcesAsync()
++    {
++        var culturesToLoad = GetCultures(CultureInfo.CurrentCulture);
+ 
+-        public void ThrowIfCultureChangeIsUnsupported()
++        if (culturesToLoad.Count == 0)
+         {
+-            // With ICU sharding enabled, bootstrapping WebAssembly will download a ICU shard based on the browser language.
+-            // If the application author was to change the culture as part of their Program.MainAsync, we might have
+-            // incomplete icu data for their culture. We would like to flag this as an error and notify the author to
+-            // use the combined icu data file instead.
+-            //
+-            // The Initialize method is invoked as one of the first steps bootstrapping the app within WebAssemblyHostBuilder.CreateDefault.
+-            // It allows us to capture the initial .NET culture that is configured based on the browser language.
+-            // The current method is invoked as part of WebAssemblyHost.RunAsync i.e. after user code in Program.MainAsync has run
+-            // thus allows us to detect if the culture was changed by user code.
+-            if (Environment.GetEnvironmentVariable("__BLAZOR_SHARDED_ICU") == "1" &&
+-                ((!CultureInfo.CurrentCulture.Name.Equals(InitialCulture.Name, StringComparison.Ordinal) ||
+-                  !CultureInfo.CurrentUICulture.Name.Equals(InitialUICulture.Name, StringComparison.Ordinal))))
+-            {
+-                throw new InvalidOperationException("Blazor detected a change in the application's culture that is not supported with the current project configuration. " +
+-                    "To change culture dynamically during startup, set <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData> in the application's project file.");
+-            }
++            return;
+         }
+ 
+-        public virtual async ValueTask LoadCurrentCultureResourcesAsync()
++        // Now that we know the cultures we care about, let WebAssemblyResourceLoader (in JavaScript) load these
++        // assemblies. We effectively want to resovle a Task<byte[][]> but there is no way to express this
++        // using interop. We'll instead do this in two parts:
++        // getSatelliteAssemblies resolves when all satellite assemblies to be loaded in .NET are fetched and available in memory.
++        var count = (int)await _invoker.InvokeUnmarshalled<string[], object?, object?, Task<object>>(
++            GetSatelliteAssemblies,
++            culturesToLoad.ToArray(),
++            null,
++            null);
++
++        if (count == 0)
+         {
+-            var culturesToLoad = GetCultures(CultureInfo.CurrentCulture);
+-
+-            if (culturesToLoad.Count == 0)
+-            {
+-                return;
+-            }
+-
+-            // Now that we know the cultures we care about, let WebAssemblyResourceLoader (in JavaScript) load these
+-            // assemblies. We effectively want to resovle a Task<byte[][]> but there is no way to express this
+-            // using interop. We'll instead do this in two parts:
+-            // getSatelliteAssemblies resolves when all satellite assemblies to be loaded in .NET are fetched and available in memory.
+-            var count = (int)await _invoker.InvokeUnmarshalled<string[], object?, object?, Task<object>>(
+-                GetSatelliteAssemblies,
+-                culturesToLoad.ToArray(),
+-                null,
+-                null);
+-
+-            if (count == 0)
+-            {
+-                return;
+-            }
++            return;
++        }
+ 
+-            // readSatelliteAssemblies resolves the assembly bytes
+-            var assemblies = _invoker.InvokeUnmarshalled<object?, object?, object?, object[]>(
+-                ReadSatelliteAssemblies,
+-                null,
+-                null,
+-                null);
++        // readSatelliteAssemblies resolves the assembly bytes
++        var assemblies = _invoker.InvokeUnmarshalled<object?, object?, object?, object[]>(
++            ReadSatelliteAssemblies,
++            null,
++            null,
++            null);
+ 
+-            for (var i = 0; i < assemblies.Length; i++)
+-            {
+-                using var stream = new MemoryStream((byte[])assemblies[i]);
+-                AssemblyLoadContext.Default.LoadFromStream(stream);
+-            }
++        for (var i = 0; i < assemblies.Length; i++)
++        {
++            using var stream = new MemoryStream((byte[])assemblies[i]);
++            AssemblyLoadContext.Default.LoadFromStream(stream);
+         }
++    }
+ 
+-        internal static List<string> GetCultures(CultureInfo cultureInfo)
++    internal static List<string> GetCultures(CultureInfo cultureInfo)
++    {
++        var culturesToLoad = new List<string>();
++
++        // Once WASM is ready, we have to use .NET's assembly loading to load additional assemblies.
++        // First calculate all possible cultures that the application might want to load. We do this by
++        // starting from the current culture and walking up the graph of parents.
++        // At the end of the the walk, we'll have a list of culture names that look like
++        // [ "fr-FR", "fr" ]
++        while (cultureInfo != null && cultureInfo != CultureInfo.InvariantCulture)
+         {
+-            var culturesToLoad = new List<string>();
+-
+-            // Once WASM is ready, we have to use .NET's assembly loading to load additional assemblies.
+-            // First calculate all possible cultures that the application might want to load. We do this by
+-            // starting from the current culture and walking up the graph of parents.
+-            // At the end of the the walk, we'll have a list of culture names that look like
+-            // [ "fr-FR", "fr" ]
+-            while (cultureInfo != null && cultureInfo != CultureInfo.InvariantCulture)
+-            {
+-                culturesToLoad.Add(cultureInfo.Name);
++            culturesToLoad.Add(cultureInfo.Name);
+ 
+-                if (cultureInfo.Parent == cultureInfo)
+-                {
+-                    break;
+-                }
+-
+-                cultureInfo = cultureInfo.Parent;
++            if (cultureInfo.Parent == cultureInfo)
++            {
++                break;
+             }
+ 
+-            return culturesToLoad;
++            cultureInfo = cultureInfo.Parent;
+         }
++
++        return culturesToLoad;
+     }
+ }

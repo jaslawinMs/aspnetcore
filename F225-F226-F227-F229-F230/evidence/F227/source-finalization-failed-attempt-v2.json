@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "finding": "F227",
+  "scope": "257",
+  "actualCompletedTool": {
+    "shellId": "f227-257-final-source-v2",
+    "command": "& 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F227-257\\observe-final-source-v2.ps1'",
+    "result": "completed with exit code 1",
+    "renderedDiagnostic": "Measure-Object: C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F227-257\\observe-final-source-v2.ps1:187\nLine |\n 187 |  … les.Count; indexTotalBytes = ($files | Measure-Object bytes -Sum).Sum\n     |                                           ~~~~~~~~~~~~~~~~~~~~~~~~~\n     | Cannot process argument because the value of argument \"bytes\" is not valid. Change the value of the \"bytes\"\n     | argument and run the operation again.",
+    "transportBoundary": "Rendered returned tool diagnostic, not separately captured raw outer-tool transport bytes.",
+    "actualProcessAndTerminalReceipt": "observer-final-source-v2.json"
+  },
+  "effect": {
+    "failurePhase": "Index metadata construction after the final collector had exited 0, its root handle had been waited, both raw streams had drained, and observer receipt had been completed.",
+    "successfulCollector": "collect-final-source-v1.ps1",
+    "collectorReceipt": "collection-final-source-v1.json",
+    "collectorRawStreams": ["final-source-v1.stdout.bin", "final-source-v1.stderr.bin"],
+    "threeFinalGuardedGitRootsActuallyCompleted": true,
+    "totalSuccessfulGitGhReadRoots": 25,
+    "indexFileCreated": false,
+    "candidateOrProductRuntimeWork": false
+  },
+  "preservation": {
+    "failedHelper": "observe-final-source-v2.ps1",
+    "rule": "Keep all executed helper bytes, receipts and streams unchanged. Do not edit or replay either the successful collector or either failed observer.",
+    "continuation": "A new byte-only verifier plus a fresh outside observer will verify and seal the already-complete evidence. No additional Git/gh, source discovery, product file, candidate, SDK, test or runtime work is authorized or required.",
+    "actualFinalCompletion": "This postprocessing failure is not a successful seal. A later actual final tool return and verified index remain required."
+  }
+}

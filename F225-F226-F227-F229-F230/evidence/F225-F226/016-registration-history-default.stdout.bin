@@ -1,0 +1,140 @@
+COMMIT 081aac6416d3e259079dc4d368429ae6e93a73cc
+PARENTS 6a0d7ae4deffa7a6beb01ced9d18b6ce9e67a9c5
+AUTHOR 2026-07-16T23:33:10+02:00
+COMMITTER 2026-07-16T21:33:10Z
+SUBJECT API review changes for Blazor SSR client-side validation (#67855)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 6a0d7ae4deffa7a6beb01ced9d18b6ce9e67a9c5
+PARENTS 27e56009ffd22d5d8c3a316e881a6352e9ccf3ee
+AUTHOR 2026-07-16T18:58:24+02:00
+COMMITTER 2026-07-16T18:58:24+02:00
+SUBJECT Improve Blazor SSR client-side form validation (#67324)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 564927ca501248f945c68e1704cbb4b1a112aae2
+PARENTS ef19e4dade7054824b7fb574702768a93508c675
+AUTHOR 2026-07-14T17:37:53+02:00
+COMMITTER 2026-07-14T15:37:53Z
+SUBJECT Fix API for CacheView (#67776)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT d1866a23152cbf028c2a2951d55bdcee439306d1
+PARENTS 7a0af92ba4fa4793b3980121695d09c378de376c
+AUTHOR 2026-07-10T12:30:32+02:00
+COMMITTER 2026-07-10T10:30:32Z
+SUBJECT CacheBoundary support for Blazor (#65772)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT c0c2230799a3f876aa673a66bc008bf9b803acac
+PARENTS 2f91a9debc7b5e2e883515a0f32240a44e39cbef
+AUTHOR 2026-05-19T23:45:01+02:00
+COMMITTER 2026-05-19T21:45:01Z
+SUBJECT SupplyParameterFromSession support for Blazor (#65184)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 86ea7a547bc96d5ed3068cfb7bac3cfdde85fc89
+PARENTS aab7c9491e9fc7f49f8dbcf0625befc37b7ac0f1
+AUTHOR 2026-05-14T19:26:39+02:00
+COMMITTER 2026-05-14T17:26:39Z
+SUBJECT Add .NET support for client-side validation in Blazor SSR (#66441)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 319e87fd950a99f3baae2aa79db3d4fb68783d85
+PARENTS df6d8dd7b6dbc32b97fb30e74fb45639bdc2f634
+AUTHOR 2026-04-17T23:17:18+02:00
+COMMITTER 2026-04-17T21:17:18Z
+SUBJECT SupplyParameterFromTempData support for Blazor (#65306)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 5b2e38c422de9dc27a56efae195082e0776cf9a9
+PARENTS f79b2ab1de5dd66c4ab79b225658b7266edab9ef
+AUTHOR 2026-04-12T10:03:46+02:00
+COMMITTER 2026-04-12T10:03:46+02:00
+SUBJECT [Blazor] Add Blazor WebAssembly Service Defaults template (#64807)
+BODY * Add Blazor WebAssembly Service Defaults template
+
+Add a new project template 'blazor-wasm-servicedefaults' for creating
+service defaults libraries for Blazor WebAssembly applications with
+.NET Aspire integration.
+
+Features:
+- OpenTelemetry support (logging, metrics, and tracing)
+- Service discovery integration
+- HTTP resilience with standard resilience handler
+- Uses standard OpenTelemetry OTLP exporter
+
+New files:
+- BlazorWasmServiceDefaults-CSharp template content
+- Template configuration and localization files (14 languages)
+- Template test and baseline configuration
+- Package version definitions for OpenTelemetry and Extensions packages
+
+* Add --hosted flag to Blazor WebAssembly service defaults template
+
+- Add 'hosted' boolean parameter to template.json for hosted vs standalone scenarios
+- In hosted mode: config flows via BrowserConfiguration DOM comment (no JS initializer needed)
+- In standalone mode: adds BlazorClientServerExtensions placeholder for config endpoint
+- Remove commented-out component metrics/tracing (clean up template output)
+- Add BlazorWasmServiceDefaultsTemplate_HostedAsync test for --hosted variant
+
+* Fix blazor-wasm-servicedefaults template for test infrastructure
+
+- Add dotnetcli.host.json to map skipRestore -> --no-restore (required by test infra)
+- Add ide.host.json for IDE support
+- Update template.json TFM from net10.0 to net11.0 (post-rebase fix)
+- Update localized strings for net11.0 and hosted parameter
+- Add #pragma warning disable xUnit1041 to test file (matches other template tests)
+
+* Update blazor-wasm-servicedefaults template with OTLP exporters and telemetry
+
+- Add WebAssembly-compatible OTLP exporters for traces, metrics, and logs
+- Add protobuf serializers for OTLP wire format
+- Add TaskBasedBatchExportProcessor for async-safe batching in WASM
+- Use OTEL_SERVICE_NAME from configuration with project name fallback
+- Add HTTP instrumentation filter to prevent OTLP feedback loops
+- Add resilience handler and runtime instrumentation
+- Create direct HttpClient instances to avoid IHttpClientFactory reentrancy
+- Add JS initializer for standalone WASM config fetch
+- Exclude wwwroot/ when hosted (framework handles DOM config)
+- Update template-baselines.json with new files
+
+* Add BrowserConfiguration for server-to-browser config via DOM comment
+
+Introduces a BrowserConfiguration model that flows serializable options
+from the server to the Blazor client via a <!--Blazor-Configuration:{}-->
+HTML comment. This replaces the WebAssemblySettingsEmitter with a unified
+mechanism that works across all render modes (Server, WebAssembly, Auto).
+
+- BrowserConfiguration, ServerBrowserOptions, SsrBrowserOptions,
+  WebAssemblyBrowserOptions model classes
+- WithBrowserConfiguration() endpoint convention builder extension
+- ConfigureBrowser component and HttpContext extensions
+- EmitBrowserConfigurationOnce in EndpointHtmlRenderer
+- TypeScript: discoverBrowserConfiguration() and Boot.Web.ts integration
+  that applies config to logLevel, circuit, SSR, and WebAssembly options
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT 65468ce8cf5a4686a4f3dc344b2d02ec493d198a
+PARENTS 120dc2d459a8ac2306159020c323e7a596b06c1f
+AUTHOR 2026-02-03T12:53:50+01:00
+COMMITTER 2026-02-03T12:53:50+01:00
+SUBJECT TempData support for Blazor (#64749)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs
+COMMIT fe7fe16b06b94c932003a80fc6738e0ee8ee2b32
+PARENTS 78e514743d906ef9e6dd48afe9f40544a230186d
+AUTHOR 2025-06-13T14:13:13+02:00
+COMMITTER 2025-06-13T12:13:13Z
+SUBJECT [Blazor] Use <LinkPreload /> component to preload assets (#62225)
+BODY 
+
+M	src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs

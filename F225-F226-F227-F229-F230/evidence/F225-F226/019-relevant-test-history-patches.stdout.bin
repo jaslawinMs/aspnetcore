@@ -1,0 +1,102 @@
+COMMIT 0e14788a0a0d07ac1134887a6ced80de12478530
+PARENTS bb68f14e9845eaf65b41c841fa4f29bd704557af
+AUTHOR 2026-06-11T20:43:17-07:00
+COMMITTER 2026-06-11T20:43:17-07:00
+SUBJECT [main] Source code updates from dotnet/dotnet (#67114)
+BODY * Update dependencies from build 318061
+Updated Dependencies:
+Microsoft.NET.Runtime.WebAssembly.Sdk, Microsoft.NETCore.BrowserDebugHost.Transport, Microsoft.NET.Runtime.MonoAOTCompiler.Task, dotnet-ef, Microsoft.Bcl.AsyncInterfaces, Microsoft.Bcl.TimeProvider, Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Design, Microsoft.EntityFrameworkCore.InMemory, Microsoft.EntityFrameworkCore.Relational, Microsoft.EntityFrameworkCore.Sqlite, Microsoft.EntityFrameworkCore.SqlServer, Microsoft.EntityFrameworkCore.Tools, Microsoft.Extensions.Caching.Abstractions, Microsoft.Extensions.Caching.Memory, Microsoft.Extensions.Configuration, Microsoft.Extensions.Configuration.Abstractions, Microsoft.Extensions.Configuration.Binder, Microsoft.Extensions.Configuration.CommandLine, Microsoft.Extensions.Configuration.EnvironmentVariables, Microsoft.Extensions.Configuration.FileExtensions, Microsoft.Extensions.Configuration.Ini, Microsoft.Extensions.Configuration.Json, Microsoft.Extensions.Configuration.UserSecrets, Microsoft.Extensions.Configuration.Xml, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.DependencyModel, Microsoft.Extensions.Diagnostics, Microsoft.Extensions.Diagnostics.Abstractions, Microsoft.Extensions.FileProviders.Abstractions, Microsoft.Extensions.FileProviders.Composite, Microsoft.Extensions.FileProviders.Physical, Microsoft.Extensions.FileSystemGlobbing, Microsoft.Extensions.HostFactoryResolver.Sources, Microsoft.Extensions.Hosting, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Http, Microsoft.Extensions.Logging, Microsoft.Extensions.Logging.Abstractions, Microsoft.Extensions.Logging.Configuration, Microsoft.Extensions.Logging.Console, Microsoft.Extensions.Logging.Debug, Microsoft.Extensions.Logging.EventLog, Microsoft.Extensions.Logging.EventSource, Microsoft.Extensions.Logging.TraceSource, Microsoft.Extensions.Options, Microsoft.Extensions.Options.ConfigurationExtensions, Microsoft.Extensions.Options.DataAnnotations, Microsoft.Extensions.Primitives, Microsoft.Internal.Runtime.AspNetCore.Transport, Microsoft.NETCore.App.Ref, Microsoft.NETCore.Platforms, System.Collections.Immutable, System.Composition, System.Configuration.ConfigurationManager, System.Diagnostics.DiagnosticSource, System.Diagnostics.EventLog, System.Diagnostics.PerformanceCounter, System.DirectoryServices.Protocols, System.Formats.Asn1, System.Formats.Cbor, System.IO.Hashing, System.IO.Pipelines, System.Memory.Data, System.Net.Http.Json, System.Net.Http.WinHttpHandler, System.Net.ServerSentEvents, System.Numerics.Tensors, System.Reflection.Metadata, System.Resources.Extensions, System.Runtime.Caching, System.Security.Cryptography.Pkcs, System.Security.Cryptography.Xml, System.Security.Permissions, System.ServiceProcess.ServiceController, System.Text.Encodings.Web, System.Text.Json, System.Threading.AccessControl, System.Threading.Channels, System.Threading.RateLimiting (Version 11.0.0-preview.6.26305.101 -> 11.0.0-preview.6.26309.107)
+Microsoft.DotNet.Arcade.Sdk, Microsoft.DotNet.Build.Tasks.Archives, Microsoft.DotNet.Build.Tasks.Installers, Microsoft.DotNet.Build.Tasks.Templating, Microsoft.DotNet.Helix.Sdk, Microsoft.DotNet.RemoteExecutor, Microsoft.DotNet.SharedFramework.Sdk (Version 11.0.0-beta.26305.101 -> 11.0.0-beta.26309.107)
+Microsoft.Web.Xdt (Version 3.3.0-preview.6.26305.101 -> 3.3.0-preview.6.26309.107)
+NuGet.Frameworks, NuGet.Packaging, NuGet.Versioning (Version 7.9.0-rc.30601 -> 7.9.0-rc.31007)
+[[ commit created by automation ]]
+
+* Allow IConfigureOptions<StartupValidatorOptions> to be registered multiple times
+
+.NET 11's OptionsBuilderExtensions.ValidateOnStart now registers
+IConfigureOptions<StartupValidatorOptions> twice (one configure action for
+synchronous validation and one for asynchronous validation). AddRazorComponents
+calls AddMetrics, which invokes ValidateOnStart, so the service-count assertion
+in RazorComponentsServiceCollectionExtensionsTest now sees 2 registrations
+instead of 1. Treat this internal service type as a multi-registration service
+so the test validates distinct implementation types instead of an exact count.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+---------
+
+Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+Co-authored-by: William Godbe <wigodbe@microsoft.com>
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+diff --git a/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs b/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
+index 40efccecb1..4d74a722e0 100644
+--- a/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
++++ b/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
+@@ -8,11 +8,21 @@ using Microsoft.AspNetCore.Components.Routing;
+ using Microsoft.AspNetCore.Hosting;
+ using Microsoft.Extensions.Configuration;
+ using Microsoft.Extensions.FileProviders;
++using Microsoft.Extensions.Options;
+ 
+ namespace Microsoft.Extensions.DependencyInjection;
+ 
+ public class RazorComponentsServiceCollectionExtensionsTest
+ {
++    // AddRazorComponents calls AddMetrics, which calls OptionsBuilderExtensions.ValidateOnStart.
++    // As of .NET 11, ValidateOnStart registers IConfigureOptions<StartupValidatorOptions> twice
++    // (one configure action for synchronous validation and one for asynchronous validation), so this
++    // service type is expected to be registered more than once. StartupValidatorOptions is internal to
++    // Microsoft.Extensions.Options, so it is resolved via reflection.
++    private static readonly Type StartupValidatorConfigureOptionsType =
++        typeof(IConfigureOptions<>).MakeGenericType(
++            typeof(IConfigureOptions<>).Assembly.GetType("Microsoft.Extensions.Options.StartupValidatorOptions", throwOnError: true)!);
++
+     [Fact]
+     public void AddRazorComponents_RegistersServices()
+     {
+@@ -99,6 +109,7 @@ public class RazorComponentsServiceCollectionExtensionsTest
+                     typeof(ResourceCollectionProvider),
+                     typeof(AntiforgeryStateProvider),
+                 },
++                [StartupValidatorConfigureOptionsType] = Array.Empty<Type>(),
+             };
+         }
+     }
+COMMIT 76e4d1838d5cf777429c9ed1dd5c9ccd937e20e4
+PARENTS caf0f3f2dae893395a8a80989315e08b38ea11a6
+AUTHOR 2025-05-19T14:24:56+02:00
+COMMITTER 2025-05-19T12:24:56Z
+SUBJECT Update `ResourceCollectionProvider` to take advantage of Declarative persistent component state (#61748)
+BODY * Refactoring + registrations.
+
+* Allow multiple instances of `IPersistentServiceRegistration`.
+
+* Skip assembly name in for all internal types.
+
+diff --git a/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs b/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
+index 09dfd3a904..40efccecb1 100644
+--- a/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
++++ b/src/Components/Endpoints/test/RazorComponentsServiceCollectionExtensionsTest.cs
+@@ -2,6 +2,7 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using Microsoft.AspNetCore.Components;
++using Microsoft.AspNetCore.Components.Forms;
+ using Microsoft.AspNetCore.Components.Forms.Mapping;
+ using Microsoft.AspNetCore.Components.Routing;
+ using Microsoft.AspNetCore.Hosting;
+@@ -92,7 +93,12 @@ public class RazorComponentsServiceCollectionExtensionsTest
+                 {
+                     typeof(SupplyParameterFromFormValueProvider),
+                     typeof(SupplyParameterFromQueryValueProvider),
+-                }
++                },
++                [typeof(IPersistentServiceRegistration)] = new[]
++                {
++                    typeof(ResourceCollectionProvider),
++                    typeof(AntiforgeryStateProvider),
++                },
+             };
+         }
+     }

@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "scope": 256,
+  "owner": "67af6370-08fe-49c0-8900-39c0f83a5f9e",
+  "findingIds": ["F225", "F226"],
+  "canonicalStates": {"F225": "pending", "F226": "pending"},
+  "canonicalStateAuthority": "No campaign/ledger write performed. Parent alone accepts, finalizes, and retires this owner.",
+  "qualificationBoundary": "SOURCE ONLY",
+  "outcome": "Real repeated-linear-enumeration pattern in two distinct test assertions; materiality unestablished; no material performance candidate.",
+  "notClassifiedAs": ["measured no gain", "false positive", "duplicate by file or shared helper", "native correctness pass", "performance qualification pass"],
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "main",
+    "defaultRepository": "dotnet/aspnetcore",
+    "defaultObservedAtUtc": "2026-11-21T03:16:59.2032703Z",
+    "defaultResolutionEvidence": ["001-gh-repository.native.json", "010-gh-default-branch.native.json"],
+    "pointObservationNotPermanent": true,
+    "reservedNavigationHead": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "reservedNavigationBranch": "refs/heads/autoperf/F145-hoist-large-response-utf8-encoding",
+    "reservedCheckoutNotUsedAsDefault": true
+  },
+  "sourceBindings": {
+    "manifests": ["014-initial-whole-sources.sources.json", "018-producer-whole-sources.sources.json"],
+    "independentBlobAndSha256Audit": "input-audit.json",
+    "wholeFilesPerRole": {"Original": 15, "Default": 15},
+    "totalWholeRoleBindings": 30,
+    "uniqueRepositoryPaths": 15,
+    "target": {
+      "path": "src\\Components\\Endpoints\\test\\RazorComponentsServiceCollectionExtensionsTest.cs",
+      "sameWholeBytesBothRoles": true,
+      "bytes": 7176,
+      "lines": 165,
+      "gitBlob": "4d74a722e057f834604ce0af0b055460bdf94546",
+      "sha256": "5743B62F11E9B3200162A5C374C154794AC26C0B3CAEBEE364F01FA1F41FF59D"
+    },
+    "registrationOwner": {
+      "path": "src\\Components\\Endpoints\\src\\DependencyInjection\\RazorComponentsServiceCollectionExtensions.cs",
+      "sameWholeBytesBothRoles": true,
+      "bytes": 7126,
+      "gitBlob": "171829f951fb0267476eddfd5bdad3cc1a4d1faa",
+      "sha256": "604925DFF2AE0F81366229F69743BF4052664E8DA9898B18543523D024D3E118"
+    },
+    "otherExaminedProductHelpersAndTestProject": "All byte-identical across the two separately retained roles.",
+    "byteDifferentNonOwningPaths": ["src\\Components\\AGENTS.md", "docs\\BlazorComponentsGuidance.md", "eng\\Versions.props"],
+    "targetFramework": "The test project uses $(DefaultNetCoreTargetFramework); both retained eng\\Versions.props files set net12.0. No project evaluation or runtime execution.",
+    "runtimeEquivalenceNotImplied": "Matching examined product sources does not establish matching SDKs, external DI/options implementations, assemblies, or runtime descriptor counts."
+  },
+  "sharedProducer": {
+    "source": "src\\Components\\Endpoints\\test\\RazorComponentsServiceCollectionExtensionsTest.cs:82-94",
+    "construction": "Each property access eagerly constructs a new ServiceCollection, calls the real AddRazorComponents once with configure omitted/null, and obtains a fresh MultiRegistrationServiceTypes dictionary.",
+    "actualReturnExpression": "services.Where(sd => !multiRegistrationServiceTypes.ContainsKey(sd.ServiceType)).Select(sd => sd.ServiceType)",
+    "deferral": "The returned IEnumerable<Type> retains this one constructed collection and dictionary. Each Contains enumerates that deferred filter/projection again; it does not call AddRazorComponents or reconstruct the dictionary again.",
+    "membership": "No materialization or custom comparer appears at either membership site. Normal Enumerable.Contains uses default Type equality, short-circuiting on a match; the captured Where/Select producer is not a prebuilt membership set.",
+    "multiplicity": "No Distinct occurs in the producer. Repeated descriptors for a non-excluded service type would yield repeated Type values; membership still only decides which assertion runs.",
+    "fixedExclusionDictionary": {
+      "source": "test file:96-115",
+      "keyCountInSource": 3,
+      "keys": ["typeof(ICascadingValueSupplier)", "typeof(IPersistentServiceRegistration)", "StartupValidatorConfigureOptionsType"],
+      "listedArrayLengths": [2, 2, 0],
+      "listedArrayValuesUsedByPredicate": false,
+      "reflection": "The startup-validator closed options Type is constructed in the class static field via reflection. Successful type initialization and its runtime registrations were not executed here.",
+      "importantLimit": "The dictionary's four listed array values are not an exhaustive runtime implementation list or an asserted descriptor count. Only dictionary keys are consulted."
+    }
+  },
+  "cardinalityAndSourceFrequency": {
+    "symbolsPerRoleAndSuccessfulInvocation": {
+      "G": "descriptor count in the helper's newly registered collection",
+      "S": "number of yielded entries after filtering, including any repeated non-excluded service types",
+      "N1": "outer descriptor count after one AddRazorComponents in F225",
+      "N2": "outer descriptor count after two AddRazorComponents calls in F226"
+    },
+    "actualSourceCounts": {
+      "preRegistrationOuterFixtureDescriptorsEachFact": 2,
+      "helperRegistrationCallsEachFact": 1,
+      "helperPropertyReadsEachFact": 1,
+      "unconditionalDistinctExplicitNamedServiceTypeRequestsInOwningMethod": 30,
+      "conditionalExplicitNamedRequests": "One HotReloadService request under MetadataUpdater.IsSupported",
+      "sourceRequestInventory": "direct-registration-requests.json"
+    },
+    "numericBoundQualification": "Under successful, additive standard TryAdd/TryAddEnumerable registration semantics, the 30 distinct unconditional named requests give a conservative G >= 30 and N1,N2 >= 32 including the two fixture types. These are conditional source lower bounds, NOT observed descriptor/type totals. Full transitive additivity and the external DI implementation were not independently captured or run, so no unconditional exact total or numerical upper total is asserted.",
+    "unconditionalOperationBoundsAtTheInspectedLoop": [
+      "0 <= S <= G; Contains is called once per reached outer descriptor.",
+      "If a Fact completes its loop, F225 performs N1 membership calls and F226 N2.",
+      "Each call visits at most G helper descriptors through the predicate and compares at most S projected Type entries; a missing Type exhausts the helper sequence.",
+      "Thus membership work is bounded by N1*G or N2*G helper-descriptor visits for the respective completed loop, with short-circuiting for present types.",
+      "Assertions may throw before those completed-loop totals; no execution count is claimed."
+    ],
+    "notInvented": "No service list, repeated test invocation count, hundreds-of-types scenario, total descriptor count or N2 = 2*N1 assumption.",
+    "exactRuntimeCountsObserved": false,
+    "unknowns": [
+      "Exact G/S/N1/N2 and distinct-Type totals in the real selected runtime closure.",
+      "The runtime value of MetadataUpdater.IsSupported and resulting conditional registration.",
+      "Full transitive AddLogging/AddDataProtection/options/metrics/TempData/persistence/cascading registration closures.",
+      "External test-runner selections, retries, suite frequency, costs, and whole-Fact performance contribution."
+    ]
+  },
+  "distinctFindings": [
+    {
+      "id": "F225",
+      "card": "linear-contains-inside-loop",
+      "severity": "informational",
+      "patternConfidence": "high, source-level",
+      "site": "test file:37-40",
+      "test": "AddRazorComponents_RegistersServices",
+      "actualSetup": "Two explicit fixture registrations, then one real AddRazorComponents on the outer collection.",
+      "sourceInvocationFrequency": "One Fact body, no Theory rows or outer repetition parameter in this file. Two AddRazorComponents calls in total when including the helper's separate collection.",
+      "assertionPaths": "For each outer descriptor: membership true invokes AssertServiceCountEquals(..., 1); membership false invokes AssertAllImplementationTypesAreDistinct.",
+      "purpose": "Validate first-call service registration multiplicity, not repeated-registration idempotence.",
+      "materiality": "Unestablished; test-only assertion path, not demonstrated application/request hot path.",
+      "proposedSourceCandidate": null,
+      "canonicalDisposition": "pending for parent decision"
+    },
+    {
+      "id": "F226",
+      "card": "linear-contains-inside-loop",
+      "severity": "informational",
+      "patternConfidence": "high, source-level",
+      "site": "test file:66-69",
+      "test": "AddRazorComponentsTwice_DoesNotDuplicateServices",
+      "actualSetup": "The same two fixture registrations, then two consecutive real AddRazorComponents calls on the SAME outer collection.",
+      "sourceInvocationFrequency": "One Fact body, no Theory rows or outer repetition parameter in this file. Three AddRazorComponents calls in total when including the helper's separate collection.",
+      "assertionPaths": "The same assertion branch selection runs after the second registration call, once per reached outer descriptor.",
+      "purpose": "Validate repeated-registration idempotence and allowed multiple implementations. This is a distinct producer/precondition from F225, despite a shared helper/file.",
+      "materiality": "Unestablished; no assumption that the second call doubles descriptors or makes this a hot path.",
+      "proposedSourceCandidate": null,
+      "canonicalDisposition": "pending for parent decision"
+    }
+  ],
+  "assertionSemantics": {
+    "count": {
+      "source": "test file:117-129",
+      "behavior": "Filters the actual outer collection by serviceDescriptor.ServiceType == serviceType, counts ALL matching descriptors, and requires exactly one. This remains a full outer-collection traversal for each reached single-registration assertion."
+    },
+    "distinctImplementationTypes": {
+      "source": "test file:131-152",
+      "behavior": "Builds a ServiceProvider for each invocation, filters actual descriptors by service type, obtains ImplementationType, instance.GetType(), or invokes the actual ImplementationFactory with that provider, then materializes and checks nonempty/distinct implementation Types.",
+      "multiplicity": "Allows several different implementation Types, rejects repeated implementation Types. It is not an exact expected-type-list assertion.",
+      "order": "Descriptor/factory processing follows collection order through Where/Select. Distinct-count comparison is set-like, but factory invocation order, side effects, and failures must not be silently reordered.",
+      "frequency": "Called once per reached outer descriptor whose service type is absent from the helper sequence, not once per distinct service type.",
+      "fixtureTypes": "IConfiguration and IWebHostEnvironment are explicitly supplied only to the outer collection in this file. Their branch cannot be assumed to be the single-registration branch merely because the fixture initially adds one each."
+    },
+    "notMeasured": "Provider construction, factory execution, Count scans and membership all contribute potential work. Source alone does not establish their relative cost or an end-to-end gain from changing membership.",
+    "equality": "Membership/dictionary/distinct use Type keys or Type values without an explicit alternate comparer; the count helper uses Type ==. No string-name, implementation-identity or reference-only substitution is justified.",
+    "preservation": "No collection, assertion, message, cache, comparison, multiplicity or order was changed."
+  },
+  "realRegistrationProducerEvidence": [
+    {
+      "source": "RazorComponentsServiceCollectionExtensions.cs:37-116",
+      "behavior": "Real owner calls AddLogging, AddAntiforgery, TryAddSingleton/Scoped/Enumerable, query/persistence/cascading/TempData registrations, persistent state registration, metrics/tracing and form mapping. Optional configure is null in these tests and helper."
+    },
+    {
+      "source": "RegisterRenderingMetricsServiceCollectionExtensions.cs:20-55",
+      "behavior": "AddComponentsMetrics scans the real collection for IMeterFactory; only if absent calls AddMetrics, then TryAddSingleton<ComponentsMetrics>. AddComponentsTracing TryAdds ComponentsActivitySource. This directly opposes assuming each second registration repeats every metrics/options descriptor."
+    },
+    {
+      "source": "RegisterPersistentComponentStateServiceCollectionExtensions.cs:26-42",
+      "behavior": "TryAddEnumerable registers IPersistentServiceRegistration using PersistentServiceRegistration<TService>; TryAddSingleton registers its collection. The owner calls it for ResourceCollectionProvider and AntiforgeryStateProvider, preserving distinct closed implementation Types rather than collapsing service-type multiplicity."
+    },
+    {
+      "source": "SupplyParameterFromQueryProviderServiceCollectionExtensions.cs:20-24 and SupplyParameterFromFormServiceCollectionExtensions.cs:19-29",
+      "behavior": "The real helpers request distinct ICascadingValueSupplier implementations with TryAddEnumerable; the form provider uses an actual factory and IFormValueMapper. No invented provider list or fixture was substituted."
+    },
+    {
+      "source": "AntiforgeryServiceCollectionExtensions.cs:20-37",
+      "behavior": "The real producer calls AddDataProtection and requests options plus six named singleton service types. These registrations illustrate the transitive closure omitted by a mere count of owner call sites; the whole external closure was not reconstructed."
+    }
+  ],
+  "historyAndDocumentation": {
+    "boundedHistory": ["015-test-history-default.stdout.bin: latest 12 path-followed commits", "016-registration-history-default.stdout.bin: latest 10 path-followed commits"],
+    "relevantPatches": "019-relevant-test-history-patches.stdout.bin",
+    "startupOptionsChange": {
+      "commit": "0e14788a0a0d07ac1134887a6ced80de12478530",
+      "subject": "[main] Source code updates from dotnet/dotnet (#67114)",
+      "date": "2026-06-11T20:43:17-07:00",
+      "sourceMeaning": "Adds the reflection-backed startup options exclusion and comments explaining two .NET 11 ValidateOnStart configure registrations. This is history/comment evidence, not a newly observed runtime count."
+    },
+    "persistentRegistrationChange": {
+      "commit": "76e4d1838d5cf777429c9ed1dd5c9ccd937e20e4",
+      "subject": "Update ResourceCollectionProvider to take advantage of Declarative persistent component state (#61748)",
+      "sourceMeaning": "Adds IPersistentServiceRegistration to allowed multiple-registration keys. Collapsing all descriptors by service type would discard the intended distinction."
+    },
+    "currentDefaultCheck": "017-role-target-diff.stdout.bin is empty with actual Git exit 0. Target test, owning registration source and test project are byte-identical between immutable roles.",
+    "guidanceApplied": "Both immutable instruction/doc roles were retained. Current Default AGENTS and Blazor guidance were read; they preserve requested research scope and the smallest faithful owning test boundary. Cross-cutting guidance distinguishes test/startup paths from hot runtime paths and requires material benefit before performance recommendations."
+  },
+  "validationBoundary": {
+    "behaviorOwner": "Existing Components.Endpoints DI registration tests and the real AddRazorComponents registration producer.",
+    "productionProducer": "The actual registration extension and its built-in registration helpers; not a synthetic IEnumerable or direct callback injection.",
+    "finalObservable": "The existing service-count and distinct-implementation assertions, if separately authorized to run.",
+    "existingSmallestFaithfulSurface": "Microsoft.AspNetCore.Components.Endpoints.Tests: AddRazorComponents_RegistersServices and AddRazorComponentsTwice_DoesNotDuplicateServices.",
+    "lowerBoundaryFalsePassRisk": "An isolated Contains benchmark or fabricated service/type list would bypass real registration, multi-registration exclusions, provider/factory work and the assertion boundary.",
+    "actualObservedBoundary": "Whole immutable sources, source-level operation bounds, history, metadata and source-utility terminal receipts only.",
+    "testsNotRun": [
+      {"name": "AddRazorComponents_RegistersServices", "reason": "Explicit SOURCE ONLY scope forbids SDK activation, build or test execution; no assertion reached by this owner."},
+      {"name": "AddRazorComponentsTwice_DoesNotDuplicateServices", "reason": "Explicit SOURCE ONLY scope forbids SDK activation, build or test execution; no assertion reached by this owner."}
+    ],
+    "noNativePrerequisiteFailureInvented": true,
+    "candidateOrNativeCorrectnessJustifiedNow": false,
+    "performanceMaterialityEstablished": false,
+    "sourceOnlyDisposition": "No material candidate; no execution/edit boundary proposed for immediate action."
+  },
+  "boundedStopAndEvidenceGaps": {
+    "wholeFileBudgetConsumed": "15 per role; do not broaden under this handoff.",
+    "nativeSourceBudget": {"attemptReceipts": 14, "actualRoots": 13, "maximum": 32, "closedBudgetsReopened": 0},
+    "finiteGapStatement": "Exact runtime descriptor/type counts, faithful test results and whole-Fact materiality remain unobserved. A separately authorized future owner would need the two unchanged real Facts and each role's actual dependency closure, not extra fabricated services or repetitions. No such work is authorized or recommended merely from this pattern.",
+    "callerAbsenceNotClaimed": true,
+    "broadenedSourceResearch": false,
+    "remoteOrDelegatedWork": false
+  },
+  "processEvidence": {
+    "exactArgvStdinStdoutStderrAndAdmission": "*.native.json, matching *.stdin.bin/*.stdout.bin/*.stderr.bin, *.guard.json and exact *.policy.json snapshots",
+    "nativeAudit": "input-audit.json",
+    "actualDistinctNativeRootPids": [31740, 35656, 36268, 41212, 47168, 47308, 48896, 48960, 50452, 51168, 52040, 52212, 53908],
+    "actualNativeSourceObserverPids": [34988, 38352, 41500],
+    "otherObservedOfflineObserverPidsBeforeSeal": [5308, 8144, 54036],
+    "sourceRootTerminal": "All 13 started roots: WaitForExit(120000) returned true, subsequent root wait completed, exit 0; both asynchronous raw stream copies awaited.",
+    "observedChildTerminal": "22 distinct creation-bound direct-child observations; all later absent or PID reused. 018 observed no child, not proof that none existed.",
+    "observationLimit": "No universal descendant absence, dedicated host, or unrelated-user inactivity claim.",
+    "failedAttemptsPreserved": [
+      "Initial controller: 001 metadata root succeeded; 002 Process.Start failed from a script-scope working-directory collision before any root PID. Actual enclosing tool exit 1. Old helper/controller unchanged and not replayed; a fresh isolated module continued from the already-successful repo metadata.",
+      "Offline auditor 256d: source-record grouping failed because Group-Object did not use OrderedDictionary keys. Actual enclosing tool exit 1. Old helper unchanged and not replayed; separate 256e diagnostic proved the cause and fresh 256f auditor validated 30 complete bindings.",
+      "256f console summary projected OrderedDictionary fields as null; actual persisted JSON was read after return and supplies the audited counts.",
+      "Three oversized view requests were declined before explicit full/bounded reads; four hover attempts returned no information and the advertised generic LSP log ID was unavailable. No unsupported resolved-external-implementation or caller-absence claim."
+    ],
+    "outerToolReceipts": ["initial-tool-return.json", "capture-b-tool-return.json", "capture-c-tool-return.json", "audit-d-tool-return.json", "diagnostic-e-tool-return.json", "audit-f-tool-return.json"],
+    "outerToolTransportLimit": "The tool's reported exit/status observations are retained separately; they are not falsely represented as byte-exact separated outer PowerShell transport streams. Exact separated native Git/gh streams are retained.",
+    "sealerExitAuthority": "Final enclosing tool exit is knowable only after its actual tool return and will be reported in the final response, not prospectively self-attested in this file."
+  },
+  "zeroExecutionAndMutation": {
+    "sdkActivations": 0,
+    "dotnetBuildTestRestoreRuntimeBrowserServerScenarioStarts": 0,
+    "benchmarkWarmupTimingAllocationProfilerCounterStarts": 0,
+    "candidateOrShippingSourceEdits": 0,
+    "sharedCheckoutIndexUntrackedReportPolicyLeaseLedgerDotnetWrites": 0,
+    "packageGlobalJsonNugetConfigApiDefaultCacheAssertionMessageIvtUnsafeAccessorEdits": 0,
+    "publication": 0
+  },
+  "stop": "Stop at the sealed source handoff. No new unrelated work; parent retains acceptance/finalization authority."
+}

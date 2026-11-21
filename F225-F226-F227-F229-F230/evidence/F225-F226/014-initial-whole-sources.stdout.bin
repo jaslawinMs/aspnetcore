@@ -1,0 +1,2150 @@
+4d74a722e057f834604ce0af0b055460bdf94546 blob 7176
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Forms.Mapping;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+public class RazorComponentsServiceCollectionExtensionsTest
+{
+    // AddRazorComponents calls AddMetrics, which calls OptionsBuilderExtensions.ValidateOnStart.
+    // As of .NET 11, ValidateOnStart registers IConfigureOptions<StartupValidatorOptions> twice
+    // (one configure action for synchronous validation and one for asynchronous validation), so this
+    // service type is expected to be registered more than once. StartupValidatorOptions is internal to
+    // Microsoft.Extensions.Options, so it is resolved via reflection.
+    private static readonly Type StartupValidatorConfigureOptionsType =
+        typeof(IConfigureOptions<>).MakeGenericType(
+            typeof(IConfigureOptions<>).Assembly.GetType("Microsoft.Extensions.Options.StartupValidatorOptions", throwOnError: true)!);
+
+    [Fact]
+    public void AddRazorComponents_RegistersServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        services.AddSingleton<IWebHostEnvironment>(new TestWebHostEnvironment());
+        // Act
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+        // Assert
+        var singleRegistrationServiceTypes = SingleRegistrationServiceTypes;
+        foreach (var service in services)
+        {
+            if (singleRegistrationServiceTypes.Contains(service.ServiceType))
+            {
+                // 'single-registration' services should only have one implementation registered.
+                AssertServiceCountEquals(services, service.ServiceType, 1);
+            }
+            else
+            {
+                // 'multi-registration' services should not have any duplicate implementation types
+                AssertAllImplementationTypesAreDistinct(services, service.ServiceType);
+            }
+        }
+    }
+
+    [Fact]
+    public void AddRazorComponentsTwice_DoesNotDuplicateServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        services.AddSingleton<IWebHostEnvironment>(new TestWebHostEnvironment());
+
+        // Act
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+        // Assert
+        var singleRegistrationServiceTypes = SingleRegistrationServiceTypes;
+        foreach (var service in services)
+        {
+            if (singleRegistrationServiceTypes.Contains(service.ServiceType))
+            {
+                // 'single-registration' services should only have one implementation registered.
+                AssertServiceCountEquals(services, service.ServiceType, 1);
+            }
+            else
+            {
+                // 'multi-registration' services should not have any duplicate implementation types
+                AssertAllImplementationTypesAreDistinct(services, service.ServiceType);
+            }
+        }
+    }
+
+    private IEnumerable<Type> SingleRegistrationServiceTypes
+    {
+        get
+        {
+            var services = new ServiceCollection();
+            RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+            var multiRegistrationServiceTypes = MultiRegistrationServiceTypes;
+            return services
+                .Where(sd => !multiRegistrationServiceTypes.ContainsKey(sd.ServiceType))
+                .Select(sd => sd.ServiceType);
+        }
+    }
+
+    private Dictionary<Type, Type[]> MultiRegistrationServiceTypes
+    {
+        get
+        {
+            return new Dictionary<Type, Type[]>()
+            {
+                [typeof(ICascadingValueSupplier)] = new[]
+                {
+                    typeof(SupplyParameterFromFormValueProvider),
+                    typeof(SupplyParameterFromQueryValueProvider),
+                },
+                [typeof(IPersistentServiceRegistration)] = new[]
+                {
+                    typeof(ResourceCollectionProvider),
+                    typeof(AntiforgeryStateProvider),
+                },
+                [StartupValidatorConfigureOptionsType] = Array.Empty<Type>(),
+            };
+        }
+    }
+
+    private void AssertServiceCountEquals(
+        IServiceCollection services,
+        Type serviceType,
+        int expectedServiceRegistrationCount)
+    {
+        var serviceDescriptors = services.Where(serviceDescriptor => serviceDescriptor.ServiceType == serviceType);
+        var actual = serviceDescriptors.Count();
+
+        Assert.True(
+            (expectedServiceRegistrationCount == actual),
+            $"Expected service type '{serviceType}' to be registered {expectedServiceRegistrationCount}" +
+            $" time(s) but was actually registered {actual} time(s).");
+    }
+
+    private void AssertAllImplementationTypesAreDistinct(
+        IServiceCollection services,
+        Type serviceType)
+    {
+        var serviceProvider = services.BuildServiceProvider();
+        var implementationTypes = services
+            .Where(sd => sd.ServiceType == serviceType)
+            .Select(service => service switch
+            {
+                { ImplementationType: { } type } => type,
+                { ImplementationInstance: { } instance } => instance.GetType(),
+                { ImplementationFactory: { } factory } => factory(serviceProvider).GetType(),
+            })
+            .ToArray();
+
+        if (implementationTypes.Length == 0)
+        {
+            Assert.Fail($"Could not find an implementation type for {serviceType}");
+        }
+        else if (implementationTypes.Length != implementationTypes.Distinct().Count())
+        {
+            Assert.Fail($"Found duplicate implementation types for {serviceType}. Implementation types: {string.Join(", ", implementationTypes.Select(x => x.ToString()))}");
+        }
+    }
+
+    private class TestWebHostEnvironment : IWebHostEnvironment
+    {
+        public string WebRootPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+        public string EnvironmentName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ApplicationName { get; set; } = "App";
+        public string ContentRootPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
+}
+
+171829f951fb0267476eddfd5bdad3cc1a4d1faa blob 7126
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection.Metadata;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Endpoints;
+using Microsoft.AspNetCore.Components.Endpoints.DependencyInjection;
+using Microsoft.AspNetCore.Components.Endpoints.Forms;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Forms.Mapping;
+using Microsoft.AspNetCore.Components.Infrastructure;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Provides methods for registering services required for server-side rendering of Razor Components.
+/// </summary>
+public static class RazorComponentsServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers services required for server-side rendering of Razor Components.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">An <see cref="Action{RazorComponentOptions}"/> to configure the provided <see cref="RazorComponentsServiceOptions"/>.</param>
+    /// <returns>An <see cref="IRazorComponentsBuilder"/> that can be used to further configure the Razor component services.</returns>
+    [RequiresUnreferencedCode("Razor Components does not currently support trimming or native AOT.", Url = "https://aka.ms/aspnet/nativeaot")]
+    public static IRazorComponentsBuilder AddRazorComponents(this IServiceCollection services, Action<RazorComponentsServiceOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Dependencies
+        services.AddLogging();
+        services.AddAntiforgery();
+
+        services.TryAddSingleton<RazorComponentsMarkerService>();
+
+        // Endpoints
+        services.TryAddSingleton<RazorComponentEndpointDataSourceFactory>();
+        services.TryAddSingleton<RazorComponentEndpointFactory>();
+        if (MetadataUpdater.IsSupported)
+        {
+            services.TryAddSingleton<HotReloadService>();
+        }
+        services.TryAddScoped<IRazorComponentEndpointInvoker, RazorComponentEndpointInvoker>();
+
+        // Common services required for components server side rendering
+        services.TryAddSingleton<ServerComponentSerializer>(services => new ServerComponentSerializer(services.GetRequiredService<IDataProtectionProvider>()));
+        services.TryAddSingleton<WebAssemblyComponentSerializer>();
+        services.TryAddScoped<EndpointHtmlRenderer>();
+        services.TryAddScoped<IComponentPrerenderer>(services => services.GetRequiredService<EndpointHtmlRenderer>());
+        services.TryAddScoped<NavigationManager, HttpNavigationManager>();
+        services.TryAddScoped<IJSRuntime, UnsupportedJavaScriptRuntime>();
+        services.TryAddScoped<INavigationInterception, UnsupportedNavigationInterception>();
+        services.TryAddScoped<IScrollToLocationHash, UnsupportedScrollToLocationHash>();
+        services.TryAddScoped<ComponentStatePersistenceManager>();
+        services.TryAddScoped(sp => sp.GetRequiredService<ComponentStatePersistenceManager>().State);
+        services.TryAddScoped<IErrorBoundaryLogger, PrerenderingErrorBoundaryLogger>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IPostConfigureOptions<RazorComponentsServiceOptions>, DefaultRazorComponentsServiceOptionsConfiguration>());
+        services.TryAddScoped<EndpointRoutingStateProvider>();
+        services.TryAddScoped<IRoutingStateProvider>(sp => sp.GetRequiredService<EndpointRoutingStateProvider>());
+        services.TryAddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+        services.AddSupplyValueFromQueryProvider();
+        services.AddSupplyValueFromPersistentComponentStateProvider();
+        services.TryAddCascadingValue(sp => sp.GetRequiredService<EndpointHtmlRenderer>().HttpContext);
+        services.TryAddScoped<ResourcePreloadService>();
+        services.AddTempData();
+        services.TryAddSingleton<ICacheViewStore>(static sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<RazorComponentsServiceOptions>>().Value;
+            var hybridCache = options.CacheViewHybridCache ?? sp.GetService<HybridCache>();
+            return hybridCache is not null
+                ? new HybridCacheViewStore(hybridCache)
+                : ActivatorUtilities.CreateInstance<MemoryCacheViewStore>(sp);
+        });
+        services.TryAddSingleton<CacheViewService>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHybridCacheSerializer<SerializedRenderFragment>>(
+            SerializedRenderFragmentHybridCacheSerializer.Instance));
+        services.TryAddScoped<TempDataCascadingValueSupplier>();
+        services.TryAddCascadingValueSupplier<SupplyParameterFromTempDataAttribute>(
+            sp => sp.GetRequiredService<TempDataCascadingValueSupplier>().CreateSubscription);
+        services.TryAddScoped<SessionCascadingValueSupplier>();
+        services.TryAddCascadingValueSupplier<SupplyParameterFromSessionAttribute>(
+            sp => sp.GetRequiredService<SessionCascadingValueSupplier>().CreateSubscription);
+
+        services.TryAddScoped<ResourceCollectionProvider>();
+        RegisterPersistentComponentStateServiceCollectionExtensions.AddPersistentServiceRegistration<ResourceCollectionProvider>(services, RenderMode.InteractiveWebAssembly);
+
+        ComponentsMetricsServiceCollectionExtensions.AddComponentsMetrics(services);
+        ComponentsMetricsServiceCollectionExtensions.AddComponentsTracing(services);
+
+        // Form handling
+        services.AddSupplyValueFromFormProvider();
+        services.TryAddScoped<AntiforgeryStateProvider, EndpointAntiforgeryStateProvider>();
+        services.TryAddScoped(sp => (EndpointAntiforgeryStateProvider)sp.GetRequiredService<AntiforgeryStateProvider>());
+        RegisterPersistentComponentStateServiceCollectionExtensions.AddPersistentServiceRegistration<AntiforgeryStateProvider>(services, RenderMode.InteractiveAuto);
+        services.TryAddScoped<HttpContextFormDataProvider>();
+        services.TryAddScoped<IFormValueMapper, HttpContextFormValueMapper>();
+        services.TryAddSingleton<ClientValidationCache>();
+        services.TryAddScoped<ClientValidationProvider, DataAnnotationsClientValidationProvider>();
+
+        if (configure != null)
+        {
+            services.Configure(configure);
+        }
+
+        return new DefaultRazorComponentsBuilder(services);
+    }
+
+    private sealed class DefaultRazorComponentsBuilder(IServiceCollection services) : IRazorComponentsBuilder
+    {
+        public IServiceCollection Services { get; } = services;
+    }
+}
+
+6900193747e9f11372c518f0902a5cb8c7218992 blob 3008
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <RazorLangVersion>8.0</RazorLangVersion>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Validation.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ComponentsSharedSourceRoot)src\WebRootComponentParameters.cs" Link="Shared\WebRootComponentParameters.cs" />
+    <Compile Include="$(ComponentsSharedSourceRoot)test\**\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+
+    <ProjectReference Include="$(RepoRoot)src\Antiforgery\src\Microsoft.AspNetCore.Antiforgery.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Html.Abstractions\src\Microsoft.AspNetCore.Html.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing.Abstractions\src\Microsoft.AspNetCore.Routing.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing\src\Microsoft.AspNetCore.Routing.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics\src\Microsoft.AspNetCore.Diagnostics.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\StaticAssets\src\Microsoft.AspNetCore.StaticAssets.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="TestApplication.staticwebassets.endpoints.json" CopyToOutputDirectory="Always" />
+    <Content Update="TestManifests\Test.staticwebassets.endpoints.json" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Validation\gen\Microsoft.Extensions.Validation.ValidationsGenerator.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>
+
+c93715c2d956b24a27e236394b8db4448301020c blob 32043
+# Working on Issues in the Components Area
+
+This guide provides step-by-step instructions for investigating, reviewing, and implementing work in the ASP.NET Core Components area.
+
+## Working on issues
+
+You MUST follow this workflow when investigating or reviewing behavioral issues, implementing behavioral fixes, or implementing new features in the Components area.
+* Add the applicable workflow steps to your `todos` and follow them strictly.
+
+The mandatory sample-to-E2E workflow, including permanent automated test coverage, applies to production feature and bug-fix implementation. Design research, code review, comparative alternatives work, and explicitly throwaway prototypes must honor the requested scope. When feasible, use the Components sample projects and a browser to validate claims at a faithful boundary, but do not add unit or E2E tests solely to satisfy the implementation workflow. State honestly whether validation is source-level, DOM-level, or end-to-end.
+
+### Structural relocations
+
+A pure source, project, or package relocation with intentionally unchanged runtime behavior does not require a new sample scenario or new E2E coverage. Validate the structure instead:
+
+- Run the existing tests and builds affected by the relocated files.
+- Exercise direct source-consumption paths so a successful package build cannot hide a stale source path.
+- Validate generated project metadata, NuGet and npm package outputs, and every affected area or repository build entry point.
+- Follow the [project relocation checklist](../../docs/AddingNewProjects.md#adding-moving-or-removing-a-project) for added, moved, or removed projects.
+
+If the change alters behavior, or validation reveals a behavioral regression, follow the normal sample-to-E2E workflow in this guide.
+
+When moving a JavaScript workspace:
+
+1. Update its path in the root `package.json` and update all workspace-to-workspace references.
+2. Regenerate `package-lock.json`. Review the diff and do not remove unrelated transitive or optional entries merely
+   because a newer local npm version accepts the resulting lockfile.
+3. Update every path-specific input and output for the workspace in `eng/Npm.Workspace.nodeproj`.
+4. Run `npm ci --prefer-online` with the Node/npm toolchain used or supported by
+   [the package-lock validation workflow](../../.github/workflows/validate-npm-package-lock-json.yml), not only a
+   newer npm version installed on the developer machine.
+5. Build the affected workspace through its normal entry point and build each direct source consumer.
+6. For every shipping package produced by the workspace, run `npm pack --dry-run --workspace <workspace-name>` and
+   inspect the included files. Also run the repository `Pack` target for `eng/Npm.Workspace.nodeproj` when the move
+   affects tracked package production.
+
+For behavioral investigations and reviews:
+- Create or identify a scenario at the smallest faithful validation boundary.
+- Before treating a combination of behaviors as a product defect, determine when each feature was introduced and identify any relevant compatibility switches. Use authoritative sources to verify that the configured switch values support the newer feature; compatibility switches preserve older behavior but do not guarantee that newer features work with that behavior. If support is unclear, report the uncertainty and escalate it. Report confirmed unsupported combinations explicitly instead of proposing product changes to make them work.
+- Faithful validation includes the component, service, runtime, or browser mechanism that owns or produces each disputed precondition and observes the claimed material effect at the appropriate boundary.
+- Before making an actionable finding that depends on DOM measurement, browser observers, resize, navigation, browser event ordering, or JS interop, validate the real producer path in a browser with Playwright when feasible.
+- For decisive claims about native browser lifecycle or state behavior, use authoritative documentation and a minimal browser probe. Treat synthesized search results as leads, not evidence.
+- Any test establishes only the downstream response, not producer reachability, if it directly injects callbacks or events or otherwise bypasses the owning producer. An isolated test can provide faithful evidence when it exercises the real producer.
+- Treat faithful non-reproduction as evidence only for the exercised conditions. A single pass does not disprove race-, timing-, load-, browser-, or platform-dependent reachability; narrow the claim to the conditions and evidence it supports. Withdraw only when faithful evidence contradicts the claimed trigger or material effect and no supported materially different condition remains.
+- Do not require E2E to validate a finding when its disputed preconditions and material effects are fully established at a lower faithful boundary. This does not waive E2E coverage required for shipped implementation work.
+
+For implementation work:
+- For a behavioral fix, reproduce the problem at the faithful boundary before attempting the fix. If faithful validation is impractical, state the observed boundary and limitation and do not call the behavioral claim verified.
+- Research the problem area using the microsoft docs, existing code, git history, and logging on the sample project.
+  - Components and template files move. Resolve historical paths with `git log --follow --name-status` or `git ls-tree` before using `git show <commit>:<path>`.
+- Implement the fix or feature in the sample project first.
+- Exercise a new feature, or reproduce a behavioral failure, interactively in the real browser using Playwright.
+- For a browser regression or reproduced browser failure, reduce the reproduction to the smallest temporary JavaScript diagnostic probe and assertion that observes the same failure in that page. Keep the probe outside the production change; it is not permanent Jest or `.test.ts` coverage.
+- For that regression, repeat the unchanged browser scenario and probe a recorded, bounded number of times. Ten runs is a reasonable default confidence sample when repository evidence does not suggest another count, not proof across environments. Treat the issue as deterministic only when every run fails the same assertion for the same reason.
+- If the result is not deterministic, investigate the owning producer and timing before selecting permanent coverage. Use a faithful lower-boundary test when that boundary owns the final observable, or add an explicit test-controlled gate when managed timing must be controlled. Do not stabilize a regression assertion with an arbitrary fixed sleep.
+- Once the fix or feature is validated in the sample, select its permanent test surface using the boundary below.
+  - For browser-owned behavior, translate the validated browser scenario and final observable into the real-browser suite selected by the boundary below; for a regression, preserve the diagnostic assertion.
+  - If an E2E test is failing, debug it by running the test server manually and navigating to the scenario in a browser.
+- Only after the selected permanent tests are passing, remove any temporary JavaScript probe and the sample code you added in the Samples projects.
+  - Use `git checkout -- src/Components/Samples src/Components/WebAssembly/Samples` and `git clean -df -- src/Components/Samples src/Components/WebAssembly/Samples` to remove the sample code.
+
+### Permanent regression test boundary
+
+Before selecting a permanent test surface, record these five fields:
+
+- **Behavior owner**: the subsystem that owns the behavior.
+- **Production producer**: the real mechanism that creates the disputed preconditions.
+- **Final observable**: the material result the regression test must assert.
+- **Selected permanent surface**: the test suite that exercises that producer and observable.
+- **Lower-boundary false-pass risk**: how a lower-level test could pass while the shipped behavior still fails.
+
+Browser-owned user-visible behavior requires permanent coverage in the repository's real-browser suite that owns the production path. For Components-owned behavior, use C# Selenium under `src/Components/test/E2ETest`. When generated template content owns the behavior, use the existing Playwright tests under `src/ProjectTemplates/test/Templates.Blazor.Tests` instead of duplicating the scenario in Components E2E. This boundary includes claims that depend on real DOM measurement, layout and geometry, scrolling, browser observers (`ResizeObserver`, `IntersectionObserver`, and `MutationObserver`), browser scheduling or event ordering, browser-dependent JS interop, navigation, focus and selection, and rendering or rehydration. Extend existing test assets and classes when practical.
+
+Do not add or retain Jest or `.test.ts` coverage in the production change as proof of the same browser scenario, whether described as primary, supplemental, faster, or more precise. When synthetic geometry, mocked observers or events, or direct state mutation or callback invocation stand in for that browser scenario's real producer, they are temporary diagnostic probes outside the production change and must be removed after the selected real-browser test supersedes them.
+
+Permanent JavaScript or TypeScript unit tests remain appropriate when the JavaScript module's deterministic contract is the final observable and the harness faithfully supplies that contract's inputs. Examples include pure helpers, structural DOM algorithms that operate on ordinary nodes and assert identity or document structure, manager callback or timer-state contracts, and validation-engine contracts. Such tests do not establish that real browser scheduling, layout, observers, or user-visible producer paths are reachable; a claim about those behaviors still requires Selenium. Managed or service behavior that is fully owned and observable below the browser likewise remains at its faithful lower boundary.
+
+If WebDriver cannot perform or observe one operation, keep the permanent C# Selenium scenario, name the exact WebDriver limitation, and use only the smallest existing JavaScript helper or `IJavaScriptExecutor` snippet for that step. Keep scenario orchestration and the final user-visible assertion in C#.
+
+For browser fixes, require strict red/green evidence: the identical assertion in the selected real-browser suite must fail for the expected reason without the fix and pass with it. Include a nearest-opposite control, meaning the closest scenario that must remain green, and, when meaningful, an adjacent control driven by the same production producer. The fix remains blocked while Jest is its only regression proof.
+
+In Components Selenium tests, synchronize assertions with observable conditions through existing waits such as `Browser.True` and `Browser.Equal`, which poll with `WebDriverWait`, or with explicit test-controlled gates such as `TaskCompletionSource` when managed timing must be controlled. Do not use an arbitrary `Thread.Sleep` as the synchronization mechanism for the regression assertion. Existing bounded polling helpers may sleep between checks when they repeatedly observe the condition and enforce a timeout.
+
+### Native AOT generic coverage
+
+For Native AOT changes involving reflection or runtime construction or invocation of generic types, implement an AOT-compatible fallback that does not depend on dynamic code or a runtime-created generic instantiation. Exercise that fallback with an application-defined value type so the test requires its own closed generic instantiation; reference-type generic sharing can allow tests that use only types such as `string` or `object` to pass while the value-type case still fails. Register the value type in the test application's source-generated JSON context when it crosses a JSON boundary, and assert the final consumer-visible result.
+
+### Cross-runtime design checkpoint
+
+Before editing behavior that crosses Components renderers, runtimes, or DI scopes:
+
+- Define the relevant behavior matrix: Server/WebAssembly/Auto, global/per-page interactivity, initial activation/enhanced navigation, prerendered/non-prerendered, and interactive `Router` present/absent. Mark intentionally excluded cells before implementation.
+- Map the producing owner, consuming owner, DI lifetime and scope, assembly boundary, initial restore ordering, value-update ordering, render-mode destinations, and stale-state clearing.
+- Request architecture review before product edits and final correctness review after targeted tests are green. Add another architecture review only when the implementation introduces a new boundary.
+
+### JavaScript and .NET compatibility boundary
+
+The JavaScript code in `src/Components/Web.JS` and the .NET code for Blazor Server and Blazor WebAssembly ship together and evolve in sync. Treat the protocol between them, including the circuit and interop message formats, the boot config, the JS initializers and the internal `Blazor._internal` surface, as an internal communication boundary rather than a public contract.
+
+- A change may update the JavaScript and the .NET code together in the same commit. Do not add compatibility shims, version negotiation, or fallback code paths so that new JavaScript keeps working with .NET from a previous major version, or the other way around.
+- Backwards compatibility across major versions (10.0 to 11.0, 11.0 to 12.0, and so on) is not required for this boundary. Assume the JavaScript and the .NET runtime always come from the same build.
+- This exemption covers only the internal JS-to-.NET boundary. Public .NET APIs, documented JavaScript entry points such as `Blazor.start`, and the documented JS interop APIs that applications call keep their normal compatibility requirements and API review process.
+- Within a servicing branch for a released major version, keep the boundary compatible unless the change is explicitly approved, because servicing updates are more constrained than a major version bump.
+
+### Code clarity and durable knowledge
+
+- Before adding a comment, make local behavior discoverable through precise names,
+  named methods or variables, and smaller single-purpose responsibilities. A named
+  method can improve clarity even when it does not reduce duplication.
+- Rely on existing abstractions and extend them with the semantic operation or
+  context needed by the caller rather than downcasting to a concrete implementation.
+  Keep implementation-specific lifecycle and state handling behind the abstraction.
+- Add a concise implementation comment only when a durable nonlocal reason cannot
+  be expressed by structure alone, such as ordering across JavaScript and .NET
+  callbacks, lifecycle ownership transfer, compatibility constraints, or a
+  required negative guarantee. Do not narrate the call graph or restate the code.
+- Do not use public XML documentation to explain internal implementation details,
+  including control flow or lifecycle state. Limit it to consumer-observable behavior.
+
+### JavaScript DOM lifecycle
+
+- When behavior targets DOM that can be replaced during the prerender-to-interactive
+  transition or enhanced navigation, bind it to the narrowest lifecycle owner that can
+  survive the replacement or re-register afterward, and clean up when that owner is
+  removed. This can be a component lifecycle, a custom element's
+  `connectedCallback`/`disconnectedCallback`, or a stable scoped ancestor. Do not move
+  element-specific listeners to `document` or `window` merely to survive replacement;
+  reserve global listeners for behavior genuinely owned by the document or window.
+
+### Overview
+
+The workflow for implementing new features in the Components area follows these steps:
+
+1. **Create a sample scenario first** - This is the most important first step. Update code in one of the projects in the `src/Components/Samples` folder to include the scenarios for the feature you want to build. This allows you to develop and test the feature interactively before writing formal tests.
+
+2. **Build and test interactively** - Build the feature and use Playwright to test it in the browser, ensuring it works end-to-end at a basic level.
+
+### Sample Projects
+
+The `src/Components/Samples` folder contains canonical Blazor Web App samples, and `src/Components/WebAssembly/Samples` contains a standalone WebAssembly sample, that you can use for developing and testing features. All are generated from the `dotnet new blazor`/`blazorwasm` templates with `Auto` interactivity and adapted to reference the in-tree framework:
+
+- **BlazorWebAppGlobal** (+ **.Client**) - A Blazor Web App with **global** interactivity (`@rendermode="InteractiveAuto"` on `Routes`/`HeadOutlet` in `App.razor`). Change that one value to `InteractiveServer`/`InteractiveWebAssembly` to test the whole app on a single platform.
+- **BlazorWebAppPerPage** (+ **.Client**) - A Blazor Web App with **per-page** interactivity. Apply `@rendermode` per page/component (`InteractiveServer`/`InteractiveWebAssembly`/`InteractiveAuto`), mix modes, or omit it for static SSR.
+- **BlazorWebAssemblyStandalone** - A standalone Blazor WebAssembly app (no server host), under `src/Components/WebAssembly/Samples`.
+
+Together these cover every interactivity platform (Server/WebAssembly/Auto/None) and location (Global/Per-page) by editing a single `@rendermode` rather than restructuring.
+
+Before expanding validation across this full matrix, state the render modes and lifecycle boundaries the task requires. Evaluate that requested matrix first, and report broader compatibility separately rather than silently redefining the task.
+
+**Always start by adding your feature scenario to whichever sample matches the render mode you need.** This allows you to:
+- Quickly iterate on the implementation
+- Test the feature interactively in a real browser
+- Verify the feature works before writing its selected permanent tests
+- Debug issues more easily with full logging capabilities
+
+3. **Debug when needed**:
+   - If something isn't working as expected, increase the logging level in the sample for `Microsoft.AspNetCore.Components` to `Debug` to see detailed logs.
+   - Check browser console logs using Playwright's `browser_console_messages`.
+   - Use Microsoft documentation to learn more about troubleshooting Blazor applications.
+   - You can also increase the log level for JavaScript console output.
+
+4. **Validate the sample works** - You must have a validated, working sample in the Samples folder before proceeding. Use Playwright to confirm the feature works end-to-end in the browser.
+
+5. **Implement permanent tests** - Only after the sample is validated, select the permanent test surface using the boundary above. Browser-owned behavior requires the owning real-browser suite identified there.
+
+6. **Clean up sample code** - After the selected permanent tests are passing, remove the sample code you added to the Samples projects. The sample was only for development and interactive testing; the selected tests now provide the permanent coverage. Use `git checkout -- src/Components/Samples src/Components/WebAssembly/Samples` and `git clean -df -- src/Components/Samples src/Components/WebAssembly/Samples` to remove the sample code.
+
+## Build Tips
+
+### Build and retry discipline
+
+On Windows, serialize builds that share the `artifacts` directory and stop sample or test-server processes before rebuilding. After two consecutive failures at the same E2E boundary, stop rerunning the full command. Isolate the boundary with a focused unit or project check or a manually driven test server, then resume the E2E loop.
+
+### Efficient Build Strategy
+
+To avoid unnecessary full repository builds, follow this optimized approach:
+
+After a build fails, identify whether the cause is a source error in the changed project, a missing or stale prerequisite, or unrelated repository infrastructure before changing commands. Use the smallest supported build that still exercises the change. Do not repeatedly retry broad builds with different exclusions unless each retry addresses an identified failure cause, and report any validation boundary that remains untested.
+
+#### 1. Initial Setup - Check for First Build
+
+Run from the repository root. If the repository-local SDK is not installed, restore it, then activate it before invoking `dotnet` directly. Linux and macOS use the same shell scripts.
+
+Windows (PowerShell):
+```powershell
+if (-not (Test-Path .dotnet\dotnet.exe)) { .\restore.cmd }
+. .\activate.ps1
+```
+
+Linux and macOS (bash or zsh):
+```bash
+if [ ! -x .dotnet/dotnet ]; then ./restore.sh; fi
+source activate.sh
+```
+
+Then check if a full build has already been completed:
+- Look for `artifacts/agent-sentinel.txt` in the repository root
+- If this file exists, skip to step 2
+- If not present, initialize submodules, run the initial build, and create the sentinel file:
+
+Windows (PowerShell):
+```powershell
+git submodule update --init --recursive
+.\eng\build.cmd
+echo "We ran eng\build.cmd successfully" > artifacts\agent-sentinel.txt
+```
+
+Linux and macOS (bash or zsh):
+```bash
+git submodule update --init --recursive
+./eng/build.sh
+echo "We ran eng/build.sh successfully" > artifacts/agent-sentinel.txt
+```
+
+**Always initialize submodules first in a fresh worktree.** Components code depends transitively on `src\submodules\MessagePack-CSharp`; without it the build fails on unresolved MessagePack types. Worktrees do not inherit the submodules of the checkout they were created from, so do this once per worktree.
+
+#### Standard build flags
+
+Unless you are specifically working on IIS, append `-p:UseIisNativeAssets=false` to every `dotnet build` in this repo. Components work never needs the ANCM native assets, and without this flag builds that pull in IIS projects fail because ANCM has not been built. The commands below already include it.
+
+#### 2. Check that JavaScript Assets are Fresh
+
+The .NET Debug build consumes `src\Components\Web.JS\dist\Debug\_framework\blazor.web.js`. A stale bundle produces **no error** - tests and samples simply behave as if your `.ts` change was never made.
+
+Before running tests or samples, verify the bundle is newer than the newest `.ts` source. Run from the repository root.
+
+PowerShell:
+```powershell
+$newest = Get-ChildItem src\Components\Web.JS\src -Recurse -Filter *.ts | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+$bundle = Get-Item src\Components\Web.JS\dist\Debug\_framework\blazor.web.js -ErrorAction SilentlyContinue
+if (-not $bundle -or $bundle.LastWriteTimeUtc -lt $newest.LastWriteTimeUtc) { "STALE" } else { "fresh" }
+```
+
+bash:
+```bash
+bundle=src/Components/Web.JS/dist/Debug/_framework/blazor.web.js
+if [ ! -f "$bundle" ] || [ -n "$(find src/Components/Web.JS/src -name '*.ts' -newer "$bundle" -print | head -n 1)" ]; then echo STALE; else echo fresh; fi
+```
+
+- If it reports `STALE`, run `npm run build` from `src\Components\Web.JS`, then re-run the check.
+- Always use `npm run build`. **Never** use `npm run build:production` on its own: it writes only `dist\Release` and leaves `dist\Debug` stale, so the Debug build keeps using your old code.
+- Re-run this check after any `git stash`, `git checkout -- <path>`, or branch switch that touches a `.ts` file - those change the sources without rebuilding the bundle.
+
+#### 3. Iterating on C# Changes
+
+**Most of the time (no dependency changes):**
+```bash
+dotnet build --no-restore -v:q -p:UseIisNativeAssets=false
+```
+
+Or with `eng\build.cmd`:
+```bash
+.\eng\build.cmd -NoRestore -NoBuildDeps -NoBuildNative -NoBuildNodeJS -NoBuildJava -NoBuildInstallers -verbosity:quiet /p:UseIisNativeAssets=false
+```
+
+**When you've added/changed project references or package dependencies:**
+
+First restore:
+```bash
+.\restore.cmd
+```
+
+Then build:
+```bash
+dotnet build --no-restore -v:q -p:UseIisNativeAssets=false
+```
+
+**Note:** The `-v:q` (or `-verbosity:quiet`) flag minimizes build output to only show success/failure and error details. Remove this flag if you need to see detailed build output for debugging.
+
+#### 4. Building Individual Projects (Fixing Build Errors)
+
+When fixing build errors in a specific project, you can build just that project without its dependencies for even faster iteration:
+
+```bash
+dotnet build <path-to-project.csproj> --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false
+```
+
+**When to use `--no-dependencies`:**
+- Fixing compilation errors in a single project (syntax errors, type errors, etc.)
+- Making isolated changes that don't affect project references
+- Rapid iteration on a specific library
+
+**When NOT to use `--no-dependencies`:**
+- You've changed public APIs that other projects depend on
+- You need to verify that dependent projects still compile correctly
+- You're unsure if your changes affect other projects (safer to build without this flag)
+
+**Example:**
+```bash
+# Fix a compilation error in Components.Endpoints
+dotnet build src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false
+```
+
+#### Quick Reference
+
+1. **Before invoking `dotnet`**: Install the repository-local SDK if it is absent (`.\restore.cmd` on Windows, `./restore.sh` on Linux/macOS), then activate it (`. .\activate.ps1` on Windows, `source activate.sh` on Linux/macOS)
+2. **First build only**: `git submodule update --init --recursive` → `.\eng\build.cmd` (Windows) or `./eng/build.sh` (Linux/macOS) → create `artifacts/agent-sentinel.txt`
+3. **Check JS assets are fresh**: Verify `src\Components\Web.JS\dist\Debug\_framework\blazor.web.js` is newer than the newest `.ts` source (see step 2 above for the command); run `npm run build` - never `build:production` alone - if `STALE`
+4. **Most C# changes**: `dotnet build --no-restore -v:q -p:UseIisNativeAssets=false`
+5. **Fixing build errors in one project**: `dotnet build <project.csproj> --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false`
+6. **Added/changed dependencies**: Run `.\restore.cmd` first, then use step 4
+7. **Always pass `-p:UseIisNativeAssets=false`** unless you are working on IIS - Components never needs ANCM native assets
+
+### E2E Testing Structure
+
+Components E2E tests use xUnit and Selenium and live in `src/Components/test/E2ETest`. Their applications come from established `testassets` and `benchmarkapps` locations across Components, and `Components.TestServer` launches the scenario-specific servers. Reuse those applications and avoid adding new startup files unless strictly necessary.
+
+Do not use `Microsoft.AspNetCore.Components.Testing` unless the request explicitly targets that project or asks to use it.
+
+### Running E2E Tests Manually
+
+1. **Build the tests**: Follow the build instructions to build the E2E test project and its dependencies.
+2. **Start Components.TestServer**:
+   ```bash
+   cd src\Components\test\testassets\Components.TestServer
+   dotnet run --project Components.TestServer.csproj -p:UseIisNativeAssets=false
+   ```
+3. **Navigate to the test server** - The main server runs on `http://127.0.0.1:5019/subdir`
+4. **Select a test scenario** - The main page shows a dropdown with all available test components
+5. **Reproduce the scenario** to verify it works the same way as in the sample
+
+Note: There are also other server instances launched for different test configurations (authentication, CORS, prerendering, etc.). These are listed in the "scenarios" table on the main page.
+
+### Understanding Logging Configuration
+
+#### Server-side (.NET) Logging
+
+The server uses `Microsoft.Extensions.Logging.Testing.TestSink` for capturing logs. Log configuration is in `Program.cs`:
+
+```csharp
+.ConfigureLogging((ctx, lb) =>
+{
+    TestSink sink = new TestSink();
+    lb.AddProvider(new TestLoggerProvider(sink));
+    lb.Services.Add(ServiceDescriptor.Singleton(sink));
+})
+```
+
+#### Client-side (Blazor WebAssembly) Logging
+
+Logs appear in the browser console. Log levels:
+- Logs with `warn:` prefix are Warning level
+- Logs with `info:` prefix are Information level
+- Logs with `fail:` prefix are Error level
+
+The Blazor WebAssembly log level can be configured at startup:
+
+```javascript
+Blazor.start({
+    logLevel: 1 // LogLevel.Debug
+});
+```
+
+LogLevel values: Trace=0, Debug=1, Information=2, Warning=3, Error=4, Critical=5
+
+For Server-side Blazor (SignalR):
+```javascript
+Blazor.start({
+    circuit: {
+        configureSignalR: builder => {
+            builder.configureLogging("debug") // LogLevel.Debug
+        }
+    }
+});
+```
+
+#### Viewing Logs in Playwright
+
+Use `browser_console_messages` to see JavaScript console output including .NET logs routed to the console.
+
+### Creating E2E Tests
+
+The Selenium E2E tests are located in `src/Components/test/E2ETest`.
+
+1. First, check if there are already E2E tests for the component/feature area you're working on
+2. Try to add an additional test to existing test files when possible
+3. When adding test coverage, prefer extending existing test components and assets over creating a set of new ones if it doesn't complicate the existing ones excessively. This reduces test infrastructure complexity and keeps related scenarios together.
+4. Regression tests for lifecycle-sensitive behavior must exercise the render boundary that owns the relevant DOM. A page-level render mode can leave the surrounding layout static, so verify that the DOM under test is actually hydrated or replaced.
+5. When the behavior under test is owned by generated template content, prefer extending the existing browser tests in `src/ProjectTemplates/test/Templates.Blazor.Tests` over duplicating the scenario in Components E2E.
+
+For telemetry or distributed-state behavior, assert the real consumer-visible output rather than only an internal component probe. Capture exported activities, metrics, or state; correlate the scenario with a unique test ID and expose a test endpoint when needed; and assert operation names, tags, links, and platform-specific metadata relevant to the contract.
+
+### Running E2E Tests
+
+This E2E suite uses Selenium. To build and run tests:
+
+```bash
+# Build the E2E test project and its dependencies
+dotnet build src/Components/test/E2ETest/Microsoft.AspNetCore.Components.E2ETests.csproj --no-restore -v:q -p:UseIisNativeAssets=false
+
+# After the build succeeds, run a specific test
+dotnet test src/Components/test/E2ETest/Microsoft.AspNetCore.Components.E2ETests.csproj --no-build --filter "FullyQualifiedName~TestName"
+```
+
+`-p:UseIisNativeAssets=false` is required here: the E2E project transitively references IIS projects that otherwise fail because ANCM has not been built. If this build instead fails on MessagePack types, your submodules are not initialized - see step 1 of the Efficient Build Strategy.
+
+For the first E2E run in a fresh worktree, or after relevant build, configuration, or output changes, run the dependency-aware build above. Do not use `--no-dependencies` to prepare E2E tests when referenced test-app outputs may be stale or missing. It may copy existing dependency outputs, but it does not rebuild referenced projects or apps. After the build succeeds, `--no-build` is the supported fast loop for repeated targeted tests while those inputs remain unchanged.
+
+### Running Native AOT E2E Tests
+
+Complete steps 1 and 2 of the Efficient Build Strategy first. `NativeAotTestApp.E2E.Tests` is a Microsoft.Testing.Platform executable, so run only the targeted test through `dotnet run`, not `dotnet test`:
+
+```bash
+dotnet run --project src/Components/Testing/testassets/NativeAotTestApp.E2E.Tests/NativeAotTestApp.E2E.Tests.csproj -p:UseIisNativeAssets=false -- --filter "FullyQualifiedName~TestName"
+```
+
+This single-line form works in PowerShell, bash, and zsh; `dotnet` accepts `/` path separators on Windows.
+
+**Important**: Never run all E2E tests locally as that is extremely costly. Full test runs should only happen on CI machines.
+
+If a test is failing, it's best to run the server manually and navigate to the test to investigate. The test output won't be very useful for debugging.
+
+d74aabb50ba06f6854d52fe6572d857deb56c3f6 blob 496
+---
+description: Instructions for folder 'src\Components'
+applyTo: "src/Components/**"
+---
+
+When working on issues in the Components area, follow the instructions in
+[src/Components/AGENTS.md](../../src/Components/AGENTS.md) and consult the relevant sections of the
+[Blazor and Components guidance](../../docs/BlazorComponentsGuidance.md).
+
+For Components Server behavior, including shared code used by the server, also follow
+[Components Server instructions](components.server.instructions.md).
+
+261e575040e4dd8e96f7a333395bc402f44cfea9 blob 1277
+---
+description: Instructions for Components Server and Endpoints
+applyTo: "src/Components/Server/**,src/Components/Endpoints/**"
+---
+
+## Logging and operational signals
+
+* Before adding or promoting a log to `Warning`, `Error`, or `Critical`, trace all paths that can emit it, including paths driven by untrusted input. Treat changes to log severity as changes to operational behavior, not just diagnostic visibility.
+* Do not emit alert-oriented logs solely because a client supplies invalid input, violates the protocol, requests an invalid state transition, or disconnects. Follow the area's established lower-severity logging conventions for these cases.
+* Do not promote a shared catch-all log to diagnose one application failure when the same catch also handles client-input failures. Separate the failure categories and log application configuration errors or server defects at the appropriate severity. Client reachability alone does not make a genuine server failure a client-input error.
+* When changing logging behavior, add coverage for both the intended application failure and representative invalid-client-input paths. Exercise the real parsing, validation, and dispatch path, and assert that invalid client input does not produce the new alert-oriented event.
+
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+cd56b18b3ec0663e134e1c316f454b7e3fb5ec7b blob 16083
+# Blazor Components guidance
+
+This guidance covers ASP.NET Core Blazor and Razor Components work under `src/Components/**` —
+rendering, lifecycle, render modes, JS interop, navigation, forms, and interactive Server circuits.
+Consult the relevant sections alongside the requested task and applicable repository and area
+instructions.
+
+The [Blazor Components architecture](../src/Components/ARCHITECTURE.md) is the canonical composition
+and ownership model for `src/Components`. This guide complements it with task-oriented change and
+validation guidance rather than defining a separate architecture.
+
+## Overarching principles
+
+- **Choose representative scenarios:** cover the render modes and lifecycle transitions affected by the change, including mixed-runtime cases where relevant.
+- **Treat JS interop and browser state as availability- and lifetime-sensitive:** `IJSRuntime`, `IJSObjectReference`, `ElementReference`, DOM callbacks, and browser resources need render-mode guards and deterministic cleanup.
+
+## Topics
+
+### Scope, layering, and public API shape
+
+- When changing shared abstractions, check consumers in other affected hosts for new environment-specific dependencies.
+- Public Components and JS interop APIs must have narrow names that describe the scenario, preserve existing overload compatibility, and expose only genuinely general extension points.
+- Use `Microsoft.Extensions.Options` and idempotent DI registration patterns for framework configuration; avoid duplicate registrations or hidden dependencies omitted by slim builders.
+- Keep source-generated or framework-only plumbing internal unless public generation contracts require access; expose strongly typed surfaces rather than untyped internal mechanisms.
+- For Components APIs, follow the [consumer-facing XML-documentation boundary](../src/Components/AGENTS.md#code-clarity-and-durable-knowledge); generic JSInterop APIs still require XML documentation for consumer-observable behavior, not internal lifecycle narration.
+
+### Render modes and hosting boundaries
+
+- For changes crossing Components renderers, runtimes, or DI scopes, use the [cross-runtime design checkpoint](../src/Components/AGENTS.md#cross-runtime-design-checkpoint) to select relevant render-mode cells and exclusions. Retain explicit static SSR, streaming, and rehydration checks when affected; do not infer correctness from one render mode.
+- Root-component and render-mode APIs must carry only serializable parameters and required metadata across process or host boundaries, including parameter definitions needed for unmatched values.
+- Cover Auto activation with both cached and uncached WebAssembly resources, including resources becoming available while an existing root remains active.
+- If a host cannot understand a known render-mode marker or descriptor, ignore unsupported host-specific markers where safe instead of failing unrelated startup paths.
+
+### Prerendering, static SSR, streaming, and state persistence
+
+- Check browser-dependent initialization with prerendering enabled and disabled, including JS interop, `ElementReference`, and DOM access.
+- For prerendered components, check restored parameters, state, and user-visible side effects across activation; cover both persisted-state reuse and initialization when no state is available.
+- Cover overlapping enhanced navigations with delayed streaming updates; verify the final DOM belongs to the latest navigation.
+- Persisted component state should serialize only required data; protect Server-consumed state with ASP.NET Core data protection, exclude secrets from WebAssembly or Auto client-readable state, and persist metadata and state atomically under consistent size limits.
+- Track quiescence through existing renderer and `SetParametersAsync` task flows rather than new public wait hooks unless the extension point is broadly useful.
+
+### Lifecycle, async flow, and renderer synchronization
+
+- Distinguish `SetParametersAsync`, `OnInitialized{Async}`, `OnParametersSet{Async}`, and `OnAfterRender{Async}`; initialization, parameter-change handling, and DOM-dependent work must be in the correct lifecycle stage.
+- Validate `ComponentBase` lifecycle changes against synchronous success, asynchronous success, cancellation, and exception paths, including `ErrorBoundary` wrapping and resulting `StateHasChanged` behavior.
+- For asynchronous lifecycle changes, cover an incomplete await followed by a new parameter update, event, or disposal before the continuation resumes.
+- Do not call `StateHasChanged` redundantly after normal event callbacks when the framework already rerenders; call it explicitly for external updates that bypass parameter binding or event dispatch.
+- For fire-and-forget work started by a component callback, check that exceptions and cancellation remain observable when the component is disposed.
+
+### Parameters, cascading values, and binding
+
+- Component parameter names and deserialization must remain case-insensitive, including prerendered, restored, and transport payload paths.
+- Treat `ParameterView` as batch-scoped data; do not retain old views after pooled render data can be recycled, and test helper APIs as well as enumeration.
+- Framework-supplied parameters, including form-bound values, may overwrite property initializers; defaults that must survive binding belong in lifecycle logic.
+- Required, optional, cascading, and two-way bound parameters should expose clear contracts, nullability, and validation without depending on a specific application binding framework.
+- Prefer `EventCallback` and `Value`/`ValueChanged`/`ValueExpression` patterns that preserve async callbacks, validation, and parent-child synchronization.
+
+### Rendering, diffing, DOM synchronization, sections, and virtualization
+
+- `RenderTreeBuilder` sequence numbers, regions, stable sorts, and degenerate comparisons must tolerate valid compiler/runtime call patterns without corrupting render batches.
+- Use stable `@key` and component identity rules when preserving instances matters; weak or unstable identifiers may recreate components but must not break app correctness.
+- For DOM synchronization changes, cover interactive render batches alongside enhanced-navigation document updates so component updates do not overwrite unrelated content.
+- Virtualization and scroll-convergence logic should use narrow DOM signals, guard against browser overflow anchoring, and avoid MutationObserver feedback loops triggered by unrelated DOM churn.
+- Section, head, title, and attribute updates should preserve user-provided attributes and target the semantically correct DOM node without unnecessary markup or global selectors.
+
+### Events, callbacks, navigation, and enhanced navigation
+
+- Event dispatch must preserve cancellation and exception semantics; real handler failures should flow through the host's explicit error path, not be swallowed or double-reported.
+- Custom browser event args require intentional opt-in before untrusted browser data is deserialized, while built-in DOM events must keep their known `EventArgs` mappings for compatibility.
+- Location-changing and navigation interception APIs need awaitable handlers, history state, deterministic cancellation, observable outcomes when exposed, and parity between programmatic and JS-initiated navigation.
+- Preserve Blazor's inbound route precedence: compare segments from left to right; for simple segments, literal segments precede constrained parameters, unconstrained parameters, constrained catch-all parameters, and unconstrained catch-all parameters. Optionality is not a precedence tie-breaker: `/users/{id}` and `/users/{id?}` must be rejected as ambiguous rather than preferring the required parameter. Supplemental implementation/test references: [`RoutePrecedence.ComputeInbound`](../src/Http/Routing/src/Template/RoutePrecedence.cs) and [`RouteTableFactoryTests.ThrowsForOptionalParametersAndNonOptionalParameters`](../src/Components/Components/test/Routing/RouteTableFactoryTests.cs).
+- Preserve exclusions for download and non-navigation links, real page loads for external replace-history navigation, and server/client `NavigationManager` synchronization.
+- Enhanced form and navigation tests should use explicit promises, per-test storage IDs, and isolated hooks instead of timeouts or shared ambient state.
+
+### JS interop, browser APIs, and serialization
+
+- `IJSRuntime` calls must be guarded by render-mode availability: unavailable during static SSR or prerendering, disconnect-prone on Server, and asynchronous across host boundaries unless a sync contract is explicit.
+- Preserve public JS interop surface compatibility, including low-level runtime entry points, nullability, `params` argument behavior, and caller-selected result types.
+- Dispose `IJSObjectReference`, `DotNetObjectReference`, event listeners, modules, and browser object URLs deterministically; tolerate expected disconnect failures during cleanup.
+- JS interop payloads on hot paths should minimize round trips, payload size, marshaling, and object identity duplication; prefer existing object-reference infrastructure over parallel channels.
+- Use source-generated JSON serialization contexts where reflection would break trimming/AOT or add unsupported runtime dependencies; keep browser data normalization precise and platform-faithful.
+
+### Disposal, cancellation, circuits, and resource ownership
+
+- Implement `IDisposable` and `IAsyncDisposable` according to the resource being owned; async-only cleanup should not be hidden behind a synchronous path that blocks or skips required work.
+- Components and services must unsubscribe from long-lived events, cancel timers and pending operations, dispose JS references, and prevent callbacks after component or circuit disposal.
+- Cancellation should cancel work before disposal invalidates state; call `Cancel` before disposing token sources when consumers may still observe cancellation.
+- Open interactive Server circuits before accepting JS interop, but keep long-running initialization in awaitable paths that tests and error handling can observe.
+- For caches or services shared across renderers or circuits, cover concurrent access independently of the component lifecycle tests.
+
+### Forms, validation, antiforgery, and file handling
+
+- `EditForm`, `EditContext`, `FieldIdentifier`, validation message components, and form CSS policy should compose through existing forms infrastructure instead of duplicating reflection or field-resolution logic.
+- Form identity and field equality must use reference-appropriate semantics so model overrides cannot corrupt edit tracking or validation state.
+- Enhanced form posts, streaming form rendering, and traditional submissions need distinct handling that preserves validation, state updates, and error reporting.
+- Browser-facing file APIs must expose explicit size and count limits, validate at the component or callback boundary, and account for Blazor Server resource exhaustion.
+- Client-side downloads should keep Blob and `createObjectURL` as the compatibility baseline, but large downloads should prefer streaming-capable browser APIs to avoid buffering entire files or exhausting browser memory.
+- Antiforgery tokens and form-related persistent state must survive Server, WebAssembly, Auto, and static SSR transitions without leaking or trusting client-modifiable data.
+
+### Security and trust boundaries
+
+- Treat interactive Server circuits as authenticated, stateful connections whose authentication changes, reconnects, JS callbacks, and persisted state require explicit synchronization or reload behavior.
+- Do not override protocol-critical authentication settings at runtime; OIDC and remote-auth flows must honor configured security semantics.
+- Keep OIDC, antiforgery, and Data Protection primitive changes in their owning security infrastructure while reviewing Components integration, interactive Server circuits, and component-state security here.
+- Use `MarkupString` only for trusted content and ensure browser-deserialized event or form data cannot cross into privileged .NET code without intentional validation.
+- Server-consumed component-state payloads embedded in HTML or transport data should be encrypted and integrity-protected; WebAssembly or Auto client-readable payloads must contain no secrets, and all modes should avoid exposing full type names or internal structure unless required for correctness.
+- Browser features with security headers, such as multithreaded WebAssembly or `SharedArrayBuffer`, must set the required cross-origin policies when enabled.
+
+### WebAssembly boot, static assets, and build packaging
+
+- WebAssembly boot should respect `@microsoft/dotnet-runtime` ownership of resource loading; custom loaders must preserve the runtime integrity contract, and local hashes should remain deterministic Auto cache-readiness heuristics rather than timing-based fallbacks.
+- Boot manifests should include only runtime resource kinds the loader understands; unrelated static assets belong in static web asset manifests, not boot metadata.
+- Static web asset base paths, publish layouts, and hosted/standalone outputs must handle collisions explicitly and use segment-aware path rewrites.
+- Build tasks should avoid version-sensitive runtime dependencies that are unsafe in MSBuild task hosts and regenerate outputs only when meaningful inputs change.
+- For publish-time trimming and Native AOT validation, follow [trimming behavior guidance](Trimming.md#validate-trimming-behavior). AOT, trimming, lazy-loaded assemblies, and source-generated serialization changes still need tests or annotations that survive publish, not local suppressions that disappear.
+
+### Tests, diagnostics, and repo fit
+
+- Apply the [repository test requirements](../CONTRIBUTING.md#tests), [faithful-validation requirements](../.github/copilot-instructions.md#running-tests), and the [Components permanent regression test boundary](../src/Components/AGENTS.md#permanent-regression-test-boundary) when validating changed behavior. Add focused unit, E2E, or browser tests across relevant render modes; include prerendering, interactivity, navigation, forms, serialization, cancellation, disposal, and error paths when affected. For Components E2E work, also follow [Components E2E guidance](../src/Components/AGENTS.md#creating-e2e-tests); generic `Microsoft.JSInterop`-only library work under `src/Components/JSInterop/` (outside `src/Components/Web.JS/` or Components UI/browser runtime paths) does not inherit that boundary or workflow. In `src/Components/Web.JS/`, the lower-boundary allowance for JavaScript or TypeScript unit tests (pure helpers, structural DOM or DOM-synchronization algorithms on ordinary nodes or templates/fragments that assert identity or document structure, manager callback or timer-state contracts, and validation-engine contracts) applies only when that deterministic module contract is the final observable and the harness faithfully supplies its inputs; when changed behavior is produced or observed through an end-to-end circuit, reconnection, navigation, or browser-interop flow and is covered only by `.test.ts` tests that mock transport or runtime collaborators, bypass construction or mutate internal state directly, or invoke registered callbacks manually across separate tests instead of exercising the real producer-to-UI flow in `src/Components/test/E2ETest`, report a test-boundary finding.
+- Blazor async tests should be deterministic: use `TaskCompletionSource`, cancellation registration, explicit browser promises, and direct completion hooks rather than delays or timing-sensitive polling.
+- Assert non-default observable values, browser console/network behavior, render output, route selection, validation messages, logs, and resource cleanup instead of mirroring helper implementation.
+- Keep diagnostics actionable but not noisy: use existing .NET or browser logging channels, include recovery guidance for deployment or startup races, and avoid masking unexpected errors with console-only logging.
+
+c599044ffb39165e718dd1b6223f5c9e1b999924 blob 16870
+# Cross-cutting guidance
+
+This guidance covers ASP.NET Core source work. Consult the relevant sections alongside the
+requested task and applicable repository and area instructions.
+
+## Overarching principles
+
+- Preserve compatibility and public API discipline over local convenience. New APIs, constructors, options, packages, templates, analyzer IDs, and shared-framework metadata become long-lived contracts.
+- Prefer existing ASP.NET Core, BCL, SDK, and repository infrastructure over custom helpers. Add abstractions only when they keep user code testable, composable, and stable.
+- Treat nullability, validation, cancellation, disposal, and thread-safety annotations as executable design contracts, not comments.
+- Separate startup, build-time, analyzer-time, and hot-path runtime work. Per-request, per-diagnostic, file-watcher, and template paths need allocation, caching, and determinism scrutiny.
+- Treat filesystem paths, tool commands, configuration, generated output, logs, and package attribution as trust boundaries that can regress even when builds and tests pass.
+
+## Topics
+
+### Cross-cutting scope and change shape
+
+- Apply the [contribution scope requirements](../CONTRIBUTING.md#before-submitting-the-pull-request) to product, tool, template, analyzer, and test-utility changes, including unrelated file moves, generated-file churn, version churn, and refactors beyond the affected scenario.
+- Preserve ownership boundaries between product code, shared source, templates, test infrastructure, and build infrastructure; do not expose shared implementation details through public namespaces or packages.
+- Prefer established shared helpers for process handling, retries, cancellation, file enumeration, CLI parsing, package metadata, and test hosting before adding one-off infrastructure.
+- Remove vestigial debug hooks, unused files, stale comments, obsolete workarounds, and duplicate conditional logic only once the scenario they protected is understood and still covered.
+
+### Public API surface, compatibility, and lifecycle
+
+- Minimize public surface area; keep speculative hooks, options, extension points, and constructor overloads internal until a demonstrated scenario and API review justify them.
+- Preserve public member names, constructor signatures, enum values, default option values, extension-method behavior, analyzer IDs, template identifiers, package identities, and shared-framework metadata unless the breaking change is deliberate and reviewed.
+- Use `[Obsolete]` with actionable migration guidance for deprecated APIs, and keep parallel or additive overloads when compatibility requires old members to remain.
+- Use applicable public API design criteria for changed public/protected APIs and shipped defaults/conventions. The [API review process](APIReviewProcess.md#process) governs that process; verify any concern against source signatures and contracts rather than reporting a design preference as a defect.
+- Public XML docs must accurately describe purpose, parameters, return values, exceptions, defaults, consumer-observable lifecycle, and non-obvious examples for IntelliSense and generated docs; follow the repository's [public XML-documentation requirement](../.github/copilot-instructions.md#formatting).
+
+### Nullability, validation, and correctness invariants
+
+- Validate public API arguments and externally supplied data at entry points with precise exception types, parameter names, and actionable messages; do not let invalid input surface later as `NullReferenceException` or an ambiguous failure.
+- Keep nullable annotations, member initialization, `MemberNotNull`-style attributes, and guard clauses aligned with real control-flow invariants; do not use annotations to hide possible null states.
+- Model unknown, unsupported, or partially restored states explicitly instead of silently mapping them into an existing known bucket; keep classification separate from filtering so tests can prove both.
+- Preserve producer-consumer invariants for buffers, streams, collections, and generated metadata; never advance, reuse, mutate, or expose data beyond what the owner granted.
+- Use explicit comparers, culture rules, and case-sensitivity decisions for strings, keys, file names, template identifiers, and configuration names when default equality is not the contract.
+
+### Async, cancellation, and background work
+
+- Use Task-based async through the whole call chain; avoid `.Result`, `.Wait()`, sync-over-async wrappers, and synchronous exception behavior that differs from the async contract.
+- Flow `CancellationToken` to cancellation-aware async I/O, process execution, analyzer APIs, and long-running test utility APIs; for `IFileProvider.Watch` and file-change notifications, manage `IChangeToken` registration and disposable lifetimes through a documented shutdown path.
+- Use `ConfigureAwait(false)` in library code that should not capture a synchronization context, while preserving app/test patterns that intentionally rely on one.
+- Wrap fire-and-forget or callback-started async work in explicit error handling so failures are observed, logged, or propagated instead of crashing later or being silently swallowed.
+- Prefer `IAsyncDisposable` and async fixture/helper patterns when cleanup is asynchronous; do not block during teardown or replace cancellation with unsafe object nulling.
+
+### Performance, allocations, caching, and pooling
+
+- Determine whether code runs at startup, build time, analyzer time, or on a hot runtime path before raising performance findings; optimize hot paths and repeated analyzer traversals first.
+- Minimize avoidable allocations in per-request, per-diagnostic, file-provider, localization, cache, and template-generation paths using spans, pooled buffers, capacity hints, cached symbols, and lazy computation where they materially help.
+- Use object pooling, `ArrayPool<T>`, shared immutable singleton results, and cache consolidation only when ownership, reset, invalidation, contention, and lifetime semantics are clear.
+- Defer expensive or failure-prone work until a caller needs it; avoid constructor, registration, or startup work that eagerly resolves files, assemblies, projects, reflection, or external tools without benefit.
+- Measure durations with elapsed-time APIs and keep benchmark or performance validation focused on the changed path rather than wall-clock or environment-sensitive measurements.
+
+### Resource lifetime, disposal, and I/O
+
+- Types owning streams, file watchers, pooled buffers, processes, temporary artifacts, native handles, subscriptions, or listeners must make ownership explicit and release deterministically on success, failure, replacement, and cancellation paths.
+- Implement `IDisposable`, `IAsyncDisposable`, `SafeHandle`, or try/finally according to the resource owned; do not hide cleanup in unrelated lifecycle methods.
+- APIs that start registrations, watches, listeners, or background work must prevent repeated starts from leaking prior instances and define whether the caller or callee owns disposal.
+- Use `IFileProvider` for virtual/read-only file access, plus path APIs and platform helpers instead of hard-coded separators, working-directory assumptions, or string concatenation; use `System.IO` or explicit writable abstractions when code must create, write, move, or delete files.
+- Treat files, directories, generated outputs, and tool inputs as race-prone: they can be missing, locked, replaced, case-sensitive, URI-shaped, or deleted between an existence check and use.
+
+### Thread-safety, shared state, and lazy initialization
+
+- Protect shared mutable state with locks, immutable snapshots, concurrent collections, or one-time initialization that preserves the invariant, not just individual operations.
+- Document thread-safety guarantees for caches, options snapshots, pools, file providers, analyzers, and shared singleton services when callers can access them concurrently.
+- Do not dispose or null shared `CancellationTokenSource`, watcher, logger, cache, or pooled state while callbacks or lazy work may still observe it; cancel first and coordinate completion.
+- Keep lock scopes readable; avoid callbacks, logging fan-out, async continuations, or service resolution while holding a lock unless the reentrancy and deadlock behavior is intentional.
+- Use immutable or readonly fields for configuration and shared dependencies after construction; mutable static state needs a concurrency and test-isolation reason.
+
+### Options, configuration, and dependency injection
+
+- Use `IConfiguration`, options, and DI for configurable behavior; avoid hard-coded values, environment-specific branches, hidden mutable/environmental static dependencies, or service locators in product APIs, while allowing established factories and BCL shared pools such as `ObjectPool.Create<T>` and `ArrayPool<T>.Shared` when ownership and lifetime semantics are clear.
+- Keep configuration keys, option names, defaults, environment-variable mappings, generated element IDs, and casing stable across providers, and document them when users can depend on them.
+- Add configuration knobs only for demonstrated scenarios; choose safe defaults and validate options early enough that failures point to the invalid setting.
+- Match DI lifetimes to the dependencies they capture; use idempotent `TryAdd`/`TryAddEnumerable` registration when repeated calls should compose with user services.
+- Keep compile-time and runtime configuration distinct: MSBuild properties, runtime host configuration, package metadata, and user options must not drift or leak into the wrong layer.
+
+### Diagnostics, logging, exceptions, and tool output
+
+- Throw specific exceptions with contextual messages for invalid input, unsupported states, timeouts, external command failures, and configuration errors; catch only exceptions you can handle or enrich.
+- For a new or broadened catch, distinguish the original operation failure from secondary failures in logging, cleanup, callbacks, or recovery. Trace what each catch observes, preserves, propagates, or silently loses. Preserving the original error does not by itself justify suppressing a secondary failure; verify the target contract for expected or best-effort handling. A PR-added test establishes implementation intent, not independent authority for that policy. Do not treat every empty catch as a defect: when a reachable failure is newly suppressed but the required policy is unestablished, return the concrete changed edge, observable effect, and missing contract as unresolved rather than LGTM or a proven defect.
+- Keep diagnostics actionable — include the invalid value, path, key, package, tool, timeout, or operation where useful — without leaking sensitive data or stack traces in normal output.
+- Use structured `ILogger`, EventSource, analyzer diagnostics, and console output at levels matching success, warning, failure, and verbose detail; do not add noisy hot-path logs.
+- For tools and scripts, separate normal output from diagnostics, preserve readable ordering under parallel execution, handle no-op cases gracefully, and suppress presentation features when output is redirected.
+- Analyzer diagnostics need stable IDs, clear messages, help links, generated-code suppression where appropriate, and tests that verify locations and examples.
+
+### Trust boundaries, security, and sensitive data
+
+- Treat file-provider inputs, physical paths, generated outputs, and tool/configuration values as untrusted at boundaries; normalize and validate roots before opening files so traversal, symlink escape, URI confusion, or provider mismatch cannot bypass the intended scope.
+- Construct process, script, MSBuild, and external tool invocations with argument lists, response files, and repository helpers; do not concatenate untrusted values into shell commands, script fragments, or properties where command/process injection or quoting bugs can change behavior.
+- Redact secrets, connection strings, tokens, user secrets, credentials, sensitive environment values, and unnecessary local paths from logs, exceptions, diagnostics, generated files, and test artifacts.
+- Keep security-sensitive defaults fail-closed and preserve validation at trust boundaries even when the changed path is primarily configuration, templates, tests, or tooling.
+
+### Localization, text, paths, and cross-platform behavior
+
+- Externalize user-facing strings through resource/localization infrastructure and keep culture, UI culture, fallback, satellite-assembly, and formatting behavior explicit.
+- Use culture-aware or ordinal string APIs per the contract; avoid locale-specific assumptions in identifiers, paths, configuration keys, analyzer comparisons, and persisted values.
+- Handle text encoding, line endings, and persisted or protocol output deliberately, using canonical repo/protocol formatting instead of platform defaults when tools consume the output.
+- Detect operating system, architecture, target framework, SDK, and host capabilities through supported APIs or MSBuild metadata; avoid hard-coded platform configuration or unsupported path assumptions.
+- Keep platform-specific tests explicit with platform skip conditions, queue conditions, and separate scenarios rather than burying incompatible behavior in conditional test bodies.
+
+### Analyzers, reflection, source generation, trimming, and AOT
+
+- Analyzer logic may stay syntax-only when syntax fully proves the diagnostic; add semantic models, symbols, and related or multiple locations only when needed for correctness, symbol identity, partial declarations, or actionable fixes, and avoid false positives in generated code.
+- Cache repeated Roslyn symbol, type, and syntax lookups; combine tree traversal with diagnostic construction when it avoids redundant reflection or compilation work.
+- Keep analyzer and code-fix packaging lean; avoid heavy workspace dependencies in analyzer assemblies unless necessary for the shipped scenario.
+- Prefer explicit reflection lookups, generic constraints, source-generated metadata, and annotated APIs over broad reflection scans that are fragile under trimming or AOT.
+- For shared-framework or template changes whose behavior depends on metadata availability, use the repository's [publish-time trimming and Native AOT validation procedure](Trimming.md#validate-trimming-behavior), including source-generated metadata paths.
+
+### Build, packaging, shared framework, and templates
+
+- Preserve layouts, package metadata, target names, template identifiers, shared-framework inclusions, reference/runtime asset separation, and SDK/tooling compatibility that downstream consumers already load.
+- Keep shared build values single-sourced and narrowly scoped; prefer authoritative project metadata over duplicate opt-in properties, and avoid repository-wide imports or suppressions for local issues.
+- Update interrelated dependency versions, feed settings, source-commit metadata, and parent relationships as a coherent set; pin versions when reproducibility or host compatibility matters.
+- Validate MSBuild conditions, item metadata, glob depth, command-line escaping, response-file usage, and path normalization carefully, since small mistakes can silently disable build or packaging logic.
+- Dependency, package, or license changes must maintain third-party attribution artifacts such as `THIRD-PARTY-NOTICES.txt`; passing builds or tests can still hide a notice, license metadata, or attribution regression.
+- In templates and widely used assets, avoid speculative churn; reserve unique identifiers, keep generated output stable, and add behavior changes only for demonstrated scenarios with tests.
+
+### Tests, determinism, and test utilities
+
+- Apply the [repository test requirements](../CONTRIBUTING.md#tests) and [faithful-validation requirements](../.github/copilot-instructions.md#running-tests). Add focused unit, integration, analyzer, template, or regression tests for changed behavior, covering success, failure, boundary, platform, and previously broken combinations.
+- Assert observable semantics — generated files, diagnostics, logs, configuration keys, exception messages, response headers, package metadata, and resource cleanup — rather than mirroring helper implementation details.
+- Keep tests deterministic: avoid timing-sensitive sleeps, current-working-directory assumptions, hard-coded ports, external service dependencies, order-sensitive output, and shared mutable state.
+- Test infrastructure should use shared helpers for unique paths, ports, retries, process execution, timeouts, output capture, Helix staging, and cleanup instead of duplicating per-test logic.
+- Preserve quarantine, skip conditions, pipeline conditions, and artifact staging until the protected scenario is understood; update the reason or implementation rather than removing the guard.
+
+4d74a722e057f834604ce0af0b055460bdf94546 blob 7176
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Forms.Mapping;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+public class RazorComponentsServiceCollectionExtensionsTest
+{
+    // AddRazorComponents calls AddMetrics, which calls OptionsBuilderExtensions.ValidateOnStart.
+    // As of .NET 11, ValidateOnStart registers IConfigureOptions<StartupValidatorOptions> twice
+    // (one configure action for synchronous validation and one for asynchronous validation), so this
+    // service type is expected to be registered more than once. StartupValidatorOptions is internal to
+    // Microsoft.Extensions.Options, so it is resolved via reflection.
+    private static readonly Type StartupValidatorConfigureOptionsType =
+        typeof(IConfigureOptions<>).MakeGenericType(
+            typeof(IConfigureOptions<>).Assembly.GetType("Microsoft.Extensions.Options.StartupValidatorOptions", throwOnError: true)!);
+
+    [Fact]
+    public void AddRazorComponents_RegistersServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        services.AddSingleton<IWebHostEnvironment>(new TestWebHostEnvironment());
+        // Act
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+        // Assert
+        var singleRegistrationServiceTypes = SingleRegistrationServiceTypes;
+        foreach (var service in services)
+        {
+            if (singleRegistrationServiceTypes.Contains(service.ServiceType))
+            {
+                // 'single-registration' services should only have one implementation registered.
+                AssertServiceCountEquals(services, service.ServiceType, 1);
+            }
+            else
+            {
+                // 'multi-registration' services should not have any duplicate implementation types
+                AssertAllImplementationTypesAreDistinct(services, service.ServiceType);
+            }
+        }
+    }
+
+    [Fact]
+    public void AddRazorComponentsTwice_DoesNotDuplicateServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        services.AddSingleton<IWebHostEnvironment>(new TestWebHostEnvironment());
+
+        // Act
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+        RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+        // Assert
+        var singleRegistrationServiceTypes = SingleRegistrationServiceTypes;
+        foreach (var service in services)
+        {
+            if (singleRegistrationServiceTypes.Contains(service.ServiceType))
+            {
+                // 'single-registration' services should only have one implementation registered.
+                AssertServiceCountEquals(services, service.ServiceType, 1);
+            }
+            else
+            {
+                // 'multi-registration' services should not have any duplicate implementation types
+                AssertAllImplementationTypesAreDistinct(services, service.ServiceType);
+            }
+        }
+    }
+
+    private IEnumerable<Type> SingleRegistrationServiceTypes
+    {
+        get
+        {
+            var services = new ServiceCollection();
+            RazorComponentsServiceCollectionExtensions.AddRazorComponents(services);
+
+            var multiRegistrationServiceTypes = MultiRegistrationServiceTypes;
+            return services
+                .Where(sd => !multiRegistrationServiceTypes.ContainsKey(sd.ServiceType))
+                .Select(sd => sd.ServiceType);
+        }
+    }
+
+    private Dictionary<Type, Type[]> MultiRegistrationServiceTypes
+    {
+        get
+        {
+            return new Dictionary<Type, Type[]>()
+            {
+                [typeof(ICascadingValueSupplier)] = new[]
+                {
+                    typeof(SupplyParameterFromFormValueProvider),
+                    typeof(SupplyParameterFromQueryValueProvider),
+                },
+                [typeof(IPersistentServiceRegistration)] = new[]
+                {
+                    typeof(ResourceCollectionProvider),
+                    typeof(AntiforgeryStateProvider),
+                },
+                [StartupValidatorConfigureOptionsType] = Array.Empty<Type>(),
+            };
+        }
+    }
+
+    private void AssertServiceCountEquals(
+        IServiceCollection services,
+        Type serviceType,
+        int expectedServiceRegistrationCount)
+    {
+        var serviceDescriptors = services.Where(serviceDescriptor => serviceDescriptor.ServiceType == serviceType);
+        var actual = serviceDescriptors.Count();
+
+        Assert.True(
+            (expectedServiceRegistrationCount == actual),
+            $"Expected service type '{serviceType}' to be registered {expectedServiceRegistrationCount}" +
+            $" time(s) but was actually registered {actual} time(s).");
+    }
+
+    private void AssertAllImplementationTypesAreDistinct(
+        IServiceCollection services,
+        Type serviceType)
+    {
+        var serviceProvider = services.BuildServiceProvider();
+        var implementationTypes = services
+            .Where(sd => sd.ServiceType == serviceType)
+            .Select(service => service switch
+            {
+                { ImplementationType: { } type } => type,
+                { ImplementationInstance: { } instance } => instance.GetType(),
+                { ImplementationFactory: { } factory } => factory(serviceProvider).GetType(),
+            })
+            .ToArray();
+
+        if (implementationTypes.Length == 0)
+        {
+            Assert.Fail($"Could not find an implementation type for {serviceType}");
+        }
+        else if (implementationTypes.Length != implementationTypes.Distinct().Count())
+        {
+            Assert.Fail($"Found duplicate implementation types for {serviceType}. Implementation types: {string.Join(", ", implementationTypes.Select(x => x.ToString()))}");
+        }
+    }
+
+    private class TestWebHostEnvironment : IWebHostEnvironment
+    {
+        public string WebRootPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+        public string EnvironmentName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ApplicationName { get; set; } = "App";
+        public string ContentRootPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
+}
+
+171829f951fb0267476eddfd5bdad3cc1a4d1faa blob 7126
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection.Metadata;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Endpoints;
+using Microsoft.AspNetCore.Components.Endpoints.DependencyInjection;
+using Microsoft.AspNetCore.Components.Endpoints.Forms;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Forms.Mapping;
+using Microsoft.AspNetCore.Components.Infrastructure;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
+
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Provides methods for registering services required for server-side rendering of Razor Components.
+/// </summary>
+public static class RazorComponentsServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers services required for server-side rendering of Razor Components.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">An <see cref="Action{RazorComponentOptions}"/> to configure the provided <see cref="RazorComponentsServiceOptions"/>.</param>
+    /// <returns>An <see cref="IRazorComponentsBuilder"/> that can be used to further configure the Razor component services.</returns>
+    [RequiresUnreferencedCode("Razor Components does not currently support trimming or native AOT.", Url = "https://aka.ms/aspnet/nativeaot")]
+    public static IRazorComponentsBuilder AddRazorComponents(this IServiceCollection services, Action<RazorComponentsServiceOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Dependencies
+        services.AddLogging();
+        services.AddAntiforgery();
+
+        services.TryAddSingleton<RazorComponentsMarkerService>();
+
+        // Endpoints
+        services.TryAddSingleton<RazorComponentEndpointDataSourceFactory>();
+        services.TryAddSingleton<RazorComponentEndpointFactory>();
+        if (MetadataUpdater.IsSupported)
+        {
+            services.TryAddSingleton<HotReloadService>();
+        }
+        services.TryAddScoped<IRazorComponentEndpointInvoker, RazorComponentEndpointInvoker>();
+
+        // Common services required for components server side rendering
+        services.TryAddSingleton<ServerComponentSerializer>(services => new ServerComponentSerializer(services.GetRequiredService<IDataProtectionProvider>()));
+        services.TryAddSingleton<WebAssemblyComponentSerializer>();
+        services.TryAddScoped<EndpointHtmlRenderer>();
+        services.TryAddScoped<IComponentPrerenderer>(services => services.GetRequiredService<EndpointHtmlRenderer>());
+        services.TryAddScoped<NavigationManager, HttpNavigationManager>();
+        services.TryAddScoped<IJSRuntime, UnsupportedJavaScriptRuntime>();
+        services.TryAddScoped<INavigationInterception, UnsupportedNavigationInterception>();
+        services.TryAddScoped<IScrollToLocationHash, UnsupportedScrollToLocationHash>();
+        services.TryAddScoped<ComponentStatePersistenceManager>();
+        services.TryAddScoped(sp => sp.GetRequiredService<ComponentStatePersistenceManager>().State);
+        services.TryAddScoped<IErrorBoundaryLogger, PrerenderingErrorBoundaryLogger>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IPostConfigureOptions<RazorComponentsServiceOptions>, DefaultRazorComponentsServiceOptionsConfiguration>());
+        services.TryAddScoped<EndpointRoutingStateProvider>();
+        services.TryAddScoped<IRoutingStateProvider>(sp => sp.GetRequiredService<EndpointRoutingStateProvider>());
+        services.TryAddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+        services.AddSupplyValueFromQueryProvider();
+        services.AddSupplyValueFromPersistentComponentStateProvider();
+        services.TryAddCascadingValue(sp => sp.GetRequiredService<EndpointHtmlRenderer>().HttpContext);
+        services.TryAddScoped<ResourcePreloadService>();
+        services.AddTempData();
+        services.TryAddSingleton<ICacheViewStore>(static sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<RazorComponentsServiceOptions>>().Value;
+            var hybridCache = options.CacheViewHybridCache ?? sp.GetService<HybridCache>();
+            return hybridCache is not null
+                ? new HybridCacheViewStore(hybridCache)
+                : ActivatorUtilities.CreateInstance<MemoryCacheViewStore>(sp);
+        });
+        services.TryAddSingleton<CacheViewService>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHybridCacheSerializer<SerializedRenderFragment>>(
+            SerializedRenderFragmentHybridCacheSerializer.Instance));
+        services.TryAddScoped<TempDataCascadingValueSupplier>();
+        services.TryAddCascadingValueSupplier<SupplyParameterFromTempDataAttribute>(
+            sp => sp.GetRequiredService<TempDataCascadingValueSupplier>().CreateSubscription);
+        services.TryAddScoped<SessionCascadingValueSupplier>();
+        services.TryAddCascadingValueSupplier<SupplyParameterFromSessionAttribute>(
+            sp => sp.GetRequiredService<SessionCascadingValueSupplier>().CreateSubscription);
+
+        services.TryAddScoped<ResourceCollectionProvider>();
+        RegisterPersistentComponentStateServiceCollectionExtensions.AddPersistentServiceRegistration<ResourceCollectionProvider>(services, RenderMode.InteractiveWebAssembly);
+
+        ComponentsMetricsServiceCollectionExtensions.AddComponentsMetrics(services);
+        ComponentsMetricsServiceCollectionExtensions.AddComponentsTracing(services);
+
+        // Form handling
+        services.AddSupplyValueFromFormProvider();
+        services.TryAddScoped<AntiforgeryStateProvider, EndpointAntiforgeryStateProvider>();
+        services.TryAddScoped(sp => (EndpointAntiforgeryStateProvider)sp.GetRequiredService<AntiforgeryStateProvider>());
+        RegisterPersistentComponentStateServiceCollectionExtensions.AddPersistentServiceRegistration<AntiforgeryStateProvider>(services, RenderMode.InteractiveAuto);
+        services.TryAddScoped<HttpContextFormDataProvider>();
+        services.TryAddScoped<IFormValueMapper, HttpContextFormValueMapper>();
+        services.TryAddSingleton<ClientValidationCache>();
+        services.TryAddScoped<ClientValidationProvider, DataAnnotationsClientValidationProvider>();
+
+        if (configure != null)
+        {
+            services.Configure(configure);
+        }
+
+        return new DefaultRazorComponentsBuilder(services);
+    }
+
+    private sealed class DefaultRazorComponentsBuilder(IServiceCollection services) : IRazorComponentsBuilder
+    {
+        public IServiceCollection Services { get; } = services;
+    }
+}
+
+6900193747e9f11372c518f0902a5cb8c7218992 blob 3008
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <RazorLangVersion>8.0</RazorLangVersion>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Validation.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ComponentsSharedSourceRoot)src\WebRootComponentParameters.cs" Link="Shared\WebRootComponentParameters.cs" />
+    <Compile Include="$(ComponentsSharedSourceRoot)test\**\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+
+    <ProjectReference Include="$(RepoRoot)src\Antiforgery\src\Microsoft.AspNetCore.Antiforgery.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Html.Abstractions\src\Microsoft.AspNetCore.Html.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing.Abstractions\src\Microsoft.AspNetCore.Routing.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing\src\Microsoft.AspNetCore.Routing.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics\src\Microsoft.AspNetCore.Diagnostics.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\StaticAssets\src\Microsoft.AspNetCore.StaticAssets.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="TestApplication.staticwebassets.endpoints.json" CopyToOutputDirectory="Always" />
+    <Content Update="TestManifests\Test.staticwebassets.endpoints.json" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Validation\gen\Microsoft.Extensions.Validation.ValidationsGenerator.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>
+
+9de862e75d3c8e520005ec33d321f7eaba43ac68 blob 36448
+# Working on Issues in the Components Area
+
+This guide provides step-by-step instructions for investigating, reviewing, and implementing work in the ASP.NET Core Components area.
+
+## Working on issues
+
+You MUST follow this workflow when investigating or reviewing behavioral issues, implementing behavioral fixes, or implementing new features in the Components area.
+* Add the applicable workflow steps to your `todos` and follow them strictly.
+
+The mandatory sample-validation and permanent-test workflow, including permanent automated regression coverage at the smallest faithful owning boundary, applies to production feature and bug-fix implementation. Design research, code review, comparative alternatives work, and explicitly throwaway prototypes must honor the requested scope. When feasible, use the Components sample projects and a browser to validate claims at a faithful boundary, but do not add unit or E2E tests solely to satisfy the implementation workflow. State honestly whether validation is source-level, DOM-level, or end-to-end.
+
+### Structural relocations
+
+A pure source, project, or package relocation with intentionally unchanged runtime behavior does not require a new sample scenario or new E2E coverage. Validate the structure instead:
+
+- Run the existing tests and builds affected by the relocated files.
+- Exercise direct source-consumption paths so a successful package build cannot hide a stale source path.
+- Validate generated project metadata, NuGet and npm package outputs, and every affected area or repository build entry point.
+- Follow the [project relocation checklist](../../docs/AddingNewProjects.md#adding-moving-or-removing-a-project) for added, moved, or removed projects.
+
+If the change alters behavior, or validation reveals a behavioral regression, follow the normal sample-validation and permanent-test workflow in this guide.
+
+When moving a JavaScript workspace:
+
+1. Update its path in the root `package.json` and update all workspace-to-workspace references.
+2. Regenerate `package-lock.json`. Review the diff and do not remove unrelated transitive or optional entries merely
+   because a newer local npm version accepts the resulting lockfile.
+3. Update every path-specific input and output for the workspace in `eng/Npm.Workspace.nodeproj`.
+4. Run `npm ci --prefer-online` with the Node/npm toolchain used or supported by
+   [the package-lock validation workflow](../../.github/workflows/validate-npm-package-lock-json.yml), not only a
+   newer npm version installed on the developer machine.
+5. Build the affected workspace through its normal entry point and build each direct source consumer.
+6. For every shipping package produced by the workspace, run `npm pack --dry-run --workspace <workspace-name>` and
+   inspect the included files. Also run the repository `Pack` target for `eng/Npm.Workspace.nodeproj` when the move
+   affects tracked package production.
+
+For behavioral investigations and reviews:
+- Create or identify a scenario at the smallest faithful validation boundary.
+- Before treating a combination of behaviors as a product defect, determine when each feature was introduced and identify any relevant compatibility switches. Use authoritative sources to verify that the configured switch values support the newer feature; compatibility switches preserve older behavior but do not guarantee that newer features work with that behavior. If support is unclear, report the uncertainty and escalate it. Report confirmed unsupported combinations explicitly instead of proposing product changes to make them work.
+- Faithful validation includes the component, service, runtime, or browser mechanism that owns or produces each disputed precondition and observes the claimed material effect at the appropriate boundary.
+- Before making an actionable finding that depends on DOM measurement, browser observers, resize, navigation, browser event ordering, or JS interop, validate the real producer path in a browser with Playwright when feasible.
+- For decisive claims about native browser lifecycle or state behavior, use authoritative documentation and a minimal browser probe. Treat synthesized search results as leads, not evidence.
+- Any test establishes only the downstream response, not producer reachability, if it directly injects callbacks or events or otherwise bypasses the owning producer. An isolated test can provide faithful evidence when it exercises the real producer.
+- Treat faithful non-reproduction as evidence only for the exercised conditions. A single pass does not disprove race-, timing-, load-, browser-, or platform-dependent reachability; narrow the claim to the conditions and evidence it supports. Withdraw only when faithful evidence contradicts the claimed trigger or material effect and no supported materially different condition remains.
+- Do not require E2E to validate a finding when its disputed preconditions and material effects are fully established at a lower faithful boundary. For shipped implementation work, select the smallest faithful permanent test surface under [Permanent regression test boundary](#permanent-regression-test-boundary); a focused unit or module test that owns the final observable satisfies that requirement and does not also require E2E.
+
+For implementation work:
+- For a behavioral fix, reproduce the problem at the faithful boundary before attempting the fix. If faithful validation is impractical, state the observed boundary and limitation and do not call the behavioral claim verified.
+- Research the problem area using the microsoft docs, existing code, git history, and logging on the sample project.
+  - Components and template files move. Resolve historical paths with `git log --follow --name-status` or `git ls-tree` before using `git show <commit>:<path>`.
+- Implement the fix or feature in the sample project first.
+- Exercise a new feature, or reproduce a behavioral failure, interactively in the real browser using Playwright.
+- For a browser regression or reproduced browser failure, reduce the reproduction to the smallest temporary JavaScript diagnostic probe and assertion that observes the same failure in that page. Keep the probe outside the production change; it is not permanent Jest or `.test.ts` coverage.
+- For that regression, repeat the unchanged browser scenario and probe a recorded, bounded number of times. Ten runs is a reasonable default confidence sample when repository evidence does not suggest another count, not proof across environments. Treat the issue as deterministic only when every run fails the same assertion for the same reason.
+- If the result is not deterministic, investigate the owning producer and timing before selecting permanent coverage. Use a faithful lower-boundary test when that boundary owns the final observable, or add an explicit test-controlled gate when managed timing must be controlled. Do not stabilize a regression assertion with an arbitrary fixed sleep.
+- Once the fix or feature is validated in the sample, select its permanent test surface using the boundary below.
+  - For browser-owned behavior, translate the validated browser scenario and final observable into the real-browser suite selected by the boundary below; for a regression, preserve the diagnostic assertion.
+  - If an E2E test is failing, debug it by running the test server manually and navigating to the scenario in a browser.
+- Only after the selected permanent tests are passing, remove any temporary JavaScript probe and the sample code you added in the Samples projects.
+  - Use `git checkout -- src/Components/Samples src/Components/WebAssembly/Samples` and `git clean -df -- src/Components/Samples src/Components/WebAssembly/Samples` to remove the sample code.
+
+### Permanent regression test boundary
+
+Before selecting a permanent test surface, record these five fields:
+
+- **Behavior owner**: the subsystem that owns the behavior.
+- **Production producer**: the real mechanism that creates the disputed preconditions.
+- **Final observable**: the material result the regression test must assert.
+- **Selected permanent surface**: the test suite that exercises that producer and observable.
+- **Lower-boundary false-pass risk**: how a lower-level test could pass while the shipped behavior still fails.
+
+Browser-owned user-visible behavior requires permanent coverage in the repository's real-browser suite that owns the production path. For Components-owned behavior, use C# Selenium under `src/Components/test/E2ETest`. When generated template content owns the behavior, use the existing Playwright tests under `src/ProjectTemplates/test/Templates.Blazor.Tests` instead of duplicating the scenario in Components E2E. This boundary includes claims that depend on real DOM measurement, layout and geometry, scrolling, browser observers (`ResizeObserver`, `IntersectionObserver`, and `MutationObserver`), browser scheduling or event ordering, browser-dependent JS interop, navigation, focus and selection, and browser-observed rendering or rehydration (such as DOM output or the prerender-to-interactive handoff in a real page). Extend existing test assets and classes when practical.
+
+Do not add or retain Jest or `.test.ts` coverage in the production change as proof of the same browser scenario, whether described as primary, supplemental, faster, or more precise. When synthetic geometry, mocked observers or events, or direct state mutation or callback invocation stand in for that browser scenario's real producer, they are temporary diagnostic probes outside the production change and must be removed after the selected real-browser test supersedes them.
+
+Permanent JavaScript or TypeScript unit tests remain appropriate when the JavaScript module's deterministic contract is the final observable and the harness faithfully supplies that contract's inputs. Examples include pure helpers, structural DOM algorithms that operate on ordinary nodes and assert identity or document structure, manager callback or timer-state contracts, and validation-engine contracts. Such tests do not establish that real browser scheduling, layout, observers, or user-visible producer paths are reachable; a claim about those behaviors still requires Selenium. Managed or service behavior that is fully owned and observable below the browser, including RenderTree diffs and component or service state, remains at its faithful lower boundary (for example, a .NET unit test using `TestRenderer`).
+
+If WebDriver cannot perform or observe one operation, keep the permanent C# Selenium scenario, name the exact WebDriver limitation, and use only the smallest existing JavaScript helper or `IJavaScriptExecutor` snippet for that step. Keep scenario orchestration and the final user-visible assertion in C#.
+
+For regression fixes, require strict red/green evidence on the permanent test surface selected above: the identical assertion must fail for the expected reason without the fix and pass with it. Keep test scope proportional to the fix:
+
+- Default to one focused regression test (or an additional assertion in an existing test, or a `[Theory]` only when every row exercises the regression and fails without the fix) rather than adding multiple standalone test methods for a localized bug fix.
+- Add a nearest-opposite control assertion only when the fix narrows or flips a branch whose opposite path is not already covered by existing tests; when needed, put it as an assertion inside the same test (or a separate single case), not as a row in the regression `[Theory]` or a multi-test control matrix.
+- When a real-browser E2E test is required by the boundary above, Jest alone is not sufficient regression proof; conversely, when a focused .NET unit test or `Web.JS` `.test.ts` test faithfully covers the owning contract, do not also add or request a Selenium E2E test.
+- Do not add test-only optional parameters, fields, properties, or hooks to production types when the behavior can be exercised through existing entry points.
+
+In Components Selenium tests, synchronize assertions with observable conditions through existing waits such as `Browser.True` and `Browser.Equal`, which poll with `WebDriverWait`, or with explicit test-controlled gates such as `TaskCompletionSource` when managed timing must be controlled. Do not use an arbitrary `Thread.Sleep` as the synchronization mechanism for the regression assertion. Existing bounded polling helpers may sleep between checks when they repeatedly observe the condition and enforce a timeout.
+
+### Native AOT generic coverage
+
+For Native AOT changes involving reflection or runtime construction or invocation of generic types, implement an AOT-compatible fallback that does not depend on dynamic code or a runtime-created generic instantiation. Exercise that fallback with an application-defined value type so the test requires its own closed generic instantiation; reference-type generic sharing can allow tests that use only types such as `string` or `object` to pass while the value-type case still fails. Register the value type in the test application's source-generated JSON context when it crosses a JSON boundary, and assert the final consumer-visible result.
+
+### Cross-runtime design checkpoint
+
+Before editing behavior that crosses Components renderers, runtimes, or DI scopes:
+
+- Define the relevant behavior matrix: Server/WebAssembly/Auto, global/per-page interactivity, initial activation/enhanced navigation, prerendered/non-prerendered, and interactive `Router` present/absent. Mark intentionally excluded cells before implementation.
+- Map the producing owner, consuming owner, DI lifetime and scope, assembly boundary, initial restore ordering, value-update ordering, render-mode destinations, and stale-state clearing.
+- Request architecture review before product edits and final correctness review after targeted tests are green. Add another architecture review only when the implementation introduces a new boundary.
+
+### JavaScript and .NET compatibility boundary
+
+The JavaScript code in `src/Components/Web.JS` and the .NET code for Blazor Server and Blazor WebAssembly ship together and evolve in sync. Treat the protocol between them, including the circuit and interop message formats, the boot config, the JS initializers and the internal `Blazor._internal` surface, as an internal communication boundary rather than a public contract.
+
+- A change may update the JavaScript and the .NET code together in the same commit. Do not add compatibility shims, version negotiation, or fallback code paths so that new JavaScript keeps working with .NET from a previous major version, or the other way around.
+- Backwards compatibility across major versions (10.0 to 11.0, 11.0 to 12.0, and so on) is not required for this boundary. Assume the JavaScript and the .NET runtime always come from the same build.
+- This exemption covers only the internal JS-to-.NET boundary. Public .NET APIs, documented JavaScript entry points such as `Blazor.start`, and the documented JS interop APIs that applications call keep their normal compatibility requirements and API review process.
+- Within a servicing branch for a released major version, keep the boundary compatible unless the change is explicitly approved, because servicing updates are more constrained than a major version bump.
+
+### Code clarity and durable knowledge
+
+- Before adding a comment, make local behavior discoverable through precise names,
+  named methods or variables, and smaller single-purpose responsibilities. A named
+  method can improve clarity even when it does not reduce duplication.
+- Rely on existing abstractions and extend them with the semantic operation or
+  context needed by the caller rather than downcasting to a concrete implementation.
+  Keep implementation-specific lifecycle and state handling behind the abstraction.
+- Add a concise implementation comment only when a durable nonlocal reason cannot
+  be expressed by structure alone, such as ordering across JavaScript and .NET
+  callbacks, lifecycle ownership transfer, compatibility constraints, or a
+  required negative guarantee. Do not narrate the call graph or restate the code.
+- Do not use public XML documentation to explain internal implementation details,
+  including control flow or lifecycle state. Limit it to consumer-observable behavior.
+
+### JavaScript DOM lifecycle
+
+- When behavior targets DOM that can be replaced during the prerender-to-interactive
+  transition or enhanced navigation, bind it to the narrowest lifecycle owner that can
+  survive the replacement or re-register afterward, and clean up when that owner is
+  removed. This can be a component lifecycle, a custom element's
+  `connectedCallback`/`disconnectedCallback`, or a stable scoped ancestor. Do not move
+  element-specific listeners to `document` or `window` merely to survive replacement;
+  reserve global listeners for behavior genuinely owned by the document or window.
+
+### Overview
+
+The workflow for implementing new features in the Components area follows these steps:
+
+1. **Create a sample scenario first** - This is the most important first step. Update code in one of the projects in the `src/Components/Samples` folder to include the scenarios for the feature you want to build. This allows you to develop and test the feature interactively before writing formal tests.
+
+2. **Build and test interactively** - Build the feature and use Playwright to test it in the browser, ensuring it works end-to-end at a basic level.
+
+### Sample Projects
+
+The `src/Components/Samples` folder contains canonical Blazor Web App samples, and `src/Components/WebAssembly/Samples` contains a standalone WebAssembly sample, that you can use for developing and testing features. All are generated from the `dotnet new blazor`/`blazorwasm` templates with `Auto` interactivity and adapted to reference the in-tree framework:
+
+- **BlazorWebAppGlobal** (+ **.Client**) - A Blazor Web App with **global** interactivity (`@rendermode="InteractiveAuto"` on `Routes`/`HeadOutlet` in `App.razor`). Change that one value to `InteractiveServer`/`InteractiveWebAssembly` to test the whole app on a single platform.
+- **BlazorWebAppPerPage** (+ **.Client**) - A Blazor Web App with **per-page** interactivity. Apply `@rendermode` per page/component (`InteractiveServer`/`InteractiveWebAssembly`/`InteractiveAuto`), mix modes, or omit it for static SSR.
+- **BlazorWebAssemblyStandalone** - A standalone Blazor WebAssembly app (no server host), under `src/Components/WebAssembly/Samples`.
+
+Together these cover every interactivity platform (Server/WebAssembly/Auto/None) and location (Global/Per-page) by editing a single `@rendermode` rather than restructuring.
+
+Before expanding validation across this full matrix, state the render modes and lifecycle boundaries the task requires. Evaluate that requested matrix first, and report broader compatibility separately rather than silently redefining the task.
+
+**Always start by adding your feature scenario to whichever sample matches the render mode you need.** This allows you to:
+- Quickly iterate on the implementation
+- Test the feature interactively in a real browser
+- Verify the feature works before writing its selected permanent tests
+- Debug issues more easily with full logging capabilities
+
+3. **Debug when needed**:
+   - If something isn't working as expected, increase the logging level in the sample for `Microsoft.AspNetCore.Components` to `Debug` to see detailed logs.
+   - Check browser console logs using Playwright's `browser_console_messages`.
+   - Use Microsoft documentation to learn more about troubleshooting Blazor applications.
+   - You can also increase the log level for JavaScript console output.
+
+4. **Validate the sample works** - You must have a validated, working sample in the Samples folder before proceeding. Use Playwright to confirm the feature works end-to-end in the browser.
+
+5. **Implement permanent tests** - Only after the sample is validated, select the permanent test surface using the boundary above. Browser-owned behavior requires the owning real-browser suite identified there.
+
+6. **Clean up sample code** - After the selected permanent tests are passing, remove the sample code you added to the Samples projects. The sample was only for development and interactive testing; the selected tests now provide the permanent coverage. Use `git checkout -- src/Components/Samples src/Components/WebAssembly/Samples` and `git clean -df -- src/Components/Samples src/Components/WebAssembly/Samples` to remove the sample code.
+
+## Design invariants
+
+Apply these rules to framework code in this area. Before flagging code, check the current
+analyzer, host-assembly boundary, and nearby pattern. Examples are anchors, not exhaustive
+inventories.
+
+### Render modes
+
+- Framework components must be render-mode agnostic so they work when consumed from a Razor
+  Class Library. The app chooses the render mode; framework components do not force one with
+  `@rendermode`.
+- Host-specific APIs and components may live in concrete host assemblies, but that set is
+  deliberately small - adding to it needs a strong reason. Anything intended for broad app or
+  library consumption needs a render-mode-agnostic abstraction.
+
+### `HttpContext` and host services
+
+- Do not use `IHttpContextAccessor` in framework components or services. Components receive
+  `HttpContext` as a cascading parameter:
+
+  ```csharp
+  [CascadingParameter] public HttpContext? HttpContext { get; set; }
+  ```
+
+- Services accept `HttpContext` as a method parameter, never as a constructor dependency.
+- Features consumed by class libraries use a render-mode-agnostic abstraction with an
+  implementation and service registration for each supported host. Antiforgery is the
+  reference pattern.
+
+### Rendering and event dispatch
+
+- Analyzer `BL0012` is authoritative for redundant `StateHasChanged()` calls in
+  `OnInitialized[Async]`, `OnParametersSet[Async]`, and event-callback handlers. Calls from
+  after-render logic, helper methods, or external callbacks may be required; check the
+  analyzer's current scope before flagging them.
+- Do not use `InvokeAsync` to re-enter a synchronization context that framework code is already
+  on. Use it to marshal external callbacks onto the renderer's context.
+  This rule covers `ComponentBase.InvokeAsync` only: `Dispatcher.InvokeAsync` in hosting
+  infrastructure is the intended dispatch point, and `EventCallback.InvokeAsync` is an
+  unrelated callback-invocation API.
+- Do not implement `IHandleEvent` in new components. `ComponentBase` already provides automatic
+  rendering after event handlers.
+
+### Trimming and dependencies
+
+- Handle reflection with trim/AOT annotations such as `[DynamicallyAccessedMembers]`,
+  `[RequiresUnreferencedCode]`, and `[RequiresDynamicCode]`. Do not impose a blanket reflection
+  ban or source-generated-serialization-only rule; JS interop itself uses annotated reflection.
+- Do not add package dependencies to shipping Components projects by default. Any addition
+  needs explicit justification against the nearby project pattern.
+
+### Coordinating async work in tests
+
+Prefer `TaskCompletionSource` to coordinate async work. Do not use `Task.Delay` or
+`Thread.Sleep` to wait for state changes. Legitimate exceptions include real-browser polling,
+duration assertions, analyzer fixture source text that is the input being analyzed, and
+deliberate slow-work simulation.
+
+## Build Tips
+
+### Build and retry discipline
+
+On Windows, serialize builds that share the `artifacts` directory and stop sample or test-server processes before rebuilding. After two consecutive failures at the same E2E boundary, stop rerunning the full command. Isolate the boundary with a focused unit or project check or a manually driven test server, then resume the E2E loop.
+
+### Efficient Build Strategy
+
+To avoid unnecessary full repository builds, follow this optimized approach:
+
+After a build fails, identify whether the cause is a source error in the changed project, a missing or stale prerequisite, or unrelated repository infrastructure before changing commands. Use the smallest supported build that still exercises the change. Do not repeatedly retry broad builds with different exclusions unless each retry addresses an identified failure cause, and report any validation boundary that remains untested.
+
+#### 1. Initial Setup - Check for First Build
+
+Run from the repository root. If the repository-local SDK is not installed, restore it, then activate it before invoking `dotnet` directly. Linux and macOS use the same shell scripts.
+
+Windows (PowerShell):
+```powershell
+if (-not (Test-Path .dotnet\dotnet.exe)) { .\restore.cmd }
+. .\activate.ps1
+```
+
+Linux and macOS (bash or zsh):
+```bash
+if [ ! -x .dotnet/dotnet ]; then ./restore.sh; fi
+source activate.sh
+```
+
+Then check if a full build has already been completed:
+- Look for `artifacts/agent-sentinel.txt` in the repository root
+- If this file exists, skip to step 2
+- If not present, initialize submodules, run the initial build, and create the sentinel file:
+
+Windows (PowerShell):
+```powershell
+git submodule update --init --recursive
+.\eng\build.cmd
+echo "We ran eng\build.cmd successfully" > artifacts\agent-sentinel.txt
+```
+
+Linux and macOS (bash or zsh):
+```bash
+git submodule update --init --recursive
+./eng/build.sh
+echo "We ran eng/build.sh successfully" > artifacts/agent-sentinel.txt
+```
+
+**Always initialize submodules first in a fresh worktree.** Components code depends transitively on `src\submodules\MessagePack-CSharp`; without it the build fails on unresolved MessagePack types. Worktrees do not inherit the submodules of the checkout they were created from, so do this once per worktree.
+
+#### Standard build flags
+
+Unless you are specifically working on IIS, append `-p:UseIisNativeAssets=false` to every `dotnet build` in this repo. Components work never needs the ANCM native assets, and without this flag builds that pull in IIS projects fail because ANCM has not been built. The commands below already include it.
+
+#### 2. Check that JavaScript Assets are Fresh
+
+The .NET Debug build consumes `src\Components\Web.JS\dist\Debug\_framework\blazor.web.js`. A stale bundle produces **no error** - tests and samples simply behave as if your `.ts` change was never made.
+
+Before running tests or samples, verify the bundle is newer than the newest `.ts` source. Run from the repository root.
+
+PowerShell:
+```powershell
+$newest = Get-ChildItem src\Components\Web.JS\src -Recurse -Filter *.ts | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+$bundle = Get-Item src\Components\Web.JS\dist\Debug\_framework\blazor.web.js -ErrorAction SilentlyContinue
+if (-not $bundle -or $bundle.LastWriteTimeUtc -lt $newest.LastWriteTimeUtc) { "STALE" } else { "fresh" }
+```
+
+bash:
+```bash
+bundle=src/Components/Web.JS/dist/Debug/_framework/blazor.web.js
+if [ ! -f "$bundle" ] || [ -n "$(find src/Components/Web.JS/src -name '*.ts' -newer "$bundle" -print | head -n 1)" ]; then echo STALE; else echo fresh; fi
+```
+
+- If it reports `STALE`, run `npm run build` from `src\Components\Web.JS`, then re-run the check.
+- Always use `npm run build`. **Never** use `npm run build:production` on its own: it writes only `dist\Release` and leaves `dist\Debug` stale, so the Debug build keeps using your old code.
+- Re-run this check after any `git stash`, `git checkout -- <path>`, or branch switch that touches a `.ts` file - those change the sources without rebuilding the bundle.
+
+#### 3. Iterating on C# Changes
+
+**Most of the time (no dependency changes):**
+```bash
+dotnet build --no-restore -v:q -p:UseIisNativeAssets=false
+```
+
+Or with `eng\build.cmd`:
+```bash
+.\eng\build.cmd -NoRestore -NoBuildDeps -NoBuildNative -NoBuildNodeJS -NoBuildJava -NoBuildInstallers -verbosity:quiet /p:UseIisNativeAssets=false
+```
+
+**When you've added/changed project references or package dependencies:**
+
+First restore:
+```bash
+.\restore.cmd
+```
+
+Then build:
+```bash
+dotnet build --no-restore -v:q -p:UseIisNativeAssets=false
+```
+
+**Note:** The `-v:q` (or `-verbosity:quiet`) flag minimizes build output to only show success/failure and error details. Remove this flag if you need to see detailed build output for debugging.
+
+#### 4. Building Individual Projects (Fixing Build Errors)
+
+When fixing build errors in a specific project, you can build just that project without its dependencies for even faster iteration:
+
+```bash
+dotnet build <path-to-project.csproj> --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false
+```
+
+**When to use `--no-dependencies`:**
+- Fixing compilation errors in a single project (syntax errors, type errors, etc.)
+- Making isolated changes that don't affect project references
+- Rapid iteration on a specific library
+
+**When NOT to use `--no-dependencies`:**
+- You've changed public APIs that other projects depend on
+- You need to verify that dependent projects still compile correctly
+- You're unsure if your changes affect other projects (safer to build without this flag)
+
+**Example:**
+```bash
+# Fix a compilation error in Components.Endpoints
+dotnet build src\Components\Endpoints\src\Microsoft.AspNetCore.Components.Endpoints.csproj --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false
+```
+
+#### Quick Reference
+
+1. **Before invoking `dotnet`**: Install the repository-local SDK if it is absent (`.\restore.cmd` on Windows, `./restore.sh` on Linux/macOS), then activate it (`. .\activate.ps1` on Windows, `source activate.sh` on Linux/macOS)
+2. **First build only**: `git submodule update --init --recursive` → `.\eng\build.cmd` (Windows) or `./eng/build.sh` (Linux/macOS) → create `artifacts/agent-sentinel.txt`
+3. **Check JS assets are fresh**: Verify `src\Components\Web.JS\dist\Debug\_framework\blazor.web.js` is newer than the newest `.ts` source (see step 2 above for the command); run `npm run build` - never `build:production` alone - if `STALE`
+4. **Most C# changes**: `dotnet build --no-restore -v:q -p:UseIisNativeAssets=false`
+5. **Fixing build errors in one project**: `dotnet build <project.csproj> --no-restore --no-dependencies -v:q -p:UseIisNativeAssets=false`
+6. **Added/changed dependencies**: Run `.\restore.cmd` first, then use step 4
+7. **Always pass `-p:UseIisNativeAssets=false`** unless you are working on IIS - Components never needs ANCM native assets
+
+### E2E Testing Structure
+
+Components E2E tests use xUnit and Selenium and live in `src/Components/test/E2ETest`. Their applications come from established `testassets` and `benchmarkapps` locations across Components, and `Components.TestServer` launches the scenario-specific servers. Reuse those applications and avoid adding new startup files unless strictly necessary.
+
+Do not use `Microsoft.AspNetCore.Components.Testing` unless the request explicitly targets that project or asks to use it.
+
+### Running E2E Tests Manually
+
+1. **Build the tests**: Follow the build instructions to build the E2E test project and its dependencies.
+2. **Start Components.TestServer**:
+   ```bash
+   cd src\Components\test\testassets\Components.TestServer
+   dotnet run --project Components.TestServer.csproj -p:UseIisNativeAssets=false
+   ```
+3. **Navigate to the test server** - The main server runs on `http://127.0.0.1:5019/subdir`
+4. **Select a test scenario** - The main page shows a dropdown with all available test components
+5. **Reproduce the scenario** to verify it works the same way as in the sample
+
+Note: There are also other server instances launched for different test configurations (authentication, CORS, prerendering, etc.). These are listed in the "scenarios" table on the main page.
+
+### Understanding Logging Configuration
+
+#### Server-side (.NET) Logging
+
+The server uses `Microsoft.Extensions.Logging.Testing.TestSink` for capturing logs. Log configuration is in `Program.cs`:
+
+```csharp
+.ConfigureLogging((ctx, lb) =>
+{
+    TestSink sink = new TestSink();
+    lb.AddProvider(new TestLoggerProvider(sink));
+    lb.Services.Add(ServiceDescriptor.Singleton(sink));
+})
+```
+
+#### Client-side (Blazor WebAssembly) Logging
+
+Logs appear in the browser console. Log levels:
+- Logs with `warn:` prefix are Warning level
+- Logs with `info:` prefix are Information level
+- Logs with `fail:` prefix are Error level
+
+The Blazor WebAssembly log level can be configured at startup:
+
+```javascript
+Blazor.start({
+    logLevel: 1 // LogLevel.Debug
+});
+```
+
+LogLevel values: Trace=0, Debug=1, Information=2, Warning=3, Error=4, Critical=5
+
+For Server-side Blazor (SignalR):
+```javascript
+Blazor.start({
+    circuit: {
+        configureSignalR: builder => {
+            builder.configureLogging("debug") // LogLevel.Debug
+        }
+    }
+});
+```
+
+#### Viewing Logs in Playwright
+
+Use `browser_console_messages` to see JavaScript console output including .NET logs routed to the console.
+
+### Creating E2E Tests
+
+The Selenium E2E tests are located in `src/Components/test/E2ETest`.
+
+1. First, check if there are already E2E tests for the component/feature area you're working on
+2. Try to add an additional test to existing test files when possible
+3. When adding test coverage, prefer extending existing test components and assets over creating a set of new ones if it doesn't complicate the existing ones excessively. This reduces test infrastructure complexity and keeps related scenarios together.
+4. Regression tests for lifecycle-sensitive behavior must exercise the render boundary that owns the relevant DOM. A page-level render mode can leave the surrounding layout static, so verify that the DOM under test is actually hydrated or replaced.
+5. When the behavior under test is owned by generated template content, prefer extending the existing browser tests in `src/ProjectTemplates/test/Templates.Blazor.Tests` over duplicating the scenario in Components E2E.
+
+For telemetry or distributed-state behavior, assert the real consumer-visible output rather than only an internal component probe. Capture exported activities, metrics, or state; correlate the scenario with a unique test ID and expose a test endpoint when needed; and assert operation names, tags, links, and platform-specific metadata relevant to the contract.
+
+### Running E2E Tests
+
+Playwright MCP is used for manual interactive validation of Components samples, not as this
+suite's E2E framework. Adding another Components E2E framework requires agreement from
+Components maintainers.
+
+This E2E suite uses Selenium. To build and run tests:
+
+```bash
+# Build the E2E test project and its dependencies
+dotnet build src/Components/test/E2ETest/Microsoft.AspNetCore.Components.E2ETests.csproj --no-restore -v:q -p:UseIisNativeAssets=false
+
+# After the build succeeds, run a specific test
+dotnet test src/Components/test/E2ETest/Microsoft.AspNetCore.Components.E2ETests.csproj --no-build --filter "FullyQualifiedName~TestName"
+```
+
+`-p:UseIisNativeAssets=false` is required here: the E2E project transitively references IIS projects that otherwise fail because ANCM has not been built. If this build instead fails on MessagePack types, your submodules are not initialized - see step 1 of the Efficient Build Strategy.
+
+For the first E2E run in a fresh worktree, or after relevant build, configuration, or output changes, run the dependency-aware build above. Do not use `--no-dependencies` to prepare E2E tests when referenced test-app outputs may be stale or missing. It may copy existing dependency outputs, but it does not rebuild referenced projects or apps. After the build succeeds, `--no-build` is the supported fast loop for repeated targeted tests while those inputs remain unchanged.
+
+### Running Native AOT E2E Tests
+
+Complete steps 1 and 2 of the Efficient Build Strategy first. `NativeAotTestApp.E2E.Tests` is a Microsoft.Testing.Platform executable, so run only the targeted test through `dotnet run`, not `dotnet test`:
+
+```bash
+dotnet run --project src/Components/Testing/testassets/NativeAotTestApp.E2E.Tests/NativeAotTestApp.E2E.Tests.csproj -p:UseIisNativeAssets=false -- --filter "FullyQualifiedName~TestName"
+```
+
+This single-line form works in PowerShell, bash, and zsh; `dotnet` accepts `/` path separators on Windows.
+
+**Important**: Never run all E2E tests locally as that is extremely costly. Full test runs should only happen on CI machines.
+
+If a test is failing, it's best to run the server manually and navigate to the test to investigate. The test output won't be very useful for debugging.
+
+d74aabb50ba06f6854d52fe6572d857deb56c3f6 blob 496
+---
+description: Instructions for folder 'src\Components'
+applyTo: "src/Components/**"
+---
+
+When working on issues in the Components area, follow the instructions in
+[src/Components/AGENTS.md](../../src/Components/AGENTS.md) and consult the relevant sections of the
+[Blazor and Components guidance](../../docs/BlazorComponentsGuidance.md).
+
+For Components Server behavior, including shared code used by the server, also follow
+[Components Server instructions](components.server.instructions.md).
+
+261e575040e4dd8e96f7a333395bc402f44cfea9 blob 1277
+---
+description: Instructions for Components Server and Endpoints
+applyTo: "src/Components/Server/**,src/Components/Endpoints/**"
+---
+
+## Logging and operational signals
+
+* Before adding or promoting a log to `Warning`, `Error`, or `Critical`, trace all paths that can emit it, including paths driven by untrusted input. Treat changes to log severity as changes to operational behavior, not just diagnostic visibility.
+* Do not emit alert-oriented logs solely because a client supplies invalid input, violates the protocol, requests an invalid state transition, or disconnects. Follow the area's established lower-severity logging conventions for these cases.
+* Do not promote a shared catch-all log to diagnose one application failure when the same catch also handles client-input failures. Separate the failure categories and log application configuration errors or server defects at the appropriate severity. Client reachability alone does not make a genuine server failure a client-input error.
+* When changing logging behavior, add coverage for both the intended application failure and representative invalid-client-input paths. Exercise the real parsing, validation, and dispatch path, and assert that invalid client input does not produce the new alert-oriented event.
+
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+b851df1ab8f4111aaf6bafacc19cc10529a7e2a9 blob 16895
+# Blazor Components guidance
+
+This guidance covers ASP.NET Core Blazor and Razor Components work under `src/Components/**` —
+rendering, lifecycle, render modes, JS interop, navigation, forms, and interactive Server circuits.
+Consult the relevant sections alongside the requested task and applicable repository and area
+instructions.
+
+The [Blazor Components architecture](../src/Components/ARCHITECTURE.md) is the canonical composition
+and ownership model for `src/Components`. This guide complements it with task-oriented change and
+validation guidance rather than defining a separate architecture.
+
+## Overarching principles
+
+- **Choose representative scenarios:** cover the render modes and lifecycle transitions affected by the change, including mixed-runtime cases where relevant.
+- **Treat JS interop and browser state as availability- and lifetime-sensitive:** `IJSRuntime`, `IJSObjectReference`, `ElementReference`, DOM callbacks, and browser resources need render-mode guards and deterministic cleanup.
+
+## Topics
+
+### Scope, layering, and public API shape
+
+- When changing shared abstractions, check consumers in other affected hosts for new environment-specific dependencies.
+- Public Components and JS interop APIs must have narrow names that describe the scenario, preserve existing overload compatibility, and expose only genuinely general extension points.
+- Use `Microsoft.Extensions.Options` and idempotent DI registration patterns for framework configuration; avoid duplicate registrations or hidden dependencies omitted by slim builders.
+- Keep source-generated or framework-only plumbing internal unless public generation contracts require access; expose strongly typed surfaces rather than untyped internal mechanisms.
+- For Components APIs, follow the [consumer-facing XML-documentation boundary](../src/Components/AGENTS.md#code-clarity-and-durable-knowledge); generic JSInterop APIs still require XML documentation for consumer-observable behavior, not internal lifecycle narration.
+
+### Render modes and hosting boundaries
+
+- For changes crossing Components renderers, runtimes, or DI scopes, use the [cross-runtime design checkpoint](../src/Components/AGENTS.md#cross-runtime-design-checkpoint) to select relevant render-mode cells and exclusions. Retain explicit static SSR, streaming, and rehydration checks when affected; do not infer correctness from one render mode.
+- Root-component and render-mode APIs must carry only serializable parameters and required metadata across process or host boundaries, including parameter definitions needed for unmatched values.
+- Cover Auto activation with both cached and uncached WebAssembly resources, including resources becoming available while an existing root remains active.
+- If a host cannot understand a known render-mode marker or descriptor, ignore unsupported host-specific markers where safe instead of failing unrelated startup paths.
+
+### Prerendering, static SSR, streaming, and state persistence
+
+- Check browser-dependent initialization with prerendering enabled and disabled, including JS interop, `ElementReference`, and DOM access.
+- For prerendered components, check restored parameters, state, and user-visible side effects across activation; cover both persisted-state reuse and initialization when no state is available.
+- Cover overlapping enhanced navigations with delayed streaming updates; verify the final DOM belongs to the latest navigation.
+- Persisted component state should serialize only required data; protect Server-consumed state with ASP.NET Core data protection, exclude secrets from WebAssembly or Auto client-readable state, and persist metadata and state atomically under consistent size limits.
+- Track quiescence through existing renderer and `SetParametersAsync` task flows rather than new public wait hooks unless the extension point is broadly useful.
+
+### Lifecycle, async flow, and renderer synchronization
+
+- Distinguish `SetParametersAsync`, `OnInitialized{Async}`, `OnParametersSet{Async}`, and `OnAfterRender{Async}`; initialization, parameter-change handling, and DOM-dependent work must be in the correct lifecycle stage.
+- Validate `ComponentBase` lifecycle changes against synchronous success, asynchronous success, cancellation, and exception paths, including `ErrorBoundary` wrapping and resulting `StateHasChanged` behavior.
+- For asynchronous lifecycle changes, cover an incomplete await followed by a new parameter update, event, or disposal before the continuation resumes.
+- Do not call `StateHasChanged` redundantly after normal event callbacks when the framework already rerenders; call it explicitly for external updates that bypass parameter binding or event dispatch.
+- For fire-and-forget work started by a component callback, check that exceptions and cancellation remain observable when the component is disposed.
+
+### Parameters, cascading values, and binding
+
+- Component parameter names and deserialization must remain case-insensitive, including prerendered, restored, and transport payload paths.
+- Treat `ParameterView` as batch-scoped data; do not retain old views after pooled render data can be recycled, and test helper APIs as well as enumeration.
+- Framework-supplied parameters, including form-bound values, may overwrite property initializers; defaults that must survive binding belong in lifecycle logic.
+- Required, optional, cascading, and two-way bound parameters should expose clear contracts, nullability, and validation without depending on a specific application binding framework.
+- Prefer `EventCallback` and `Value`/`ValueChanged`/`ValueExpression` patterns that preserve async callbacks, validation, and parent-child synchronization.
+
+### Rendering, diffing, DOM synchronization, sections, and virtualization
+
+- `RenderTreeBuilder` sequence numbers, regions, stable sorts, and degenerate comparisons must tolerate valid compiler/runtime call patterns without corrupting render batches.
+- Use stable `@key` and component identity rules when preserving instances matters; weak or unstable identifiers may recreate components but must not break app correctness.
+- For DOM synchronization changes, cover interactive render batches alongside enhanced-navigation document updates so component updates do not overwrite unrelated content.
+- Virtualization and scroll-convergence logic should use narrow DOM signals, guard against browser overflow anchoring, and avoid MutationObserver feedback loops triggered by unrelated DOM churn.
+- Section, head, title, and attribute updates should preserve user-provided attributes and target the semantically correct DOM node without unnecessary markup or global selectors.
+
+### Events, callbacks, navigation, and enhanced navigation
+
+- Event dispatch must preserve cancellation and exception semantics; real handler failures should flow through the host's explicit error path, not be swallowed or double-reported.
+- Custom browser event args require intentional opt-in before untrusted browser data is deserialized, while built-in DOM events must keep their known `EventArgs` mappings for compatibility.
+- Location-changing and navigation interception APIs need awaitable handlers, history state, deterministic cancellation, observable outcomes when exposed, and parity between programmatic and JS-initiated navigation.
+- Preserve Blazor's inbound route precedence: compare segments from left to right; for simple segments, literal segments precede constrained parameters, unconstrained parameters, constrained catch-all parameters, and unconstrained catch-all parameters. Optionality is not a precedence tie-breaker: `/users/{id}` and `/users/{id?}` must be rejected as ambiguous rather than preferring the required parameter. Supplemental implementation/test references: [`RoutePrecedence.ComputeInbound`](../src/Http/Routing/src/Template/RoutePrecedence.cs) and [`RouteTableFactoryTests.ThrowsForOptionalParametersAndNonOptionalParameters`](../src/Components/Components/test/Routing/RouteTableFactoryTests.cs).
+- Preserve exclusions for download and non-navigation links, real page loads for external replace-history navigation, and server/client `NavigationManager` synchronization.
+- Enhanced form and navigation tests should use explicit promises, per-test storage IDs, and isolated hooks instead of timeouts or shared ambient state.
+
+### JS interop, browser APIs, and serialization
+
+- `IJSRuntime` calls must be guarded by render-mode availability: unavailable during static SSR or prerendering, disconnect-prone on Server, and asynchronous across host boundaries unless a sync contract is explicit.
+- Preserve public JS interop surface compatibility, including low-level runtime entry points, nullability, `params` argument behavior, and caller-selected result types.
+- Dispose `IJSObjectReference`, `DotNetObjectReference`, event listeners, modules, and browser object URLs deterministically; tolerate expected disconnect failures during cleanup.
+- JS interop payloads on hot paths should minimize round trips, payload size, marshaling, and object identity duplication; prefer existing object-reference infrastructure over parallel channels.
+- Use source-generated JSON serialization contexts where reflection would break trimming/AOT or add unsupported runtime dependencies; keep browser data normalization precise and platform-faithful.
+
+### Disposal, cancellation, circuits, and resource ownership
+
+- Implement `IDisposable` and `IAsyncDisposable` according to the resource being owned; async-only cleanup should not be hidden behind a synchronous path that blocks or skips required work.
+- Components and services must unsubscribe from long-lived events, cancel timers and pending operations, dispose JS references, and prevent callbacks after component or circuit disposal.
+- Cancellation should cancel work before disposal invalidates state; call `Cancel` before disposing token sources when consumers may still observe cancellation.
+- Open interactive Server circuits before accepting JS interop, but keep long-running initialization in awaitable paths that tests and error handling can observe.
+- For caches or services shared across renderers or circuits, cover concurrent access independently of the component lifecycle tests.
+
+### Forms, validation, antiforgery, and file handling
+
+- `EditForm`, `EditContext`, `FieldIdentifier`, validation message components, and form CSS policy should compose through existing forms infrastructure instead of duplicating reflection or field-resolution logic.
+- Form identity and field equality must use reference-appropriate semantics so model overrides cannot corrupt edit tracking or validation state.
+- Enhanced form posts, streaming form rendering, and traditional submissions need distinct handling that preserves validation, state updates, and error reporting.
+- Browser-facing file APIs must expose explicit size and count limits, validate at the component or callback boundary, and account for Blazor Server resource exhaustion.
+- Client-side downloads should keep Blob and `createObjectURL` as the compatibility baseline, but large downloads should prefer streaming-capable browser APIs to avoid buffering entire files or exhausting browser memory.
+- Antiforgery tokens and form-related persistent state must survive Server, WebAssembly, Auto, and static SSR transitions without leaking or trusting client-modifiable data.
+
+### Security and trust boundaries
+
+- Treat interactive Server circuits as authenticated, stateful connections whose authentication changes, reconnects, JS callbacks, and persisted state require explicit synchronization or reload behavior.
+- Do not override protocol-critical authentication settings at runtime; OIDC and remote-auth flows must honor configured security semantics.
+- Keep OIDC, antiforgery, and Data Protection primitive changes in their owning security infrastructure while reviewing Components integration, interactive Server circuits, and component-state security here.
+- Use `MarkupString` only for trusted content and ensure browser-deserialized event or form data cannot cross into privileged .NET code without intentional validation.
+- Server-consumed component-state payloads embedded in HTML or transport data should be encrypted and integrity-protected; WebAssembly or Auto client-readable payloads must contain no secrets, and all modes should avoid exposing full type names or internal structure unless required for correctness.
+- Browser features with security headers, such as multithreaded WebAssembly or `SharedArrayBuffer`, must set the required cross-origin policies when enabled.
+
+### WebAssembly boot, static assets, and build packaging
+
+- WebAssembly boot should respect `@microsoft/dotnet-runtime` ownership of resource loading; custom loaders must preserve the runtime integrity contract, and local hashes should remain deterministic Auto cache-readiness heuristics rather than timing-based fallbacks.
+- Boot manifests should include only runtime resource kinds the loader understands; unrelated static assets belong in static web asset manifests, not boot metadata.
+- Static web asset base paths, publish layouts, and hosted/standalone outputs must handle collisions explicitly and use segment-aware path rewrites.
+- Build tasks should avoid version-sensitive runtime dependencies that are unsafe in MSBuild task hosts and regenerate outputs only when meaningful inputs change.
+- For publish-time trimming and Native AOT validation, follow [trimming behavior guidance](Trimming.md#validate-trimming-behavior). AOT, trimming, lazy-loaded assemblies, and source-generated serialization changes still need tests or annotations that survive publish, not local suppressions that disappear.
+
+### Tests, diagnostics, and repo fit
+
+- Apply the [repository test requirements](../CONTRIBUTING.md#tests), [faithful-validation requirements](../.github/copilot-instructions.md#running-tests), and the [Components permanent regression test boundary](../src/Components/AGENTS.md#permanent-regression-test-boundary) when validating changed behavior. Add focused unit, E2E, or browser tests across relevant render modes; include prerendering, interactivity, navigation, forms, serialization, cancellation, disposal, and error paths when affected. For Components E2E work, also follow [Components E2E guidance](../src/Components/AGENTS.md#creating-e2e-tests); generic `Microsoft.JSInterop`-only library work under `src/Components/JSInterop/` (outside `src/Components/Web.JS/` or Components UI/browser runtime paths) does not inherit that boundary or workflow. In `src/Components/Web.JS/`, the lower-boundary allowance for JavaScript or TypeScript unit tests (pure helpers, structural DOM or DOM-synchronization algorithms on ordinary nodes or templates/fragments that assert identity or document structure, manager callback or timer-state contracts, and validation-engine contracts) applies only when that deterministic module contract is the final observable and the harness faithfully supplies its inputs; when changed behavior is produced or observed through an end-to-end circuit, reconnection, navigation, or browser-interop flow and is covered only by `.test.ts` tests that mock transport or runtime collaborators, bypass construction or mutate internal state directly, or invoke registered callbacks manually across separate tests instead of exercising the real producer-to-UI flow in `src/Components/test/E2ETest`, report a test-boundary finding.
+- Keep test coverage proportional to the change: prefer one focused .NET unit test or `Web.JS` `.test.ts` test (or extending an existing test) when that layer faithfully owns the changed contract, reserve Selenium E2E tests for behaviors that genuinely require a real browser engine or cross-layer hosting integration, add a control assertion only when a modified branch leaves the opposite path uncovered, and do not add test-only optional parameters, fields, properties, or hooks to production types when the behavior can be exercised through existing entry points. During code review, do not ask contributors to add Selenium E2E tests when a focused unit or `.test.ts` test faithfully covers the owning contract, and flag disproportionate multi-test matrices or unnecessary E2E scaffolding for consolidation.
+- Blazor async tests should be deterministic: use `TaskCompletionSource`, cancellation registration, explicit browser promises, and direct completion hooks rather than delays or timing-sensitive polling.
+- Assert non-default observable values, browser console/network behavior, render output, route selection, validation messages, logs, and resource cleanup instead of mirroring helper implementation.
+- Keep diagnostics actionable but not noisy: use existing .NET or browser logging channels, include recovery guidance for deployment or startup races, and avoid masking unexpected errors with console-only logging.
+
+c599044ffb39165e718dd1b6223f5c9e1b999924 blob 16870
+# Cross-cutting guidance
+
+This guidance covers ASP.NET Core source work. Consult the relevant sections alongside the
+requested task and applicable repository and area instructions.
+
+## Overarching principles
+
+- Preserve compatibility and public API discipline over local convenience. New APIs, constructors, options, packages, templates, analyzer IDs, and shared-framework metadata become long-lived contracts.
+- Prefer existing ASP.NET Core, BCL, SDK, and repository infrastructure over custom helpers. Add abstractions only when they keep user code testable, composable, and stable.
+- Treat nullability, validation, cancellation, disposal, and thread-safety annotations as executable design contracts, not comments.
+- Separate startup, build-time, analyzer-time, and hot-path runtime work. Per-request, per-diagnostic, file-watcher, and template paths need allocation, caching, and determinism scrutiny.
+- Treat filesystem paths, tool commands, configuration, generated output, logs, and package attribution as trust boundaries that can regress even when builds and tests pass.
+
+## Topics
+
+### Cross-cutting scope and change shape
+
+- Apply the [contribution scope requirements](../CONTRIBUTING.md#before-submitting-the-pull-request) to product, tool, template, analyzer, and test-utility changes, including unrelated file moves, generated-file churn, version churn, and refactors beyond the affected scenario.
+- Preserve ownership boundaries between product code, shared source, templates, test infrastructure, and build infrastructure; do not expose shared implementation details through public namespaces or packages.
+- Prefer established shared helpers for process handling, retries, cancellation, file enumeration, CLI parsing, package metadata, and test hosting before adding one-off infrastructure.
+- Remove vestigial debug hooks, unused files, stale comments, obsolete workarounds, and duplicate conditional logic only once the scenario they protected is understood and still covered.
+
+### Public API surface, compatibility, and lifecycle
+
+- Minimize public surface area; keep speculative hooks, options, extension points, and constructor overloads internal until a demonstrated scenario and API review justify them.
+- Preserve public member names, constructor signatures, enum values, default option values, extension-method behavior, analyzer IDs, template identifiers, package identities, and shared-framework metadata unless the breaking change is deliberate and reviewed.
+- Use `[Obsolete]` with actionable migration guidance for deprecated APIs, and keep parallel or additive overloads when compatibility requires old members to remain.
+- Use applicable public API design criteria for changed public/protected APIs and shipped defaults/conventions. The [API review process](APIReviewProcess.md#process) governs that process; verify any concern against source signatures and contracts rather than reporting a design preference as a defect.
+- Public XML docs must accurately describe purpose, parameters, return values, exceptions, defaults, consumer-observable lifecycle, and non-obvious examples for IntelliSense and generated docs; follow the repository's [public XML-documentation requirement](../.github/copilot-instructions.md#formatting).
+
+### Nullability, validation, and correctness invariants
+
+- Validate public API arguments and externally supplied data at entry points with precise exception types, parameter names, and actionable messages; do not let invalid input surface later as `NullReferenceException` or an ambiguous failure.
+- Keep nullable annotations, member initialization, `MemberNotNull`-style attributes, and guard clauses aligned with real control-flow invariants; do not use annotations to hide possible null states.
+- Model unknown, unsupported, or partially restored states explicitly instead of silently mapping them into an existing known bucket; keep classification separate from filtering so tests can prove both.
+- Preserve producer-consumer invariants for buffers, streams, collections, and generated metadata; never advance, reuse, mutate, or expose data beyond what the owner granted.
+- Use explicit comparers, culture rules, and case-sensitivity decisions for strings, keys, file names, template identifiers, and configuration names when default equality is not the contract.
+
+### Async, cancellation, and background work
+
+- Use Task-based async through the whole call chain; avoid `.Result`, `.Wait()`, sync-over-async wrappers, and synchronous exception behavior that differs from the async contract.
+- Flow `CancellationToken` to cancellation-aware async I/O, process execution, analyzer APIs, and long-running test utility APIs; for `IFileProvider.Watch` and file-change notifications, manage `IChangeToken` registration and disposable lifetimes through a documented shutdown path.
+- Use `ConfigureAwait(false)` in library code that should not capture a synchronization context, while preserving app/test patterns that intentionally rely on one.
+- Wrap fire-and-forget or callback-started async work in explicit error handling so failures are observed, logged, or propagated instead of crashing later or being silently swallowed.
+- Prefer `IAsyncDisposable` and async fixture/helper patterns when cleanup is asynchronous; do not block during teardown or replace cancellation with unsafe object nulling.
+
+### Performance, allocations, caching, and pooling
+
+- Determine whether code runs at startup, build time, analyzer time, or on a hot runtime path before raising performance findings; optimize hot paths and repeated analyzer traversals first.
+- Minimize avoidable allocations in per-request, per-diagnostic, file-provider, localization, cache, and template-generation paths using spans, pooled buffers, capacity hints, cached symbols, and lazy computation where they materially help.
+- Use object pooling, `ArrayPool<T>`, shared immutable singleton results, and cache consolidation only when ownership, reset, invalidation, contention, and lifetime semantics are clear.
+- Defer expensive or failure-prone work until a caller needs it; avoid constructor, registration, or startup work that eagerly resolves files, assemblies, projects, reflection, or external tools without benefit.
+- Measure durations with elapsed-time APIs and keep benchmark or performance validation focused on the changed path rather than wall-clock or environment-sensitive measurements.
+
+### Resource lifetime, disposal, and I/O
+
+- Types owning streams, file watchers, pooled buffers, processes, temporary artifacts, native handles, subscriptions, or listeners must make ownership explicit and release deterministically on success, failure, replacement, and cancellation paths.
+- Implement `IDisposable`, `IAsyncDisposable`, `SafeHandle`, or try/finally according to the resource owned; do not hide cleanup in unrelated lifecycle methods.
+- APIs that start registrations, watches, listeners, or background work must prevent repeated starts from leaking prior instances and define whether the caller or callee owns disposal.
+- Use `IFileProvider` for virtual/read-only file access, plus path APIs and platform helpers instead of hard-coded separators, working-directory assumptions, or string concatenation; use `System.IO` or explicit writable abstractions when code must create, write, move, or delete files.
+- Treat files, directories, generated outputs, and tool inputs as race-prone: they can be missing, locked, replaced, case-sensitive, URI-shaped, or deleted between an existence check and use.
+
+### Thread-safety, shared state, and lazy initialization
+
+- Protect shared mutable state with locks, immutable snapshots, concurrent collections, or one-time initialization that preserves the invariant, not just individual operations.
+- Document thread-safety guarantees for caches, options snapshots, pools, file providers, analyzers, and shared singleton services when callers can access them concurrently.
+- Do not dispose or null shared `CancellationTokenSource`, watcher, logger, cache, or pooled state while callbacks or lazy work may still observe it; cancel first and coordinate completion.
+- Keep lock scopes readable; avoid callbacks, logging fan-out, async continuations, or service resolution while holding a lock unless the reentrancy and deadlock behavior is intentional.
+- Use immutable or readonly fields for configuration and shared dependencies after construction; mutable static state needs a concurrency and test-isolation reason.
+
+### Options, configuration, and dependency injection
+
+- Use `IConfiguration`, options, and DI for configurable behavior; avoid hard-coded values, environment-specific branches, hidden mutable/environmental static dependencies, or service locators in product APIs, while allowing established factories and BCL shared pools such as `ObjectPool.Create<T>` and `ArrayPool<T>.Shared` when ownership and lifetime semantics are clear.
+- Keep configuration keys, option names, defaults, environment-variable mappings, generated element IDs, and casing stable across providers, and document them when users can depend on them.
+- Add configuration knobs only for demonstrated scenarios; choose safe defaults and validate options early enough that failures point to the invalid setting.
+- Match DI lifetimes to the dependencies they capture; use idempotent `TryAdd`/`TryAddEnumerable` registration when repeated calls should compose with user services.
+- Keep compile-time and runtime configuration distinct: MSBuild properties, runtime host configuration, package metadata, and user options must not drift or leak into the wrong layer.
+
+### Diagnostics, logging, exceptions, and tool output
+
+- Throw specific exceptions with contextual messages for invalid input, unsupported states, timeouts, external command failures, and configuration errors; catch only exceptions you can handle or enrich.
+- For a new or broadened catch, distinguish the original operation failure from secondary failures in logging, cleanup, callbacks, or recovery. Trace what each catch observes, preserves, propagates, or silently loses. Preserving the original error does not by itself justify suppressing a secondary failure; verify the target contract for expected or best-effort handling. A PR-added test establishes implementation intent, not independent authority for that policy. Do not treat every empty catch as a defect: when a reachable failure is newly suppressed but the required policy is unestablished, return the concrete changed edge, observable effect, and missing contract as unresolved rather than LGTM or a proven defect.
+- Keep diagnostics actionable — include the invalid value, path, key, package, tool, timeout, or operation where useful — without leaking sensitive data or stack traces in normal output.
+- Use structured `ILogger`, EventSource, analyzer diagnostics, and console output at levels matching success, warning, failure, and verbose detail; do not add noisy hot-path logs.
+- For tools and scripts, separate normal output from diagnostics, preserve readable ordering under parallel execution, handle no-op cases gracefully, and suppress presentation features when output is redirected.
+- Analyzer diagnostics need stable IDs, clear messages, help links, generated-code suppression where appropriate, and tests that verify locations and examples.
+
+### Trust boundaries, security, and sensitive data
+
+- Treat file-provider inputs, physical paths, generated outputs, and tool/configuration values as untrusted at boundaries; normalize and validate roots before opening files so traversal, symlink escape, URI confusion, or provider mismatch cannot bypass the intended scope.
+- Construct process, script, MSBuild, and external tool invocations with argument lists, response files, and repository helpers; do not concatenate untrusted values into shell commands, script fragments, or properties where command/process injection or quoting bugs can change behavior.
+- Redact secrets, connection strings, tokens, user secrets, credentials, sensitive environment values, and unnecessary local paths from logs, exceptions, diagnostics, generated files, and test artifacts.
+- Keep security-sensitive defaults fail-closed and preserve validation at trust boundaries even when the changed path is primarily configuration, templates, tests, or tooling.
+
+### Localization, text, paths, and cross-platform behavior
+
+- Externalize user-facing strings through resource/localization infrastructure and keep culture, UI culture, fallback, satellite-assembly, and formatting behavior explicit.
+- Use culture-aware or ordinal string APIs per the contract; avoid locale-specific assumptions in identifiers, paths, configuration keys, analyzer comparisons, and persisted values.
+- Handle text encoding, line endings, and persisted or protocol output deliberately, using canonical repo/protocol formatting instead of platform defaults when tools consume the output.
+- Detect operating system, architecture, target framework, SDK, and host capabilities through supported APIs or MSBuild metadata; avoid hard-coded platform configuration or unsupported path assumptions.
+- Keep platform-specific tests explicit with platform skip conditions, queue conditions, and separate scenarios rather than burying incompatible behavior in conditional test bodies.
+
+### Analyzers, reflection, source generation, trimming, and AOT
+
+- Analyzer logic may stay syntax-only when syntax fully proves the diagnostic; add semantic models, symbols, and related or multiple locations only when needed for correctness, symbol identity, partial declarations, or actionable fixes, and avoid false positives in generated code.
+- Cache repeated Roslyn symbol, type, and syntax lookups; combine tree traversal with diagnostic construction when it avoids redundant reflection or compilation work.
+- Keep analyzer and code-fix packaging lean; avoid heavy workspace dependencies in analyzer assemblies unless necessary for the shipped scenario.
+- Prefer explicit reflection lookups, generic constraints, source-generated metadata, and annotated APIs over broad reflection scans that are fragile under trimming or AOT.
+- For shared-framework or template changes whose behavior depends on metadata availability, use the repository's [publish-time trimming and Native AOT validation procedure](Trimming.md#validate-trimming-behavior), including source-generated metadata paths.
+
+### Build, packaging, shared framework, and templates
+
+- Preserve layouts, package metadata, target names, template identifiers, shared-framework inclusions, reference/runtime asset separation, and SDK/tooling compatibility that downstream consumers already load.
+- Keep shared build values single-sourced and narrowly scoped; prefer authoritative project metadata over duplicate opt-in properties, and avoid repository-wide imports or suppressions for local issues.
+- Update interrelated dependency versions, feed settings, source-commit metadata, and parent relationships as a coherent set; pin versions when reproducibility or host compatibility matters.
+- Validate MSBuild conditions, item metadata, glob depth, command-line escaping, response-file usage, and path normalization carefully, since small mistakes can silently disable build or packaging logic.
+- Dependency, package, or license changes must maintain third-party attribution artifacts such as `THIRD-PARTY-NOTICES.txt`; passing builds or tests can still hide a notice, license metadata, or attribution regression.
+- In templates and widely used assets, avoid speculative churn; reserve unique identifiers, keep generated output stable, and add behavior changes only for demonstrated scenarios with tests.
+
+### Tests, determinism, and test utilities
+
+- Apply the [repository test requirements](../CONTRIBUTING.md#tests) and [faithful-validation requirements](../.github/copilot-instructions.md#running-tests). Add focused unit, integration, analyzer, template, or regression tests for changed behavior, covering success, failure, boundary, platform, and previously broken combinations.
+- Assert observable semantics — generated files, diagnostics, logs, configuration keys, exception messages, response headers, package metadata, and resource cleanup — rather than mirroring helper implementation details.
+- Keep tests deterministic: avoid timing-sensitive sleeps, current-working-directory assumptions, hard-coded ports, external service dependencies, order-sensitive output, and shared mutable state.
+- Test infrastructure should use shared helpers for unique paths, ports, retries, process execution, timeouts, output capture, Helix staging, and cleanup instead of duplicating per-test logic.
+- Preserve quarantine, skip conditions, pipeline conditions, and artifact staging until the protected scenario is understood; update the reason or implementation rather than removing the guard.
+
