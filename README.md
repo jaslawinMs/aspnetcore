@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 265/358 finalized**: 78 drafts, 31 no-gain, 106 rejected and 50 duplicates;
-93 findings remain unfinished.
+**Progress: 268/358 finalized**: 78 drafts, 31 no-gain, 109 rejected and 50 duplicates;
+90 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,9 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F222 | Rejected, XML hash producer materially unqualified | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): actual cloned XML/list producer and declared assertion dispatch, no fabricated hashing workload. [Evidence](F222-F223-F224/README.md) |
+| F223 | Rejected, diagnostic-ID filtering materiality unestablished | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): real warning producer, per-get one-descriptor versus retained-eight distinction. [Evidence](F222-F223-F224/README.md) |
+| F224 | Rejected, diagnostic-document scan materially unqualified | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): actual document producers and repeated-tree-request boundary, no reparsing claim. [Evidence](F222-F223-F224/README.md) |
 | F225 | Rejected, registration-test membership materially unqualified | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual deferred DI producer and assertion cost boundary, no invented service collection. [Evidence](F225-F226-F227-F229-F230/README.md) |
 | F226 | Rejected, repeated-registration materiality unestablished | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual same-collection second registration and allowed-multiple contracts; not F225 duplicate. [Evidence](F225-F226-F227-F229-F230/README.md) |
 | F227 | Rejected, startup culture-membership materiality unestablished | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual current/UI hierarchy and ordered first-common-ancestor break, no fabricated deep cultures. [Evidence](F225-F226-F227-F229-F230/README.md) |
