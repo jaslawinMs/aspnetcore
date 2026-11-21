@@ -1,0 +1,22 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+const readline = require('node:readline').createInterface({ input: process.stdin });
+
+readline.on('line', command => {
+    switch (command) {
+        case 'start':
+            process.stderr.write('progress');
+            break;
+        case 'lines':
+            process.stdout.write('\u001b[32mstdout\u001b[0m\n');
+            process.stderr.write('\r\u001b[31mfirst error\u001b[0m\r\n\n \t\r\nplain {Value}\n\u001b[1;33msecond error\u001b[0m\n\u001b[0m\n');
+            break;
+        case 'finish':
+            process.stderr.end('tail', () => {
+                readline.close();
+                process.stdin.destroy();
+            });
+            break;
+    }
+});

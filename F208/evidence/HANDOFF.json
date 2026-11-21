@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "finding": "F208",
+  "card": "expensive-branch-result-computed-eagerly",
+  "sealedAtUtc": "2026-11-20T23:45:18.499Z",
+  "state": "private-candidate-correctness-qualified-only",
+  "coordinatorOwnsFinalDispositionTimingAndPublication": true,
+  "sourcePins": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "actualUpstreamDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "freshSourceReceipt": "upstream-source-pin.json",
+    "finalDefaultRecheck": "upstream-default-recheck.json",
+    "graphs": [
+      "C:\\src\\ap-F208-o193",
+      "C:\\src\\ap-F208-d193"
+    ]
+  },
+  "change": {
+    "shipping": "Only add logger.IsEnabled(LogLevel.Error) to the existing non-whitespace stderr-line condition.",
+    "tests": "One four-row real-Node theory in the existing SpaServices.Extensions.Tests project, a gated Node asset, and its content-copy item.",
+    "publicApiDefaultsOrConventionsChanged": false,
+    "exactDiffAndHashIndex": "changed-files.json",
+    "indexSha256": "ED87CDCF0696A985FF5B0B92F98A7708E0210AF677D3CC33EF653D54DBF78173",
+    "privateGitState": "Detached source pins; two new test files have intent-to-add entries only. No commit/push/PR/issue."
+  },
+  "rationale": "Real Node stderr generated five already-normalized ILogger.Log attempts even when the real LoggerFactory discarded Error. The guard avoids preparing that unused branch and matches stdout. This is a conditional mechanism improvement, not evidence of a worthwhile performance win.",
+  "evidenceBoundary": {
+    "producer": "Actual NodeScriptRunner Process.Start -> Node fixture process.stderr -> redirected StandardError -> EventedStreamReader.Run -> AttachToLogger.",
+    "filter": "Real LoggerFactory category Microsoft.AspNetCore.SpaServices; Information/Error/Critical/None thresholds. Recording logger forwards to that real factory.",
+    "observable": "Normalized attempted messages before the factory filter, real provider sink output, exact raw error capture, progress Console forwarding, EOF and exit code.",
+    "covered": [
+      "ANSI SGR and ANSI-only lines",
+      "CRLF/LF multiline, empty and whitespace-only lines",
+      "literal braces and final unterminated stderr",
+      "partial stderr Console forwarding regardless of threshold",
+      "raw EventedStreamStringReader capture independent of filtering",
+      "each fixture awaits runner exit 0 and both stream-closed events"
+    ],
+    "notBypassed": "No synthetic event/delegate invocation, uninitialized runner, standalone compiler or replacement stream reader.",
+    "limits": [
+      "Node is passed directly as package-manager command to the extensionless run fixture; complete npm/Angular/React CLI applications were not installed or exercised.",
+      "Windows only; no cross-OS or long-running CLI workload qualification.",
+      "No incidence, realistic volume, CPU, throughput, latency, allocation or materiality evidence."
+    ]
+  },
+  "correctness": {
+    "nativeProject": "src\\Middleware\\Spa\\SpaServices.Extensions\\test\\Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj",
+    "test": "Microsoft.AspNetCore.SpaServices.Extensions.Tests.NodeScriptRunnerTests.AttachToLogger_FiltersAndNormalizesRealNodeOutput",
+    "regressions": [
+      "Critical",
+      "None"
+    ],
+    "nearestControls": [
+      "Information",
+      "Error"
+    ],
+    "baselinePerRole": "Two expected failing disabled rows; both enabled controls passed.",
+    "candidatePerRole": "All 18 native project rows passed; 4 producer rows and 14 existing controls; no skips.",
+    "exactRowsAndExecutionIdentities": "test-rows.json",
+    "redGreenIdentityProof": "red-green-row-proof.json",
+    "assertionsUnchangedProof": "fixture-source-proof.json",
+    "acceptance": "ACCEPTANCE-result.json"
+  },
+  "historyAndRelatedWork": {
+    "stdoutGuardPrecedent": "103560b3d4b322779638e4f3e127f59a98a41847 / upstream PR47837; history-2023-guard.diff.",
+    "newDefaultProcessChange": "0328b915263b84541e57b75f824e79a75f2d5ed3 / PR70669 only changes ProcessStartInfo to InheritedHandles=[] at this file; untouched.",
+    "duplicateChecks": "No F208 fork branch or matching F208/NodeScriptRunner fork PR found; current upstream remains eager. Search receipts preserved, not an exhaustive unpublished-branch claim.",
+    "scope": "No F200/F201/F214/F236/F345 code, graph, policy or ledger changes."
+  },
+  "exceptionSemantics": {
+    "sourceOnly": "No catch, regex, timeout, process-start wrapping or stream-reader implementation changed. Enabled output retains one-second regex replacement then LogError, now after IsEnabled. Disabled output intentionally skips both operations. New IsEnabled exceptions, stateful filters and RegexMatchTimeoutException were not forced. EventedStreamReader.Run does not catch callback exceptions; no universal exception-equivalence claim.",
+    "rawStartupErrorDiagnostics": "Production Angular/React readers subscribe independently to StdErr; exact raw capture is preserved in the theory."
+  },
+  "nativeExecution": {
+    "allCommandsArgumentsEnvironmentExits": "COMMANDS.json",
+    "commandManifestSha256": "E9B2BC9750CE56BE68BE706444D0FBCD72737D05F29FCB07A6B8BAFF42660DFC",
+    "nativeRoots": 15,
+    "allObservedOwnedRootsChildrenAndStreamsTerminal": true,
+    "terminalReceipt": "owned-terminal-check-016.json",
+    "forcedOwnedProcessStops": 0,
+    "sdk": "12.0.100-alpha.1.26557.102; each command activated its exact graph and refused ambient SDK fallback.",
+    "constraints": "max2 build nodes; concurrent final role builds used one each; no node reuse/shared compilation.",
+    "defaultRuntime": "Exact cached 12.0.0-alpha.1.26569.107 materialized privately; no download/install/downgrade. 200 file hashes in cached-default-runtime.json. SDK activation remains graph-local; explicit DOTNET_ROOT_X64 selects private application runtime.",
+    "originalRuntimeLimit": "Runtimeconfig requires 12.0.0-alpha.1.26562.105; selected Original runtime was not separately instrumented. No exact performance-runtime pairing claim.",
+    "preservedFailures": [
+      "red-001-no-restore: missing generated imports, exit1; recovered by bounded GenerateFiles target.",
+      "red-003-no-assets and default-008-no-assets: NETSDK1004, exit1; only then restored each native test graph.",
+      "red-005-native and red-006-filter-boundary: expected Original disabled-row assertion failures, exit1.",
+      "default-010-red-native: testhost missing runtime69, exit1 and zero rows. All four producer cases blocked before assertions; recovered from exact existing cache in default-011.",
+      "default-011-red-cached-runtime: expected Default disabled-row assertion failures, exit1.",
+      "default-010 rows.json: failed null-row parser output retained, superseded by actual-rows.json, COMMANDS.json and real TRX.",
+      "seal-017-python-missing: source-only sealing interpreter alias exited9009 before script execution. No Python install; replaced with existing Node/PowerShell tooling."
+    ]
+  },
+  "performanceAndMateriality": {
+    "comparisonsAuthorized": 0,
+    "benchmarksWarmupsCountersProfilersExecuted": 0,
+    "performanceQualified": false,
+    "limits": "Developer CLI output only; Error normally enabled. Added enabled-path IsEnabled cost and real-world benefit unmeasured. No performance or false-positive disposition."
+  },
+  "reservedWorktree": "reserved-root-final.json; expected branch/HEAD and four unrelated untracked reports retained; no owner writes.",
+  "policyLeaseRegistryLedgerWrites": false,
+  "publicationOrBrowserActions": false,
+  "artifactHashIndex": "ARTIFACTS.sha256.json"
+}

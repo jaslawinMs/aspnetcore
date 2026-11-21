@@ -1,0 +1,81 @@
+{
+  "finding": "F208",
+  "revision": 203,
+  "status": "declarative-input-and-source-plan-only",
+  "sourceBindings": {
+    "owner": "src\\Middleware\\Spa\\SpaServices.Extensions\\src\\Npm\\NodeScriptRunner.cs",
+    "reader": "src\\Middleware\\Spa\\SpaServices.Extensions\\src\\Util\\EventedStreamReader.cs",
+    "rawErrorReader": "src\\Middleware\\Spa\\SpaServices.Extensions\\src\\Util\\EventedStreamStringReader.cs",
+    "existingNativeProject": "src\\Middleware\\Spa\\SpaServices.Extensions\\test\\Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj",
+    "existingNativeFixture": "src\\Middleware\\Spa\\SpaServices.Extensions\\test\\NodeScriptRunnerTests.cs",
+    "existingNativeFixtureRawSha256From193": "6AE97443EE500266F7DD3D382CB28A73E3B9AA62EE19BFE884A2E7A0AB415DC0",
+    "existingProducer": "src\\Middleware\\Spa\\SpaServices.Extensions\\testassets\\NodeScriptRunner\\run",
+    "existingProducerRawSha256From193": "B36CFE0262A102BFB3BC8E59BDDF9FD1168F775B147092DF9854D1ECE0192ED8",
+    "shippingDifference": "Only && logger.IsEnabled(LogLevel.Error) in stderr's existing non-whitespace condition.",
+    "rule": "Future private source graphs only; never edit193 graphs or artifacts. Both prospective variants use byte-identical producer, consumer and dependencies. Read actual product assembly implementations; do not link copied reader/runner source into a replacement assembly."
+  },
+  "fullInput": {
+    "basis": "Unamplified193 native producer data, not a captured npm/Angular/React transcript.",
+    "stdinCommandsExactlyOnce": ["start", "lines", "finish"],
+    "onStartStderr": "progress",
+    "onLinesStdout": "\u001b[32mstdout\u001b[0m\n",
+    "onLinesStderr": "\r\u001b[31mfirst error\u001b[0m\r\n\n \t\r\nplain {Value}\n\u001b[1;33msecond error\u001b[0m\n\u001b[0m\n",
+    "onFinishStderrEnd": "tail",
+    "expectedRawStderrLines": [
+      "progress\r\u001b[31mfirst error\u001b[0m\r\n",
+      "\n",
+      " \t\r\n",
+      "plain {Value}\n",
+      "\u001b[1;33msecond error\u001b[0m\n",
+      "\u001b[0m\n",
+      "tail"
+    ],
+    "expectedNormalizedErrorMessagesWhenEnabled": [
+      "progress\rfirst error\r\n",
+      "plain {Value}\n",
+      "second error\n",
+      "\n",
+      "tail"
+    ],
+    "normalizationEligibleLinesPerOperation": 5,
+    "partialChunkGate": "Wait for real OnReceivedChunk accumulation equal to progress before sending lines.",
+    "completeLineGate": "Wait for the actual raw OnReceivedLine value ESC[0m followed by LF before sending finish.",
+    "rule": "No loop, repeat/count option, longer text, added stderr marker, flushing delay or larger output. Retain the existing command-driven one-process producer."
+  },
+  "whitespaceInput": {
+    "status": "specified-control-not-implemented-or-executed",
+    "stdinCommandsExactlyOnce": ["start", "lines", "finish"],
+    "onStartStderr": " \t",
+    "onLinesStdout": "\u001b[32mstdout\u001b[0m\n",
+    "onLinesStderr": "\r\n\n",
+    "onFinish": "End stderr without a tail, then close readline and stdin.",
+    "expectedRawStderrLines": [" \t\r\n", "\n"],
+    "expectedNormalizedErrorMessagesWhenEnabled": [],
+    "normalizationEligibleLinesPerOperation": 0,
+    "partialChunkGate": "Wait for actual accumulated space+tab chunk data before sending lines.",
+    "completeLineGate": "Wait for the actual empty LF line after the whitespace CRLF line before sending finish.",
+    "rule": "Use whitespace itself as the producer gate. Do not add a non-whitespace/ANSI stderr sentinel, which would invalidate this zero-normalization control."
+  },
+  "loggingAndAssertions": {
+    "levelsPerInput": ["Error", "Critical", "None"],
+    "factory": "Use the real LoggerFactory category Microsoft.AspNetCore.SpaServices and the existing TestLoggerProvider/TestSink, with the selected real minimum-level filter.",
+    "loggerPassedToAttachToLogger": "The actual factory.CreateLogger result directly; NOT193 RecordingLogger.",
+    "whyNoRecordingLogger": "193's diagnostic wrapper eagerly formats/enqueues rejected attempts before forwarding. Timing that wrapper would charge synthetic rejected-log recording to the baseline and exaggerate the guard's benefit.",
+    "rawCapture": "Keep production EventedStreamStringReader attached independently. Its expected string is each received raw line plus Environment.NewLine, including the final unterminated tail.",
+    "console": "Retain the same per-operation partial-chunk Console capture for both variants; no globally parallel operation. Do not assume newline-containing OS chunk partitioning is stable.",
+    "expectedSink": "Full Error emits exactly the five normalized Error messages; Critical/None emit none. Whitespace emits no Error messages at any level. Information/stdout messages are filtered at all three measured levels.",
+    "completion": "Await actual Node exit0, both production stream-closed events and all callbacks/drains. Dispose logger/provider, runner and Process before consumer exit0. Preserve literal braces, color stripping, CRLF/LF, ANSI-only newline and raw error diagnostics.",
+    "outsideInterval": "Supervisor result parsing, byte/identity comparison and statistical calculations. Consumer logging, collection, required callback delivery and flushing remain inside the whole-operation interval."
+  },
+  "futureConsumerAndIdentityPlan": {
+    "readiness": "No runnable source supplied because workload/materiality and image prerequisites remain open.",
+    "consumer": "Prefer a private executable entrypoint/build mode inside the existing native test project, preserving its assembly name and existing product access. A selected case performs exactly one real NodeScriptRunner operation. Build-mode qualification is still required; no new framework IVT/UnsafeAccessor or standalone copied product implementation.",
+    "managedIdentity": "An explicitly authorized untimed run of each frozen image must report actual Environment.Version, RuntimeInformation.FrameworkDescription, runtime directory, loaded CoreLib/coreclr paths and hashes, product assembly path/hash/MVID, process architecture, deps/runtimeconfig hashes and physical-host witness. Original must actually load26562.105; Default must separately load26569.107. Refuse roll-forward or fallback.",
+    "nodeIdentity": "A future explicit identity-only stdin command may report the actual child process.pid, process.execPath and process.versions.node/v8 on stdout during untimed qualification. Resolve/hash that exact executable and capture its owned PID/ancestry. Never send that command in measured cases or add identity stderr output.",
+    "executableBinding": "Bind package-manager command/path and PATH to the same frozen Node executable for both variants; qualify Windows cmd quoting and actual Node child selection before timing. A path label alone is insufficient.",
+    "entryInvocation": "Future child uses graph activation and the explicit frozen runtime/deps files, exact --fx-version and --roll-forward Disable where supported. Verify the actual consumer runtime, not merely dotnet --info, SDK metadata or parent launcher version.",
+    "imageManifest": "For each role/variant freeze all source inputs, program/producer/provider DLLs, PDB/MVIDs, deps/runtimeconfig, host/SDK/runtime closures, Node, scripts, argv, working directory and environment hashes before timing. Outputs go outside immutable images. Consumers and Node inputs must match across each pair.",
+    "processSettings": "Preserve exact graph activation plus DOTNET_GENERATE_ASPNET_CERTIFICATE=false, DOTNET_ADD_GLOBAL_TOOLS_TO_PATH=false and MSBUILDDISABLENODEREUSE=1. Use the unmodified common helper's declared tiering0 settings for both variants if the coordinator accepts that limitation. No machine priority/affinity/power changes.",
+    "failurePolicy": "Identity/setup/case faults do not become performance samples or permission to retune. Preserve failed attempts; no automatic rerun. No future process launch is authorized by this source plan."
+  }
+}

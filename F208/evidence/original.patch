@@ -1,0 +1,217 @@
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/src/Npm/NodeScriptRunner.cs b/src/Middleware/Spa/SpaServices.Extensions/src/Npm/NodeScriptRunner.cs
+index bf8b89a2e08314912345bb8b62fd925ce721de6a..9a3be00da83473a86e297377c47b8775964b643d 100644
+--- a/src/Middleware/Spa/SpaServices.Extensions/src/Npm/NodeScriptRunner.cs
++++ b/src/Middleware/Spa/SpaServices.Extensions/src/Npm/NodeScriptRunner.cs
+@@ -96,7 +96,7 @@ internal sealed class NodeScriptRunner : IDisposable
+ 
+         StdErr.OnReceivedLine += line =>
+         {
+-            if (!string.IsNullOrWhiteSpace(line))
++            if (!string.IsNullOrWhiteSpace(line) && logger.IsEnabled(LogLevel.Error))
+             {
+                 logger.LogError(StripAnsiColors(line));
+             }
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/test/Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj b/src/Middleware/Spa/SpaServices.Extensions/test/Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj
+index 8a3bd604ab2003f623bfb8ceb3480e9df47a7365..b0848ccb6e1d58ae4ec5452c90303276a75e157f 100644
+--- a/src/Middleware/Spa/SpaServices.Extensions/test/Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj
++++ b/src/Middleware/Spa/SpaServices.Extensions/test/Microsoft.AspNetCore.SpaServices.Extensions.Tests.csproj
+@@ -21,6 +21,7 @@
+     <ProjectReference Include="$(RepoRoot)src\Middleware\Spa\SpaServices.Extensions\src\Microsoft.AspNetCore.SpaServices.Extensions.csproj" />
+     <ProjectReference Include="$(RepoRoot)src\Middleware\StaticFiles\src\Microsoft.AspNetCore.StaticFiles.csproj" />
+     <Content Include="js\**\*" />
++    <Content Include="..\testassets\NodeScriptRunner\run" Link="NodeScriptRunner\run" CopyToOutputDirectory="PreserveNewest" />
+   </ItemGroup>
+ 
+   <ItemGroup>
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/test/NodeScriptRunnerTests.cs b/src/Middleware/Spa/SpaServices.Extensions/test/NodeScriptRunnerTests.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..5328e64e8093d1a1b943c324cf4996cfec2aaf19
+--- /dev/null
++++ b/src/Middleware/Spa/SpaServices.Extensions/test/NodeScriptRunnerTests.cs
+@@ -0,0 +1,158 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++using System.Collections.Concurrent;
++using System.Diagnostics;
++using System.IO;
++using System.Linq;
++using System.Text;
++using System.Threading;
++using System.Threading.Tasks;
++using Microsoft.AspNetCore.InternalTesting;
++using Microsoft.AspNetCore.NodeServices.Npm;
++using Microsoft.AspNetCore.NodeServices.Util;
++using Microsoft.Extensions.DiagnosticAdapter;
++using Microsoft.Extensions.Logging;
++using Microsoft.Extensions.Logging.Testing;
++using Xunit;
++
++namespace Microsoft.AspNetCore.SpaServices.Extensions.Tests;
++
++[Collection(nameof(NodeScriptRunnerTests))]
++public class NodeScriptRunnerTests
++{
++    [CollectionDefinition(nameof(NodeScriptRunnerTests), DisableParallelization = true)]
++    public sealed class ConsoleCollection
++    {
++    }
++
++    [Theory]
++    [InlineData(LogLevel.Information)]
++    [InlineData(LogLevel.Error)]
++    [InlineData(LogLevel.Critical)]
++    [InlineData(LogLevel.None)]
++    public async Task AttachToLogger_FiltersAndNormalizesRealNodeOutput(LogLevel minimumLevel)
++    {
++        var sink = new TestSink();
++        using var loggerFactory = LoggerFactory.Create(builder => builder
++            .SetMinimumLevel(minimumLevel)
++            .AddProvider(new TestLoggerProvider(sink)));
++        var logger = new RecordingLogger(loggerFactory.CreateLogger("Microsoft.AspNetCore.SpaServices"));
++        using var diagnosticListener = new DiagnosticListener(nameof(NodeScriptRunnerTests));
++        var started = new TaskCompletionSource<Process>(TaskCreationOptions.RunContinuationsAsynchronously);
++        using var subscription = diagnosticListener.SubscribeWithAdapter(new NodeStartedObserver(started));
++        var runner = new NodeScriptRunner(
++            Path.Combine(AppContext.BaseDirectory, "NodeScriptRunner"),
++            "stderr", null, null, "node", diagnosticListener, CancellationToken.None);
++        var process = await started.Task.DefaultTimeout();
++        using var errors = new EventedStreamStringReader(runner.StdErr);
++        var progressReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var linesReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var stdoutClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var stderrClosed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
++        var progress = new StringBuilder();
++        using var consoleOutput = new StringWriter();
++        var originalConsoleOutput = Console.Out;
++
++        try
++        {
++            Console.SetOut(consoleOutput);
++            runner.AttachToLogger(logger);
++            runner.StdErr.OnReceivedChunk += chunk =>
++            {
++                progress.Append(chunk.Array, chunk.Offset, chunk.Count);
++                if (progress.ToString() == "progress")
++                {
++                    progressReceived.TrySetResult();
++                }
++            };
++            runner.StdErr.OnReceivedLine += line =>
++            {
++                if (line == "\u001b[0m\n")
++                {
++                    linesReceived.TrySetResult();
++                }
++            };
++            runner.StdOut.OnStreamClosed += () => stdoutClosed.TrySetResult();
++            runner.StdErr.OnStreamClosed += () => stderrClosed.TrySetResult();
++
++            await SendCommandAsync(process, "start");
++            await progressReceived.Task.DefaultTimeout();
++            Assert.Equal("progress", consoleOutput.ToString());
++            Assert.Empty(logger.Writes);
++            Assert.Empty(sink.Writes);
++
++            await SendCommandAsync(process, "lines");
++            await linesReceived.Task.DefaultTimeout();
++            await SendCommandAsync(process, "finish");
++            await Task.WhenAll(stdoutClosed.Task, stderrClosed.Task, process.WaitForExitAsync()).DefaultTimeout();
++            Assert.Equal(0, process.ExitCode);
++
++            string[] rawErrorLines =
++            [
++                "progress\r\u001b[31mfirst error\u001b[0m\r\n",
++                "\n",
++                " \t\r\n",
++                "plain {Value}\n",
++                "\u001b[1;33msecond error\u001b[0m\n",
++                "\u001b[0m\n",
++                "tail"
++            ];
++            Assert.Equal(string.Concat(rawErrorLines.Select(line => line + Environment.NewLine)), errors.ReadAsString());
++            Assert.EndsWith("tail", consoleOutput.ToString());
++
++            string[] expectedErrors = minimumLevel <= LogLevel.Error
++                ? ["progress\rfirst error\r\n", "plain {Value}\n", "second error\n", "\n", "tail"]
++                : [];
++            string[] expectedOutput = minimumLevel <= LogLevel.Information ? ["stdout\n"] : [];
++            Assert.Equal(expectedErrors, sink.Writes.Where(write => write.LogLevel == LogLevel.Error).Select(write => write.Message));
++            Assert.Equal(expectedOutput, sink.Writes.Where(write => write.LogLevel == LogLevel.Information).Select(write => write.Message));
++            Assert.Equal(expectedErrors, logger.Writes.Where(write => write.Level == LogLevel.Error).Select(write => write.Message));
++            Assert.Equal(expectedOutput, logger.Writes.Where(write => write.Level == LogLevel.Information).Select(write => write.Message));
++        }
++        finally
++        {
++            Console.SetOut(originalConsoleOutput);
++            ((IDisposable)runner).Dispose();
++            await process.WaitForExitAsync().DefaultTimeout();
++            process.Dispose();
++        }
++    }
++
++    private static async Task SendCommandAsync(Process process, string command)
++    {
++        await process.StandardInput.WriteLineAsync(command);
++        await process.StandardInput.FlushAsync();
++    }
++
++    private sealed class NodeStartedObserver(TaskCompletionSource<Process> started)
++    {
++        [DiagnosticName("Microsoft.AspNetCore.NodeServices.Npm.NpmStarted")]
++        public void OnNpmStarted(Process process)
++        {
++            started.TrySetResult(process);
++        }
++    }
++
++    private sealed class RecordingLogger(ILogger logger) : ILogger
++    {
++        public ConcurrentQueue<(LogLevel Level, string Message)> Writes { get; } = new();
++
++        public IDisposable BeginScope<TState>(TState state) where TState : notnull
++        {
++            return logger.BeginScope(state);
++        }
++
++        public bool IsEnabled(LogLevel logLevel)
++        {
++            return logger.IsEnabled(logLevel);
++        }
++
++        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
++        {
++            Writes.Enqueue((logLevel, formatter(state, exception)));
++            logger.Log(logLevel, eventId, state, exception, formatter);
++        }
++    }
++}
+diff --git a/src/Middleware/Spa/SpaServices.Extensions/testassets/NodeScriptRunner/run b/src/Middleware/Spa/SpaServices.Extensions/testassets/NodeScriptRunner/run
+new file mode 100644
+index 0000000000000000000000000000000000000000..2d37be21c349005169092fee96990bc95a9b8d89
+--- /dev/null
++++ b/src/Middleware/Spa/SpaServices.Extensions/testassets/NodeScriptRunner/run
+@@ -0,0 +1,22 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++const readline = require('node:readline').createInterface({ input: process.stdin });
++
++readline.on('line', command => {
++    switch (command) {
++        case 'start':
++            process.stderr.write('progress');
++            break;
++        case 'lines':
++            process.stdout.write('\u001b[32mstdout\u001b[0m\n');
++            process.stderr.write('\r\u001b[31mfirst error\u001b[0m\r\n\n \t\r\nplain {Value}\n\u001b[1;33msecond error\u001b[0m\n\u001b[0m\n');
++            break;
++        case 'finish':
++            process.stderr.end('tail', () => {
++                readline.close();
++                process.stdin.destroy();
++            });
++            break;
++    }
++});
