@@ -1,0 +1,14 @@
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 32)         _window.WebMessageReceived += (sender, message) =>
+cf2f128e24 (Steve Sanderson     2021-06-11 20:57:15 +0100 33)         {
+c65dac77cf (Pranav K            2021-12-22 22:35:24 -0800 34)             // On some platforms, we need to move off the browser UI thread
+c65dac77cf (Pranav K            2021-12-22 22:35:24 -0800 35)             Task.Factory.StartNew(message =>
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 36)             {
+c65dac77cf (Pranav K            2021-12-22 22:35:24 -0800 37)                 // TODO: Fix this. Photino should ideally tell us the URL that the message comes from so we
+c65dac77cf (Pranav K            2021-12-22 22:35:24 -0800 38)                 // know whether to trust it. Currently it's hardcoded to trust messages from any source, including
+c65dac77cf (Pranav K            2021-12-22 22:35:24 -0800 39)                 // if the webview is somehow navigated to an external URL.
+85573e6b92 (Surayya Huseyn Zada 2023-04-06 21:03:23 +0200 40)                 var messageOriginUrl = _appBaseUri;
+cf2f128e24 (Steve Sanderson     2021-06-11 20:57:15 +0100 41) 
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 42)                 MessageReceived(messageOriginUrl, (string)message!);
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 43)             }, message, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 44)         };
+a450cb69b5 (Pranav K            2021-11-05 17:52:08 -0700 45)     }

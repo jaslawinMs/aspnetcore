@@ -1,0 +1,441 @@
+{
+  "src/Components/Testing/gen/ServiceOverrideAnalyzer.cs": [
+    {
+      "term": "internal class ServiceOverrideAnalyzer",
+      "matches": [
+        {
+          "line": 14,
+          "text": "internal class ServiceOverrideAnalyzer : DiagnosticAnalyzer"
+        }
+      ]
+    },
+    {
+      "term": "RegisterSyntaxNodeAction",
+      "matches": [
+        {
+          "line": 26,
+          "text": "context.RegisterSyntaxNodeAction(AnalyzeInvocation, SyntaxKind.InvocationExpression);"
+        }
+      ]
+    },
+    {
+      "term": "GetSymbolInfo",
+      "matches": [
+        {
+          "line": 40,
+          "text": "var symbolInfo = semanticModel.GetSymbolInfo(invocation, context.CancellationToken);"
+        }
+      ]
+    },
+    {
+      "term": "Skip calls within",
+      "matches": [
+        {
+          "line": 54,
+          "text": "// Skip calls within ServerStartOptions itself (generic → non-generic forwarding)"
+        }
+      ]
+    },
+    {
+      "term": "method.IsGenericMethod",
+      "matches": [
+        {
+          "line": 66,
+          "text": "if (method.IsGenericMethod && method.TypeArguments.Length == 1)"
+        },
+        {
+          "line": 74,
+          "text": "else if (!method.IsGenericMethod && method.Parameters.Length == 2)"
+        }
+      ]
+    },
+    {
+      "term": "GetConstantValue",
+      "matches": [
+        {
+          "line": 96,
+          "text": "var constantValue = semanticModel.GetConstantValue("
+        }
+      ]
+    },
+    {
+      "term": "var candidates =",
+      "matches": [
+        {
+          "line": 108,
+          "text": "var candidates = overrideType.GetMembers(methodName)"
+        }
+      ]
+    },
+    {
+      "term": ".OfType<IMethodSymbol>()",
+      "matches": [
+        {
+          "line": 109,
+          "text": ".OfType<IMethodSymbol>()"
+        }
+      ]
+    },
+    {
+      "term": ".Where(m =>",
+      "matches": [
+        {
+          "line": 110,
+          "text": ".Where(m =>"
+        }
+      ]
+    },
+    {
+      "term": ".ToList();",
+      "matches": [
+        {
+          "line": 114,
+          "text": ".ToList();"
+        }
+      ]
+    },
+    {
+      "term": "candidates.Count == 0",
+      "matches": [
+        {
+          "line": 116,
+          "text": "if (candidates.Count == 0)"
+        }
+      ]
+    },
+    {
+      "term": "DiagnosticDescriptors.MethodNotFound",
+      "matches": [
+        {
+          "line": 18,
+          "text": "DiagnosticDescriptors.MethodNotFound,"
+        },
+        {
+          "line": 121,
+          "text": "DiagnosticDescriptors.MethodNotFound,"
+        }
+      ]
+    },
+    {
+      "term": "var targetMethod =",
+      "matches": [
+        {
+          "line": 129,
+          "text": "var targetMethod = candidates.FirstOrDefault(m => m.IsStatic);"
+        }
+      ]
+    },
+    {
+      "term": "targetMethod is null",
+      "matches": [
+        {
+          "line": 130,
+          "text": "if (targetMethod is null)"
+        }
+      ]
+    },
+    {
+      "term": "DiagnosticDescriptors.MethodMustBeStatic",
+      "matches": [
+        {
+          "line": 20,
+          "text": "DiagnosticDescriptors.MethodMustBeStatic);"
+        },
+        {
+          "line": 135,
+          "text": "DiagnosticDescriptors.MethodMustBeStatic,"
+        }
+      ]
+    }
+  ],
+  "src/Components/Testing/gen/StartupHookGenerator.cs": [
+    {
+      "term": "IIncrementalGenerator",
+      "matches": [
+        {
+          "line": 15,
+          "text": "internal class StartupHookGenerator : IIncrementalGenerator"
+        }
+      ]
+    },
+    {
+      "term": "CreateSyntaxProvider",
+      "matches": [
+        {
+          "line": 27,
+          "text": "var callsites = context.SyntaxProvider.CreateSyntaxProvider("
+        }
+      ]
+    },
+    {
+      "term": "callsites.Collect()",
+      "matches": [
+        {
+          "line": 32,
+          "text": "var collected = callsites.Collect();"
+        }
+      ]
+    },
+    {
+      "term": "RegisterSourceOutput",
+      "matches": [
+        {
+          "line": 34,
+          "text": "context.RegisterSourceOutput(collected, EmitServiceOverrideResolver);"
+        }
+      ]
+    },
+    {
+      "term": "static ServiceOverrideCallsite? ExtractCallsite",
+      "matches": [
+        {
+          "line": 68,
+          "text": "static ServiceOverrideCallsite? ExtractCallsite("
+        }
+      ]
+    },
+    {
+      "term": "var targetMethod =",
+      "matches": [
+        {
+          "line": 139,
+          "text": "var targetMethod = overrideType.GetMembers(methodName)"
+        }
+      ]
+    },
+    {
+      "term": ".FirstOrDefault(m =>",
+      "matches": [
+        {
+          "line": 141,
+          "text": ".FirstOrDefault(m =>"
+        }
+      ]
+    },
+    {
+      "term": "m.IsStatic &&",
+      "matches": [
+        {
+          "line": 142,
+          "text": "m.IsStatic &&"
+        }
+      ]
+    },
+    {
+      "term": "return new ServiceOverrideCallsite",
+      "matches": [
+        {
+          "line": 158,
+          "text": "return new ServiceOverrideCallsite(fullyQualified, fullName, assemblyName, methodName);"
+        }
+      ]
+    },
+    {
+      "term": "context.AddSource(\"ServiceOverrideResolver.g.cs\"",
+      "matches": [
+        {
+          "line": 214,
+          "text": "context.AddSource(\"ServiceOverrideResolver.g.cs\", sb.ToString());"
+        }
+      ]
+    }
+  ],
+  "src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs": [
+    {
+      "term": "public async Task",
+      "matches": [
+        {
+          "line": 16,
+          "text": "public async Task NoDiagnostics_WhenNoCallsites()"
+        },
+        {
+          "line": 33,
+          "text": "public async Task NoDiagnostics_WhenMethodIsValid()"
+        },
+        {
+          "line": 59,
+          "text": "public async Task NoDiagnostics_WhenMethodIsValidWithStringLiteral()"
+        },
+        {
+          "line": 85,
+          "text": "public async Task NoDiagnostics_WhenValidNonGenericOverload()"
+        },
+        {
+          "line": 111,
+          "text": "public async Task ReportsE2E003_WhenMethodIsNotStatic()"
+        },
+        {
+          "line": 142,
+          "text": "public async Task ReportsE2E003_WhenMethodIsNotStatic_NonGenericOverload()"
+        },
+        {
+          "line": 171,
+          "text": "public async Task ReportsE2E001_WhenMethodNotFound()"
+        },
+        {
+          "line": 202,
+          "text": "public async Task ReportsE2E001_WhenMethodHasWrongSignature()"
+        },
+        {
+          "line": 231,
+          "text": "public async Task ReportsE2E002_WhenMethodNameNotConstant()"
+        },
+        {
+          "line": 262,
+          "text": "public async Task NoDiagnostics_WhenCallIsNotOnServerStartOptions()"
+        },
+        {
+          "line": 288,
+          "text": "public async Task ReportsE2E003_SpecificToNonStaticMethod_NotMethodNotFound()"
+        },
+        {
+          "line": 320,
+          "text": "public async Task ReportsE2E001_WhenStaticMethodExistsButWrongParameter()"
+        },
+        {
+          "line": 349,
+          "text": "public async Task DiagnosticLocationPointsToInvocation()"
+        },
+        {
+          "line": 376,
+          "text": "public async Task NoDiagnostics_WhenPrivateStaticMethodWithCorrectSignature()"
+        }
+      ]
+    },
+    {
+      "term": "static async Task<Diagnostic[]>",
+      "matches": [
+        {
+          "line": 401,
+          "text": "static async Task<Diagnostic[]> GetAnalyzerDiagnosticsAsync(string userSource)"
+        }
+      ]
+    },
+    {
+      "term": "WithAnalyzers",
+      "matches": [
+        {
+          "line": 405,
+          "text": "var compilationWithAnalyzers = compilation.WithAnalyzers(analyzers.ToImmutableArray());"
+        },
+        {
+          "line": 406,
+          "text": "var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();"
+        }
+      ]
+    },
+    {
+      "term": "GetAnalyzerDiagnosticsAsync();",
+      "matches": [
+        {
+          "line": 406,
+          "text": "var diagnostics = await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();"
+        }
+      ]
+    }
+  ],
+  "src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs": [
+    {
+      "term": "internal static GeneratorDriverRunResult",
+      "matches": [
+        {
+          "line": 410,
+          "text": "internal static GeneratorDriverRunResult RunGenerator(CSharpCompilation compilation)"
+        }
+      ]
+    },
+    {
+      "term": "CSharpGeneratorDriver.Create",
+      "matches": [
+        {
+          "line": 413,
+          "text": "var driver = CSharpGeneratorDriver.Create(generator);"
+        }
+      ]
+    },
+    {
+      "term": "RunGenerators(compilation)",
+      "matches": [
+        {
+          "line": 414,
+          "text": "driver = (CSharpGeneratorDriver)driver.RunGenerators(compilation);"
+        }
+      ]
+    },
+    {
+      "term": "internal static CSharpCompilation CreateCompilationWithInfrastructure",
+      "matches": [
+        {
+          "line": 429,
+          "text": "internal static CSharpCompilation CreateCompilationWithInfrastructure(string userSource)"
+        }
+      ]
+    },
+    {
+      "term": "CSharpSyntaxTree.ParseText",
+      "matches": [
+        {
+          "line": 420,
+          "text": "var syntaxTree = CSharpSyntaxTree.ParseText(\"namespace TestAssembly;\");"
+        },
+        {
+          "line": 458,
+          "text": "CSharpSyntaxTree.ParseText(infraSource),"
+        },
+        {
+          "line": 459,
+          "text": "CSharpSyntaxTree.ParseText(userSource),"
+        }
+      ]
+    },
+    {
+      "term": "CSharpCompilation.Create",
+      "matches": [
+        {
+          "line": 422,
+          "text": "return CSharpCompilation.Create("
+        },
+        {
+          "line": 467,
+          "text": "return CSharpCompilation.Create("
+        }
+      ]
+    }
+  ],
+  "src/Components/Testing/src/Infrastructure/ServerInstance.cs": [
+    {
+      "term": "E2E_TEST_SERVICES_TYPE",
+      "matches": [
+        {
+          "line": 242,
+          "text": "environment[\"E2E_TEST_SERVICES_TYPE\"] = options.ServiceOverrideTypeName;"
+        },
+        {
+          "line": 261,
+          "text": "environment.Remove(\"E2E_TEST_SERVICES_TYPE\");"
+        },
+        {
+          "line": 317,
+          "text": "startInfo.Environment.Remove(\"E2E_TEST_SERVICES_TYPE\");"
+        }
+      ]
+    },
+    {
+      "term": "E2E_TEST_SERVICES_METHOD",
+      "matches": [
+        {
+          "line": 243,
+          "text": "environment[\"E2E_TEST_SERVICES_METHOD\"] = options.ServiceOverrideMethodName!;"
+        },
+        {
+          "line": 262,
+          "text": "environment.Remove(\"E2E_TEST_SERVICES_METHOD\");"
+        },
+        {
+          "line": 318,
+          "text": "startInfo.Environment.Remove(\"E2E_TEST_SERVICES_METHOD\");"
+        }
+      ]
+    }
+  ]
+}

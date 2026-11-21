@@ -1,0 +1,163 @@
+{
+  "finding": "F212",
+  "ownerAgentId": "c485590a-1d0d-4aa3-971b-e1bfc2bfe790",
+  "disposition": "SOURCE_ONLY_INTENTIONAL_DISPATCH_NO_MATERIAL_CANDIDATE",
+  "validationBoundary": "Pinned source, source history, and authoritative Windows browser-threading documentation. No loaded-runtime, native-window, browser, test, or performance experiment.",
+  "conclusion": "The small delegate is a deliberate handoff off the native browser callback, followed by dispatch through the actual Photino UI owner. The downstream InvokeAsync path is not necessarily asynchronous. Removing the task is not a semantics-preserving local optimization. No materially justified alternative survives the assigned source/materiality gate.",
+  "notMeasuredNoGain": true,
+  "candidateCreated": false,
+  "candidateDiff": "candidate.diff",
+  "implementationAcceptanceNotInvoked": "No qualified material candidate; no shipping or private graph changes, builds, tests, SDK activation, restore, browser workload, or benchmark were warranted.",
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultObservation": "source-pins-003.json and native\\003-github-main.stdout",
+    "physicalHost": "CPC-jasla-LSEJU",
+    "reservedCheckoutIsDefault": false,
+    "exactMemberships": [
+      "source-memberships-003.json",
+      "external-memberships-004.json",
+      "source-memberships-005.json",
+      "source-memberships-006.json"
+    ],
+    "pairComparison": "source-role-pairs-006.json",
+    "findingSeamUnchanged": "PhotinoWebViewManager, PhotinoDispatcher, PhotinoSynchronizationContext, BlazorWindow, the framework manager/IPC path and WebView boot/sender/receiver have identical blobs between Original and observed Default.",
+    "observedRoleDifferences": "BasicTestApp/Index.razor, Components/AGENTS.md, BlazorComponentsGuidance.md and eng/Versions.props differ. Both roles still select no test component initially, and both pin Photino.NET 2.5.2. These differences are preserved, not flattened into a common fixture.",
+    "absence": "The guessed eng/Dependencies.props path is absent in both commit/path queries; it is not used as dependency evidence."
+  },
+  "dependencySourcePins": {
+    "manifestVersion": "Both ASP.NET Core eng/Versions.props files specify PhotinoNETVersion 2.5.2; the sample references Photino.NET.",
+    "Photino.NET": {
+      "repository": "tryphotino/photino.NET",
+      "tag": "v2.5.2",
+      "commit": "8cd67ebcbbf3ddeea14e6d8c499a1679259359d8",
+      "sourceProject": "Photino.NET/Photino.NET.csproj",
+      "nativeDependency": "Photino.Native 2.5.2"
+    },
+    "Photino.Native": {
+      "repository": "tryphotino/photino.Native",
+      "tag": "v2.5.2",
+      "commit": "9e33f78ec9b135a11678c2f844e83e3dc712f2b2"
+    },
+    "officialWindowsContract": {
+      "repository": "MicrosoftDocs/edge-developer",
+      "commit": "34db6e7c589ef46266db59b05f12ca2c0e823cb3",
+      "path": "microsoft-edge/webview2/concepts/threading-model.md",
+      "publicUrl": "https://learn.microsoft.com/microsoft-edge/webview2/concepts/threading-model"
+    },
+    "binaryBindingLimit": "Version-tag source agrees with the declared package dependency, but no installed package, native DLL, loaded assembly, MVID, native WebView runtime version or package-to-binary reproducibility binding was established. Source provenance is not loaded-runtime proof."
+  },
+  "actualProducer": [
+    {
+      "owner": "Existing PhotinoTestApp",
+      "path": "src/Components/WebView/Samples/PhotinoPlatform/testassets/PhotinoTestApp/Program.cs",
+      "behavior": "STAThread Main creates one BlazorWindow, registers BasicTestApp.Index once at root, registers two JavaScript-addable component types, then calls mainWindow.Run(). Run navigates and enters PhotinoWindow.WaitForClose()."
+    },
+    {
+      "owner": "Existing host document and Blazor WebView boot",
+      "paths": [
+        "src/Components/WebView/Samples/PhotinoPlatform/testassets/PhotinoTestApp/wwwroot/webviewhost.html",
+        "src/Components/Web.JS/src/Boot.WebView.ts",
+        "src/Components/Web.JS/src/Platform/WebView/WebViewIpcSender.ts"
+      ],
+      "behavior": "The host loads blazor.webview.js. Boot installs the real JS interop dispatcher, receiver and navigation callbacks and sends AttachPage. The sender serializes supported IPC messages and calls the platform-provided window.external.sendMessage."
+    },
+    {
+      "owner": "Photino.Native Windows",
+      "path": "Photino.Native/Photino.Windows.cpp",
+      "behavior": "Injected window.external.sendMessage forwards to window.chrome.webview.postMessage. The registered ICoreWebView2WebMessageReceivedEventHandler reads the string and directly calls _webMessageReceivedCallback before returning S_OK. There is no intervening managed task in this native producer.",
+      "threadContract": "The pinned Microsoft WebView2 documentation says the control is created on a UI thread with a message pump and all callbacks occur on that thread."
+    },
+    {
+      "owner": "Photino.Native Linux",
+      "path": "Photino.Native/Photino.Linux.cpp",
+      "behavior": "Injected sendMessage posts to window.webkit.messageHandlers.Photinointerop. A script-message-received::Photinointerop signal invokes HandleWebMessage, which directly calls the registered callback with the string, then frees the native string and unrefs the JS result.",
+      "threadLimit": "Signal registration and direct callback chain are established by pinned source. An independent GTK/WebKit callback-affinity contract and a live Linux process were not collected; no universal Linux thread or lifecycle claim is made."
+    },
+    {
+      "owner": "Photino.Native macOS",
+      "paths": [
+        "Photino.Native/Photino.Mac.mm",
+        "Photino.Native/Photino.Mac.UiDelegate.h",
+        "Photino.Native/Photino.Mac.UiDelegate.mm"
+      ],
+      "behavior": "Injected sendMessage posts to the photinointerop WKScriptMessageHandler. The actual UiDelegate didReceiveScriptMessage method directly calls webMessageReceivedCallback(messageUtf8).",
+      "threadLimit": "The direct WK callback chain is established by pinned source. An independent WKWebView callback-affinity contract and a live macOS process were not collected."
+    },
+    {
+      "owner": "Photino.NET managed/native bridge",
+      "paths": [
+        "Photino.NET/PhotinoNativeDelegates.cs",
+        "Photino.NET/PhotinoNativeParameters.cs",
+        "Photino.NET/PhotinoWindow.NET.cs",
+        "Photino.NET/PhotinoNetDelegates.cs"
+      ],
+      "behavior": "The Cdecl string callback is stored in startup parameters as OnWebMessageReceived. That method synchronously invokes WebMessageReceived?.Invoke(this, message). This is the real producer into the sample subscription, not a synthesized callback or unit-test injection."
+    }
+  ],
+  "dispatchOwnership": {
+    "currentSampleBoundary": "For each actual WebMessageReceived event, the sample creates one Task.Factory.StartNew operation with the string as state, CancellationToken.None, TaskCreationOptions.DenyChildAttach and TaskScheduler.Default. The event handler does not await message processing. The comment explicitly says some platforms need to move off the browser UI thread.",
+    "baseManager": "WebViewManager.MessageReceived performs its source-URI gate and calls _dispatcher.InvokeAsync with asynchronous IPC processing. The returned dispatcher task is discarded. IPC exceptions are reported through IpcSender.NotifyUnhandledException and rethrown inside that task.",
+    "sameOwner": "BlazorWindow constructs PhotinoDispatcher for its own PhotinoWindow and passes that dispatcher to PhotinoWebViewManager. PageContext passes the same dispatcher to WebViewRenderer; its Dispatcher property returns that owner.",
+    "notUnconditionalAsync": "PhotinoDispatcher.CheckAccess compares SynchronizationContext.Current with its PhotinoSynchronizationContext and runs the delegate immediately when equal. Otherwise the context may execute synchronously when its queued antecedent is complete. ExecuteSynchronously always uses _window.Invoke and temporarily installs its synchronization context.",
+    "nativeInvoke": {
+      "managed": "PhotinoWindow records the constructing managed thread ID. Invoke runs the Action immediately on that thread, otherwise calls Photino_Invoke.",
+      "Windows": "Photino::Invoke posts WM_USER_INVOKE and blocks its caller on a condition variable until the window procedure executes the callback and signals completion.",
+      "Linux": "Photino::Invoke queues gdk_threads_add_idle and blocks its caller until the callback signals completion.",
+      "macOS": "Photino::Invoke uses dispatch_sync(dispatch_get_main_queue(), callback)."
+    },
+    "whyNotInline": "Calling MessageReceived on the browser callback stack can synchronously enter IPC/application/rendering code through the same-thread native Invoke fast path. The current separate task allows the native event handler to return independently while UI-affine work is forwarded through the platform's marshaling path. A downstream method named InvokeAsync is therefore not proof that the outer handoff is redundant.",
+    "reentrancyContract": "The pinned WebView2 documentation says callbacks run serially, unsupported nested message loops/modal UI within an event handler can leave the event on the stack, and such work should be scheduled after the event handler completes. This is a contract reason to preserve the boundary, not a reproduced assertion that this unmodified sample currently hangs.",
+    "ordering": "The current default-scheduler tasks are not documented here as native-arrival FIFO. The synchronization context controls its queued callbacks and continuations. Inlining or adding a new queue would change admission/reentrancy and cannot be called equivalent.",
+    "faultAndCancellation": "The explicit task scheduler, task exception boundary, DenyChildAttach option, CancellationToken.None and separate discarded dispatcher task are existing behavior. Replacing the task with a direct call or a raw thread-pool work item would require new fault/callback/cancellation equivalence proof; none was fabricated.",
+    "lifetime": "The window owns the manager and event registration; the event handler and queued task retain the manager/message needed for forwarding. Framework PageContext owns the per-page renderer/service scope and disposes/replaces it on attachment/disposal. This investigation neither adds disposal/cancellation nor claims all post-close callback races are prevented."
+  },
+  "normalWorkloadAndCardinality": {
+    "sourceScope": "The unchanged existing PhotinoTestApp startup/host and BasicTestApp selector, plus real WebView IPC producers. No sample process was launched.",
+    "sourceCardinalities": [
+      "One BlazorWindow creation in Program.Main.",
+      "One configured static BasicTestApp.Index root and two JavaScript component-type registrations, not three initially instantiated roots.",
+      "Both source roles initialize SelectedComponentTypeName to none; a selected test component is created only after a selection/query override.",
+      "Boot has a started guard and sends one AttachPage on its successful boot path.",
+      "A successful RenderBatch JS handler reports render completion; interop, byte-array and navigation messages are conditional on real operations.",
+      "The receiver recognizes seven incoming IPC kinds: AttachPage, BeginInvokeDotNet, EndInvokeJS, ReceiveByteArrayFromJS, OnRenderCompleted, OnLocationChanged and OnLocationChanging.",
+      "The finding site schedules one task per native message event, not per argument, byte, DOM edit or render-tree element."
+    ],
+    "highFrequencyPremise": "No bounded actual normal sample workload demonstrating high-frequency native messages or material scheduling cost was supplied or observed. A large user-selected scenario could generate many events, but counting possible test choices does not establish a normal rate or useful saving.",
+    "notClaimed": [
+      "No measured messages/second, elapsed time, allocation count, benefit threshold or no-gain result.",
+      "No exact startup native-message total inferred from static registration counts.",
+      "No claim that all applications using this sample host are low frequency.",
+      "No invented message burst, callback injection, bridge, queue, browser simulation, repetition or isolated task-scheduling experiment."
+    ]
+  },
+  "history": {
+    "boundedCurrentPathQueries": "Six commits per role, retained as full GitHub responses and summaries.",
+    "followHistory": "The bounded local git log --follow --name-status query finds the exact current path introduced by cf2f128e24187970d66e7b6c5bb529b0a584a015 (Blazor WebView alternate runtime platform, 2021-06-11). No guessed historical path was used.",
+    "introduction": "The entire introduction file and exact addition patch show Task.Factory.StartNew and the explicit move-off-browser-UI comment from the initial implementation. The older overload/options are preserved as history, not misrepresented as identical to current options.",
+    "latestPathEdit": "Both bounded role histories start with 85573e6b9293cd5df5b938a9a0b8ac772bb0fc68 (2023-04-06, hash routing); the current finding-site blob is identical across the two frozen roles."
+  },
+  "faithfulValidationBoundary": {
+    "behaviorOwner": "Photino native browser callback bridge, the sample's callback handoff, and its Photino UI dispatcher.",
+    "productionProducer": "The real window.external.sendMessage to WebView2/WebKit/WKScriptMessageHandler path, not WebViewManager.MessageReceived called by a test.",
+    "finalObservable": "Unchanged user-visible native WebView rendering/interop/navigation and callback completion/reentrancy/fault/lifetime behavior, if an implementation were ever proposed.",
+    "selectedPermanentSurface": "None: no implementation or claimed behavioral regression. No permanent tests added solely for source qualification.",
+    "lowerBoundaryFalsePassRisk": "TestWebViewManager directly invokes MessageReceived after serializing a message and supplies Dispatcher.CreateDefault. Existing manager unit tests therefore bypass both native callback production and PhotinoDispatcher/PhotinoWindow.Invoke. Running them could not establish that removing this handoff preserves real native behavior.",
+    "testsRun": [],
+    "testRows": [],
+    "whyNoBrowserSkillExecution": "No browser behavior change or deterministic browser experiment was needed to reject an unjustified candidate at the source/materiality gate. No simulated browser workload was manufactured. validate-blazor-feature would be required before actual Components browser validation.",
+    "unverified": "No native-window producer was executed. No runtime, browser/UI, cancellation/fault race, performance or red/green fix claim."
+  },
+  "operationalLimitsAndFailures": [
+    "collector001 failed closed on the parent-confirmed missing comma in shared policy before starting any gh/git child. Its immutable helper and full error artifacts remain. The invalid bytes were not copied before parse; the exact error and tool-visible malformed policy are recorded, not reconstructed as a raw snapshot.",
+    "collector002 completed one read-only git HEAD root and fully drained both streams, then its wrapper failed because CopyToAsync GetResult emitted VoidTaskResult into the returned pipeline. collector003 suppresses that output in a fresh helper and uses the retained successful HEAD observation; collector002 was not edited or replayed.",
+    "Local LSP was attempted before bounded exact source fallback. One wrong-line MessageReceived lookup returned no definition; line42 resolved to the real base manager. Photino event lookup exposed metadata-as-source only, not a pinned dependency/runtime binding. A PageContext position returned NavigationManager instead of the requested renderer; exact filename fallback found Services/WebViewRenderer.cs. The advertised lsp-csharp log ID was not accessible through read_agent.",
+    "The known repository and user NuGet-cache candidate locations for Photino.NET2.5.2 nuspec did not exist. No package install, restore, ambient SDK fallback or binary identity inference followed.",
+    "Read-only gh/git children have exact identities, argv, exit and separately retained fully drained stdout/stderr. Child enumeration was not performed, and no universal descendant-closure or unrelated-user quiescence claim is made.",
+    "Owning PowerShell helper responses are available through the tool boundary and invocation/failure records; original OS-level separate stdout/stderr files for those outer shells were not captured. Do not equate that with the fully redirected gh/git child streams.",
+    "No graph, SDK activation, compiler, build, test runner, application, browser, remote execution, measurement, package/tool addition, shared policy/lease/ledger write, commit, push or publication occurred."
+  ],
+  "reservedState": "reserved/after006.snapshot.json verifies the assigned HEAD, branch, exact index and HEAD file bytes, porcelain status and all four unrelated untracked reports unchanged.",
+  "outstandingOwnedWork": [],
+  "coordinatorDecisionRequested": "Accept or finalize the source-only intentional-dispatch/no-material-candidate disposition. No performance eligibility, comparison, implementation or publication approval is implied."
+}

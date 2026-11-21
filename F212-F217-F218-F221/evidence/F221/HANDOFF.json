@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "finding": "F221",
+  "owner": "ac5fbaab-9a69-42c1-81ff-6fdc625139ba",
+  "authorization": "GO234",
+  "terminalDisposition": "source-only-no-material-candidate",
+  "validationBoundary": "Exact frozen source, existing Roslyn test-source contracts, local LSP API/symbol evidence, bounded static normal-use inventory, and read-only source history.",
+  "measuredNoGain": false,
+  "implementationCreated": false,
+  "candidateDiff": {
+    "path": "candidate.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  "decision": {
+    "materialNormalCompilationCaseEstablished": false,
+    "reason": "The materialized list is visible, but bounded normal examples contain only two explicit compile-time override registrations, each naming one static declaration. This analyzer branch is not the runtime service-override execution path. No faithful normal compilation case establishes material cost warranting a private candidate.",
+    "cardQualification": "This is not a simple ToList()[0] use. The list supports both zero-versus-nonstatic diagnostic classification and first-static existence selection.",
+    "scopeOfConclusion": "No justified material candidate in the investigated source evidence; not proof of zero cost or of all external consumer cardinalities.",
+    "notAJustification": [
+      "Visible allocation alone",
+      "Fabricated same-name overload/member sets",
+      "Repeated compiles or assumed IDE reanalysis frequency",
+      "Isolated LINQ/allocation timings",
+      "Calling the package merely repository test code; it is intended for external package consumers"
+    ],
+    "primaryStopReasonIsMateriality": true,
+    "policyFailureWasNotUsedAsPerformanceEvidence": true
+  },
+  "sourceRoles": {
+    "repository": "dotnet/aspnetcore",
+    "host": "CPC-jasla-LSEJU",
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultObservedUtc": "2026-11-21T01:52:14.449Z",
+    "defaultObservation": "Fresh read-only gh api repos/dotnet/aspnetcore/git/ref/heads/main. Target/project bytes first independently obtained through gh contents pinned to that full commit; other dependencies read from the available local object for the same commit, never from reserved HEAD.",
+    "manifest": "source-manifest.json",
+    "frozenOriginalFiles": 18,
+    "frozenDefaultFiles": 18,
+    "additionalIntroductionFile": 1,
+    "target": {
+      "path": "src/Components/Testing/gen/ServiceOverrideAnalyzer.cs",
+      "originalAndDefaultBlob": "bd8c23c174318751d5758c72c18129718cfe49d3",
+      "bytes": 6006,
+      "sha256": "C0B1A7FAF1363DA3AE7970AA7AF1C0FCB8B46BD3793BFAB69239FA9D7AE7DF43",
+      "materializationSpan": "108-114",
+      "zeroBranchSpan": "116-126",
+      "staticBranchSpan": "128-139"
+    },
+    "project": "src/Components/Testing/gen/Microsoft.AspNetCore.Components.Testing.Generators.csproj",
+    "targetFramework": "netstandard2.0",
+    "projectBlob": "65f3052463677396262b4698cde08052e49b3a06",
+    "projectBytes": 1098,
+    "sourceEquality": "source-qualification-summary.json",
+    "sourceDeltaQualification": "17 of 18 frozen file pairs are byte-identical. ServerInstance whole-file delta is preserved; its relevant BuildProcessEnvironment body is identical, independently recorded in consumer-source-boundary.json. No unrelated delta was modified or assessed."
+  },
+  "producerAndOrdering": {
+    "analyzerKind": "DiagnosticAnalyzer, not an incremental generator",
+    "entry": "ServiceOverrideAnalyzer.Initialize lines22-26 disables generated-code analysis, enables concurrent execution, and registers AnalyzeInvocation for InvocationExpression.",
+    "realSymbolProducer": [
+      "Syntactic method-name fast path must be ConfigureServices.",
+      "SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol must be IMethodSymbol, whose name and containing type identify ServerStartOptions.ConfigureServices.",
+      "Calls within ServerStartOptions are skipped, avoiding its generic-to-nongeneric forwarding body.",
+      "Generic overload uses its one actual method type argument; non-generic two-parameter overload requires a typeof expression to obtain the override type through GetTypeInfo.",
+      "GetConstantValue on the method-name expression must produce a string before any GetMembers lookup."
+    ],
+    "candidateProducer": "overrideType.GetMembers(methodName) returns ImmutableArray<ISymbol> for that name (LSP API contract), then OfType<IMethodSymbol>, exactly one parameter, then parameter Type.ToDisplayString equal to Microsoft.Extensions.DependencyInjection.IServiceCollection, then ToList.",
+    "evaluationOrder": [
+      "ToList exhausts the filtered source before any Count/static check.",
+      "Count==0 reports E2E001 on invocation.GetLocation and returns.",
+      "Nonempty list is scanned with FirstOrDefault(m => m.IsStatic) in retained source enumeration order.",
+      "No static candidate reports E2E003 on invocation.GetLocation.",
+      "A static candidate causes no diagnostic; the selected symbol is used only for the null check, not emitted or invoked by this analyzer."
+    ],
+    "diagnosticPrecedenceWithinInvocation": "Nonconstant E2E002 precedes member production; E2E001 distinguishes no signature-matching method from E2E003 for signature-matching methods but no static match.",
+    "globalDiagnosticOrdering": "Not claimed; concurrent analyzer execution is enabled.",
+    "enumerationCaution": "The initial named-member result is an ImmutableArray, but GetMembers lookup, Roslyn symbol access, OfType/Where and ToDisplayString are not assumed free. Current code evaluates the filter once and scans the materialized list for static membership. Re-enumerating a deferred filter can repeat work; a lone static FirstOrDefault conflates the two error states.",
+    "sourceLineEvidence": "source-line-anchors.json",
+    "lspEvidence": "TOOL-EVIDENCE.json"
+  },
+  "diagnostics": [
+    {
+      "id": "E2E001",
+      "severity": "Error",
+      "condition": "No methods survive the name/kind/parameter filter",
+      "message": "Method '{0}' with parameter '(IServiceCollection)' was not found on type '{1}'",
+      "locationContract": "invocation.GetLocation()",
+      "source": "ServiceOverrideAnalyzer.cs lines116-126; DiagnosticDescriptors.cs"
+    },
+    {
+      "id": "E2E002",
+      "severity": "Warning",
+      "condition": "Method-name expression is not a compile-time constant string",
+      "message": "The method name argument to ConfigureServices must be a compile-time constant (string literal or nameof). The override will fall back to reflection at runtime.",
+      "locationContract": "methodNameExpr.GetLocation()",
+      "source": "ServiceOverrideAnalyzer.cs lines95-105; DiagnosticDescriptors.cs"
+    },
+    {
+      "id": "E2E003",
+      "severity": "Error",
+      "condition": "At least one signature-matching method exists, but no matching static method exists",
+      "message": "Method '{0}' on type '{1}' must be static to be used as a service override",
+      "locationContract": "invocation.GetLocation()",
+      "source": "ServiceOverrideAnalyzer.cs lines128-139; DiagnosticDescriptors.cs"
+    }
+  ],
+  "generatorAndConsumer": {
+    "independentGenerator": "StartupHookGenerator is an IIncrementalGenerator. Initialize uses CreateSyntaxProvider(IsConfigureServicesCandidate, ExtractCallsite), filters nulls, Collects and registers EmitServiceOverrideResolver.",
+    "separateLookup": "ExtractCallsite lines139-147 performs its own GetMembers/OfType/FirstOrDefault with IsStatic before parameter checks. It does not consume the analyzer candidates list or targetMethod.",
+    "generatedResultContract": "Invalid/nonconstant callsites return null. Valid callsites produce type/assembly/method-name metadata; EmitServiceOverrideResolver emits ServiceOverrideResolver.g.cs with direct method-group delegate arms. This is source behavior, not an observed generated output.",
+    "runtimeSourcePath": [
+      "ServerStartOptions.ConfigureServices stores the type assembly-qualified name and method name; generic overload forwards to that method.",
+      "ServerInstance.BuildProcessEnvironment transports E2E_TEST_SERVICES_TYPE and E2E_TEST_SERVICES_METHOD for the managed startup-hook path.",
+      "TestReadinessHostingStartup attempts the generated IE2EServiceOverrideResolver and falls back to reflection when unresolved.",
+      "TestServiceOverrideObserver invokes the resulting configure-services action at the host-building service-configuration boundary."
+    ],
+    "materialityBoundary": "Repeated runtime server starts or service override invocations are not repeated executions of this compile-time analyzer list.",
+    "selectedLoadedRuntimeProof": false
+  },
+  "normalUseAndDocumentation": {
+    "inventory": "static-source-counts.json",
+    "sourceOnlyCounts": true,
+    "normalCallsites": 2,
+    "distinctRequestedMethodNames": 2,
+    "declaredMethodsWithEachRequestedName": 1,
+    "examples": [
+      "TestApp.E2E.Tests/Tests/AsyncStateTests.cs:25 names TestOverrides.LockableWeather",
+      "TestApp.E2E.Tests/Tests/WeatherServiceOverrideTests.cs:26 names TestOverrides.FakeWeather",
+      "TestApp.E2E.Tests/ServiceOverrides/TestOverrides.cs:14,20 defines those two distinct static IServiceCollection methods"
+    ],
+    "executedCandidateCounts": null,
+    "documentation": "ServerStartOptions XML documentation requires static void MethodName(IServiceCollection services); IE2EServiceOverrideResolver XML documents compile-time discovery, generated delegates and runtime fallback.",
+    "markdownSearch": "Bounded docs/**/*.md and Components/Testing/**/*.md searches returned no direct matches in either frozen role; full command/exit1 streams preserved.",
+    "externalAndRepeatedCompilationCardinality": "Not established or extrapolated."
+  },
+  "history": {
+    "artifact": "history-summary.json",
+    "defaultPathHistoryLimit": 8,
+    "returnedCommits": 1,
+    "introduction": "33557cf9698da9b1970e2bf78f39b6603db0a39b",
+    "introducedAt": "2026-04-15T15:32:58Z",
+    "subject": "[Blazor] Add Components.Testing E2E test infrastructure (#65958)",
+    "originalFollowHistoryAndDefaultReadOnlyGhAgree": true,
+    "targetBlobIdenticalAtIntroductionOriginalDefault": true
+  },
+  "testing": {
+    "existingCases": "EXISTING-CASES.json",
+    "analyzerFactsInventoried": 14,
+    "generatorFactsInventoried": 17,
+    "testsExecuted": 0,
+    "rowsExecuted": [],
+    "actualDiagnosticReports": [],
+    "actualGeneratedOutputs": [],
+    "whyNotExecuted": "No justified candidate survived source qualification. Builds solely to confirm a visible small allocation were explicitly disallowed. Conditional correctness work was not activated.",
+    "notATestFailure": true,
+    "faithfulFutureBoundaryIfScopeReopened": "Existing real CSharpCompilation/WithAnalyzers and CSharpGeneratorDriver helpers, not injected candidates/results; exact diagnostics/locations/output and every intended row would need actual reports.",
+    "documentedBuildEntry": "src\\Components\\build.cmd forwards to eng\\build.cmd with area projects and EnforceE2ETestPrerequisites=true.",
+    "establishedTestCategory": "Microsoft.AspNetCore.Components.Testing.Tests, xUnit v3, OutputType Exe, existing custom RunTests target",
+    "noDotnetNoSdkActivationClaim": true
+  },
+  "guardAndFailures": {
+    "failureEvidence": "TOOL-EVIDENCE.json",
+    "initialPythonAliasExit": 9009,
+    "initialNodePolicyParseExit": 1,
+    "failedHelpersPreservedUnchanged": true,
+    "malformedPolicyRaw": "guards\\policy-source003.bin",
+    "malformedPolicySha256": "624427970E710866CC56224028E10FD38227A8A509BEBA4614D96D188212F386",
+    "repairedPointObservation": "guards\\point-observation-source005.json",
+    "repairedPolicySha256": "3C33966D507D0018468C34203CE942A2862F2DAC34A64F212398160492051989",
+    "repairedObservationUtc": "2026-11-21T01:55:29.794Z",
+    "terminalPointObservation": "guards\\point-observation-terminal.json",
+    "noPerpetualNativePermissionInferred": true,
+    "buildsDuringMalformedPolicy": 0
+  },
+  "ownedWork": {
+    "nativeDisposition": "native-work-disposition.json",
+    "actualRootChildReceiptSummary": "process-summary.json",
+    "fullRootStreams": "launches\\*\\stdout.txt and stderr.txt",
+    "fullCommandStreams": "commands\\*\\stdout.bin and stderr.bin",
+    "argvPidsWaitsExits": "Adjacent receipt.json files; immutable helpers preserved in evidence root.",
+    "privateGraphsCreated": [],
+    "buildsTestsRestoresTimings": 0,
+    "processStops": 0,
+    "outstandingOwnedBuildTestApplicationWork": [],
+    "systemWideQuiescenceClaim": false
+  },
+  "reservedCheckout": {
+    "path": "C:\\src\\aspnetcore",
+    "head": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "branch": "autoperf/F145-hoist-large-response-utf8-encoding",
+    "start": "reserved-start.json",
+    "terminal": "reserved-terminal.json",
+    "headBranchTrackedDiffStatusLogicalIndexEntriesUnchanged": true,
+    "trackedDiffBytes": 0,
+    "untrackedReportNames": 4,
+    "workerWrites": 0,
+    "limits": "Unrelated report bytes and physical index-file bytes were not inventoried. Their paths were not opened for writing."
+  },
+  "explicitLimitations": [
+    "Source-only qualification is not measured no-gain, a verified bug fix, a Roslyn execution result, or an end-to-end pass.",
+    "No actual diagnostic SourceSpan, generated resolver tree, compile timing, allocation count or external consumer distribution was observed.",
+    "No multi-eligible-same-name ordering case was invented or executed; source retains its current selection and diagnostic precedence.",
+    "Source dependencies/compiled paths are not selected loaded-runtime proof.",
+    "No F215/hash-combiner assessment, candidate, commit, PR, publication, policy/lease/shared-ledger change, remote execution or child agent was made."
+  ],
+  "seal": {
+    "artifactIndex": "artifact-index.json",
+    "jsonValidation": "json-validation.json",
+    "seal": "SEAL.json",
+    "scheme": "Index hashes every payload file except the index and SEAL; SEAL binds the index and HANDOFF. SEAL's own hash is returned externally.",
+    "acceptanceOwner": "Coordinator independently verifies and finalizes; this handoff is not campaign publication."
+  },
+  "outstandingWorkerWork": []
+}

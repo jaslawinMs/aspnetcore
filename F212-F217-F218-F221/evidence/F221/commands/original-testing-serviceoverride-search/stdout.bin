@@ -1,0 +1,131 @@
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/DiagnosticDescriptors.cs:20:        "Non-constant method name in ConfigureServices",
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/DiagnosticDescriptors.cs:21:        "The method name argument to ConfigureServices must be a compile-time constant (string literal or nameof). The override will fall back to reflection at runtime.",
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/ServiceOverrideCallsite.cs:8:internal sealed class ServiceOverrideCallsite : IEquatable<ServiceOverrideCallsite>
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/ServiceOverrideCallsite.cs:18:    public ServiceOverrideCallsite(
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/ServiceOverrideCallsite.cs:30:    public bool Equals(ServiceOverrideCallsite? other)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/ServiceOverrideCallsite.cs:41:    public override bool Equals(object? obj) => Equals(obj as ServiceOverrideCallsite);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:26:        // Detect ConfigureServices callsites and emit a resolver
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:28:                predicate: IsConfigureServicesCandidate,
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:34:        context.RegisterSourceOutput(collected, EmitServiceOverrideResolver);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:37:    static bool IsConfigureServicesCandidate(SyntaxNode node, CancellationToken ct)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:44:        // Fast path: check if the method name looks like ConfigureServices
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:45:        return GetInvokedMethodName(invocation) == "ConfigureServices";
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:68:    static ServiceOverrideCallsite? ExtractCallsite(
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:80:        // Verify it's ServerStartOptions.ConfigureServices
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:81:        if (method.Name != "ConfigureServices" ||
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:102:            // Generic: ConfigureServices<T>("methodName")
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:111:            // Non-generic: ConfigureServices(typeof(T), "methodName")
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:158:        return new ServiceOverrideCallsite(fullyQualified, fullName, assemblyName, methodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:161:    static void EmitServiceOverrideResolver(
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:163:        ImmutableArray<ServiceOverrideCallsite?> callsites)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:167:            .Cast<ServiceOverrideCallsite>()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:177:        sb.AppendLine("internal sealed class ServiceOverrideResolver : global::Microsoft.AspNetCore.Components.Testing.Infrastructure.IE2EServiceOverrideResolver");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/gen/StartupHookGenerator.cs:214:        context.AddSource("ServiceOverrideResolver.g.cs", sb.ToString());
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/nativeaot/NativeAotTestHarnessGenerator.cs:40:                    builder.ConfigureServices(
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/IE2EServiceOverrideResolver.cs:12:/// <see cref="ServerStartOptions.ConfigureServices{T}(string)"/>.
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/IE2EServiceOverrideResolver.cs:16:/// The source generator detects <c>ConfigureServices&lt;T&gt;("MethodName")</c>
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/IE2EServiceOverrideResolver.cs:18:/// <c>ServiceOverrideResolver</c> that maps (type name, method name) pairs to
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/IE2EServiceOverrideResolver.cs:27:public interface IE2EServiceOverrideResolver
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/IE2EServiceOverrideResolver.cs:35:    /// (as set by <see cref="ServerStartOptions.ConfigureServices{T}(string)"/>).
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:179:        if (options.ServiceOverrideTypeName is not null)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:181:            sb.Append('|').Append(options.ServiceOverrideTypeName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:182:            sb.Append(':').Append(options.ServiceOverrideMethodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:208:        if (isCompiledHarness && options.ServiceOverrideTypeName is not null)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:211:                "ServerStartOptions.ConfigureServices cannot be used with a compiled E2E harness. " +
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:240:        if (options.ServiceOverrideTypeName is not null)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:242:            environment["E2E_TEST_SERVICES_TYPE"] = options.ServiceOverrideTypeName;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerInstance.cs:243:            environment["E2E_TEST_SERVICES_METHOD"] = options.ServiceOverrideMethodName!;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:25:    internal string? ServiceOverrideTypeName { get; private set; }
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:27:    internal string? ServiceOverrideMethodName { get; private set; }
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:36:    public void ConfigureServices(Type type, string methodName)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:38:        ServiceOverrideTypeName = type.AssemblyQualifiedName;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:39:        ServiceOverrideMethodName = methodName;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/ServerStartOptions.cs:48:    public void ConfigureServices<T>(string methodName) => ConfigureServices(typeof(T), methodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestReadinessHostingStartup.cs:34:        builder.ConfigureServices(services =>
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestReadinessHostingStartup.cs:76:                new TestServiceOverrideObserver(configureServices));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestReadinessHostingStartup.cs:109:            var resolverType = testAssembly.GetType("Microsoft.AspNetCore.Components.Testing.Generated.ServiceOverrideResolver");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestReadinessHostingStartup.cs:115:            var resolver = (IE2EServiceOverrideResolver)Activator.CreateInstance(resolverType)!;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestServiceOverrideObserver.cs:11:// the provided configureServices action AFTER the app's own ConfigureServices —
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestServiceOverrideObserver.cs:16:internal class TestServiceOverrideObserver : IObserver<DiagnosticListener>
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestServiceOverrideObserver.cs:20:    internal TestServiceOverrideObserver(Action<IServiceCollection> configureServices)
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/Infrastructure/TestServiceOverrideObserver.cs:50:                hostBuilder.ConfigureServices((_, services) =>
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/PublicAPI.Shipped.txt:2:Microsoft.AspNetCore.Components.Testing.Infrastructure.IE2EServiceOverrideResolver
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/PublicAPI.Shipped.txt:3:Microsoft.AspNetCore.Components.Testing.Infrastructure.IE2EServiceOverrideResolver.TryResolve(string! assemblyQualifiedTypeName, string! methodName) -> System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>?
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/PublicAPI.Shipped.txt:30:Microsoft.AspNetCore.Components.Testing.Infrastructure.ServerStartOptions.ConfigureServices(System.Type! type, string! methodName) -> void
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/src/PublicAPI.Shipped.txt:31:Microsoft.AspNetCore.Components.Testing.Infrastructure.ServerStartOptions.ConfigureServices<T>(string! methodName) -> void
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:13:public class ServiceOverrideAnalyzerTests
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:48:                        options.ConfigureServices<TestOverrides>(nameof(TestOverrides.FakeWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:74:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:100:                        options.ConfigureServices(typeof(TestOverrides), "Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:126:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:157:                        options.ConfigureServices(typeof(TestOverrides), "Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:186:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:217:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:247:                        options.ConfigureServices<TestOverrides>(method);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:269:                    public void ConfigureServices<T>(string methodName) { }
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:277:                        other.ConfigureServices<MyTest>("NotARealMethod");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:305:                        options.ConfigureServices<TestOverrides>("Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:336:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:361:                        options.ConfigureServices<TestOverrides>("Missing");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:391:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs:404:        var analyzers = new DiagnosticAnalyzer[] { new ServiceOverrideAnalyzer() };
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:50:        // StartupHook.g.cs, HostingStartupAttribute.g.cs, ServiceOverrideResolver.g.cs
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:119:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:122:        Assert.Contains("class ServiceOverrideResolver", source);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:123:        Assert.Contains("IE2EServiceOverrideResolver", source);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:130:    public void Generator_DetectsGenericConfigureServices_WithNameof()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:145:                        options.ConfigureServices<TestOverrides>(nameof(TestOverrides.FakeWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:155:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:163:    public void Generator_DetectsGenericConfigureServices_WithStringLiteral()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:178:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:188:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:196:    public void Generator_DetectsNonGenericConfigureServices()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:211:                        options.ConfigureServices(typeof(TestOverrides), "Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:221:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:245:                        options.ConfigureServices<TestOverrides>(nameof(TestOverrides.FakeWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:246:                        options.ConfigureServices<TestOverrides>(nameof(TestOverrides.LockableWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:256:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:280:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:294:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:315:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:329:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:350:                        options.ConfigureServices<TestOverrides>(nameof(TestOverrides.FakeWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:360:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:383:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:392:                        options.ConfigureServices<TestOverrides>("FakeWeather");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:402:            .Single(t => t.FilePath.EndsWith("ServiceOverrideResolver.g.cs"));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:445:                    public void ConfigureServices<T>(string methodName) { }
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:446:                    public void ConfigureServices(System.Type type, string methodName) { }
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/Generators/StartupHookGeneratorTests.cs:448:                public interface IE2EServiceOverrideResolver
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:25:    public void ComputeKey_WithServiceOverride_IncludesTypeAndMethod()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:29:        options.ConfigureServices<ServerInstanceTests>("Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:62:        options1.ConfigureServices<string>("Method");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:66:        options2.ConfigureServices<string>("Method");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:178:    public void BuildProcessEnvironment_CompiledHarnessWithConfigureServices_FailsClearly()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:182:        options.ConfigureServices<ServerInstanceTests>(nameof(Configure));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerInstanceTests.cs:193:        Assert.Contains("ConfigureServices cannot be used with a compiled E2E harness", exception.Message);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:21:    public void ConfigureServices_Generic_CapturesTypeAndMethod()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:27:        options.ConfigureServices<ServerStartOptionsTests>("MyMethod");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:30:        Assert.Equal(typeof(ServerStartOptionsTests).AssemblyQualifiedName, options.ServiceOverrideTypeName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:31:        Assert.Equal("MyMethod", options.ServiceOverrideMethodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:35:    public void ConfigureServices_NonGeneric_CapturesTypeAndMethod()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:42:        options.ConfigureServices(type, "Configure");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:45:        Assert.Equal(type.AssemblyQualifiedName, options.ServiceOverrideTypeName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:46:        Assert.Equal("Configure", options.ServiceOverrideMethodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:50:    public void ConfigureServices_CalledTwice_OverwritesPrevious()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:56:        options.ConfigureServices<string>("First");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:57:        options.ConfigureServices<int>("Second");
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:60:        Assert.Equal(typeof(int).AssemblyQualifiedName, options.ServiceOverrideTypeName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:61:        Assert.Equal("Second", options.ServiceOverrideMethodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:91:    public void ServiceOverride_IsNullByDefault()
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:97:        Assert.Null(options.ServiceOverrideTypeName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/test/ServerStartOptionsTests.cs:98:        Assert.Null(options.ServiceOverrideMethodName);
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/ServiceOverrides/FakeWeatherService.cs:6:namespace TestApp.E2E.Tests.ServiceOverrides;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/ServiceOverrides/LockableWeatherService.cs:7:namespace TestApp.E2E.Tests.ServiceOverrides;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/ServiceOverrides/TestOverrides.cs:7:namespace TestApp.E2E.Tests.ServiceOverrides;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/ServiceOverrides/TestOverrides.cs:10:// Registered via options.ConfigureServices<TestOverrides>(nameof(TestOverrides.XxxMethod))
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/Tests/AsyncStateTests.cs:10:using TestApp.E2E.Tests.ServiceOverrides;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/Tests/AsyncStateTests.cs:25:            options.ConfigureServices<TestOverrides>(nameof(TestOverrides.LockableWeather));
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/Tests/WeatherServiceOverrideTests.cs:10:using TestApp.E2E.Tests.ServiceOverrides;
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/Tests/WeatherServiceOverrideTests.cs:16:public partial class WeatherServiceOverrideTests : BrowserTest
+37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Components/Testing/testassets/TestApp.E2E.Tests/Tests/WeatherServiceOverrideTests.cs:26:            options.ConfigureServices<TestOverrides>(nameof(TestOverrides.FakeWeather));

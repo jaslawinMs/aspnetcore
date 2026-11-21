@@ -1,0 +1,187 @@
+{
+  "finding": "F217",
+  "owner": "80994088-1962-4607-83b1-093e3056f0ea",
+  "authorization": "GO237, subject to fresh admission before each native",
+  "disposition": "source-only-no-material-candidate",
+  "coordinatorAcceptance": "pending; coordinator alone accepts/finalizes",
+  "summary": "The existing XOR combiner is unchanged in Original and independently frozen upstream Default. Equal endpoint values remain equal-hash values. Real reviewed Kestrel server producers fix ServerName to \".\" and reuse the endpoint for a listener. No material owning hash-key workload invoking this override was established. A real generic EndPoint dictionary lead was traced to an existing one-IP-endpoint in-memory benchmark, not a named-pipe workload. No candidate, private graph, build, test, or performance activity was warranted.",
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "DefaultBranch": "main",
+    "DefaultObservation": "Independent read-only gh repository/default-branch and commits/main observations retained in native/upstream-repository and native/upstream-main-freeze.",
+    "ReservedHead": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "ReservedBranch": "autoperf/F145-hoist-large-response-utf8-encoding",
+    "physicalHost": "CPC-jasla-LSEJU",
+    "authoritativeSnapshots": [
+      "pinned-raw\\Original",
+      "pinned-raw\\Default"
+    ],
+    "notRawSourceProof": "sources\\Original is the preserved CRLF-converted git archive extraction from failed source-byte qualification. It is not substituted for pinned raw blobs.",
+    "loadedRuntimeProof": false
+  },
+  "exactContract": {
+    "path": "src\\Servers\\Connections.Abstractions\\src\\NamedPipeEndPoint.cs",
+    "lines": "12-43,55-64",
+    "targetSha256BothRoles": "E6A01346D268CAE3D95853F4320BF6246A87FCB39A2A20764E5C8FBDDA07424B",
+    "type": "Public sealed class deriving from System.Net.EndPoint. No IEquatable<NamedPipeEndPoint>, endpoint equality operator, or custom comparer is declared in this class.",
+    "fields": "Two constructor-assigned get-only string properties: ServerName and PipeName. The one-argument constructor supplies LocalComputerServerName \".\"; the two-argument constructor retains the supplied strings without normalization.",
+    "equality": "Equals(object?) requires a NamedPipeEndPoint and compares ServerName and PipeName in their original roles with string ==. These are case-sensitive ordinal string comparisons, not pipe-name normalization or an OS-level name equivalence rule.",
+    "hash": "GetHashCode() returns ServerName.GetHashCode() ^ PipeName.GetHashCode(), with no custom comparer or cache.",
+    "logicalReview": "Under the ordinary string equality/hash contract, equal endpoint tuples produce equal component hashes and therefore equal XOR hashes. Unequal endpoints sharing a hash do not violate that contract. No numeric hash stability, distribution, runtime cost, or end-to-end performance claim was tested.",
+    "restrictedAlgebra": "For the reviewed built-in local-server producer, ServerName is the same \".\" string. XOR by its fixed hash is a bijection on the pipe-name hash value: h1 XOR c equals h2 XOR c exactly when h1 equals h2. This observation is restricted to that producer shape, is not a benchmark, and does not establish universal immateriality.",
+    "normalInputBoundary": "Properties and constructors are annotated non-nullable. Null injection, OS pipe-name edge validation, and changing equality/validation/default conventions are not proposed or exercised.",
+    "comparerDocumentation": "Pinned dotnet/docs best-practices-strings.md lines210 and321 explicitly describe default string equality-operator ordinal semantics. Guessed external hash-remarks paths returned404 and remain failures, not retrieved authority."
+  },
+  "frameworks": {
+    "sourceFiles": [
+      "src\\Servers\\Connections.Abstractions\\src\\Microsoft.AspNetCore.Connections.Abstractions.csproj:5-7",
+      "Directory.Build.props:117-119",
+      "eng\\Versions.props:59-63"
+    ],
+    "bothRolesNormalTargets": [
+      "net462",
+      "netstandard2.0",
+      "netstandard2.1",
+      "net12.0"
+    ],
+    "currentLts": "net12.0 in both pinned roles; conditional CurrentLtsTargetFramework append does not duplicate it.",
+    "sourceOnlyBuildMode": "DotNetBuildSourceOnly=true selects only DefaultNetCoreTargetFramework.",
+    "baselineBoundary": "The retained net10.0 PublicAPI files are repository membership, not evidence that net10.0 is a current normal target.",
+    "validation": "Source inventory only. No target was built or executed. Local LSP hover reported net12.0 unavailable and the three legacy target contexts available; these editor statuses are not build or runtime proof.",
+    "compatibilityPreservedBy": "No shipping code, combiner replacement, public API, default, project, SDK, package, NuGet, global.json, IVT, or UnsafeAccessor change."
+  },
+  "realProducersAndValues": [
+    {
+      "owner": "KestrelServerOptions.ListenNamedPipe",
+      "source": "src\\Servers\\Kestrel\\Core\\src\\KestrelServerOptions.cs:633-651 in Original; same named-pipe seam shifted by unrelated preceding Default additions",
+      "producer": "One NamedPipeEndPoint(pipeName) per configuring overload invocation, wrapped in ListenOptions and appended to CodeBackedListenOptions.",
+      "shape": "ServerName \".\"; application-supplied pipeName. The endpoint collection is a List<ListenOptions>, not a hash-key collection.",
+      "cardinalityBoundary": "One endpoint per configured listener call; no observed deployment count or frequency is inferred."
+    },
+    {
+      "owner": "BindingAddress.Parse and AddressBinder.ParseAddress",
+      "sources": [
+        "src\\Http\\Http\\src\\BindingAddress.cs:14,65,84-112,168-195",
+        "src\\Servers\\Kestrel\\Core\\src\\Internal\\AddressBinder.cs:99-144"
+      ],
+      "producer": "A http/https pipe:/ address yields parsed NamedPipeName, then new NamedPipeEndPoint(parsedAddress.NamedPipeName).",
+      "shape": "ServerName again \".\"; name is the parsed pipe-name substring. Configuration reload iterates configured endpoints and compares EndpointConfig values, rather than hashing NamedPipeEndPoint.",
+      "testBoundary": "AddressBinderTests.ParseAddressNamedPipe and slash variants document parsing shapes. Parsing-only slash cases are not asserted to be accepted native Windows pipe names."
+    },
+    {
+      "owner": "NamedPipeTransportFactory and NamedPipeConnectionListener",
+      "sources": [
+        "src\\Servers\\Kestrel\\Transport.NamedPipes\\src\\Internal\\NamedPipeTransportFactory.cs:34-72",
+        "src\\Servers\\Kestrel\\Transport.NamedPipes\\src\\Internal\\NamedPipeConnectionListener.cs:21-51,99-115,192-239",
+        "src\\Servers\\Kestrel\\Transport.NamedPipes\\src\\Internal\\NamedPipeConnection.cs:34-55",
+        "src\\Servers\\Kestrel\\Transport.NamedPipes\\src\\NamedPipeTransportOptions.cs:100-130"
+      ],
+      "producer": "Factory accepts the named-pipe type and rejects server names other than \".\"; listener stores the endpoint and passes that same endpoint to connections and stream-creation context.",
+      "consumer": "Stream creation consumes PipeName strings. Per-listener pool/parallel stream count is not a collection of distinct endpoint keys, and connections do not create a fresh endpoint for each request.",
+      "cardinalityBoundary": "No connection, request, or pipe-stream rate is converted into GetHashCode invocation frequency."
+    },
+    {
+      "owner": "Existing documented application",
+      "documentation": "dotnet/AspNetCore.Docs pinned endpoints.md:581-598 and its exact referenced KestrelNamedEP/Program.cs",
+      "shape": "The existing sample configures exactly defaultPipe and securedPipe with ListenNamedPipe, then switches on context.NamedPipeEndPoint.PipeName. Both use the ordinary local-server constructor path.",
+      "cardinalityBoundary": "Two configured names in a documentation sample; not an observed production distribution, synthetic workload, dictionary, or hash loop."
+    },
+    {
+      "owner": "Existing transport tests",
+      "source": "src\\Servers\\Kestrel\\Transport.NamedPipes\\test\\NamedPipeTestHelpers.cs:22,33-55",
+      "shape": "GetUniquePipeName uses Kestrel- plus Path.GetRandomFileName; client creation reads ServerName and PipeName into NamedPipeClientStream.",
+      "boundary": "Test setup source only; tests were not run and random-name generation was not executed for this investigation."
+    }
+  ],
+  "consumerQualification": {
+    "materialOwningNamedPipeHashConsumerEstablished": false,
+    "tracedOwningPaths": [
+      {
+        "source": "src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\TransportManager.cs:14,42-60,99-119",
+        "result": "Factory iteration and List<ActiveTransport>; stop selection uses a List<EndpointConfig>. No NamedPipeEndPoint hash-key operation in the reviewed path."
+      },
+      {
+        "sources": [
+          "src\\Servers\\Kestrel\\Core\\src\\KestrelConfigurationLoader.cs:71-75,342-437",
+          "src\\Servers\\Kestrel\\Core\\src\\Internal\\ConfigurationReader.cs:268-318"
+        ],
+        "result": "Endpoint callbacks are keyed by endpoint name strings with OrdinalIgnoreCase. Reload uses lists and EndpointConfig equality over configuration values, not the named-pipe endpoint object's hash."
+      },
+      {
+        "sources": [
+          "src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\ConnectionManager.cs:14,29,44-52",
+          "src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\TransportConnectionManager.cs:14,21-34"
+        ],
+        "result": "Connection tracking dictionaries are keyed by generated long connection IDs, not NamedPipeEndPoint."
+      },
+      {
+        "sources": [
+          "src\\Servers\\Kestrel\\Core\\src\\ListenOptions.cs:48,74-76,148-166,222-226",
+          "src\\Shared\\ConnectionEndpointTags.cs:63-99"
+        ],
+        "result": "Endpoint property/type inspection and display/tag string generation; endpoint objects are not passed as hash keys by these reviewed branches."
+      }
+    ],
+    "actualGenericDictionaryLead": {
+      "source": "src\\Servers\\Kestrel\\perf\\Microbenchmarks\\InMemoryTransportBenchmark.cs:40-63,104-129",
+      "collection": "Dictionary<EndPoint,IReadOnlyList<InMemoryConnection>> _connections using its default comparer.",
+      "operation": "InMemoryTransportFactory.BindAsync calls _connections.Add(endpoint, connections).",
+      "actualExistingProducer": "GlobalSetupPlaintext fixes UseUrls(\"http://127.0.0.1:5000\"), connectionsPerEndPoint:1, and selects Connections.Values.Single().Single(). AddressBinder creates an IPEndPoint for this address.",
+      "result": "This is a genuine EndPoint hash-key collection but the existing workload supplies a single IP endpoint, not NamedPipeEndPoint. It is setup storage, not evidence of frequent named-pipe hashing. Its source was read; no benchmark was run or changed.",
+      "notDone": "No URL substitution, extra endpoints, fabricated collisions, new dictionary harness, direct hashing loop, warmup or measurement."
+    },
+    "boundedSearch": {
+      "lsp": "Reserved local class findReferences returned32 locations. Override findReferences returned43 broad locations including shared Object.GetHashCode-related and metadata references; those are not treated as an exact call graph for this override.",
+      "pinnedQueries": "Each role retained exact NamedPipeEndPoint/ListenNamedPipe matches in src/docs/.github and endpoint-collection regex leads across tracked C# src files, with exact argv/full streams. Each has23 exact-name paths and59 collection-lead lines.",
+      "otherLeads": "Other matched Endpoint/RouteEndpoint/symbol-comparer names are not evidence of a Microsoft.AspNetCore.Connections.NamedPipeEndPoint key path.",
+      "limits": "Unloaded/editor project coverage, untyped object/EndPoint/generic dispatch, aliases, multiline collection syntax, external applications/packages and arbitrary custom comparers are not resolved exhaustively. No universal consumer-absence or universal immateriality claim is made.",
+      "unrelatedIndex": "Azure code index's configured msazure/One scope was not queried or presented as ASP.NET evidence."
+    }
+  },
+  "historyAndDefault": {
+    "endpointHistoryBound": "git log --follow --format=fuller -p -n8 for each pinned role",
+    "returnedEndpointCommit": "dfd4cdea4d8d993ba96655927f59aa66cf7013cd",
+    "returnedSubject": "Add Kestrel named pipes transport (#44426), 2022-12-22",
+    "conclusion": "The retained introduction already contains these constructors, ordinal-field equality and XOR hash. Both bounded role histories return this introduction, and both current pinned raw endpoint blobs are identical.",
+    "projectHistoryBound": "Last4 project commits retained for each role, including #69631 reference resolution/CPM, #61076 conditional LTS append, #59389 SDK update and #59219 LTS targeting.",
+    "selectedDefaultDifferences": "Among the initial38 selected raw members per role, only eng/Versions.props and KestrelServerOptions.cs differ. The relevant framework values and named-pipe seam remain the same; the server-options diff adds preceding request-target handling outside F217.",
+    "boundary": "This is bounded source/history evidence, not proof about all branches, old packages, external consumer behavior or loaded runtime binaries."
+  },
+  "candidateAndValidation": {
+    "candidate": "none",
+    "candidateDiff": "candidate.diff, zero bytes",
+    "privateGraphsCreated": [],
+    "shippingFilesChanged": [],
+    "builds": [],
+    "testsRun": [],
+    "testRowsRun": [],
+    "requestedAutomatedTestBlocked": "none selected: the material owning hash-workload gate did not survive; builds/tests were intentionally not admitted merely because XOR collisions are possible.",
+    "redGreenEvidence": "Not applicable: no fix or behavioral regression is claimed.",
+    "faithfulBoundary": "Pinned whole-source producer/consumer and contract/history review only; no runtime, protocol, loaded-binary, distribution or performance validation.",
+    "measurements": [],
+    "publication": "none",
+    "reasonToStop": "Changing a long-shipped combiner without a demonstrated material owning hash workload does not satisfy this campaign's candidate gate. This is the explicitly accepted source-only stop, not measured-no-gain, false-positive, or a claim that external workloads cannot benefit."
+  },
+  "failuresPreserved": [
+    "Initial oversized policy view and missing root AGENTS view; subsequent exact policy ranges and ancestor-presence observations retained.",
+    "02-pinned-discovery.ps1 exited1 on an archive/raw git-blob mismatch for Directory.Build.props; archive native itself exited0. New raw git-show qualification matched the pinned blob and all selected raw sources. Failed helper/archive remain unchanged and were not replayed.",
+    "04-consumer-and-docs.ps1 exited1 on dotnet/docs hash-remarks HTTP404.",
+    "06-qualified-documentation.ps1 exited1 on dotnet/dotnet-api-docs hash-remarks HTTP404.",
+    "07-final-documentation-membership.ps1 completed0 but the supplementary-docs directory request returned HTTP404; the nonzero native result remains explicit.",
+    "LSP incomingCalls at local KestrelServerOptions.cs:636:17 returned no call hierarchy; it was not treated as consumer-absence proof. Hover at endpoint57:66 returned ServerName property information, not an operator binding.",
+    "Two combined PowerShell display-only reads were truncated by the tool. They read already-retained raw query/doc/source files; no source/native stream was replaced by the truncated display and no temporary tool-output file was accessed."
+  ],
+  "outstandingWork": {
+    "ownerWorkAfterSeal": "none; stop",
+    "coordinator": "Independently verify index/seal and accept or reject this source-only disposition.",
+    "reopeningCondition": "A concrete legitimate existing endpoint-key consumer with attributable frequency/cardinality and material effect would be needed before separately authorized candidate or correctness work.",
+    "unverified": [
+      "External or untyped/custom-comparer hash workloads.",
+      "Runtime execution and every target-framework build.",
+      "Native pipe-name edge acceptance and OS naming equivalence.",
+      "Any hash distribution, allocation, timing or performance gain.",
+      "Universal absence of descendants outside actually observed native identities."
+    ]
+  }
+}

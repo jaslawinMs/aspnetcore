@@ -1,0 +1,117 @@
+commit 121024a14a22483bf03a859e8a435c5b9521576c
+Author:     William Godbe <wigodbe@microsoft.com>
+AuthorDate: Wed Oct 7 09:07:54 2026 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Oct 7 09:07:54 2026 -0700
+
+    Replace custom reference resolution with explicit references and CPM (#69631)
+    
+    * Convert reference declarations mechanically
+    
+    Convert assembly-name references to explicit project/package references, centralize ordinary version declarations, root repository project paths, and separate reference blocks with blank lines.
+    
+    This mechanical-only file set is paired with the following build-infrastructure commit.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Replace custom reference resolution with central package management
+    
+    Introduce the central package catalog and explicit reference inventories while preserving framework, packaging, tool, and standalone-consumer behavior. Update generation and validation, retain intentional version overrides, and fix consumer, linker, WebView, and SiteExtension integration.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+diff --git a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+index 3bcc44991e..2c898bb107 100644
+--- a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
++++ b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+@@ -12,11 +12,11 @@
+   </PropertyGroup>
+ 
+   <ItemGroup>
+-    <Reference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' != '$(DefaultNetCoreTargetFramework)'" />
++    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' != '$(DefaultNetCoreTargetFramework)'" />
+ 
+-    <Reference Include="Microsoft.Extensions.Features" />
++    <ProjectReference Include="$(RepoRoot)src\Extensions\Features\src\Microsoft.Extensions.Features.csproj" />
+ 
+-    <Reference Include="System.IO.Pipelines" Condition="'$(TargetFramework)' != '$(DefaultNetCoreTargetFramework)'"/>
++    <PackageReference Include="System.IO.Pipelines" Condition="'$(TargetFramework)' != '$(DefaultNetCoreTargetFramework)'"/>
+ 
+     <Compile Include="$(SharedSourceRoot)ActivatorUtilities\*.cs" />
+     <Compile Include="$(SharedSourceRoot)ParameterDefaultValue\*.cs" />
+
+commit 154871b6d362ace7ba6a2efca4e07f6e3385ec7a
+Author:     Brennan <brecon@microsoft.com>
+AuthorDate: Mon Mar 24 09:54:16 2025 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Mar 24 09:54:16 2025 -0700
+
+    Add CurrentLtsTargetFramework only when it's not present (#61076)
+
+diff --git a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+index 2871430790..3bcc44991e 100644
+--- a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
++++ b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+@@ -2,7 +2,8 @@
+ 
+   <PropertyGroup>
+     <Description>Core components of ASP.NET Core networking protocol stack.</Description>
+-    <TargetFrameworks>$(DefaultNetFxTargetFramework);netstandard2.0;netstandard2.1;$(DefaultNetCoreTargetFramework);$(CurrentLtsTargetFramework)</TargetFrameworks>
++    <TargetFrameworks>$(DefaultNetFxTargetFramework);netstandard2.0;netstandard2.1;$(DefaultNetCoreTargetFramework)</TargetFrameworks>
++    <TargetFrameworks Condition="! $(TargetFrameworks.Contains('$(CurrentLtsTargetFramework)'))">$(TargetFrameworks);$(CurrentLtsTargetFramework)</TargetFrameworks>
+     <TargetFrameworks Condition="'$(DotNetBuildSourceOnly)' == 'true'">$(DefaultNetCoreTargetFramework)</TargetFrameworks>
+     <IsAspNetCoreApp>true</IsAspNetCoreApp>
+     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+commit 3d6364be17756d6942a384fee46364bbfad1a05b
+Author:     github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+AuthorDate: Fri Dec 13 08:56:55 2024 +0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Dec 13 08:56:55 2024 +0800
+
+    Update .NET SDK to 10.0.100-alpha.1.24609.2 (#59389)
+    
+    Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+    Co-authored-by: Mackinnon Buck <mbuck@microsoft.com>
+    Co-authored-by: James Newton-King <james@newtonking.com>
+
+diff --git a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+index 2eb2bd082e..2871430790 100644
+--- a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
++++ b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+@@ -22,6 +22,7 @@
+     <Compile Include="$(SharedSourceRoot)Debugger\DictionaryDebugView.cs" LinkBase="Shared" />
+     <Compile Include="$(SharedSourceRoot)Debugger\DictionaryItemDebugView.cs" LinkBase="Shared" />
+     <Compile Include="$(SharedSourceRoot)TrimmingAttributes.cs" LinkBase="Shared" />
++    <Compile Include="$(SharedSourceRoot)Obsoletions.cs" LinkBase="Shared" />
+   </ItemGroup>
+ 
+   <ItemGroup>
+
+commit 7e5155df4a44758c05483d8566c4c0b62298175f
+Author:     Korolev Dmitry <dmkorolev@microsoft.com>
+AuthorDate: Fri Nov 29 21:23:15 2024 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Nov 29 21:23:15 2024 +0100
+
+    also support LTS framework for Connections.Abstractions (#59219)
+
+diff --git a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+index 25784a904c..2eb2bd082e 100644
+--- a/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
++++ b/src/Servers/Connections.Abstractions/src/Microsoft.AspNetCore.Connections.Abstractions.csproj
+@@ -1,8 +1,8 @@
+-<Project Sdk="Microsoft.NET.Sdk">
++﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+     <Description>Core components of ASP.NET Core networking protocol stack.</Description>
+-    <TargetFrameworks>$(DefaultNetFxTargetFramework);netstandard2.0;netstandard2.1;$(DefaultNetCoreTargetFramework)</TargetFrameworks>
++    <TargetFrameworks>$(DefaultNetFxTargetFramework);netstandard2.0;netstandard2.1;$(DefaultNetCoreTargetFramework);$(CurrentLtsTargetFramework)</TargetFrameworks>
+     <TargetFrameworks Condition="'$(DotNetBuildSourceOnly)' == 'true'">$(DefaultNetCoreTargetFramework)</TargetFrameworks>
+     <IsAspNetCoreApp>true</IsAspNetCoreApp>
+     <GenerateDocumentationFile>true</GenerateDocumentationFile>

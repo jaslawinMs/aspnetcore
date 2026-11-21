@@ -1,0 +1,73 @@
+{
+  "finding": "F218",
+  "decision": "bounded-source-only-no-material-candidate",
+  "proposedDisposition": "rejected",
+  "sourceRoles": "Fresh pinned Original/current Default; all14 captured product/test/sample file pairs byte-identical. Version.Details and guidance differ and are preserved.",
+  "actualProducer": [
+    "MapRazorComponents locates/creates a data source; its factory adds one action discovering typeof(TRootComponent).Assembly.",
+    "AddAdditionalAssemblies appends one AddAssembly action per supplied Assembly. Its public input is not universally bounded.",
+    "On first endpoint initialization, UpdateEndpoints creates a NEW ComponentApplicationBuilder and invokes those actions before building the page/component result and enumerating pages into endpoints.",
+    "IRazorComponentApplication.GetBuilderForAssembly scans exported types/routes/render-mode attributes to construct one descriptor, then calls AddLibrary once for that assembly, not once per discovered type/page/route.",
+    "Actual metadata-update HotReloadService notification exchanges/cancels its token; the initialized data source subscribes and UpdateEndpoints replays configuration with a new builder. Startup-only would omit this real refresh producer.",
+    "Canonical Global and PerPage samples each configure one root assembly plus one explicit Client assembly. These are source-defined inputs, not executed or universal application assembly counts."
+  ],
+  "operationQualification": {
+    "realPattern": "Contains-before-Add exists on a private default HashSet<string>; duplicate AddLibrary throws the existing exact Assembly already defined. exception before set/page/component insertion.",
+    "descriptor": "AssemblyName is getter-only; Pages/Components lists are passed separately to downstream dictionaries after set insertion.",
+    "importantFirstInsertionCorrection": "Declared HashSet default constructor leaves _buckets null; Contains -> FindItemIndex returns-1 without hashing/probing while buckets is null. Add -> AddIfNotPresent then initializes. Therefore NOT every unique assembly pays two hash/bucket probes. An already-initialized set can repeat lookup work.",
+    "sourceRuntimeBoundary": "Both complete declared HashSet sources are retained. Actual loaded CLR/JIT/comparer/branch/hash counts, allocations or elapsed costs were not observed.",
+    "scope": "Page/component collection conversion and Combine/Exclude paths are context, not additional retained-site improvements or unrelated fixes."
+  },
+  "materialityDecision": {
+    "reason": "No material owning endpoint-discovery/refresh workload established for removing this one per-library preliminary check. More pages/routes do not multiply this site's assembly cardinality, and the canonical source examples have two assembly inputs.",
+    "notClaimed": [
+      "No cost or impossible benefit",
+      "A verified candidate equivalence or duplicate-exception regression",
+      "Universal application/plugin assembly bound or a complete caller graph",
+      "Reflection dominates measured time",
+      "Compiled/runtime Hot Reload or browser/endpoint execution proof"
+    ],
+    "notIntroduced": ["Large synthetic descriptor/library sets", "Repeated refreshes/assemblies/hash loops", "Isolated Contains/Add timing", "Cache/API/exception/default or collection-order change"]
+  },
+  "existingCoverage": {
+    "sourceInspectedOnly": [
+      "ComponentApplicationBuilder_CanAddLibrary",
+      "ComponentApplicationBuilder_CanAddMultipleLibraries",
+      "ComponentApplicationBuilder_CanRemoveLibrary",
+      "ComponentApplicationBuilder_CanCombineBuilders",
+      "ComponentApplicationBuilder_CombiningDoesNotDuplicateSharedDependencies",
+      "ComponentApplicationBuilder_CanExcludeOtherBuilders",
+      "Existing HotReloadServiceTests source"
+    ],
+    "executed": [],
+    "selectedAfterSourceGate": false,
+    "boundary": "Direct library builder tests are not performance/cardinality or real metadata-delta producer evidence; no candidate requires new permanent unit/browser coverage."
+  },
+  "history": {
+    "targetFollowLimit": 8,
+    "actualEntriesReturned": 3,
+    "latest": "4802de196a70a72017e292fe78f94560972dd4cf / existing49757 manual reflection discovery",
+    "relatedSearchLimit": 8,
+    "actualReturned": [68299, 68471, 63972, 47126],
+    "limit": "Bounded metadata/context, not exhaustive related work, inspected open-PR code, duplicate/approval or upstream-write evidence."
+  },
+  "provenance": {
+    "wholeAspNetCoreMemberships": 34,
+    "rawGitObjects": 44,
+    "priorPublishedRawObjectsReused": 36,
+    "wholeDeclaredExternalSources": 2,
+    "waitedDrainedSourceCommands": 19,
+    "reuse": "Previous F205-F207 archive graph independently revalidated; only exact raw objects reused. Fresh Default observed independently. Earlier F205 reserved-root incident remains disclosed, not erased by reuse.",
+    "currentRegistrationObservation": "Both239 points identify actual independentFindingPreparationWorkers F209/F212/F221/F217. They are snapshots, not perpetual native permission or quiescence."
+  },
+  "implementationAndExecution": {
+    "candidateEdits": 0,
+    "newPrivateSourceGraphs": 0,
+    "sdkActivations": 0,
+    "productNativeBuildTestRestoreServerRuntimeProbeStarts": 0,
+    "actualFramesRequestsBrowsersOrMetadataDeltas": 0,
+    "performanceAuthorizationsMeasurementsCountersProfilers": 0,
+    "sourceChangesReservedOrShared": 0
+  },
+  "finalization": "Only separately verified coordinator fork publication may finalize the pending finding. No measured no-gain or universal immateriality claim."
+}

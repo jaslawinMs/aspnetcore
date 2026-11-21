@@ -1,0 +1,135 @@
+{
+  "evidenceKind": "Existing frozen test source inventory only. These are source-inferred contracts, not actual test reports or observed Roslyn results.",
+  "executedTests": 0,
+  "executedRows": [],
+  "analyzerTestFile": "src/Components/Testing/test/Generators/ServiceOverrideAnalyzerTests.cs",
+  "testProject": "src/Components/Testing/test/Microsoft.AspNetCore.Components.Testing.Tests.csproj",
+  "framework": "Existing xUnit v3 Facts; no Theory/InlineData rows in the selected analyzer class.",
+  "realProducerInExistingHelper": [
+    "StartupHookGeneratorTests.CreateCompilationWithInfrastructure parses infrastructure/user C# with CSharpSyntaxTree.ParseText and creates a CSharpCompilation.",
+    "ServiceOverrideAnalyzerTests.GetAnalyzerDiagnosticsAsync constructs the actual ServiceOverrideAnalyzer, calls compilation.WithAnalyzers, then awaits GetAnalyzerDiagnosticsAsync.",
+    "Infrastructure symbols are supplied as C# source declarations. Candidate/result structs are not injected.",
+    "The helper does not establish a successful emit/full product build, and was not executed in this preparation."
+  ],
+  "analyzerFacts": [
+    {
+      "name": "NoDiagnostics_WhenNoCallsites",
+      "sourceLine": 16,
+      "sourceCase": "No ConfigureServices invocation",
+      "sourceExpected": "No analyzer diagnostics",
+      "materializationReached": false
+    },
+    {
+      "name": "NoDiagnostics_WhenMethodIsValid",
+      "sourceLine": 33,
+      "sourceCase": "Generic call, nameof, one declared static IServiceCollection method",
+      "sourceExpected": "No analyzer diagnostics",
+      "sourceDeclaredSignatureMatchingMethodCount": 1
+    },
+    {
+      "name": "NoDiagnostics_WhenMethodIsValidWithStringLiteral",
+      "sourceLine": 59,
+      "sourceCase": "Generic call, string literal, one declared static IServiceCollection method",
+      "sourceExpected": "No analyzer diagnostics",
+      "sourceDeclaredSignatureMatchingMethodCount": 1
+    },
+    {
+      "name": "NoDiagnostics_WhenValidNonGenericOverload",
+      "sourceLine": 85,
+      "sourceCase": "typeof call, one declared static IServiceCollection method",
+      "sourceExpected": "No analyzer diagnostics",
+      "sourceDeclaredSignatureMatchingMethodCount": 1
+    },
+    {
+      "name": "ReportsE2E003_WhenMethodIsNotStatic",
+      "sourceLine": 111,
+      "sourceCase": "One declared signature-matching instance method",
+      "sourceExpected": "Single E2E003 Error; message names method and must be static",
+      "sourceDeclaredSignatureMatchingMethodCount": 1,
+      "sourceDeclaredStaticSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "ReportsE2E003_WhenMethodIsNotStatic_NonGenericOverload",
+      "sourceLine": 142,
+      "sourceCase": "typeof call, one declared signature-matching instance method",
+      "sourceExpected": "Single E2E003 Error",
+      "sourceDeclaredSignatureMatchingMethodCount": 1,
+      "sourceDeclaredStaticSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "ReportsE2E001_WhenMethodNotFound",
+      "sourceLine": 171,
+      "sourceCase": "Named method absent",
+      "sourceExpected": "Single E2E001 Error; message includes method and type",
+      "sourceDeclaredSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "ReportsE2E001_WhenMethodHasWrongSignature",
+      "sourceLine": 202,
+      "sourceCase": "Named static method has string parameter",
+      "sourceExpected": "Single E2E001 Error",
+      "sourceDeclaredSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "ReportsE2E002_WhenMethodNameNotConstant",
+      "sourceLine": 231,
+      "sourceCase": "Method name passed through non-const local",
+      "sourceExpected": "Single E2E002 Warning before candidate production",
+      "materializationReached": false
+    },
+    {
+      "name": "NoDiagnostics_WhenCallIsNotOnServerStartOptions",
+      "sourceLine": 262,
+      "sourceCase": "ConfigureServices belongs to different type",
+      "sourceExpected": "No analyzer diagnostics",
+      "materializationReached": false
+    },
+    {
+      "name": "ReportsE2E003_SpecificToNonStaticMethod_NotMethodNotFound",
+      "sourceLine": 288,
+      "sourceCase": "Correct IServiceCollection parameter but instance method",
+      "sourceExpected": "Single E2E003 explicitly not E2E001",
+      "sourceDeclaredSignatureMatchingMethodCount": 1,
+      "sourceDeclaredStaticSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "ReportsE2E001_WhenStaticMethodExistsButWrongParameter",
+      "sourceLine": 320,
+      "sourceCase": "Named static method has int parameter",
+      "sourceExpected": "Single E2E001",
+      "sourceDeclaredSignatureMatchingMethodCount": 0
+    },
+    {
+      "name": "DiagnosticLocationPointsToInvocation",
+      "sourceLine": 349,
+      "sourceCase": "Named method absent",
+      "sourceExpected": "Single diagnostic, non-None location, valid line span",
+      "sourceDeclaredSignatureMatchingMethodCount": 0,
+      "limitation": "Existing assertions do not check an exact SourceSpan. No exact emitted span was observed here."
+    },
+    {
+      "name": "NoDiagnostics_WhenPrivateStaticMethodWithCorrectSignature",
+      "sourceLine": 376,
+      "sourceCase": "One declared private static signature-matching method",
+      "sourceExpected": "No analyzer diagnostics",
+      "sourceDeclaredSignatureMatchingMethodCount": 1,
+      "limitation": "Analyzer acceptance only; not a claim that generated source accessibility or a full compilation was validated."
+    }
+  ],
+  "sourceBranchInventory": {
+    "facts": 14,
+    "materializationSourceCases": 11,
+    "noEligibleSourceCases": 4,
+    "matchingButNoStaticSourceCases": 3,
+    "staticMatchSourceCases": 4,
+    "earlySkippedSourceCases": 3,
+    "executedCardinalities": null
+  },
+  "generatorProducerInExistingHelper": [
+    "StartupHookGeneratorTests.RunGenerator constructs the real StartupHookGenerator, CSharpGeneratorDriver.Create, RunGenerators(compilation), and GetRunResult.",
+    "Existing source assertions check resolver entries for generic nameof/string and non-generic calls, two differently named overrides on one type, no entry for missing/nonstatic methods, and duplicate callsite output.",
+    "There are 17 existing generator Facts. None were executed; no generated source or diagnostics were observed."
+  ],
+  "orderingCoverageLimit": "No inspected existing case establishes selection among multiple eligible same-name overloads. No candidate was implemented, so no additional overload/member sets or test cases were invented.",
+  "whyNotRun": "Source qualification did not justify a faithful material normal-use candidate. Conditional implementation/testing acceptance never activated; this is not a failed/blocked regression test or measured no-gain result."
+}

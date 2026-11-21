@@ -1,0 +1,29 @@
+[
+  {
+    "id": "F218",
+    "finding": {
+      "card_id": "hashset-contains-before-add",
+      "file": "src/Components/Endpoints/src/Discovery/ComponentApplicationBuilder.cs",
+      "line_start": 75,
+      "line_end": 79,
+      "project": "Microsoft.AspNetCore.Components.Endpoints",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Adding a component library probes the assembly HashSet with Contains and then Add.",
+      "explanation": "AddLibrary checks _assemblies.Contains for the same assembly name that it subsequently inserts with _assemblies.Add. Unique assemblies therefore pay two hash-table probes. The operation occurs during application discovery/startup, so it is classified informational.",
+      "snippet": "if (_assemblies.Contains(libraryBuilder.AssemblyName))\n{\n    throw new InvalidOperationException(\"Assembly already defined.\");\n}\n_assemblies.Add(libraryBuilder.AssemblyName);",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

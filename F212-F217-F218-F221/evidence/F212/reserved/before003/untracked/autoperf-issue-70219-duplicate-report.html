@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoPerf overlap with dotnet/aspnetcore#70219</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --link: #58a6ff;
+      --exact: #2ea043;
+      --related: #d29922;
+      --none: #6e7681;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 1500px; margin: 0 auto; padding: 32px; }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    h2 { margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { margin: 10px 0; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+    .lede, .note { color: var(--muted); max-width: 1000px; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 24px 0; }
+    .metric, .match-card, .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+    .metric strong { display: block; font-size: 28px; }
+    .metric span { color: var(--muted); }
+    .match-card { margin: 14px 0; }
+    .match-heading { display: flex; gap: 10px; align-items: center; }
+    .area, .state { color: var(--muted); font-size: 12px; }
+    .badge { display: inline-block; border-radius: 999px; padding: 3px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .badge.exact, .badge.exact_duplicate { background: color-mix(in srgb, var(--exact) 30%, transparent); color: #7ee787; }
+    .badge.related_not_duplicate { background: color-mix(in srgb, var(--related) 30%, transparent); color: #e3b341; }
+    .badge.no_overlap { background: color-mix(in srgb, var(--none) 35%, transparent); color: #c9d1d9; }
+    .finding-list li { margin: 12px 0; }
+    .finding-list p { margin: 4px 0; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; background: var(--panel); }
+    th, td { border: 1px solid var(--border); padding: 9px; text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #21262d; z-index: 1; }
+    td ul { margin: 0; padding-left: 18px; }
+    .controls { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; background: var(--bg); border-bottom: 1px solid var(--border); }
+    input, select { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 9px; }
+    input { min-width: 320px; flex: 1; }
+    .matrix { overflow-x: auto; max-height: 75vh; border: 1px solid var(--border); }
+    .matrix table { min-width: 1300px; }
+    details summary { cursor: pointer; color: var(--link); }
+    footer { color: var(--muted); margin-top: 40px; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #fff; --panel: #f6f8fa; --border: #d0d7de; --text: #1f2328; --muted: #59636e; --link: #0969da; }
+      th { background: #eaeef2; }
+      .badge.exact, .badge.exact_duplicate { color: #116329; }
+      .badge.related_not_duplicate { color: #7d4e00; }
+      .badge.no_overlap { color: #424a53; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>AutoPerf overlap with <a href="https://github.com/dotnet/aspnetcore/issues/70219">dotnet/aspnetcore#70219</a></h1>
+  <p class="lede">Comparison of the 98 performance PRs in the issue's latest complete table against 369 AutoPerf findings. Exact duplicates require the same concrete source behavior; sharing an area or file is insufficient.</p>
+
+  <section class="summary">
+    <div class="metric"><strong>7</strong><span>duplicate PRs</span></div>
+    <div class="metric"><strong>11</strong><span>unique matching findings</span></div>
+    <div class="metric"><strong>52</strong><span>related, not duplicate</span></div>
+    <div class="metric"><strong>39</strong><span>no overlap</span></div>
+    <div class="metric"><strong>98</strong><span>PRs reviewed</span></div>
+  </section>
+
+  <div class="panel">
+    <strong>Answer:</strong> <b>7 of 98 PRs</b> duplicate at least one of our findings, covering <b>11 unique findings</b>.
+    Closed PRs that duplicate another issue PR were still compared independently.
+  </div>
+
+  <h2>Exact duplicates</h2>
+  
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Middleware</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70132">#70132: Avoid HashSet and LINQ when selecting a response compression provider</a></h3>
+          <p>The patch removes the candidate OrderByDescending/ThenBy/First full sort and selects the best compression provider incrementally in CandidateSelector, fixing the same full-sort-for-top-one behavior.</p>
+          <h4>Matching AutoPerf findings (1)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>full-sort-for-top-n-selection</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs#L147-L149"><code>src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs:147-149</code></a></div>
+        <strong>Compression negotiation fully sorts candidates to select one provider.</strong>
+        <p>Candidate selection changed from sorting the complete candidate set and taking First to maintaining the best candidate as entries are added.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Components</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70133">#70133: Avoid redundant dictionary lookups when diffing keyed items</a></h3>
+          <p>The patch replaces the old-tree ContainsKey followed by indexer assignment with Dictionary.TryAdd, eliminating the same double probe. The separate new-tree finding is not matched because the final PR reverted that single-probe change.</p>
+          <h4>Matching AutoPerf findings (1)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>dictionary-containskey-before-indexer</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs#L337-L342"><code>src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs:337-342</code></a></div>
+        <strong>Render-tree keyed lookup probes each old sibling key before inserting it.</strong>
+        <p>The old-sibling insertion now uses TryAdd, so duplicate detection and insertion share one dictionary probe instead of ContainsKey plus indexer assignment.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">SignalR</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70143">#70143: Reduce allocations when parsing SignalR MessagePack messages</a></h3>
+          <p>ReadStreamIds now allocates the final string array from streamIdCount and fills it by index, removing the temporary List&lt;string&gt; and ToArray copy identified by the finding.</p>
+          <h4>Matching AutoPerf findings (1)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>single-use-container-built-before-enumeration</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs#L268-L283"><code>src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs:268-283</code></a></div>
+        <strong>Stream IDs are accumulated in a temporary List and immediately copied to an array.</strong>
+        <p>The parser allocates string[streamIdCount], assigns each parsed ID directly, and returns it; the temporary List and ToArray are gone.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Middleware</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70169">#70169: Reduce allocations when serializing DistributedSession</a></h3>
+          <p>Session serialization now computes the exact payload size and writes directly into one byte array, removing the default MemoryStream growth and final ToArray copy at the finding site.</p>
+          <h4>Matching AutoPerf findings (1)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>memorystream-unbounded-growth</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/Session/src/DistributedSession.cs#L273-L274"><code>src/Middleware/Session/src/DistributedSession.cs:273-274</code></a></div>
+        <strong>Session serialization accumulates the complete, potentially large session payload in a default growable MemoryStream.</strong>
+        <p>CommitAsync now receives one exact-sized byte array from Serialize; Serialize precomputes the payload length and writes directly to it instead of growing a MemoryStream and copying with ToArray.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Security</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70172">#70172: Reduce allocations when serializing authentication tickets</a></h3>
+          <p>For the built-in TicketSerializer and PropertiesSerializer types, the patch bypasses the MemoryStream/BinaryWriter serialization paths and writes through BinaryPayloadWriter, addressing the same growable-stream serialization sites identified by both findings.</p>
+          <h4>Matching AutoPerf findings (2)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>memorystream-unbounded-growth</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Security/Authentication/Core/src/TicketSerializer.cs#L30-L36"><code>src/Security/Authentication/Core/src/TicketSerializer.cs:30-36</code></a></div>
+        <strong>Authentication ticket serialization grows a MemoryStream and then copies the complete ticket.</strong>
+        <p>The built-in TicketSerializer fast path no longer serializes through MemoryStream/BinaryWriter; it writes the same ticket format through BinaryPayloadWriter.</p>
+      </li>
+      <li>
+        <div><code>memorystream-unbounded-growth</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Security/Authentication/Core/src/PropertiesSerializer.cs#L19-L28"><code>src/Security/Authentication/Core/src/PropertiesSerializer.cs:19-28</code></a></div>
+        <strong>Authentication properties serialize through an unbounded growable MemoryStream.</strong>
+        <p>The built-in PropertiesSerializer fast path likewise bypasses its default MemoryStream/BinaryWriter serialization path.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Identity</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70223">#70223: Avoid LINQ and allocations in PasswordValidator</a></h3>
+          <p>The patch removes the four LINQ scans over the password string and replaces each All/Any predicate with a direct character loop, exactly matching the four findings.</p>
+          <h4>Matching AutoPerf findings (4)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>linq-char-set-search-on-string</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L51"><code>src/Identity/Extensions.Core/src/PasswordValidator.cs:51</code></a></div>
+        <strong>Password validation uses LINQ All to scan every UTF-16 character.</strong>
+        <p>password.All(IsLetterOrDigit) is replaced by an explicit short-circuiting character loop.</p>
+      </li>
+      <li>
+        <div><code>linq-char-set-search-on-string</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L61"><code>src/Identity/Extensions.Core/src/PasswordValidator.cs:61</code></a></div>
+        <strong>Password lowercase validation uses LINQ Any over the string.</strong>
+        <p>password.Any(IsLower) is replaced by an explicit short-circuiting character loop.</p>
+      </li>
+      <li>
+        <div><code>linq-char-set-search-on-string</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L66"><code>src/Identity/Extensions.Core/src/PasswordValidator.cs:66</code></a></div>
+        <strong>Password uppercase validation uses LINQ Any over the string.</strong>
+        <p>password.Any(IsUpper) is replaced by an explicit short-circuiting character loop.</p>
+      </li>
+      <li>
+        <div><code>linq-char-set-search-on-string</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L56"><code>src/Identity/Extensions.Core/src/PasswordValidator.cs:56</code></a></div>
+        <strong>Password digit validation uses LINQ Any over the string.</strong>
+        <p>password.Any(IsDigit) is replaced by an explicit short-circuiting character loop.</p>
+      </li></ul>
+        </article>
+        <article class="match-card">
+          <div class="match-heading">
+            <span class="badge exact">Exact duplicate</span>
+            <span class="area">Identity</span>
+          </div>
+          <h3><a href="https://github.com/dotnet/aspnetcore/pull/70224">#70224: Reduce per-call overhead in UserValidator</a></h3>
+          <p>Username validation no longer uses Any with a nested allowed-character Contains scan; it uses cached SearchValues on modern .NET and a direct indexed fallback elsewhere, fixing the same nested character-search behavior.</p>
+          <h4>Matching AutoPerf findings (1)</h4>
+          <ul class="finding-list">
+      <li>
+        <div><code>linq-char-set-search-on-string</code></div>
+        <div><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/UserValidator.cs#L61-L62"><code>src/Identity/Extensions.Core/src/UserValidator.cs:61-62</code></a></div>
+        <strong>Username validation enumerates the username with LINQ and searches the allowed-character string for every character.</strong>
+        <p>The LINQ Any plus per-character allowed-string Contains scan is replaced by SearchValues.ContainsAnyExcept or a direct loop with IndexOf.</p>
+      </li></ul>
+        </article>
+
+  <h2>Duplicate cards</h2>
+  <table><thead><tr><th>AutoPerf card</th><th>Matched findings</th></tr></thead><tbody><tr><td><code>dictionary-containskey-before-indexer</code></td><td>1</td></tr><tr><td><code>full-sort-for-top-n-selection</code></td><td>1</td></tr><tr><td><code>linq-char-set-search-on-string</code></td><td>5</td></tr><tr><td><code>memorystream-unbounded-growth</code></td><td>3</td></tr><tr><td><code>single-use-container-built-before-enumeration</code></td><td>1</td></tr></tbody></table>
+
+  <h2>Classification by area</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Exact</th><th>Related</th><th>No overlap</th><th>Total</th></tr></thead>
+    <tbody><tr><td>Components</td><td>1</td><td>1</td><td>6</td><td>8</td></tr><tr><td>DataProtection</td><td>0</td><td>5</td><td>0</td><td>5</td></tr><tr><td>Hosting</td><td>0</td><td>1</td><td>0</td><td>1</td></tr><tr><td>Http/Headers</td><td>0</td><td>3</td><td>1</td><td>4</td></tr><tr><td>Http/Http</td><td>0</td><td>0</td><td>2</td><td>2</td></tr><tr><td>Http/Http.Abstractions</td><td>0</td><td>0</td><td>1</td><td>1</td></tr><tr><td>Http/Http.Extensions</td><td>0</td><td>0</td><td>2</td><td>2</td></tr><tr><td>Http/Routing</td><td>0</td><td>4</td><td>2</td><td>6</td></tr><tr><td>Http/Shared</td><td>0</td><td>1</td><td>0</td><td>1</td></tr><tr><td>Http/WebUtilities</td><td>0</td><td>4</td><td>1</td><td>5</td></tr><tr><td>Identity</td><td>2</td><td>3</td><td>2</td><td>7</td></tr><tr><td>Kestrel</td><td>0</td><td>2</td><td>4</td><td>6</td></tr><tr><td>Middleware</td><td>2</td><td>9</td><td>4</td><td>15</td></tr><tr><td>Mvc</td><td>0</td><td>8</td><td>3</td><td>11</td></tr><tr><td>OpenApi</td><td>0</td><td>2</td><td>0</td><td>2</td></tr><tr><td>Security</td><td>1</td><td>7</td><td>1</td><td>9</td></tr><tr><td>Shared</td><td>0</td><td>0</td><td>1</td><td>1</td></tr><tr><td>Shared/Hpack</td><td>0</td><td>0</td><td>1</td><td>1</td></tr><tr><td>Shared/ServerInfrastructure</td><td>0</td><td>0</td><td>1</td><td>1</td></tr><tr><td>SignalR</td><td>1</td><td>2</td><td>6</td><td>9</td></tr><tr><td>StaticAssets</td><td>0</td><td>0</td><td>1</td><td>1</td></tr></tbody>
+  </table>
+
+  <h2>Full 98-PR classification matrix</h2>
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search PR, area, reason, file, or card">
+    <select id="classification">
+      <option value="">All classifications</option>
+      <option value="exact_duplicate">Exact duplicate</option>
+      <option value="related_not_duplicate">Related, not duplicate</option>
+      <option value="no_overlap">No overlap</option>
+    </select>
+    <span id="visibleCount">98 visible</span>
+  </div>
+  <div class="matrix">
+    <table>
+      <thead><tr><th>PR</th><th>Title</th><th>Area</th><th>Classification</th><th>Reason</th><th>Matching findings</th><th>Changed files</th></tr></thead>
+      <tbody id="matrixBody">
+          <tr data-classification="related_not_duplicate" data-search="70117 avoid allocating the content-length string when writing http/2 and http/3 response headers kestrel related_not_duplicate the pr touches knownheaders.cs only to generate a raw/lazy content-length value. it does not change the aggregate string concatenation or repeated contains pipelines at the autoperf finding lines. src/servers/kestrel/core/src/internal/http/httpheaders.generated.cs src/servers/kestrel/core/src/internal/http/httpresponseheaders.cs src/servers/kestrel/core/src/internal/http3/http3headersenumerator.cs src/servers/kestrel/core/src/internal/http3/qpackheaderwriter.cs src/servers/kestrel/core/test/http2/http2hpackencodertests.cs src/servers/kestrel/core/test/http2/http2headersenumeratortests.cs src/servers/kestrel/core/test/http3/http3headersenumeratortests.cs src/servers/kestrel/core/test/http3/http3qpackencodertests.cs src/servers/kestrel/perf/microbenchmarks/http3/qpackheaderwriterbenchmark.cs src/servers/kestrel/shared/hpackheaderwriter.cs src/servers/kestrel/shared/http2headersenumerator.cs src/servers/kestrel/shared/knownheaders.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70117">#70117</a></td>
+            <td>Avoid allocating the Content-Length string when writing HTTP/2 and HTTP/3 response headers<div class="state">OPEN</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR touches KnownHeaders.cs only to generate a raw/lazy Content-Length value. It does not change the Aggregate string concatenation or repeated Contains pipelines at the AutoPerf finding lines.</td>
+            <td>—</td>
+            <td><details><summary>12 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpHeaders.Generated.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpResponseHeaders.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http3/Http3HeadersEnumerator.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http3/QPackHeaderWriter.cs</code></li><li><code>src/Servers/Kestrel/Core/test/Http2/Http2HPackEncoderTests.cs</code></li><li><code>src/Servers/Kestrel/Core/test/Http2/Http2HeadersEnumeratorTests.cs</code></li><li><code>src/Servers/Kestrel/Core/test/Http3/Http3HeadersEnumeratorTests.cs</code></li><li><code>src/Servers/Kestrel/Core/test/Http3/Http3QPackEncoderTests.cs</code></li><li><code>src/Servers/Kestrel/perf/Microbenchmarks/Http3/QPackHeaderWriterBenchmark.cs</code></li><li><code>src/Servers/Kestrel/shared/HPackHeaderWriter.cs</code></li><li><code>src/Servers/Kestrel/shared/Http2HeadersEnumerator.cs</code></li><li><code>src/Servers/Kestrel/shared/KnownHeaders.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70118 reuse http3rawframe across pooled http/3 streams kestrel no_overlap the pr&#x27;s concrete change (reuse http3rawframe across pooled http/3 streams) is in http3stream.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/core/src/internal/http3/http3stream.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70118">#70118</a></td>
+            <td>Reuse Http3RawFrame across pooled HTTP/3 streams<div class="state">OPEN</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reuse Http3RawFrame across pooled HTTP/3 streams) is in Http3Stream.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>1 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http3/Http3Stream.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70119 add allocation-free fast path to hasjsoncontenttype http/http.extensions no_overlap the pr&#x27;s concrete change (add allocation-free fast path to hasjsoncontenttype) is in httprequestjsonextensions.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http.extensions/src/httprequestjsonextensions.cs src/http/http.extensions/test/httprequestjsonextensionstests.cs src/http/http/perf/microbenchmarks/jsoncontenttypebenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70119">#70119</a></td>
+            <td>Add allocation-free fast path to HasJsonContentType<div class="state">MERGED</div></td>
+            <td>Http/Http.Extensions</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Add allocation-free fast path to HasJsonContentType) is in HttpRequestJsonExtensions.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http.Extensions/src/HttpRequestJsonExtensions.cs</code></li><li><code>src/Http/Http.Extensions/test/HttpRequestJsonExtensionsTests.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/JsonContentTypeBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70120 avoid intermediate allocation when decoding query string names/values http/http no_overlap the pr&#x27;s concrete change (avoid intermediate allocation when decoding query string names/values) is in queryfeature.cs, queryhelpers.cs, querystringenumerable.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http/src/features/queryfeature.cs src/http/http/test/features/queryfeaturetests.cs src/http/webutilities/src/queryhelpers.cs src/http/webutilities/test/queryhelperstests.cs src/shared/querystringenumerable.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70120">#70120</a></td>
+            <td>Avoid intermediate allocation when decoding query string names/values<div class="state">OPEN</div></td>
+            <td>Http/Http</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid intermediate allocation when decoding query string names/values) is in QueryFeature.cs, QueryHelpers.cs, QueryStringEnumerable.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Http/Http/src/Features/QueryFeature.cs</code></li><li><code>src/Http/Http/test/Features/QueryFeatureTests.cs</code></li><li><code>src/Http/WebUtilities/src/QueryHelpers.cs</code></li><li><code>src/Http/WebUtilities/test/QueryHelpersTests.cs</code></li><li><code>src/Shared/QueryStringEnumerable.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70121 vectorize skipping of empty values in header list parsing http/headers no_overlap the pr&#x27;s concrete change (vectorize skipping of empty values in header list parsing) is in headerutilities.cs, httpruleparser.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/headers/src/headerutilities.cs src/http/headers/test/entitytagheadervaluetest.cs src/http/http/perf/microbenchmarks/headerparsingbenchmarks.cs src/shared/httpruleparser.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70121">#70121</a></td>
+            <td>Vectorize skipping of empty values in header list parsing<div class="state">MERGED</div></td>
+            <td>Http/Headers</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Vectorize skipping of empty values in header list parsing) is in HeaderUtilities.cs, HttpRuleParser.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/Http/Headers/src/HeaderUtilities.cs</code></li><li><code>src/Http/Headers/test/EntityTagHeaderValueTest.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/HeaderParsingBenchmarks.cs</code></li><li><code>src/Shared/HttpRuleParser.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70125 write renderbatchwriter frames and edits as single fixed-size records components no_overlap the pr&#x27;s concrete change (write renderbatchwriter frames and edits as single fixed-size records) is in renderbatchwriter.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/components/perf/renderbatchwriterbenchmark.cs src/components/server/test/circuits/renderbatchwritertest.cs src/components/shared/src/renderbatchwriter.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70125">#70125</a></td>
+            <td>Write RenderBatchWriter frames and edits as single fixed-size records<div class="state">MERGED</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Write RenderBatchWriter frames and edits as single fixed-size records) is in RenderBatchWriter.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/Components/perf/RenderBatchWriterBenchmark.cs</code></li><li><code>src/Components/Server/test/Circuits/RenderBatchWriterTest.cs</code></li><li><code>src/Components/Shared/src/RenderBatchWriter.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70126 skip validationcontext allocation for valid values of built-in dataannotations attributes mvc related_not_duplicate both concern mvc validation cost, but this pr skips validationcontext creation for built-in attributes; the findings cover different validation-summary, input-generation, and reflection behaviors. src/mvc/mvc.dataannotations/src/dataannotationsmodelvalidator.cs src/mvc/mvc.dataannotations/test/dataannotationsmodelvalidatortest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/dataannotationsvalidationbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70126">#70126</a></td>
+            <td>Skip ValidationContext allocation for valid values of built-in DataAnnotations attributes<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>Both concern MVC validation cost, but this PR skips ValidationContext creation for built-in attributes; the findings cover different validation-summary, input-generation, and reflection behaviors.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Mvc/Mvc.DataAnnotations/src/DataAnnotationsModelValidator.cs</code></li><li><code>src/Mvc/Mvc.DataAnnotations/test/DataAnnotationsModelValidatorTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/DataAnnotationsValidationBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70127 reduce allocations in defaultlinkgenerator http/routing no_overlap the pr&#x27;s concrete change (reduce allocations in defaultlinkgenerator) is in defaultlinkgenerator.cs, defaultlinkparser.cs, templatebinder.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/routing/src/defaultlinkgenerator.cs src/http/routing/src/defaultlinkparser.cs src/http/routing/src/template/templatebinder.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70127">#70127</a></td>
+            <td>Reduce allocations in DefaultLinkGenerator<div class="state">MERGED</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reduce allocations in DefaultLinkGenerator) is in DefaultLinkGenerator.cs, DefaultLinkParser.cs, TemplateBinder.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Routing/src/DefaultLinkGenerator.cs</code></li><li><code>src/Http/Routing/src/DefaultLinkParser.cs</code></li><li><code>src/Http/Routing/src/Template/TemplateBinder.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70128 reduce per-render allocations in razorpage, razorview and razorviewengine mvc related_not_duplicate the patch lazily allocates razor page collections but retains the separate contains/add section probes and does not replace section dictionary containskey/indexer operations; the blocking synchronous api is also unchanged. src/mvc/mvc.razor/src/razorpage.cs src/mvc/mvc.razor/src/razorpagebase.cs src/mvc/mvc.razor/src/razorview.cs src/mvc/mvc.razor/src/razorviewengine.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/razorviewrenderbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70128">#70128</a></td>
+            <td>Reduce per-render allocations in RazorPage, RazorView and RazorViewEngine<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The patch lazily allocates Razor page collections but retains the separate Contains/Add section probes and does not replace section dictionary ContainsKey/indexer operations; the blocking synchronous API is also unchanged.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Mvc/Mvc.Razor/src/RazorPage.cs</code></li><li><code>src/Mvc/Mvc.Razor/src/RazorPageBase.cs</code></li><li><code>src/Mvc/Mvc.Razor/src/RazorView.cs</code></li><li><code>src/Mvc/Mvc.Razor/src/RazorViewEngine.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/RazorViewRenderBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70129 reduce allocations in mvc model validation mvc related_not_duplicate this pr removes validation closures and lazily creates result lists. it does not change the validationstatedictionary enumerator or the separate reflection findings in union validation. src/mvc/mvc.abstractions/src/modelbinding/validation/validationentry.cs src/mvc/mvc.core/src/modelbinding/validation/defaultcomplexobjectvalidationstrategy.cs src/mvc/mvc.core/src/modelbinding/validation/validationvisitor.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70129">#70129</a></td>
+            <td>Reduce allocations in MVC model validation<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>This PR removes validation closures and lazily creates result lists. It does not change the ValidationStateDictionary enumerator or the separate reflection findings in union validation.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Mvc/Mvc.Abstractions/src/ModelBinding/Validation/ValidationEntry.cs</code></li><li><code>src/Mvc/Mvc.Core/src/ModelBinding/Validation/DefaultComplexObjectValidationStrategy.cs</code></li><li><code>src/Mvc/Mvc.Core/src/ModelBinding/Validation/ValidationVisitor.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70130 lazily allocate templateinfo visited objects set mvc related_not_duplicate the pr lazily allocates templateinfo visited state. nearby autoperf findings concern validation-summary scans, synchronous template rendering, input-type contains calls, and reflection, not this allocation. src/mvc/mvc.viewfeatures/src/templateinfo.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/razorviewrenderbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70130">#70130</a></td>
+            <td>Lazily allocate TemplateInfo visited objects set<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR lazily allocates TemplateInfo visited state. Nearby AutoPerf findings concern validation-summary scans, synchronous template rendering, input-type Contains calls, and reflection, not this allocation.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Mvc/Mvc.ViewFeatures/src/TemplateInfo.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/RazorViewRenderBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70131 lazily allocate and right-size the model binding state stack mvc no_overlap the pr&#x27;s concrete change (lazily allocate and right-size the model binding state stack) is in defaultmodelbindingcontext.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/mvc/mvc.core/src/modelbinding/defaultmodelbindingcontext.cs src/mvc/mvc.core/test/modelbinding/defaultmodelbindingcontexttest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/complextypemodelbindingbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70131">#70131</a></td>
+            <td>Lazily allocate and right-size the model binding state stack<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Lazily allocate and right-size the model binding state stack) is in DefaultModelBindingContext.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Mvc/Mvc.Core/src/ModelBinding/DefaultModelBindingContext.cs</code></li><li><code>src/Mvc/Mvc.Core/test/ModelBinding/DefaultModelBindingContextTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/ComplexTypeModelBindingBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70132 avoid hashset and linq when selecting a response compression provider middleware exact_duplicate the patch removes the candidate orderbydescending/thenby/first full sort and selects the best compression provider incrementally in candidateselector, fixing the same full-sort-for-top-one behavior. src/middleware/responsecompression/src/responsecompressionprovider.cs src/middleware/responsecompression/test/responsecompressionprovidertest.cs full-sort-for-top-n-selection compression negotiation fully sorts candidates to select one provider.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70132">#70132</a></td>
+            <td>Avoid HashSet and LINQ when selecting a response compression provider<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>The patch removes the candidate OrderByDescending/ThenBy/First full sort and selects the best compression provider incrementally in CandidateSelector, fixing the same full-sort-for-top-one behavior.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs#L147-L149"><code>full-sort-for-top-n-selection</code> — src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs:147</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs</code></li><li><code>src/Middleware/ResponseCompression/test/ResponseCompressionProviderTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70133 avoid redundant dictionary lookups when diffing keyed items components exact_duplicate the patch replaces the old-tree containskey followed by indexer assignment with dictionary.tryadd, eliminating the same double probe. the separate new-tree finding is not matched because the final pr reverted that single-probe change. src/components/components/perf/keyedlistdiffbenchmark.cs src/components/components/src/rendertree/rendertreediffbuilder.cs dictionary-containskey-before-indexer render-tree keyed lookup probes each old sibling key before inserting it.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70133">#70133</a></td>
+            <td>Avoid redundant dictionary lookups when diffing keyed items<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>The patch replaces the old-tree ContainsKey followed by indexer assignment with Dictionary.TryAdd, eliminating the same double probe. The separate new-tree finding is not matched because the final PR reverted that single-probe change.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs#L337-L342"><code>dictionary-containskey-before-indexer</code> — src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs:337</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Components/Components/perf/KeyedListDiffBenchmark.cs</code></li><li><code>src/Components/Components/src/RenderTree/RenderTreeDiffBuilder.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70134 avoid linq and intermediate strings in setcommaseparatedvalues http/http.abstractions no_overlap the pr&#x27;s concrete change (avoid linq and intermediate strings in setcommaseparatedvalues) is in parsinghelpers.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http.abstractions/perf/microbenchmarks/setheaderjoinedbenchmark.cs src/http/http.abstractions/src/internal/parsinghelpers.cs src/http/http/test/headerdictionarytests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70134">#70134</a></td>
+            <td>Avoid LINQ and intermediate strings in SetCommaSeparatedValues<div class="state">MERGED</div></td>
+            <td>Http/Http.Abstractions</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid LINQ and intermediate strings in SetCommaSeparatedValues) is in ParsingHelpers.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http.Abstractions/perf/Microbenchmarks/SetHeaderJoinedBenchmark.cs</code></li><li><code>src/Http/Http.Abstractions/src/Internal/ParsingHelpers.cs</code></li><li><code>src/Http/Http/test/HeaderDictionaryTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70136 use ulong.tryformat for content-length values &gt;= 1000 in kestrel shared/serverinfrastructure no_overlap the pr&#x27;s concrete change (use ulong.tryformat for content-length values &gt;= 1000 in kestrel) is in bufferextensions.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/perf/microbenchmarks/bufferwriterextensionsbenchmark.cs src/shared/serverinfrastructure/bufferextensions.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70136">#70136</a></td>
+            <td>Use ulong.TryFormat for Content-Length values &gt;= 1000 in Kestrel<div class="state">MERGED</div></td>
+            <td>Shared/ServerInfrastructure</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Use ulong.TryFormat for Content-Length values &gt;= 1000 in Kestrel) is in BufferExtensions.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Servers/Kestrel/perf/Microbenchmarks/BufferWriterExtensionsBenchmark.cs</code></li><li><code>src/Shared/ServerInfrastructure/BufferExtensions.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70137 avoid per-header allocations in signalr hub protocols signalr related_not_duplicate the messagepack file overlaps, but the patch optimizes header error-string construction and dictionary enumeration. it does not change readstreamids or its list-to-array copy. src/signalr/common/protocols.json/src/protocol/jsonhubprotocol.cs src/signalr/common/protocols.messagepack/src/protocol/messagepackhubprotocolworker.cs src/signalr/perf/microbenchmarks/hubprotocolheadersbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70137">#70137</a></td>
+            <td>Avoid per-header allocations in SignalR hub protocols<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The MessagePack file overlaps, but the patch optimizes header error-string construction and dictionary enumeration. It does not change ReadStreamIds or its List-to-array copy.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs</code></li><li><code>src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs</code></li><li><code>src/SignalR/perf/Microbenchmarks/HubProtocolHeadersBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70138 share per-endpoint candidate data when building the dfa matcher http/routing related_not_duplicate the pr caches per-endpoint candidate data. the finding is a separate addparentsmatchingcomplexsegment loop that enumerates dictionary keys and then indexes the dictionary. src/http/routing/src/matching/candidate.cs src/http/routing/src/matching/dfamatcherbuilder.cs src/http/routing/test/unittests/matching/dfamatcherbuildertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70138">#70138</a></td>
+            <td>Share per-endpoint candidate data when building the DFA matcher<div class="state">OPEN</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR caches per-endpoint Candidate data. The finding is a separate AddParentsMatchingComplexSegment loop that enumerates dictionary keys and then indexes the dictionary.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Routing/src/Matching/Candidate.cs</code></li><li><code>src/Http/Routing/src/Matching/DfaMatcherBuilder.cs</code></li><li><code>src/Http/Routing/test/UnitTests/Matching/DfaMatcherBuilderTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70139 reset bufferedtextwriter char segment buffer between flushes components no_overlap the pr&#x27;s concrete change (reset bufferedtextwriter char segment buffer between flushes) is in bufferedtextwriter.cs, textchunk.cs, textchunklistbuilder.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/bufferedtextwriterbenchmark.cs src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/endpoints/src/rendering/buffering/bufferedtextwriter.cs src/components/endpoints/src/rendering/buffering/textchunk.cs src/components/endpoints/src/rendering/buffering/textchunklistbuilder.cs src/components/endpoints/test/buffering/bufferedtextwritertest.cs src/components/endpoints/test/buffering/textchunklistbuildertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70139">#70139</a></td>
+            <td>Reset BufferedTextWriter char segment buffer between flushes<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reset BufferedTextWriter char segment buffer between flushes) is in BufferedTextWriter.cs, TextChunk.cs, TextChunkListBuilder.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>src/Components/Components/perf/BufferedTextWriterBenchmark.cs</code></li><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/BufferedTextWriter.cs</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/TextChunk.cs</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/TextChunkListBuilder.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/BufferedTextWriterTest.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/TextChunkListBuilderTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70140 use pooled buffer for utf-8 payload in dotnetdispatcher.endinvokejs components no_overlap the pr&#x27;s concrete change (use pooled buffer for utf-8 payload in dotnetdispatcher.endinvokejs) is in dotnetdispatcher.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/endinvokejsbenchmark.cs src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/jsinterop/src/infrastructure/dotnetdispatcher.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70140">#70140</a></td>
+            <td>Use pooled buffer for UTF-8 payload in DotNetDispatcher.EndInvokeJS<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Use pooled buffer for UTF-8 payload in DotNetDispatcher.EndInvokeJS) is in DotNetDispatcher.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Components/Components/perf/EndInvokeJSBenchmark.cs</code></li><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/JSInterop/src/Infrastructure/DotNetDispatcher.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70141 avoid resolving the default ihubactivator from di on every hub invocation signalr no_overlap the pr&#x27;s concrete change (avoid resolving the default ihubactivator from di on every hub invocation) is in defaulthubactivatorregistration.cs, defaulthubdispatcher.cs, signalrdependencyinjectionextensions.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/server/core/src/internal/defaulthubactivatorregistration.cs src/signalr/server/core/src/internal/defaulthubdispatcher.cs src/signalr/server/core/src/signalrdependencyinjectionextensions.cs src/signalr/server/signalr/test/microsoft.aspnetcore.signalr.tests/hubconnectionhandlertests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70141">#70141</a></td>
+            <td>Avoid resolving the default IHubActivator from DI on every hub invocation<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid resolving the default IHubActivator from DI on every hub invocation) is in DefaultHubActivatorRegistration.cs, DefaultHubDispatcher.cs, SignalRDependencyInjectionExtensions.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/SignalR/server/Core/src/Internal/DefaultHubActivatorRegistration.cs</code></li><li><code>src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs</code></li><li><code>src/SignalR/server/Core/src/SignalRDependencyInjectionExtensions.cs</code></li><li><code>src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70142 avoid allocating the target string per invocation received by the .net signalr client signalr no_overlap the pr&#x27;s concrete change (avoid allocating the target string per invocation received by the .net signalr client) is in hubconnection.cs, jsonhubprotocol.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/clients/csharp/client.core/src/hubconnection.cs src/signalr/clients/csharp/client/test/unittests/hubconnectiontests.protocol.cs src/signalr/common/protocols.json/src/protocol/jsonhubprotocol.cs src/signalr/common/signalr.common/test/internal/protocol/jsonhubprotocoltests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70142">#70142</a></td>
+            <td>Avoid allocating the target string per invocation received by the .NET SignalR client<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid allocating the target string per invocation received by the .NET SignalR client) is in HubConnection.cs, JsonHubProtocol.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/SignalR/clients/csharp/Client.Core/src/HubConnection.cs</code></li><li><code>src/SignalR/clients/csharp/Client/test/UnitTests/HubConnectionTests.Protocol.cs</code></li><li><code>src/SignalR/common/Protocols.Json/src/Protocol/JsonHubProtocol.cs</code></li><li><code>src/SignalR/common/SignalR.Common/test/Internal/Protocol/JsonHubProtocolTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70143 reduce allocations when parsing signalr messagepack messages signalr exact_duplicate readstreamids now allocates the final string array from streamidcount and fills it by index, removing the temporary list&lt;string&gt; and toarray copy identified by the finding. src/signalr/common/protocols.messagepack/src/protocol/messagepackhubprotocolworker.cs src/signalr/common/signalr.common/test/internal/protocol/messagepackhubprotocoltestbase.cs single-use-container-built-before-enumeration stream ids are accumulated in a temporary list and immediately copied to an array.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70143">#70143</a></td>
+            <td>Reduce allocations when parsing SignalR MessagePack messages<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>ReadStreamIds now allocates the final string array from streamIdCount and fills it by index, removing the temporary List&lt;string&gt; and ToArray copy identified by the finding.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs#L268-L283"><code>single-use-container-built-before-enumeration</code> — src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs:268</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/SignalR/common/Protocols.MessagePack/src/Protocol/MessagePackHubProtocolWorker.cs</code></li><li><code>src/SignalR/common/SignalR.Common/test/Internal/Protocol/MessagePackHubProtocolTestBase.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70144 avoid resolving the default hub activator from di for every hub invocation signalr no_overlap the pr&#x27;s concrete change (avoid resolving the default hub activator from di for every hub invocation) is in defaulthubdispatcher.cs, hubactivatorregistrations.cs, signalrdependencyinjectionextensions.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/server/core/src/internal/defaulthubdispatcher.cs src/signalr/server/core/src/internal/hubactivatorregistrations.cs src/signalr/server/core/src/signalrdependencyinjectionextensions.cs src/signalr/server/signalr/test/microsoft.aspnetcore.signalr.tests/hubconnectionhandlertestutils/hubs.cs src/signalr/server/signalr/test/microsoft.aspnetcore.signalr.tests/hubconnectionhandlertests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70144">#70144</a></td>
+            <td>Avoid resolving the default hub activator from DI for every hub invocation<div class="state">CLOSED</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid resolving the default hub activator from DI for every hub invocation) is in DefaultHubDispatcher.cs, HubActivatorRegistrations.cs, SignalRDependencyInjectionExtensions.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/SignalR/server/Core/src/Internal/DefaultHubDispatcher.cs</code></li><li><code>src/SignalR/server/Core/src/Internal/HubActivatorRegistrations.cs</code></li><li><code>src/SignalR/server/Core/src/SignalRDependencyInjectionExtensions.cs</code></li><li><code>src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTestUtils/Hubs.cs</code></li><li><code>src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/HubConnectionHandlerTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70145 reduce allocations in corsservice.evaluatepolicy middleware no_overlap the pr&#x27;s concrete change (reduce allocations in corsservice.evaluatepolicy) is in aspnetcore.slnx, corsresult.cs, corsservice.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. aspnetcore.slnx src/middleware/cors/src/infrastructure/corsresult.cs src/middleware/cors/src/infrastructure/corsservice.cs src/middleware/cors/test/unittests/corsservicetests.cs src/middleware/middleware.slnf src/middleware/perf/cors.microbenchmarks/assemblyinfo.cs src/middleware/perf/cors.microbenchmarks/corsservicebenchmark.cs src/middleware/perf/cors.microbenchmarks/microsoft.aspnetcore.cors.microbenchmarks.csproj ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70145">#70145</a></td>
+            <td>Reduce allocations in CorsService.EvaluatePolicy<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reduce allocations in CorsService.EvaluatePolicy) is in AspNetCore.slnx, CorsResult.cs, CorsService.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>8 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/CORS/src/Infrastructure/CorsResult.cs</code></li><li><code>src/Middleware/CORS/src/Infrastructure/CorsService.cs</code></li><li><code>src/Middleware/CORS/test/UnitTests/CorsServiceTests.cs</code></li><li><code>src/Middleware/Middleware.slnf</code></li><li><code>src/Middleware/perf/CORS.Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/perf/CORS.Microbenchmarks/CorsServiceBenchmark.cs</code></li><li><code>src/Middleware/perf/CORS.Microbenchmarks/Microsoft.AspNetCore.Cors.Microbenchmarks.csproj</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70146 reduce allocations in managed dataprotection protect/unprotect dataprotection related_not_duplicate the pr optimizes modern .net encryption output. the matched findings explicitly target the legacy non-net memorystream encryption/decryption branches, which remain. src/dataprotection/dataprotection/src/managed/managedauthenticatedencryptor.cs src/dataprotection/dataprotection/src/sp800_108/managedsp800_108_ctr_hmacsha512.cs src/dataprotection/dataprotection/test/microsoft.aspnetcore.dataprotection.tests/managed/managedauthenticatedencryptortests.cs src/dataprotection/dataprotection/test/microsoft.aspnetcore.dataprotection.tests/sp800_108/sp800_108tests.cs src/dataprotection/benchmarks/microsoft.aspnetcore.dataprotection.microbenchmarks/benchmarks/keyringprotectorbenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70146">#70146</a></td>
+            <td>Reduce allocations in managed DataProtection protect/unprotect<div class="state">OPEN</div></td>
+            <td>DataProtection</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR optimizes modern .NET encryption output. The matched findings explicitly target the legacy non-NET MemoryStream encryption/decryption branches, which remain.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/DataProtection/DataProtection/src/Managed/ManagedAuthenticatedEncryptor.cs</code></li><li><code>src/DataProtection/DataProtection/src/SP800_108/ManagedSP800_108_CTR_HMACSHA512.cs</code></li><li><code>src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Managed/ManagedAuthenticatedEncryptorTests.cs</code></li><li><code>src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/SP800_108/SP800_108Tests.cs</code></li><li><code>src/DataProtection/benchmarks/Microsoft.AspNetCore.DataProtection.MicroBenchmarks/Benchmarks/KeyRingProtectorBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70147 avoid enumerator allocations when evaluating authorization handlers security related_not_duplicate this pr removes handler and requirement enumerator allocations. the nearby finding is the repeated allowedvalues.contains scan inside claim matching, a distinct nested lookup. src/security/authorization/core/src/authorizationhandler.cs src/security/authorization/core/src/defaultauthorizationservice.cs src/security/authorization/core/src/passthroughauthorizationhandler.cs src/security/authorization/test/defaultauthorizationservicetests.cs src/security/perf/microbenchmarks/authorizationservicebenchmark.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70147">#70147</a></td>
+            <td>Avoid enumerator allocations when evaluating authorization handlers<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>This PR removes handler and requirement enumerator allocations. The nearby finding is the repeated AllowedValues.Contains scan inside claim matching, a distinct nested lookup.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Security/Authorization/Core/src/AuthorizationHandler.cs</code></li><li><code>src/Security/Authorization/Core/src/DefaultAuthorizationService.cs</code></li><li><code>src/Security/Authorization/Core/src/PassThroughAuthorizationHandler.cs</code></li><li><code>src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/AuthorizationServiceBenchmark.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70148 reduce allocations in output/response caching key generation and policy collection middleware related_not_duplicate the pr removes stringvalues copies and policy-list allocations. the output cache finding is cachevarybyrules using linq any for dictionary emptiness; that source behavior is not changed. src/middleware/outputcaching/perf/microbenchmarks/outputcachekeyproviderbenchmarks.cs src/middleware/outputcaching/perf/microbenchmarks/outputcachemiddlewarebenchmarks.cs src/middleware/outputcaching/src/outputcachekeyprovider.cs src/middleware/outputcaching/src/outputcachemiddleware.cs src/middleware/outputcaching/test/outputcachemiddlewaretests.cs src/middleware/responsecaching/src/responsecachingkeyprovider.cs src/middleware/responsecaching/src/responsecachingmiddleware.cs src/middleware/perf/responsecaching.microbenchmarks/responsecachingvarybybenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70148">#70148</a></td>
+            <td>Reduce allocations in output/response caching key generation and policy collection<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes StringValues copies and policy-list allocations. The Output Cache finding is CacheVaryByRules using LINQ Any for dictionary emptiness; that source behavior is not changed.</td>
+            <td>—</td>
+            <td><details><summary>8 files</summary><ul><li><code>src/Middleware/OutputCaching/perf/Microbenchmarks/OutputCacheKeyProviderBenchmarks.cs</code></li><li><code>src/Middleware/OutputCaching/perf/Microbenchmarks/OutputCacheMiddlewareBenchmarks.cs</code></li><li><code>src/Middleware/OutputCaching/src/OutputCacheKeyProvider.cs</code></li><li><code>src/Middleware/OutputCaching/src/OutputCacheMiddleware.cs</code></li><li><code>src/Middleware/OutputCaching/test/OutputCacheMiddlewareTests.cs</code></li><li><code>src/Middleware/ResponseCaching/src/ResponseCachingKeyProvider.cs</code></li><li><code>src/Middleware/ResponseCaching/src/ResponseCachingMiddleware.cs</code></li><li><code>src/Middleware/perf/ResponseCaching.Microbenchmarks/ResponseCachingVaryByBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70149 skip streaming-type reflection for primitive signalr client arguments signalr no_overlap the pr&#x27;s concrete change (skip streaming-type reflection for primitive signalr client arguments) is in hubconnection.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/clients/csharp/client.core/src/hubconnection.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70149">#70149</a></td>
+            <td>Skip streaming-type reflection for primitive SignalR client arguments<div class="state">MERGED</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Skip streaming-type reflection for primitive SignalR client arguments) is in HubConnection.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>1 files</summary><ul><li><code>src/SignalR/clients/csharp/Client.Core/src/HubConnection.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70150 coalesce small writes in bufferedtextwriter (static ssr) components no_overlap the pr&#x27;s concrete change (coalesce small writes in bufferedtextwriter (static ssr)) is in bufferedtextwriter.cs, textchunk.cs, textchunklistbuilder.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/bufferedtextwriterbenchmark.cs src/components/components/perf/htmlrendererbenchmark.cs src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/endpoints/src/rendering/buffering/bufferedtextwriter.cs src/components/endpoints/src/rendering/buffering/textchunk.cs src/components/endpoints/src/rendering/buffering/textchunklistbuilder.cs src/components/endpoints/test/buffering/bufferedtextwritertest.cs src/components/endpoints/test/buffering/textchunklistbuildertest.cs src/components/endpoints/test/buffering/textchunkpagetest.cs src/components/endpoints/test/buffering/textchunktest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70150">#70150</a></td>
+            <td>Coalesce small writes in BufferedTextWriter (static SSR)<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Coalesce small writes in BufferedTextWriter (static SSR)) is in BufferedTextWriter.cs, TextChunk.cs, TextChunkListBuilder.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>10 files</summary><ul><li><code>src/Components/Components/perf/BufferedTextWriterBenchmark.cs</code></li><li><code>src/Components/Components/perf/HtmlRendererBenchmark.cs</code></li><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/BufferedTextWriter.cs</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/TextChunk.cs</code></li><li><code>src/Components/Endpoints/src/Rendering/Buffering/TextChunkListBuilder.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/BufferedTextWriterTest.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/TextChunkListBuilderTest.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/TextChunkPageTest.cs</code></li><li><code>src/Components/Endpoints/test/Buffering/TextChunkTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70151 classify element names once in statichtmlrenderer components no_overlap the pr&#x27;s concrete change (classify element names once in statichtmlrenderer) is in statichtmlrenderer.htmlwriting.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/htmlrendererbenchmark.cs src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/web/src/htmlrendering/statichtmlrenderer.htmlwriting.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70151">#70151</a></td>
+            <td>Classify element names once in StaticHtmlRenderer<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Classify element names once in StaticHtmlRenderer) is in StaticHtmlRenderer.HtmlWriting.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Components/Components/perf/HtmlRendererBenchmark.cs</code></li><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/Web/src/HtmlRendering/StaticHtmlRenderer.HtmlWriting.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70152 skip processing lower-priority candidates once a match is found in dfamatcher http/routing related_not_duplicate this pr skips lower-priority runtime matcher candidates after a match. the finding concerns a build-time dfamatcherbuilder dictionary keys/indexer pattern. src/http/routing/perf/microbenchmarks/matching/matcherorderedcandidatesbenchmark.cs src/http/routing/src/matching/dfamatcher.cs src/http/routing/test/unittests/matching/dfamatchertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70152">#70152</a></td>
+            <td>Skip processing lower-priority candidates once a match is found in DfaMatcher<div class="state">OPEN</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>This PR skips lower-priority runtime matcher candidates after a match. The finding concerns a build-time DfaMatcherBuilder dictionary keys/indexer pattern.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Routing/perf/Microbenchmarks/Matching/MatcherOrderedCandidatesBenchmark.cs</code></li><li><code>src/Http/Routing/src/Matching/DfaMatcher.cs</code></li><li><code>src/Http/Routing/test/UnitTests/Matching/DfaMatcherTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70153 allocate a component&#x27;s second rendertreebuilder on demand components no_overlap the pr&#x27;s concrete change (allocate a component&#x27;s second rendertreebuilder on demand) is in componentstate.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/components/components/perf/htmlrendererbenchmark.cs src/components/components/perf/microsoft.aspnetcore.components.performance.csproj src/components/components/src/rendering/componentstate.cs src/components/components/test/renderertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70153">#70153</a></td>
+            <td>Allocate a component&#x27;s second RenderTreeBuilder on demand<div class="state">OPEN</div></td>
+            <td>Components</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Allocate a component&#x27;s second RenderTreeBuilder on demand) is in ComponentState.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/Components/Components/perf/HtmlRendererBenchmark.cs</code></li><li><code>src/Components/Components/perf/Microsoft.AspNetCore.Components.Performance.csproj</code></li><li><code>src/Components/Components/src/Rendering/ComponentState.cs</code></li><li><code>src/Components/Components/test/RendererTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70154 reduce allocations in httpmethodmatcherpolicy.getedges http/routing related_not_duplicate the pr changes httpmethodmatcherpolicy edge collection. the finding is in dfamatcherbuilder parent-literal traversal, so it is adjacent dfa-build work but a different lookup. src/http/routing/perf/microbenchmarks/matching/httpmethodmatcherpolicybenchmark.cs src/http/routing/src/matching/httpmethodmatcherpolicy.cs src/http/routing/test/unittests/matching/httpmethodmatcherpolicytest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70154">#70154</a></td>
+            <td>Reduce allocations in HttpMethodMatcherPolicy.GetEdges<div class="state">OPEN</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR changes HttpMethodMatcherPolicy edge collection. The finding is in DfaMatcherBuilder parent-literal traversal, so it is adjacent DFA-build work but a different lookup.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Routing/perf/Microbenchmarks/Matching/HttpMethodMatcherPolicyBenchmark.cs</code></li><li><code>src/Http/Routing/src/Matching/HttpMethodMatcherPolicy.cs</code></li><li><code>src/Http/Routing/test/UnitTests/Matching/HttpMethodMatcherPolicyTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70155 reduce allocations in requestlocalizationmiddleware middleware related_not_duplicate the patch replaces linq/interface enumeration with indexed or span-friendly loops, but it still scans supported cultures for each requested culture. the finding’s repeated linear lookup remains. aspnetcore.slnx src/middleware/localization/src/acceptlanguageheaderrequestcultureprovider.cs src/middleware/localization/src/requestlocalizationmiddleware.cs src/middleware/localization/test/unittests/acceptlanguageheaderrequestcultureprovidertest.cs src/middleware/localization/test/unittests/requestlocalizationmiddlewaretest.cs src/middleware/middleware.slnf src/middleware/perf/localization.microbenchmarks/assemblyinfo.cs src/middleware/perf/localization.microbenchmarks/microsoft.aspnetcore.localization.microbenchmarks.csproj src/middleware/perf/localization.microbenchmarks/requestlocalizationmiddlewarebenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70155">#70155</a></td>
+            <td>Reduce allocations in RequestLocalizationMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The patch replaces LINQ/interface enumeration with indexed or span-friendly loops, but it still scans supported cultures for each requested culture. The finding’s repeated linear lookup remains.</td>
+            <td>—</td>
+            <td><details><summary>9 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/Localization/src/AcceptLanguageHeaderRequestCultureProvider.cs</code></li><li><code>src/Middleware/Localization/src/RequestLocalizationMiddleware.cs</code></li><li><code>src/Middleware/Localization/test/UnitTests/AcceptLanguageHeaderRequestCultureProviderTest.cs</code></li><li><code>src/Middleware/Localization/test/UnitTests/RequestLocalizationMiddlewareTest.cs</code></li><li><code>src/Middleware/Middleware.slnf</code></li><li><code>src/Middleware/perf/Localization.Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/perf/Localization.Microbenchmarks/Microsoft.AspNetCore.Localization.Microbenchmarks.csproj</code></li><li><code>src/Middleware/perf/Localization.Microbenchmarks/RequestLocalizationMiddlewareBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70156 avoid per-line memorystream in bufferedreadstream.readline http/webutilities related_not_duplicate this pr removes a per-line memorystream in bufferedreadstream. the autoperf findings in webutilities concern exception-driven multipart section conversion, not line buffering. src/http/webutilities/src/bufferedreadstream.cs src/http/webutilities/src/multipartreader.cs src/http/webutilities/test/bufferedreadstreamtests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70156">#70156</a></td>
+            <td>Avoid per-line MemoryStream in BufferedReadStream.ReadLine<div class="state">OPEN</div></td>
+            <td>Http/WebUtilities</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>This PR removes a per-line MemoryStream in BufferedReadStream. The AutoPerf findings in WebUtilities concern exception-driven multipart section conversion, not line buffering.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/WebUtilities/src/BufferedReadStream.cs</code></li><li><code>src/Http/WebUtilities/src/MultipartReader.cs</code></li><li><code>src/Http/WebUtilities/test/BufferedReadStreamTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70157 reduce hpack dynamic table name hashing shared/hpack no_overlap the pr&#x27;s concrete change (reduce hpack dynamic table name hashing) is in dynamichpackencoder.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/perf/microbenchmarks/http2/hpackheaderwriterbenchmark.cs src/shared/hpack/dynamichpackencoder.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70157">#70157</a></td>
+            <td>Reduce HPACK dynamic table name hashing<div class="state">OPEN</div></td>
+            <td>Shared/Hpack</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reduce HPACK dynamic table name hashing) is in DynamicHPackEncoder.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Servers/Kestrel/perf/Microbenchmarks/Http2/HPackHeaderWriterBenchmark.cs</code></li><li><code>src/Shared/Hpack/DynamicHPackEncoder.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70158 kestrel: avoid name allocation and extra lookups when appending unknown request headers kestrel related_not_duplicate the patch optimizes unknown-header name/value creation and lookup. it does not change mergecookies.toarray or the knownheaders generator aggregate/contains findings. src/servers/kestrel/core/src/internal/http/httpheaders.generated.cs src/servers/kestrel/core/src/internal/http/httpheaders.cs src/servers/kestrel/core/src/internal/http/httprequestheaders.cs src/servers/kestrel/core/test/httprequestheaderstests.cs src/servers/kestrel/perf/microbenchmarks/requestheadersappendbenchmark.cs src/servers/kestrel/shared/knownheaders.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70158">#70158</a></td>
+            <td>Kestrel: avoid name allocation and extra lookups when appending unknown request headers<div class="state">OPEN</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The patch optimizes unknown-header name/value creation and lookup. It does not change MergeCookies.ToArray or the KnownHeaders generator Aggregate/Contains findings.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpHeaders.Generated.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpHeaders.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs</code></li><li><code>src/Servers/Kestrel/Core/test/HttpRequestHeadersTests.cs</code></li><li><code>src/Servers/Kestrel/perf/Microbenchmarks/RequestHeadersAppendBenchmark.cs</code></li><li><code>src/Servers/Kestrel/shared/KnownHeaders.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70159 reuse work lists in dfamatcherbuilder.applypolicies http/routing related_not_duplicate the patch reuses applypolicies work lists. the finding is in addparentsmatchingcomplexsegment and its dictionary keys/indexer lookup, a different method and behavior. src/http/routing/src/matching/dfamatcherbuilder.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70159">#70159</a></td>
+            <td>Reuse work lists in DfaMatcherBuilder.ApplyPolicies<div class="state">OPEN</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The patch reuses ApplyPolicies work lists. The finding is in AddParentsMatchingComplexSegment and its dictionary keys/indexer lookup, a different method and behavior.</td>
+            <td>—</td>
+            <td><details><summary>1 files</summary><ul><li><code>src/Http/Routing/src/Matching/DfaMatcherBuilder.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70160 vectorize fastpathtokenizer http/routing no_overlap the pr&#x27;s concrete change (vectorize fastpathtokenizer) is in fastpathtokenizer.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/routing/src/matching/fastpathtokenizer.cs src/http/routing/test/unittests/matching/fastpathtokenizertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70160">#70160</a></td>
+            <td>Vectorize FastPathTokenizer<div class="state">OPEN</div></td>
+            <td>Http/Routing</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Vectorize FastPathTokenizer) is in FastPathTokenizer.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Http/Routing/src/Matching/FastPathTokenizer.cs</code></li><li><code>src/Http/Routing/test/UnitTests/Matching/FastPathTokenizerTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70161 avoid allocating httpcontext.items in hosting requestend hosting related_not_duplicate the pr avoids creating httpcontext.items during hosting diagnostics. the hosting finding is immutable string growth while building loader exception messages. aspnetcore.slnx src/hosting/hosting.slnf src/hosting/hosting/perf/microbenchmarks/assemblyinfo.cs src/hosting/hosting/perf/microbenchmarks/hostingapplicationbenchmark.cs src/hosting/hosting/perf/microbenchmarks/microsoft.aspnetcore.hosting.microbenchmarks.csproj src/hosting/hosting/src/internal/hostingapplicationdiagnostics.cs src/hosting/hosting/test/hostingmetricstests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70161">#70161</a></td>
+            <td>Avoid allocating HttpContext.Items in hosting RequestEnd<div class="state">MERGED</div></td>
+            <td>Hosting</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR avoids creating HttpContext.Items during hosting diagnostics. The Hosting finding is immutable string growth while building loader exception messages.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Hosting/Hosting.slnf</code></li><li><code>src/Hosting/Hosting/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Hosting/Hosting/perf/Microbenchmarks/HostingApplicationBenchmark.cs</code></li><li><code>src/Hosting/Hosting/perf/Microbenchmarks/Microsoft.AspNetCore.Hosting.Microbenchmarks.csproj</code></li><li><code>src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs</code></li><li><code>src/Hosting/Hosting/test/HostingMetricsTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70162 kestrel: vectorize query string end search in http/1.1 request line parsing kestrel no_overlap the pr&#x27;s concrete change (kestrel: vectorize query string end search in http/1.1 request line parsing) is in httpparser.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/core/src/internal/http/httpparser.cs src/servers/kestrel/perf/microbenchmarks/httpparserbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70162">#70162</a></td>
+            <td>Kestrel: vectorize query string end search in HTTP/1.1 request line parsing<div class="state">MERGED</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Kestrel: vectorize query string end search in HTTP/1.1 request line parsing) is in HttpParser.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http/HttpParser.cs</code></li><li><code>src/Servers/Kestrel/perf/Microbenchmarks/HttpParserBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70163 avoid parsing content-type and allocating items in hasformcontenttype http/http no_overlap the pr&#x27;s concrete change (avoid parsing content-type and allocating items in hasformcontenttype) is in formfeature.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http/perf/microbenchmarks/formfeaturebenchmark.cs src/http/http/src/features/formfeature.cs src/http/http/test/features/formfeaturetests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70163">#70163</a></td>
+            <td>Avoid parsing Content-Type and allocating Items in HasFormContentType<div class="state">OPEN</div></td>
+            <td>Http/Http</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid parsing Content-Type and allocating Items in HasFormContentType) is in FormFeature.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http/perf/Microbenchmarks/FormFeatureBenchmark.cs</code></li><li><code>src/Http/Http/src/Features/FormFeature.cs</code></li><li><code>src/Http/Http/test/Features/FormFeatureTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70164 avoid streamreader allocations in multipartsection.readasstringasync http/webutilities related_not_duplicate the pr removes streamreader allocations from multipart value reads. the nearby webutilities findings are expected-failure exceptions in multipart section conversion. src/http/webutilities/perf/microbenchmarks/multipartsectionreadasstringbenchmark.cs src/http/webutilities/src/multipartsectionstreamextensions.cs src/http/webutilities/test/multipartsectionstreamextensionstests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70164">#70164</a></td>
+            <td>Avoid StreamReader allocations in MultipartSection.ReadAsStringAsync<div class="state">OPEN</div></td>
+            <td>Http/WebUtilities</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes StreamReader allocations from multipart value reads. The nearby WebUtilities findings are expected-failure exceptions in multipart section conversion.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/WebUtilities/perf/Microbenchmarks/MultipartSectionReadAsStringBenchmark.cs</code></li><li><code>src/Http/WebUtilities/src/MultipartSectionStreamExtensions.cs</code></li><li><code>src/Http/WebUtilities/test/MultipartSectionStreamExtensionsTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70165 read authentication tickets directly from the payload buffer security related_not_duplicate the pr optimizes ticket and properties deserialization from byte buffers. the findings target the opposite serialization direction and its memorystream growth/toarray behavior. src/security/authentication/core/src/binarypayloadreader.cs src/security/authentication/core/src/propertiesserializer.cs src/security/authentication/core/src/ticketserializer.cs src/security/authentication/core/src/wellknownclaimstrings.cs src/security/authentication/test/ticketserializertests.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj src/security/perf/microbenchmarks/ticketserializerbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70165">#70165</a></td>
+            <td>Read authentication tickets directly from the payload buffer<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR optimizes ticket and properties deserialization from byte buffers. The findings target the opposite serialization direction and its MemoryStream growth/ToArray behavior.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>src/Security/Authentication/Core/src/BinaryPayloadReader.cs</code></li><li><code>src/Security/Authentication/Core/src/PropertiesSerializer.cs</code></li><li><code>src/Security/Authentication/Core/src/TicketSerializer.cs</code></li><li><code>src/Security/Authentication/Core/src/WellKnownClaimStrings.cs</code></li><li><code>src/Security/Authentication/test/TicketSerializerTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li><li><code>src/Security/perf/Microbenchmarks/TicketSerializerBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70166 reduce allocations in output formatter content negotiation mvc related_not_duplicate the pr avoids stringvalues boxing and restructures accept parsing helpers. the malformed-segment path still uses throwing parsing inside catch, so the exception-control-flow finding remains. src/mvc/mvc.core/src/formatters/acceptheaderparser.cs src/mvc/mvc.core/src/formatters/textoutputformatter.cs src/mvc/mvc.core/src/infrastructure/defaultoutputformatterselector.cs src/mvc/mvc.core/test/formatters/acceptheaderparsertest.cs src/mvc/mvc.core/test/infrastructure/defaultoutputformatterselectortest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/objectresultexecutorbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70166">#70166</a></td>
+            <td>Reduce allocations in output formatter content negotiation<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR avoids StringValues boxing and restructures Accept parsing helpers. The malformed-segment path still uses throwing parsing inside catch, so the exception-control-flow finding remains.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Mvc/Mvc.Core/src/Formatters/AcceptHeaderParser.cs</code></li><li><code>src/Mvc/Mvc.Core/src/Formatters/TextOutputFormatter.cs</code></li><li><code>src/Mvc/Mvc.Core/src/Infrastructure/DefaultOutputFormatterSelector.cs</code></li><li><code>src/Mvc/Mvc.Core/test/Formatters/AcceptHeaderParserTest.cs</code></li><li><code>src/Mvc/Mvc.Core/test/Infrastructure/DefaultOutputFormatterSelectorTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/ObjectResultExecutorBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70167 reduce allocations in inputtaghelper rendering mvc related_not_duplicate the overlapping file change only replaces validatormetadata foreach with indexed iteration. it does not alter the fixed input-type contains calls, enum reflection/reverse lookup, boolean lowercasing, or modelstate double probe findings. src/mvc/mvc.taghelpers/src/inputtaghelper.cs src/mvc/mvc.taghelpers/test/inputtaghelpertest.cs src/mvc/mvc.viewfeatures/src/defaulthtmlgenerator.cs src/mvc/mvc.viewfeatures/src/rendering/tagbuilder.cs src/mvc/mvc.viewfeatures/test/rendering/tagbuildertest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/inputtaghelperbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70167">#70167</a></td>
+            <td>Reduce allocations in InputTagHelper rendering<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The overlapping file change only replaces ValidatorMetadata foreach with indexed iteration. It does not alter the fixed input-type Contains calls, enum reflection/reverse lookup, Boolean lowercasing, or ModelState double probe findings.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Mvc/Mvc.TagHelpers/src/InputTagHelper.cs</code></li><li><code>src/Mvc/Mvc.TagHelpers/test/InputTagHelperTest.cs</code></li><li><code>src/Mvc/Mvc.ViewFeatures/src/DefaultHtmlGenerator.cs</code></li><li><code>src/Mvc/Mvc.ViewFeatures/src/Rendering/TagBuilder.cs</code></li><li><code>src/Mvc/Mvc.ViewFeatures/test/Rendering/TagBuilderTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/InputTagHelperBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70168 avoid rebuilding and redundantly cloning openapi schema trees when resolving references openapi related_not_duplicate this pr avoids rebuilding and cloning openapi schema trees. the autoperf openapi findings concern different generated-code reflection and lookup sites. src/openapi/src/services/schemas/openapischemaservice.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70168">#70168</a></td>
+            <td>Avoid rebuilding and redundantly cloning OpenAPI schema trees when resolving references<div class="state">OPEN</div></td>
+            <td>OpenApi</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>This PR avoids rebuilding and cloning OpenAPI schema trees. The AutoPerf OpenAPI findings concern different generated-code reflection and lookup sites.</td>
+            <td>—</td>
+            <td><details><summary>1 files</summary><ul><li><code>src/OpenApi/src/Services/Schemas/OpenApiSchemaService.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70169 reduce allocations when serializing distributedsession middleware exact_duplicate session serialization now computes the exact payload size and writes directly into one byte array, removing the default memorystream growth and final toarray copy at the finding site. src/middleware/session/src/distributedsession.cs src/middleware/session/test/sessiontests.cs memorystream-unbounded-growth session serialization accumulates the complete, potentially large session payload in a default growable memorystream.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70169">#70169</a></td>
+            <td>Reduce allocations when serializing DistributedSession<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>Session serialization now computes the exact payload size and writes directly into one byte array, removing the default MemoryStream growth and final ToArray copy at the finding site.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Middleware/Session/src/DistributedSession.cs#L273-L274"><code>memorystream-unbounded-growth</code> — src/Middleware/Session/src/DistributedSession.cs:273</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Middleware/Session/src/DistributedSession.cs</code></li><li><code>src/Middleware/Session/test/SessionTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70170 reduce per-request work in staticassetsinvoker staticassets no_overlap the pr&#x27;s concrete change (reduce per-request work in staticassetsinvoker) is in aspnetcore.slnx, staticassetsinvoker.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. aspnetcore.slnx src/staticassets/perf/microbenchmarks/assemblyinfo.cs src/staticassets/perf/microbenchmarks/microsoft.aspnetcore.staticassets.microbenchmarks.csproj src/staticassets/perf/microbenchmarks/staticassetsinvokerbenchmark.cs src/staticassets/src/staticassetsinvoker.cs src/staticassets/test/staticassetsintegrationtests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70170">#70170</a></td>
+            <td>Reduce per-request work in StaticAssetsInvoker<div class="state">MERGED</div></td>
+            <td>StaticAssets</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reduce per-request work in StaticAssetsInvoker) is in AspNetCore.slnx, StaticAssetsInvoker.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/StaticAssets/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/StaticAssets/perf/Microbenchmarks/Microsoft.AspNetCore.StaticAssets.Microbenchmarks.csproj</code></li><li><code>src/StaticAssets/perf/Microbenchmarks/StaticAssetsInvokerBenchmark.cs</code></li><li><code>src/StaticAssets/src/StaticAssetsInvoker.cs</code></li><li><code>src/StaticAssets/test/StaticAssetsIntegrationTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70171 avoid materializing all custom attributes during openapi schema generation openapi related_not_duplicate both optimize openapi attribute work, but the pr changes runtime openapischemaservice/openapidocumentservice. the candidate findings are separate generated xml-comment snapshot code that still materializes/scans attributes. src/openapi/src/services/openapidocumentservice.cs src/openapi/src/services/schemas/openapischemaservice.cs src/openapi/test/microsoft.aspnetcore.openapi.tests/services/openapischemaservice/openapischemaservice.annotations.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70171">#70171</a></td>
+            <td>Avoid materializing all custom attributes during OpenAPI schema generation<div class="state">OPEN</div></td>
+            <td>OpenApi</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>Both optimize OpenAPI attribute work, but the PR changes runtime OpenApiSchemaService/OpenApiDocumentService. The candidate findings are separate generated XML-comment snapshot code that still materializes/scans attributes.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/OpenApi/src/Services/OpenApiDocumentService.cs</code></li><li><code>src/OpenApi/src/Services/Schemas/OpenApiSchemaService.cs</code></li><li><code>src/OpenApi/test/Microsoft.AspNetCore.OpenApi.Tests/Services/OpenApiSchemaService/OpenApiSchemaService.Annotations.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70172 reduce allocations when serializing authentication tickets security exact_duplicate for the built-in ticketserializer and propertiesserializer types, the patch bypasses the memorystream/binarywriter serialization paths and writes through binarypayloadwriter, addressing the same growable-stream serialization sites identified by both findings. src/security/authentication/core/src/binarypayloadwriter.cs src/security/authentication/core/src/propertiesserializer.cs src/security/authentication/core/src/ticketserializer.cs src/security/authentication/test/ticketserializerwritetests.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj src/security/perf/microbenchmarks/ticketserializerwritebenchmark.cs memorystream-unbounded-growth authentication ticket serialization grows a memorystream and then copies the complete ticket. memorystream-unbounded-growth authentication properties serialize through an unbounded growable memorystream.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70172">#70172</a></td>
+            <td>Reduce allocations when serializing authentication tickets<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>For the built-in TicketSerializer and PropertiesSerializer types, the patch bypasses the MemoryStream/BinaryWriter serialization paths and writes through BinaryPayloadWriter, addressing the same growable-stream serialization sites identified by both findings.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Security/Authentication/Core/src/TicketSerializer.cs#L30-L36"><code>memorystream-unbounded-growth</code> — src/Security/Authentication/Core/src/TicketSerializer.cs:30</a></li><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Security/Authentication/Core/src/PropertiesSerializer.cs#L19-L28"><code>memorystream-unbounded-growth</code> — src/Security/Authentication/Core/src/PropertiesSerializer.cs:19</a></li></ul></td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Security/Authentication/Core/src/BinaryPayloadWriter.cs</code></li><li><code>src/Security/Authentication/Core/src/PropertiesSerializer.cs</code></li><li><code>src/Security/Authentication/Core/src/TicketSerializer.cs</code></li><li><code>src/Security/Authentication/test/TicketSerializerWriteTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li><li><code>src/Security/perf/Microbenchmarks/TicketSerializerWriteBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70173 reduce per-request allocations in staticfilemiddleware middleware related_not_duplicate the pr optimizes staticfilemiddleware and content-type lookup. the static files finding is cumulative path string concatenation in htmldirectoryformatter. aspnetcore.slnx src/middleware/staticfiles/staticfiles.slnf src/middleware/staticfiles/perf/microbenchmarks/assemblyinfo.cs src/middleware/staticfiles/perf/microbenchmarks/microsoft.aspnetcore.staticfiles.microbenchmarks.csproj src/middleware/staticfiles/perf/microbenchmarks/staticfilebenchmark.cs src/middleware/staticfiles/src/fileextensioncontenttypeprovider.cs src/middleware/staticfiles/src/staticfilecontext.cs src/middleware/staticfiles/test/unittests/defaultcontenttypeprovidertests.cs src/middleware/staticfiles/test/unittests/staticfilecontexttest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70173">#70173</a></td>
+            <td>Reduce per-request allocations in StaticFileMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR optimizes StaticFileMiddleware and content-type lookup. The Static Files finding is cumulative path string concatenation in HtmlDirectoryFormatter.</td>
+            <td>—</td>
+            <td><details><summary>9 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/StaticFiles/StaticFiles.slnf</code></li><li><code>src/Middleware/StaticFiles/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/StaticFiles/perf/Microbenchmarks/Microsoft.AspNetCore.StaticFiles.Microbenchmarks.csproj</code></li><li><code>src/Middleware/StaticFiles/perf/Microbenchmarks/StaticFileBenchmark.cs</code></li><li><code>src/Middleware/StaticFiles/src/FileExtensionContentTypeProvider.cs</code></li><li><code>src/Middleware/StaticFiles/src/StaticFileContext.cs</code></li><li><code>src/Middleware/StaticFiles/test/UnitTests/DefaultContentTypeProviderTests.cs</code></li><li><code>src/Middleware/StaticFiles/test/UnitTests/StaticFileContextTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70174 cache identity usermanager/signinmanager metrics per imeterfactory identity related_not_duplicate the overlapping signinmanager change caches metrics objects. the finding concerns external-login provider display-name lookup through a full scheme snapshot. src/identity/core/src/signinmanager.cs src/identity/core/src/signinmanagermetrics.cs src/identity/extensions.core/src/usermanager.cs src/identity/extensions.core/src/usermanagermetrics.cs src/identity/test/identity.test/countingmeterfactory.cs src/identity/test/identity.test/signinmanagertest.cs src/identity/test/identity.test/usermanagertest.cs src/security/perf/microbenchmarks/identitymanagerresolvebenchmark.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70174">#70174</a></td>
+            <td>Cache Identity UserManager/SignInManager metrics per IMeterFactory<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The overlapping SignInManager change caches metrics objects. The finding concerns external-login provider display-name lookup through a full scheme snapshot.</td>
+            <td>—</td>
+            <td><details><summary>9 files</summary><ul><li><code>src/Identity/Core/src/SignInManager.cs</code></li><li><code>src/Identity/Core/src/SignInManagerMetrics.cs</code></li><li><code>src/Identity/Extensions.Core/src/UserManager.cs</code></li><li><code>src/Identity/Extensions.Core/src/UserManagerMetrics.cs</code></li><li><code>src/Identity/test/Identity.Test/CountingMeterFactory.cs</code></li><li><code>src/Identity/test/Identity.Test/SignInManagerTest.cs</code></li><li><code>src/Identity/test/Identity.Test/UserManagerTest.cs</code></li><li><code>src/Security/perf/Microbenchmarks/IdentityManagerResolveBenchmark.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70175 cache securitystampvalidator logger per iloggerfactory identity related_not_duplicate the pr caches securitystampvalidator logging state. the identity finding concerns signinmanager external authentication-scheme lookup, not logger creation. src/identity/core/src/securitystampvalidator.cs src/identity/test/identity.test/securitystampvalidatortest.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj src/security/perf/microbenchmarks/securitystampvalidatorresolvebenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70175">#70175</a></td>
+            <td>Cache SecurityStampValidator logger per ILoggerFactory<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR caches SecurityStampValidator logging state. The Identity finding concerns SignInManager external authentication-scheme lookup, not logger creation.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/Identity/Core/src/SecurityStampValidator.cs</code></li><li><code>src/Identity/test/Identity.Test/SecurityStampValidatorTest.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li><li><code>src/Security/perf/Microbenchmarks/SecurityStampValidatorResolveBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70176 reduce per-request allocations in w3cloggingmiddleware middleware related_not_duplicate the pr caches w3c log formatting and snapshots headers. the nearby httplogging finding is a fixed four-element encoding table represented as list&lt;encoding&gt;. aspnetcore.slnx src/middleware/httplogging/perf/microbenchmarks/assemblyinfo.cs src/middleware/httplogging/perf/microbenchmarks/microsoft.aspnetcore.httplogging.microbenchmarks.csproj src/middleware/httplogging/perf/microbenchmarks/w3cloggingmiddlewarebenchmark.cs src/middleware/httplogging/src/w3cloggingmiddleware.cs src/middleware/httplogging/test/w3cloggingmiddlewaretests.cs src/middleware/middleware.slnf ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70176">#70176</a></td>
+            <td>Reduce per-request allocations in W3CLoggingMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR caches W3C log formatting and snapshots headers. The nearby HttpLogging finding is a fixed four-element encoding table represented as List&lt;Encoding&gt;.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/Microsoft.AspNetCore.HttpLogging.Microbenchmarks.csproj</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/W3CLoggingMiddlewareBenchmark.cs</code></li><li><code>src/Middleware/HttpLogging/src/W3CLoggingMiddleware.cs</code></li><li><code>src/Middleware/HttpLogging/test/W3CLoggingMiddlewareTests.cs</code></li><li><code>src/Middleware/Middleware.slnf</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70177 avoid per-request allocations in forwardedheadersmiddleware middleware no_overlap the pr&#x27;s concrete change (avoid per-request allocations in forwardedheadersmiddleware) is in aspnetcore.slnx, forwardedheadersmiddleware.cs, middleware.slnf; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. aspnetcore.slnx src/middleware/httpoverrides/perf/microbenchmarks/assemblyinfo.cs src/middleware/httpoverrides/perf/microbenchmarks/forwardedheadersmiddlewarebenchmark.cs src/middleware/httpoverrides/perf/microbenchmarks/microsoft.aspnetcore.httpoverrides.microbenchmarks.csproj src/middleware/httpoverrides/src/forwardedheadersmiddleware.cs src/middleware/httpoverrides/test/forwardedheadersmiddlewaretest.cs src/middleware/middleware.slnf ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70177">#70177</a></td>
+            <td>Avoid per-request allocations in ForwardedHeadersMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid per-request allocations in ForwardedHeadersMiddleware) is in AspNetCore.slnx, ForwardedHeadersMiddleware.cs, Middleware.slnf; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/HttpOverrides/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/HttpOverrides/perf/Microbenchmarks/ForwardedHeadersMiddlewareBenchmark.cs</code></li><li><code>src/Middleware/HttpOverrides/perf/Microbenchmarks/Microsoft.AspNetCore.HttpOverrides.Microbenchmarks.csproj</code></li><li><code>src/Middleware/HttpOverrides/src/ForwardedHeadersMiddleware.cs</code></li><li><code>src/Middleware/HttpOverrides/test/ForwardedHeadersMiddlewareTest.cs</code></li><li><code>src/Middleware/Middleware.slnf</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70178 reduce per-request allocations and cpu in rewritemiddleware middleware related_not_duplicate the pr gates debug arguments, avoids boxing the rules-list enumerator, and removes regex substring allocations. the findings target conditioncollection’s separate enumerator and stringmatch’s ordering comparison. aspnetcore.slnx src/middleware/middleware.slnf src/middleware/rewrite/perf/microbenchmarks/assemblyinfo.cs src/middleware/rewrite/perf/microbenchmarks/microsoft.aspnetcore.rewrite.microbenchmarks.csproj src/middleware/rewrite/perf/microbenchmarks/rewritemiddlewarebenchmark.cs src/middleware/rewrite/src/iisurlrewrite/iisurlrewriterule.cs src/middleware/rewrite/src/redirectrule.cs src/middleware/rewrite/src/regexhelper.cs src/middleware/rewrite/src/rewritemiddleware.cs src/middleware/rewrite/src/rewriterule.cs src/middleware/rewrite/src/urlmatch.cs src/middleware/rewrite/src/urlmatches/regexmatch.cs src/middleware/rewrite/test/regexrulematchtests.cs src/middleware/rewrite/test/rewritemiddlewareloggingtests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70178">#70178</a></td>
+            <td>Reduce per-request allocations and CPU in RewriteMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR gates debug arguments, avoids boxing the rules-list enumerator, and removes regex substring allocations. The findings target ConditionCollection’s separate enumerator and StringMatch’s ordering comparison.</td>
+            <td>—</td>
+            <td><details><summary>14 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/Middleware.slnf</code></li><li><code>src/Middleware/Rewrite/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/Rewrite/perf/Microbenchmarks/Microsoft.AspNetCore.Rewrite.Microbenchmarks.csproj</code></li><li><code>src/Middleware/Rewrite/perf/Microbenchmarks/RewriteMiddlewareBenchmark.cs</code></li><li><code>src/Middleware/Rewrite/src/IISUrlRewrite/IISUrlRewriteRule.cs</code></li><li><code>src/Middleware/Rewrite/src/RedirectRule.cs</code></li><li><code>src/Middleware/Rewrite/src/RegexHelper.cs</code></li><li><code>src/Middleware/Rewrite/src/RewriteMiddleware.cs</code></li><li><code>src/Middleware/Rewrite/src/RewriteRule.cs</code></li><li><code>src/Middleware/Rewrite/src/UrlMatch.cs</code></li><li><code>src/Middleware/Rewrite/src/UrlMatches/RegexMatch.cs</code></li><li><code>src/Middleware/Rewrite/test/RegexRuleMatchTests.cs</code></li><li><code>src/Middleware/Rewrite/test/RewriteMiddlewareLoggingTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70179 avoid allocating httpcontext.items in statuscodepagesmiddleware when unused middleware no_overlap the pr&#x27;s concrete change (avoid allocating httpcontext.items in statuscodepagesmiddleware when unused) is in microsoft.aspnetcore.diagnostics.csproj, statuscodepagesmiddleware.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/middleware/diagnostics/src/microsoft.aspnetcore.diagnostics.csproj src/middleware/diagnostics/src/statuscodepage/statuscodepagesmiddleware.cs src/middleware/diagnostics/test/unittests/statuscodemiddlewaretest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70179">#70179</a></td>
+            <td>Avoid allocating HttpContext.Items in StatusCodePagesMiddleware when unused<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid allocating HttpContext.Items in StatusCodePagesMiddleware when unused) is in Microsoft.AspNetCore.Diagnostics.csproj, StatusCodePagesMiddleware.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Middleware/Diagnostics/src/Microsoft.AspNetCore.Diagnostics.csproj</code></li><li><code>src/Middleware/Diagnostics/src/StatusCodePage/StatusCodePagesMiddleware.cs</code></li><li><code>src/Middleware/Diagnostics/test/UnitTests/StatusCodeMiddlewareTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70180 skip the endpoint rate limiter when the endpoint has no rate limiting policy middleware no_overlap the pr&#x27;s concrete change (skip the endpoint rate limiter when the endpoint has no rate limiting policy) is in aspnetcore.slnx, middleware.slnf, ratelimitingmiddleware.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. aspnetcore.slnx src/middleware/middleware.slnf src/middleware/ratelimiting/perf/microbenchmarks/assemblyinfo.cs src/middleware/ratelimiting/perf/microbenchmarks/microsoft.aspnetcore.ratelimiting.microbenchmarks.csproj src/middleware/ratelimiting/perf/microbenchmarks/ratelimitingmiddlewarebenchmark.cs src/middleware/ratelimiting/src/ratelimitingmiddleware.cs src/middleware/ratelimiting/test/ratelimitingmiddlewaretests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70180">#70180</a></td>
+            <td>Skip the endpoint rate limiter when the endpoint has no rate limiting policy<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Skip the endpoint rate limiter when the endpoint has no rate limiting policy) is in AspNetCore.slnx, Middleware.slnf, RateLimitingMiddleware.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/Middleware.slnf</code></li><li><code>src/Middleware/RateLimiting/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/RateLimiting/perf/Microbenchmarks/Microsoft.AspNetCore.RateLimiting.Microbenchmarks.csproj</code></li><li><code>src/Middleware/RateLimiting/perf/Microbenchmarks/RateLimitingMiddlewareBenchmark.cs</code></li><li><code>src/Middleware/RateLimiting/src/RateLimitingMiddleware.cs</code></li><li><code>src/Middleware/RateLimiting/test/RateLimitingMiddlewareTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70181 pre-size the httplogging parameter lists middleware related_not_duplicate the pr pre-sizes per-request httplogging parameter lists. the autoperf finding in the area is the unrelated fixed mediatypehelpers encoding list. aspnetcore.slnx src/middleware/httplogging/perf/microbenchmarks/assemblyinfo.cs src/middleware/httplogging/perf/microbenchmarks/httploggingmiddlewarebenchmark.cs src/middleware/httplogging/perf/microbenchmarks/microsoft.aspnetcore.httplogging.microbenchmarks.csproj src/middleware/httplogging/src/httploggingmiddleware.cs src/middleware/httplogging/test/httploggingmiddlewaretests.cs src/middleware/middleware.slnf ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70181">#70181</a></td>
+            <td>Pre-size the HttpLogging parameter lists<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR pre-sizes per-request HttpLogging parameter lists. The AutoPerf finding in the area is the unrelated fixed MediaTypeHelpers encoding list.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>AspNetCore.slnx</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/AssemblyInfo.cs</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/HttpLoggingMiddlewareBenchmark.cs</code></li><li><code>src/Middleware/HttpLogging/perf/Microbenchmarks/Microsoft.AspNetCore.HttpLogging.Microbenchmarks.csproj</code></li><li><code>src/Middleware/HttpLogging/src/HttpLoggingMiddleware.cs</code></li><li><code>src/Middleware/HttpLogging/test/HttpLoggingMiddlewareTests.cs</code></li><li><code>src/Middleware/Middleware.slnf</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70182 avoid split/toarray allocations in contentdispositionheadervalue mime decoding http/headers related_not_duplicate the pr removes split/toarray while mime-decoding content-disposition. header findings concern namevalueheadervalue hashing and cookieheadervalue formatting. src/http/headers/src/contentdispositionheadervalue.cs src/http/headers/test/contentdispositionheadervaluetest.cs src/http/http/perf/microbenchmarks/contentdispositionparsebenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70182">#70182</a></td>
+            <td>Avoid Split/ToArray allocations in ContentDispositionHeaderValue MIME decoding<div class="state">OPEN</div></td>
+            <td>Http/Headers</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes Split/ToArray while MIME-decoding Content-Disposition. Header findings concern NameValueHeaderValue hashing and CookieHeaderValue formatting.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Headers/src/ContentDispositionHeaderValue.cs</code></li><li><code>src/Http/Headers/test/ContentDispositionHeaderValueTest.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/ContentDispositionParseBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70183 materialize trimmed [authorize] roles once in authorizationpolicy.combineasync security related_not_duplicate the pr materializes trimmed role names once for rolesauthorizationrequirement. the finding concerns claimsauthorizationrequirement repeatedly scanning allowed claim values. src/security/authorization/core/src/authorizationpolicy.cs src/security/authorization/core/src/rolesauthorizationrequirement.cs src/security/authorization/test/authorizationpolicyfacts.cs src/security/authorization/test/defaultauthorizationservicetests.cs src/security/perf/microbenchmarks/authorizerolesbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70183">#70183</a></td>
+            <td>Materialize trimmed [Authorize] roles once in AuthorizationPolicy.CombineAsync<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR materializes trimmed role names once for RolesAuthorizationRequirement. The finding concerns ClaimsAuthorizationRequirement repeatedly scanning allowed claim values.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Security/Authorization/Core/src/AuthorizationPolicy.cs</code></li><li><code>src/Security/Authorization/Core/src/RolesAuthorizationRequirement.cs</code></li><li><code>src/Security/Authorization/test/AuthorizationPolicyFacts.cs</code></li><li><code>src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/AuthorizeRolesBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70184 fast path for http/2 and http/3 :path validation kestrel no_overlap the pr&#x27;s concrete change (fast path for http/2 and http/3 :path validation) is in http2stream.cs, http3stream.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/core/src/internal/http2/http2stream.cs src/servers/kestrel/core/src/internal/http3/http3stream.cs src/servers/kestrel/perf/microbenchmarks/http2/http2streamheadersbenchmark.cs src/servers/kestrel/test/inmemory.functionaltests/http2/http2streamtests.cs src/servers/kestrel/test/inmemory.functionaltests/http3/http3streamtests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70184">#70184</a></td>
+            <td>Fast path for HTTP/2 and HTTP/3 :path validation<div class="state">OPEN</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Fast path for HTTP/2 and HTTP/3 :path validation) is in Http2Stream.cs, Http3Stream.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http2/Http2Stream.cs</code></li><li><code>src/Servers/Kestrel/Core/src/Internal/Http3/Http3Stream.cs</code></li><li><code>src/Servers/Kestrel/perf/Microbenchmarks/Http2/Http2StreamHeadersBenchmark.cs</code></li><li><code>src/Servers/Kestrel/test/InMemory.FunctionalTests/Http2/Http2StreamTests.cs</code></li><li><code>src/Servers/Kestrel/test/InMemory.FunctionalTests/Http3/Http3StreamTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70185 avoid closure allocations and lock-all count when adding a signalr connection to a group signalr related_not_duplicate the pr optimizes group insertion and count locking. signalr findings concern repeated recipient/exclusion-list scans during sends, not group-add bookkeeping. src/signalr/server/core/src/internal/hubgrouplist.cs src/signalr/server/signalr/test/microsoft.aspnetcore.signalr.tests/internal/hubgrouplisttests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70185">#70185</a></td>
+            <td>Avoid closure allocations and lock-all Count when adding a SignalR connection to a group<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR optimizes group insertion and Count locking. SignalR findings concern repeated recipient/exclusion-list scans during sends, not group-add bookkeeping.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/SignalR/server/Core/src/Internal/HubGroupList.cs</code></li><li><code>src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/HubGroupListTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70186 avoid intermediate substring when unescaping request cookie values http/shared related_not_duplicate the pr avoids a substring while unescaping request cookies. cookie-related findings concern kestrel cookie-value joining and cookieheadervalue formatting. src/http/http/perf/microbenchmarks/cookieparsebenchmarks.cs src/http/http/test/requestcookiescollectiontests.cs src/http/shared/cookieheaderparsershared.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70186">#70186</a></td>
+            <td>Avoid intermediate substring when unescaping request cookie values<div class="state">OPEN</div></td>
+            <td>Http/Shared</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR avoids a substring while unescaping request cookies. Cookie-related findings concern Kestrel cookie-value joining and CookieHeaderValue formatting.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http/perf/Microbenchmarks/CookieParseBenchmarks.cs</code></li><li><code>src/Http/Http/test/RequestCookiesCollectionTests.cs</code></li><li><code>src/Http/Shared/CookieHeaderParserShared.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70187 reduce allocations in dataprotection string protect/unprotect dataprotection related_not_duplicate the pr removes intermediate arrays in string protect/unprotect wrappers. the findings target legacy managed encryptor memorystream branches, which are separate lower-level code. src/dataprotection/abstractions/src/dataprotectioncommonextensions.cs src/dataprotection/abstractions/test/dataprotectioncommonextensionstests.cs src/dataprotection/dataprotection/src/keymanagement/keyringbasedspandataprotector.cs src/dataprotection/dataprotection/test/microsoft.aspnetcore.dataprotection.tests/keymanagement/keyringbaseddataprotectortests.cs src/dataprotection/shared/src/clearingpooledbufferwriter.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70187">#70187</a></td>
+            <td>Reduce allocations in DataProtection string Protect/Unprotect<div class="state">OPEN</div></td>
+            <td>DataProtection</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes intermediate arrays in string Protect/Unprotect wrappers. The findings target legacy managed encryptor MemoryStream branches, which are separate lower-level code.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/DataProtection/Abstractions/src/DataProtectionCommonExtensions.cs</code></li><li><code>src/DataProtection/Abstractions/test/DataProtectionCommonExtensionsTests.cs</code></li><li><code>src/DataProtection/DataProtection/src/KeyManagement/KeyRingBasedSpanDataProtector.cs</code></li><li><code>src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/KeyManagement/KeyRingBasedDataProtectorTests.cs</code></li><li><code>src/DataProtection/shared/src/ClearingPooledBufferWriter.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70188 cache signalr stream converter factories instead of reflecting per uploaded stream signalr no_overlap the pr&#x27;s concrete change (cache signalr stream converter factories instead of reflecting per uploaded stream) is in streamtracker.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/perf/microbenchmarks/streamtrackerbenchmark.cs src/signalr/server/core/src/streamtracker.cs src/signalr/server/signalr/test/microsoft.aspnetcore.signalr.tests/internal/streamtrackertests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70188">#70188</a></td>
+            <td>Cache SignalR stream converter factories instead of reflecting per uploaded stream<div class="state">OPEN</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Cache SignalR stream converter factories instead of reflecting per uploaded stream) is in StreamTracker.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/SignalR/perf/Microbenchmarks/StreamTrackerBenchmark.cs</code></li><li><code>src/SignalR/server/Core/src/StreamTracker.cs</code></li><li><code>src/SignalR/server/SignalR/test/Microsoft.AspNetCore.SignalR.Tests/Internal/StreamTrackerTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70189 allocate the http/3 header encoding buffer on first use kestrel no_overlap the pr&#x27;s concrete change (allocate the http/3 header encoding buffer on first use) is in http3framewriter.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/servers/kestrel/core/src/internal/http3/http3framewriter.cs src/servers/kestrel/perf/microbenchmarks/http3/http3connectionsetupbenchmark.cs src/servers/kestrel/shared/test/http3/http3inmemory.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70189">#70189</a></td>
+            <td>Allocate the HTTP/3 header encoding buffer on first use<div class="state">OPEN</div></td>
+            <td>Kestrel</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Allocate the HTTP/3 header encoding buffer on first use) is in Http3FrameWriter.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Servers/Kestrel/Core/src/Internal/Http3/Http3FrameWriter.cs</code></li><li><code>src/Servers/Kestrel/perf/Microbenchmarks/Http3/Http3ConnectionSetupBenchmark.cs</code></li><li><code>src/Servers/Kestrel/shared/test/Http3/Http3InMemory.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70190 avoid parsing the accept header on non-sse signalr connection gets signalr no_overlap the pr&#x27;s concrete change (avoid parsing the accept header on non-sse signalr connection gets) is in httpconnectiondispatcher.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/signalr/common/http.connections/src/internal/httpconnectiondispatcher.cs src/signalr/common/http.connections/test/serversenteventsrequestdetectiontests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70190">#70190</a></td>
+            <td>Avoid parsing the Accept header on non-SSE SignalR connection GETs<div class="state">MERGED</div></td>
+            <td>SignalR</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid parsing the Accept header on non-SSE SignalR connection GETs) is in HttpConnectionDispatcher.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/SignalR/common/Http.Connections/src/Internal/HttpConnectionDispatcher.cs</code></li><li><code>src/SignalR/common/Http.Connections/test/ServerSentEventsRequestDetectionTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70191 avoid intermediate copies in timelimiteddataprotector dataprotection related_not_duplicate the pr removes timelimiteddataprotector payload copies. the findings target legacy managedauthenticatedencryptor stream growth, a distinct layer and implementation. src/dataprotection/dataprotection/src/keymanagement/keyringbasedspandataprotector.cs src/dataprotection/extensions/src/timelimiteddataprotector.cs src/dataprotection/extensions/test/timelimiteddataprotectortests.cs src/dataprotection/shared/src/clearingpooledbufferwriter.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70191">#70191</a></td>
+            <td>Avoid intermediate copies in TimeLimitedDataProtector<div class="state">OPEN</div></td>
+            <td>DataProtection</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes TimeLimitedDataProtector payload copies. The findings target legacy ManagedAuthenticatedEncryptor stream growth, a distinct layer and implementation.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/DataProtection/DataProtection/src/KeyManagement/KeyRingBasedSpanDataProtector.cs</code></li><li><code>src/DataProtection/Extensions/src/TimeLimitedDataProtector.cs</code></li><li><code>src/DataProtection/Extensions/test/TimeLimitedDataProtectorTests.cs</code></li><li><code>src/DataProtection/shared/src/ClearingPooledBufferWriter.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70192 build the dataprotection aad template lazily dataprotection related_not_duplicate the pr lazily builds dataprotection aad templates. the nearby finding is a keyring dictionary containskey/add double probe, not aad construction. src/dataprotection/dataprotection/src/keymanagement/keyringbaseddataprotector.cs src/dataprotection/dataprotection/test/microsoft.aspnetcore.dataprotection.tests/keymanagement/additionalauthenticateddatatemplatetests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70192">#70192</a></td>
+            <td>Build the DataProtection AAD template lazily<div class="state">OPEN</div></td>
+            <td>DataProtection</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR lazily builds DataProtection AAD templates. The nearby finding is a KeyRing dictionary ContainsKey/add double probe, not AAD construction.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/DataProtection/DataProtection/src/KeyManagement/KeyRingBasedDataProtector.cs</code></li><li><code>src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/KeyManagement/AdditionalAuthenticatedDataTemplateTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70193 write aes-gcm key modifier and nonce directly into the output buffer dataprotection related_not_duplicate the pr writes aes-gcm nonce/key-modifier bytes in place. the findings concern cbc legacy managed encryptor memorystreams, explicitly a different encryptor. src/dataprotection/dataprotection/src/managed/aesgcmauthenticatedencryptor.cs src/dataprotection/dataprotection/test/microsoft.aspnetcore.dataprotection.tests/aes/aesauthenticatedencryptortests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70193">#70193</a></td>
+            <td>Write AES-GCM key modifier and nonce directly into the output buffer<div class="state">OPEN</div></td>
+            <td>DataProtection</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR writes AES-GCM nonce/key-modifier bytes in place. The findings concern CBC legacy managed encryptor MemoryStreams, explicitly a different encryptor.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/DataProtection/DataProtection/src/Managed/AesGcmAuthenticatedEncryptor.cs</code></li><li><code>src/DataProtection/DataProtection/test/Microsoft.AspNetCore.DataProtection.Tests/Aes/AesAuthenticatedEncryptorTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70194 avoid per-line memorystream allocation in bufferedreadstream.readline http/webutilities related_not_duplicate although this is an issue-level duplicate of #70156, against autoperf it only relates to webutilities buffering; the findings there concern multipart conversion exceptions. src/http/webutilities/src/bufferedreadstream.cs src/http/webutilities/test/bufferedreadstreamtests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70194">#70194</a></td>
+            <td>Avoid per-line MemoryStream allocation in BufferedReadStream.ReadLine<div class="state">CLOSED</div></td>
+            <td>Http/WebUtilities</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>Although this is an issue-level duplicate of #70156, against AutoPerf it only relates to WebUtilities buffering; the findings there concern multipart conversion exceptions.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Http/WebUtilities/src/BufferedReadStream.cs</code></li><li><code>src/Http/WebUtilities/test/BufferedReadStreamTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70195 use exact-size header arrays for output cache entries middleware related_not_duplicate the pr right-sizes retained output-cache header arrays. the output cache finding is linq any used to test a vary-rule dictionary for emptiness. src/middleware/outputcaching/src/outputcacheentry.cs src/middleware/outputcaching/src/outputcacheentryformatter.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70195">#70195</a></td>
+            <td>Use exact-size header arrays for output cache entries<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR right-sizes retained output-cache header arrays. The Output Cache finding is LINQ Any used to test a vary-rule dictionary for emptiness.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Middleware/OutputCaching/src/OutputCacheEntry.cs</code></li><li><code>src/Middleware/OutputCaching/src/OutputCacheEntryFormatter.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70196 skip mediatypeheadervalue parsing for common json request content types http/http.extensions no_overlap the pr&#x27;s concrete change (skip mediatypeheadervalue parsing for common json request content types) is in httprequestjsonextensions.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http.extensions/src/httprequestjsonextensions.cs src/http/http.extensions/test/httprequestjsonextensionstests.cs src/http/http/perf/microbenchmarks/httprequestjsoncontenttypebenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70196">#70196</a></td>
+            <td>Skip MediaTypeHeaderValue parsing for common JSON request content types<div class="state">CLOSED</div></td>
+            <td>Http/Http.Extensions</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Skip MediaTypeHeaderValue parsing for common JSON request content types) is in HttpRequestJsonExtensions.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http.Extensions/src/HttpRequestJsonExtensions.cs</code></li><li><code>src/Http/Http.Extensions/test/HttpRequestJsonExtensionsTests.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/HttpRequestJsonContentTypeBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70197 avoid per-response allocations when matching content-type in responsecompressionprovider middleware related_not_duplicate the same responsecompressionprovider file is changed, but this pr optimizes mime-type matching. it leaves the candidate-quality full sort identified by the finding. src/middleware/responsecompression/perf/microbenchmarks/shouldcompressresponsebenchmark.cs src/middleware/responsecompression/src/responsecompressionprovider.cs src/middleware/responsecompression/test/responsecompressionmiddlewaretest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70197">#70197</a></td>
+            <td>Avoid per-response allocations when matching Content-Type in ResponseCompressionProvider<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The same ResponseCompressionProvider file is changed, but this PR optimizes MIME-type matching. It leaves the candidate-quality full sort identified by the finding.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Middleware/ResponseCompression/perf/Microbenchmarks/ShouldCompressResponseBenchmark.cs</code></li><li><code>src/Middleware/ResponseCompression/src/ResponseCompressionProvider.cs</code></li><li><code>src/Middleware/ResponseCompression/test/ResponseCompressionMiddlewareTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70198 avoid a streamreader per multipart form value in readasstringasync http/webutilities related_not_duplicate although this is an issue-level duplicate of #70164, against autoperf it optimizes streamreader use, while the nearby findings concern multipart conversion exceptions. src/http/http/perf/microbenchmarks/formfeaturereadformbenchmarks.cs src/http/webutilities/src/multipartsectionstreamextensions.cs src/http/webutilities/test/multipartsectionstreamextensionstests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70198">#70198</a></td>
+            <td>Avoid a StreamReader per multipart form value in ReadAsStringAsync<div class="state">CLOSED</div></td>
+            <td>Http/WebUtilities</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>Although this is an issue-level duplicate of #70164, against AutoPerf it optimizes StreamReader use, while the nearby findings concern multipart conversion exceptions.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http/perf/Microbenchmarks/FormFeatureReadFormBenchmarks.cs</code></li><li><code>src/Http/WebUtilities/src/MultipartSectionStreamExtensions.cs</code></li><li><code>src/Http/WebUtilities/test/MultipartSectionStreamExtensionsTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70199 avoid per-request policy list, enumerator and tag set allocations in outputcachemiddleware middleware related_not_duplicate the pr replaces per-request policy lists/enumerators and lazily creates tags. it does not change cachevarybyrules.any, the autoperf finding in the subsystem. src/middleware/outputcaching/perf/microbenchmarks/middlewarebenchmarks.cs src/middleware/outputcaching/src/outputcachecontext.cs src/middleware/outputcaching/src/outputcachemiddleware.cs src/middleware/outputcaching/test/outputcachemiddlewaretests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70199">#70199</a></td>
+            <td>Avoid per-request policy list, enumerator and tag set allocations in OutputCacheMiddleware<div class="state">OPEN</div></td>
+            <td>Middleware</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR replaces per-request policy lists/enumerators and lazily creates tags. It does not change CacheVaryByRules.Any, the AutoPerf finding in the subsystem.</td>
+            <td>—</td>
+            <td><details><summary>4 files</summary><ul><li><code>src/Middleware/OutputCaching/perf/Microbenchmarks/MiddlewareBenchmarks.cs</code></li><li><code>src/Middleware/OutputCaching/src/OutputCacheContext.cs</code></li><li><code>src/Middleware/OutputCaching/src/OutputCacheMiddleware.cs</code></li><li><code>src/Middleware/OutputCaching/test/OutputCacheMiddlewareTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70200 reduce allocations in queryhelpers.addquerystring http/webutilities no_overlap the pr&#x27;s concrete change (reduce allocations in queryhelpers.addquerystring) is in queryhelpers.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/webutilities/perf/microbenchmarks/queryhelpersaddquerystringbenchmark.cs src/http/webutilities/src/queryhelpers.cs src/http/webutilities/test/queryhelperstests.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70200">#70200</a></td>
+            <td>Reduce allocations in QueryHelpers.AddQueryString<div class="state">OPEN</div></td>
+            <td>Http/WebUtilities</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Reduce allocations in QueryHelpers.AddQueryString) is in QueryHelpers.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/WebUtilities/perf/Microbenchmarks/QueryHelpersAddQueryStringBenchmark.cs</code></li><li><code>src/Http/WebUtilities/src/QueryHelpers.cs</code></li><li><code>src/Http/WebUtilities/test/QueryHelpersTests.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70201 avoid parsing common content-type values when resolving response encoding shared no_overlap the pr&#x27;s concrete change (avoid parsing common content-type values when resolving response encoding) is in responsecontenttypehelper.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/http/http/perf/microbenchmarks/contentresultbenchmarks.cs src/mvc/mvc.core/test/formatters/responsecontenttypehelpertest.cs src/shared/responsecontenttypehelper.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70201">#70201</a></td>
+            <td>Avoid parsing common Content-Type values when resolving response encoding<div class="state">OPEN</div></td>
+            <td>Shared</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid parsing common Content-Type values when resolving response encoding) is in ResponseContentTypeHelper.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Http/perf/Microbenchmarks/ContentResultBenchmarks.cs</code></li><li><code>src/Mvc/Mvc.Core/test/Formatters/ResponseContentTypeHelperTest.cs</code></li><li><code>src/Shared/ResponseContentTypeHelper.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70203 reuse a cached stringbuilder when formatting header values http/headers related_not_duplicate the overlapping namevalueheadervalue change reuses a stringbuilder cache in tostring. the finding concerns its xor-only gethashcode implementation. src/http/headers/src/cachecontrolheadervalue.cs src/http/headers/src/contentdispositionheadervalue.cs src/http/headers/src/contentrangeheadervalue.cs src/http/headers/src/mediatypeheadervalue.cs src/http/headers/src/namevalueheadervalue.cs src/http/headers/src/rangeheadervalue.cs src/http/headers/src/stringbuildercache.cs src/http/headers/test/headervaluetostringtest.cs src/http/http/perf/microbenchmarks/headervaluetostringbenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70203">#70203</a></td>
+            <td>Reuse a cached StringBuilder when formatting header values<div class="state">OPEN</div></td>
+            <td>Http/Headers</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The overlapping NameValueHeaderValue change reuses a StringBuilder cache in ToString. The finding concerns its XOR-only GetHashCode implementation.</td>
+            <td>—</td>
+            <td><details><summary>9 files</summary><ul><li><code>src/Http/Headers/src/CacheControlHeaderValue.cs</code></li><li><code>src/Http/Headers/src/ContentDispositionHeaderValue.cs</code></li><li><code>src/Http/Headers/src/ContentRangeHeaderValue.cs</code></li><li><code>src/Http/Headers/src/MediaTypeHeaderValue.cs</code></li><li><code>src/Http/Headers/src/NameValueHeaderValue.cs</code></li><li><code>src/Http/Headers/src/RangeHeaderValue.cs</code></li><li><code>src/Http/Headers/src/StringBuilderCache.cs</code></li><li><code>src/Http/Headers/test/HeaderValueToStringTest.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/HeaderValueToStringBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70204 avoid stringbuilder when encoding content-disposition file names http/headers related_not_duplicate the pr removes stringbuilder from content-disposition encoding. the autoperf stringbuilder finding is a different cookieheadervalue formatter. src/http/headers/src/contentdispositionheadervalue.cs src/http/headers/test/contentdispositionheadervaluetest.cs src/http/http/perf/microbenchmarks/contentdispositionsetfilenamebenchmarks.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70204">#70204</a></td>
+            <td>Avoid StringBuilder when encoding Content-Disposition file names<div class="state">OPEN</div></td>
+            <td>Http/Headers</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes StringBuilder from Content-Disposition encoding. The AutoPerf StringBuilder finding is a different CookieHeaderValue formatter.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Http/Headers/src/ContentDispositionHeaderValue.cs</code></li><li><code>src/Http/Headers/test/ContentDispositionHeaderValueTest.cs</code></li><li><code>src/Http/Http/perf/Microbenchmarks/ContentDispositionSetFileNameBenchmarks.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70209 avoid sorting small prefixcontainer key sets in value providers mvc no_overlap the pr&#x27;s concrete change (avoid sorting small prefixcontainer key sets in value providers) is in prefixcontainer.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/mvc/mvc.core/src/modelbinding/prefixcontainer.cs src/mvc/mvc.core/test/modelbinding/prefixcontainertest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/prefixcontainerbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70209">#70209</a></td>
+            <td>Avoid sorting small PrefixContainer key sets in value providers<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid sorting small PrefixContainer key sets in value providers) is in PrefixContainer.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Mvc/Mvc.Core/src/ModelBinding/PrefixContainer.cs</code></li><li><code>src/Mvc/Mvc.Core/test/ModelBinding/PrefixContainerTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/PrefixContainerBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70210 avoid per-parameter validation allocations for simple models mvc related_not_duplicate the patch lazily creates validationstatedictionary’s inner dictionary, but its public getenumerator still returns an interface enumerator and boxes the dictionary struct enumerator. src/mvc/mvc.abstractions/src/modelbinding/validation/validationstatedictionary.cs src/mvc/mvc.abstractions/test/modelbinding/validation/validationstatedictionarytest.cs src/mvc/mvc.core/src/modelbinding/validation/validationstack.cs src/mvc/mvc.core/test/modelbinding/validation/validationstacktest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/parameterbinderbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70210">#70210</a></td>
+            <td>Avoid per-parameter validation allocations for simple models<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The patch lazily creates ValidationStateDictionary’s inner dictionary, but its public GetEnumerator still returns an interface enumerator and boxes the dictionary struct enumerator.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Mvc/Mvc.Abstractions/src/ModelBinding/Validation/ValidationStateDictionary.cs</code></li><li><code>src/Mvc/Mvc.Abstractions/test/ModelBinding/Validation/ValidationStateDictionaryTest.cs</code></li><li><code>src/Mvc/Mvc.Core/src/ModelBinding/Validation/ValidationStack.cs</code></li><li><code>src/Mvc/Mvc.Core/test/ModelBinding/Validation/ValidationStackTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/ParameterBinderBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70211 avoid viewlocationexpandercontext allocations on razor view lookup cache hits mvc related_not_duplicate the pr avoids view-location expander allocations on cache hits. nearby razor findings concern section-set/dictionary probes and synchronous section rendering. src/mvc/mvc.razor/src/iviewlocationexpanderwithoutvalues.cs src/mvc/mvc.razor/src/razorviewengine.cs src/mvc/mvc.razor/test/razorviewenginetest.cs src/mvc/mvc.razorpages/src/infrastructure/pageviewlocationexpander.cs src/mvc/mvc.razorpages/test/infrastructure/pageviewlocationexpandertest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc.views/views/shared/_viewenginebenchmarkpartial.cshtml src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/viewenginebenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70211">#70211</a></td>
+            <td>Avoid ViewLocationExpanderContext allocations on Razor view lookup cache hits<div class="state">OPEN</div></td>
+            <td>Mvc</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR avoids view-location expander allocations on cache hits. Nearby Razor findings concern section-set/dictionary probes and synchronous section rendering.</td>
+            <td>—</td>
+            <td><details><summary>7 files</summary><ul><li><code>src/Mvc/Mvc.Razor/src/IViewLocationExpanderWithoutValues.cs</code></li><li><code>src/Mvc/Mvc.Razor/src/RazorViewEngine.cs</code></li><li><code>src/Mvc/Mvc.Razor/test/RazorViewEngineTest.cs</code></li><li><code>src/Mvc/Mvc.RazorPages/src/Infrastructure/PageViewLocationExpander.cs</code></li><li><code>src/Mvc/Mvc.RazorPages/test/Infrastructure/PageViewLocationExpanderTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc.Views/Views/Shared/_ViewEngineBenchmarkPartial.cshtml</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/ViewEngineBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70212 select razor pages handlers without allocating a candidate list mvc no_overlap the pr&#x27;s concrete change (select razor pages handlers without allocating a candidate list) is in defaultpagehandlermethodselector.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/mvc/mvc.razorpages/src/infrastructure/defaultpagehandlermethodselector.cs src/mvc/mvc.razorpages/test/infrastructure/defaultpagehandlermethodselectortest.cs src/mvc/perf/microbenchmarks/microsoft.aspnetcore.mvc/pagehandlerselectorbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70212">#70212</a></td>
+            <td>Select Razor Pages handlers without allocating a candidate list<div class="state">MERGED</div></td>
+            <td>Mvc</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Select Razor Pages handlers without allocating a candidate list) is in DefaultPageHandlerMethodSelector.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Mvc/Mvc.RazorPages/src/Infrastructure/DefaultPageHandlerMethodSelector.cs</code></li><li><code>src/Mvc/Mvc.RazorPages/test/Infrastructure/DefaultPageHandlerMethodSelectorTest.cs</code></li><li><code>src/Mvc/perf/Microbenchmarks/Microsoft.AspNetCore.Mvc/PageHandlerSelectorBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70218 avoid allocating a token substring when authenticating bearer tokens security no_overlap the pr&#x27;s concrete change (avoid allocating a token substring when authenticating bearer tokens) is in bearertokenconfigureoptions.cs, bearertokenhandler.cs, bearertokenticketdataformat.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/security/authentication/bearertoken/src/bearertokenconfigureoptions.cs src/security/authentication/bearertoken/src/bearertokenhandler.cs src/security/authentication/bearertoken/src/bearertokenticketdataformat.cs src/security/authentication/test/bearertokentests.cs src/security/perf/microbenchmarks/bearertokenauthenticatebenchmark.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70218">#70218</a></td>
+            <td>Avoid allocating a token substring when authenticating bearer tokens<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Avoid allocating a token substring when authenticating bearer tokens) is in BearerTokenConfigureOptions.cs, BearerTokenHandler.cs, BearerTokenTicketDataFormat.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Security/Authentication/BearerToken/src/BearerTokenConfigureOptions.cs</code></li><li><code>src/Security/Authentication/BearerToken/src/BearerTokenHandler.cs</code></li><li><code>src/Security/Authentication/BearerToken/src/BearerTokenTicketDataFormat.cs</code></li><li><code>src/Security/Authentication/test/BearerTokenTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/BearerTokenAuthenticateBenchmark.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70220 cache the absence of authorization metadata in authorizationmiddleware security related_not_duplicate the pr caches endpoints with no authorization metadata. authorization findings concern claim-value scans and eager failure-log formatting, not middleware metadata caching. src/security/authorization/policy/src/authorizationmiddleware.cs src/security/authorization/policy/src/authorizationpolicycache.cs src/security/authorization/test/authorizationmiddlewaretests.cs src/security/perf/microbenchmarks/authorizationmiddlewarecachedpolicybenchmark.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70220">#70220</a></td>
+            <td>Cache the absence of authorization metadata in AuthorizationMiddleware<div class="state">MERGED</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR caches endpoints with no authorization metadata. Authorization findings concern claim-value scans and eager failure-log formatting, not middleware metadata caching.</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Security/Authorization/Policy/src/AuthorizationMiddleware.cs</code></li><li><code>src/Security/Authorization/Policy/src/AuthorizationPolicyCache.cs</code></li><li><code>src/Security/Authorization/test/AuthorizationMiddlewareTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/AuthorizationMiddlewareCachedPolicyBenchmark.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70221 avoid claimsprincipal.claims iterator allocations in claimsauthorizationrequirement security related_not_duplicate the pr avoids claimsprincipal.claims iterator allocations by enumerating identities directly, but ismatch still calls allowedvalues.contains for every claim; the nested-scan finding remains. src/security/authorization/core/src/claimsauthorizationrequirement.cs src/security/authorization/test/defaultauthorizationservicetests.cs src/security/perf/microbenchmarks/claimsauthorizationrequirementbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70221">#70221</a></td>
+            <td>Avoid ClaimsPrincipal.Claims iterator allocations in ClaimsAuthorizationRequirement<div class="state">MERGED</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR avoids ClaimsPrincipal.Claims iterator allocations by enumerating identities directly, but IsMatch still calls AllowedValues.Contains for every claim; the nested-scan finding remains.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Security/Authorization/Core/src/ClaimsAuthorizationRequirement.cs</code></li><li><code>src/Security/Authorization/test/DefaultAuthorizationServiceTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/ClaimsAuthorizationRequirementBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70222 reduce usermanager construction cost identity related_not_duplicate the pr optimizes usermanager construction and token-provider iteration. identity findings concern password/username validation loops and unrelated test assertions. src/identity/extensions.core/src/usermanager.cs src/identity/test/identity.test/usermanagertest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70222">#70222</a></td>
+            <td>Reduce UserManager construction cost<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR optimizes UserManager construction and token-provider iteration. Identity findings concern password/username validation loops and unrelated test assertions.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Identity/Extensions.Core/src/UserManager.cs</code></li><li><code>src/Identity/test/Identity.Test/UserManagerTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70223 avoid linq and allocations in passwordvalidator identity exact_duplicate the patch removes the four linq scans over the password string and replaces each all/any predicate with a direct character loop, exactly matching the four findings. src/identity/extensions.core/src/passwordvalidator.cs src/identity/test/identity.test/passwordvalidatortest.cs linq-char-set-search-on-string password validation uses linq all to scan every utf-16 character. linq-char-set-search-on-string password lowercase validation uses linq any over the string. linq-char-set-search-on-string password uppercase validation uses linq any over the string. linq-char-set-search-on-string password digit validation uses linq any over the string.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70223">#70223</a></td>
+            <td>Avoid LINQ and allocations in PasswordValidator<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>The patch removes the four LINQ scans over the password string and replaces each All/Any predicate with a direct character loop, exactly matching the four findings.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L51"><code>linq-char-set-search-on-string</code> — src/Identity/Extensions.Core/src/PasswordValidator.cs:51</a></li><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L61"><code>linq-char-set-search-on-string</code> — src/Identity/Extensions.Core/src/PasswordValidator.cs:61</a></li><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L66"><code>linq-char-set-search-on-string</code> — src/Identity/Extensions.Core/src/PasswordValidator.cs:66</a></li><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/PasswordValidator.cs#L56"><code>linq-char-set-search-on-string</code> — src/Identity/Extensions.Core/src/PasswordValidator.cs:56</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Identity/Extensions.Core/src/PasswordValidator.cs</code></li><li><code>src/Identity/test/Identity.Test/PasswordValidatorTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="exact_duplicate" data-search="70224 reduce per-call overhead in uservalidator identity exact_duplicate username validation no longer uses any with a nested allowed-character contains scan; it uses cached searchvalues on modern .net and a direct indexed fallback elsewhere, fixing the same nested character-search behavior. src/identity/extensions.core/src/uservalidator.cs src/identity/test/identity.test/uservalidatortest.cs linq-char-set-search-on-string username validation enumerates the username with linq and searches the allowed-character string for every character.">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70224">#70224</a></td>
+            <td>Reduce per-call overhead in UserValidator<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge exact_duplicate">Exact duplicate</span></td>
+            <td>Username validation no longer uses Any with a nested allowed-character Contains scan; it uses cached SearchValues on modern .NET and a direct indexed fallback elsewhere, fixing the same nested character-search behavior.</td>
+            <td><ul><li><a href="https://github.com/dotnet/aspnetcore/blob/1d03b662a9b9ddacb6421ea152dad07e0ddc5820/src/Identity/Extensions.Core/src/UserValidator.cs#L61-L62"><code>linq-char-set-search-on-string</code> — src/Identity/Extensions.Core/src/UserValidator.cs:61</a></li></ul></td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Identity/Extensions.Core/src/UserValidator.cs</code></li><li><code>src/Identity/test/Identity.Test/UserValidatorTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70225 avoid an extra task allocation in defaultauthorizationserviceimpl.authorizeasync security related_not_duplicate the pr returns the completed authorization task directly. nearby findings concern claim-value scans and eager failure-log string joins, not task wrapping. src/security/authorization/core/src/defaultauthorizationserviceimpl.cs src/security/authorization/test/authorizationmetricstest.cs src/security/perf/microbenchmarks/defaultauthorizationservicebenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70225">#70225</a></td>
+            <td>Avoid an extra task allocation in DefaultAuthorizationServiceImpl.AuthorizeAsync<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR returns the completed authorization task directly. Nearby findings concern claim-value scans and eager failure-log string joins, not task wrapping.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Security/Authorization/Core/src/DefaultAuthorizationServiceImpl.cs</code></li><li><code>src/Security/Authorization/test/AuthorizationMetricsTest.cs</code></li><li><code>src/Security/perf/Microbenchmarks/DefaultAuthorizationServiceBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70226 speed up totp validation by reusing the hmac and input buffer across timesteps identity no_overlap the pr&#x27;s concrete change (speed up totp validation by reusing the hmac and input buffer across timesteps) is in authenticatortokenprovider.cs, rfc6238authenticationservice.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/identity/extensions.core/src/authenticatortokenprovider.cs src/identity/extensions.core/src/rfc6238authenticationservice.cs src/identity/test/identity.test/rfc6238authenticationservicetest.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70226">#70226</a></td>
+            <td>Speed up TOTP validation by reusing the HMAC and input buffer across timesteps<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Speed up TOTP validation by reusing the HMAC and input buffer across timesteps) is in AuthenticatorTokenProvider.cs, Rfc6238AuthenticationService.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>3 files</summary><ul><li><code>src/Identity/Extensions.Core/src/AuthenticatorTokenProvider.cs</code></li><li><code>src/Identity/Extensions.Core/src/Rfc6238AuthenticationService.cs</code></li><li><code>src/Identity/test/Identity.Test/Rfc6238AuthenticationServiceTest.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="no_overlap" data-search="70227 speed up base32.frombase32 decoding for authenticator keys identity no_overlap the pr&#x27;s concrete change (speed up base32.frombase32 decoding for authenticator keys) is in base32.cs; no autoperf finding identifies that source behavior, and the scored candidates are in different files or target different operations. src/identity/extensions.core/src/base32.cs src/identity/test/identity.test/base32test.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70227">#70227</a></td>
+            <td>Speed up Base32.FromBase32 decoding for authenticator keys<div class="state">OPEN</div></td>
+            <td>Identity</td>
+            <td><span class="badge no_overlap">No overlap</span></td>
+            <td>The PR&#x27;s concrete change (Speed up Base32.FromBase32 decoding for authenticator keys) is in Base32.cs; no AutoPerf finding identifies that source behavior, and the scored candidates are in different files or target different operations.</td>
+            <td>—</td>
+            <td><details><summary>2 files</summary><ul><li><code>src/Identity/Extensions.Core/src/Base32.cs</code></li><li><code>src/Identity/test/Identity.Test/Base32Test.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70228 use span-based data protection in securedataformat security related_not_duplicate the pr removes intermediate arrays around data protection in securedataformat. it still invokes ticketserializer/propertiesserializer, whose memorystream serialization findings are independent (as the pr body also states). src/security/authentication/core/src/securedataformat.cs src/security/authentication/test/securedataformattests.cs src/security/perf/microbenchmarks/cookieauthenticationbenchmark.cs src/security/perf/microbenchmarks/microsoft.aspnetcore.security.microbenchmarks.csproj src/security/perf/microbenchmarks/securedataformatbenchmark.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70228">#70228</a></td>
+            <td>Use span-based data protection in SecureDataFormat<div class="state">OPEN</div></td>
+            <td>Security</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR removes intermediate arrays around data protection in SecureDataFormat. It still invokes TicketSerializer/PropertiesSerializer, whose MemoryStream serialization findings are independent (as the PR body also states).</td>
+            <td>—</td>
+            <td><details><summary>5 files</summary><ul><li><code>src/Security/Authentication/Core/src/SecureDataFormat.cs</code></li><li><code>src/Security/Authentication/test/SecureDataFormatTests.cs</code></li><li><code>src/Security/perf/Microbenchmarks/CookieAuthenticationBenchmark.cs</code></li><li><code>src/Security/perf/Microbenchmarks/Microsoft.AspNetCore.Security.Microbenchmarks.csproj</code></li><li><code>src/Security/perf/Microbenchmarks/SecureDataFormatBenchmark.cs</code></li></ul></details></td>
+          </tr>
+          <tr data-classification="related_not_duplicate" data-search="70246 reuse renderbatchwriter across render batches in remoterenderer components related_not_duplicate the pr reuses renderbatchwriter and its stream across batches. components findings in adjacent serialization files concern json text round-trips and root-component duplicate scans. src/components/server/src/circuits/remoterenderer.cs src/components/server/test/circuits/renderbatchwritertest.cs src/components/shared/src/arraybuildermemorystream.cs src/components/shared/src/renderbatchwriter.cs src/components/webassembly/webassembly/src/rendering/webassemblyrenderer.cs src/components/webview/webview/src/ipcsender.cs ">
+            <td><a href="https://github.com/dotnet/aspnetcore/pull/70246">#70246</a></td>
+            <td>Reuse RenderBatchWriter across render batches in RemoteRenderer<div class="state">MERGED</div></td>
+            <td>Components</td>
+            <td><span class="badge related_not_duplicate">Related, not duplicate</span></td>
+            <td>The PR reuses RenderBatchWriter and its stream across batches. Components findings in adjacent serialization files concern JSON text round-trips and root-component duplicate scans.</td>
+            <td>—</td>
+            <td><details><summary>6 files</summary><ul><li><code>src/Components/Server/src/Circuits/RemoteRenderer.cs</code></li><li><code>src/Components/Server/test/Circuits/RenderBatchWriterTest.cs</code></li><li><code>src/Components/Shared/src/ArrayBuilderMemoryStream.cs</code></li><li><code>src/Components/Shared/src/RenderBatchWriter.cs</code></li><li><code>src/Components/WebAssembly/WebAssembly/src/Rendering/WebAssemblyRenderer.cs</code></li><li><code>src/Components/WebView/WebView/src/IpcSender.cs</code></li></ul></details></td>
+          </tr></tbody>
+    </table>
+  </div>
+
+  <h2>Methodology and limits</h2>
+  <ul>
+    <li>Source issue: <a href="https://github.com/dotnet/aspnetcore/issues/70219">#70219 — ASP.NET Core perf effort: summary of open performance PRs</a>.</li>
+    <li>All 98 PR titles, bodies, states, and changed-file lists were fetched from GitHub.</li>
+    <li>The 23 PRs sharing an exact changed file with an AutoPerf finding were checked against their patches.</li>
+    <li><b>Exact duplicate</b> means the patch removes the same concrete behavior at the finding site.</li>
+    <li><b>Related, not duplicate</b> includes same-file or same-area optimizations that change a different behavior.</li>
+    <li>The comparison uses AutoPerf findings at repository revision <code>1d03b662a9b9ddacb6421ea152dad07e0ddc5820</code>; subsequent PR edits may change the result.</li>
+    <li>This is a static overlap analysis, not an assessment of PR correctness, benchmark fidelity, or merge readiness.</li>
+  </ul>
+
+  <footer>Generated 2026-11-04 06:35 UTC · Input review: <code>issue-70219-duplicate-review.json</code></footer>
+</main>
+<script>
+  const search = document.getElementById('search');
+  const classification = document.getElementById('classification');
+  const rows = [...document.querySelectorAll('#matrixBody tr')];
+  const visibleCount = document.getElementById('visibleCount');
+  function filterRows() {
+    const query = search.value.trim().toLowerCase();
+    const selected = classification.value;
+    let visible = 0;
+    for (const row of rows) {
+      const matchesText = !query || row.dataset.search.includes(query);
+      const matchesClass = !selected || row.dataset.classification === selected;
+      const show = matchesText && matchesClass;
+      row.hidden = !show;
+      if (show) visible++;
+    }
+    visibleCount.textContent = `${visible} visible`;
+  }
+  search.addEventListener('input', filterRows);
+  classification.addEventListener('change', filterRows);
+</script>
+</body>
+</html>
