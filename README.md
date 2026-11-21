@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 250/358 finalized**: 78 drafts, 31 no-gain, 91 rejected and 50 duplicates;
-108 findings remain unfinished.
+**Progress: 252/358 finalized**: 78 drafts, 31 no-gain, 93 rejected and 50 duplicates;
+106 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F210 | Rejected, http2cat assertion materiality unestablished | [jaslawinMs/aspnetcore#218](https://github.com/jaslawinMs/aspnetcore/issues/218): finite diagnostic producer and TRACE-conditional eager string source, no compiled/runtime performance result. [Evidence](F210-F211/README.md) |
+| F211 | Rejected, http2cat payload-log materiality unestablished | [jaslawinMs/aspnetcore#218](https://github.com/jaslawinMs/aspnetcore/issues/218): actual Memory payload/copy/console producer qualified, no material discarded-logging scenario or measured performance. [Evidence](F210-F211/README.md) |
 | F205 | Rejected, endpoint-builder materiality unestablished | [jaslawinMs/aspnetcore#217](https://github.com/jaslawinMs/aspnetcore/issues/217): bounded standard initialization/actual-refresh work, not per-request/page-route work. Actual restored receipt-path incident retained. [Evidence](F205-F207/README.md) |
 | F207 | Rejected, identity-log materiality unestablished | [jaslawinMs/aspnetcore#217](https://github.com/jaslawinMs/aspnetcore/issues/217): eager argument qualified at new-key persistence, not warm payload execution; no runtime/performance result. [Evidence](F205-F207/README.md) |
 | F199 | Rejected, transport-abort materiality unestablished | [jaslawinMs/aspnetcore#216](https://github.com/jaslawinMs/aspnetcore/issues/216): real copy and declared List-task span path qualified, but no material transport-stop workload or runtime performance result. [Evidence](F199/README.md) |
