@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 240/358 finalized**: 78 drafts, 31 no-gain, 81 rejected and 50 duplicates;
-118 findings remain unfinished.
+**Progress: 242/358 finalized**: 78 drafts, 31 no-gain, 83 rejected and 50 duplicates;
+116 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,8 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F190 | Rejected, real producers already cheap-countable | [jaslawinMs/aspnetcore#212](https://github.com/jaslawinMs/aspnetcore/issues/212): actual arrays and fixed-depth pipelines have metadata counts in pinned source; no native runtime/performance result. [Evidence](F190-F191/README.md) |
+| F191 | Rejected, diagnostic producer already indexed | [jaslawinMs/aspnetcore#212](https://github.com/jaslawinMs/aspnetcore/issues/212): real producer returns `Diagnostic[]`, so `ElementAt` is indexed; no repeated non-indexed traversal on located paths. [Evidence](F190-F191/README.md) |
 | F240 | Rejected, no material discovery candidate | [jaslawinMs/aspnetcore#211](https://github.com/jaslawinMs/aspnetcore/issues/211): opt-in registration and small reviewed source populations do not justify replacement complexity; no native or performance result. [Evidence](F240-F268/README.md) |
 | F268 | Rejected, no material sample candidate | [jaslawinMs/aspnetcore#211](https://github.com/jaslawinMs/aspnetcore/issues/211): broadcast copy confirmed, but no representative workload or material gain established; no native buffer-equivalence or performance claim. [Evidence](F240-F268/README.md) |
 | F214 | Rejected, scoped null-guard evidence | [jaslawinMs/aspnetcore#210](https://github.com/jaslawinMs/aspnetcore/issues/210): located string-key producers and inspected .NET 12 native guards do not substantiate the claimed boxing; not a whole-operation allocation or performance claim. [Evidence](F214-F236/README.md) |
