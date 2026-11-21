@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 268/358 finalized**: 78 drafts, 31 no-gain, 109 rejected and 50 duplicates;
-90 findings remain unfinished.
+**Progress: 272/358 finalized**: 78 drafts, 31 no-gain, 113 rejected and 50 duplicates;
+86 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,10 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F231 | Rejected, two-item user-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): actual real-factory/Moq producer and twelve declared rows, not inflated claim lists. [Evidence](F231-F232-F233-F239/README.md) |
+| F232 | Rejected, two-item Admin-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): separate Admin setup and support branches, no measured whole-test cost. [Evidence](F231-F232-F233-F239/README.md) |
+| F233 | Rejected, two-item Local-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): separate Local setup/site; later insertion alone is not materiality. [Evidence](F231-F232-F233-F239/README.md) |
+| F239 | Rejected, narrow real directory cohorts lack material candidate | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): actual Add producers/topology, inherited-normalizer/engine-frequency limits explicit. [Evidence](F231-F232-F233-F239/README.md) |
 | F222 | Rejected, XML hash producer materially unqualified | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): actual cloned XML/list producer and declared assertion dispatch, no fabricated hashing workload. [Evidence](F222-F223-F224/README.md) |
 | F223 | Rejected, diagnostic-ID filtering materiality unestablished | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): real warning producer, per-get one-descriptor versus retained-eight distinction. [Evidence](F222-F223-F224/README.md) |
 | F224 | Rejected, diagnostic-document scan materially unqualified | [jaslawinMs/aspnetcore#222](https://github.com/jaslawinMs/aspnetcore/issues/222): actual document producers and repeated-tree-request boundary, no reparsing claim. [Evidence](F222-F223-F224/README.md) |
