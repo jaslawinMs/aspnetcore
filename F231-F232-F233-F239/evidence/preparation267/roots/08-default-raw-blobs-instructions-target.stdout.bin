@@ -1,0 +1,385 @@
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+e6ec5f79f5355005a74fdaad69acb697f1d04792 blob 5797
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+using Microsoft.Extensions.Options;
+using Moq;
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+public class UserClaimsPrincipalFactoryTest
+{
+    [Fact]
+    public async Task CreateIdentityNullChecks()
+    {
+        var userManager = MockHelpers.MockUserManager<PocoUser>().Object;
+        var roleManager = MockHelpers.MockRoleManager<PocoRole>().Object;
+        var options = new Mock<IOptions<IdentityOptions>>();
+        Assert.Throws<ArgumentException>("optionsAccessor",
+            () => new UserClaimsPrincipalFactory<PocoUser, PocoRole>(userManager, roleManager, options.Object));
+        var identityOptions = new IdentityOptions();
+        options.Setup(a => a.Value).Returns(identityOptions);
+        var factory = new UserClaimsPrincipalFactory<PocoUser, PocoRole>(userManager, roleManager, options.Object);
+        await Assert.ThrowsAsync<ArgumentNullException>("user",
+            async () => await factory.CreateAsync(null));
+    }
+
+    [Theory]
+    [InlineData(true, false, false, false)]
+    [InlineData(true, true, false, false)]
+    [InlineData(true, false, true, false)]
+    [InlineData(true, true, true, false)]
+    [InlineData(false, false, false, true)]
+    [InlineData(false, true, false, true)]
+    [InlineData(false, false, false, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(true, false, false, true)]
+    [InlineData(true, true, false, true)]
+    [InlineData(true, false, true, true)]
+    [InlineData(true, true, true, true)]
+    public async Task EnsureClaimsIdentityHasExpectedClaims(bool supportRoles, bool supportClaims, bool supportRoleClaims, bool supportsUserEmail)
+    {
+        // Setup
+        var userManager = MockHelpers.MockUserManager<PocoUser>();
+        var roleManager = MockHelpers.MockRoleManager<PocoRole>();
+        var user = new PocoUser { UserName = "Foo", Email = "foo@bar.com" };
+        userManager.Setup(m => m.SupportsUserClaim).Returns(supportClaims);
+        userManager.Setup(m => m.SupportsUserRole).Returns(supportRoles);
+        userManager.Setup(m => m.SupportsUserEmail).Returns(supportsUserEmail);
+        userManager.Setup(m => m.GetUserIdAsync(user)).ReturnsAsync(user.Id);
+        userManager.Setup(m => m.GetUserNameAsync(user)).ReturnsAsync(user.UserName);
+        if (supportsUserEmail)
+        {
+            userManager.Setup(m => m.GetEmailAsync(user)).ReturnsAsync(user.Email);
+        }
+        var roleClaims = new[] { "Admin", "Local" };
+        if (supportRoles)
+        {
+            userManager.Setup(m => m.GetRolesAsync(user)).ReturnsAsync(roleClaims);
+            roleManager.Setup(m => m.SupportsRoleClaims).Returns(supportRoleClaims);
+        }
+        var userClaims = new[] { new Claim("Whatever", "Value"), new Claim("Whatever2", "Value2") };
+        if (supportClaims)
+        {
+            userManager.Setup(m => m.GetClaimsAsync(user)).ReturnsAsync(userClaims);
+        }
+        userManager.Object.Options = new IdentityOptions();
+
+        var admin = new PocoRole() { Name = "Admin" };
+        var local = new PocoRole() { Name = "Local" };
+        var adminClaims = new[] { new Claim("AdminClaim1", "Value1"), new Claim("AdminClaim2", "Value2") };
+        var localClaims = new[] { new Claim("LocalClaim1", "Value1"), new Claim("LocalClaim2", "Value2") };
+        if (supportRoleClaims)
+        {
+            roleManager.Setup(m => m.FindByNameAsync("Admin")).ReturnsAsync(admin);
+            roleManager.Setup(m => m.FindByNameAsync("Local")).ReturnsAsync(local);
+            roleManager.Setup(m => m.GetClaimsAsync(admin)).ReturnsAsync(adminClaims);
+            roleManager.Setup(m => m.GetClaimsAsync(local)).ReturnsAsync(localClaims);
+        }
+
+        var options = new Mock<IOptions<IdentityOptions>>();
+        var identityOptions = new IdentityOptions();
+        options.Setup(a => a.Value).Returns(identityOptions);
+        var factory = new UserClaimsPrincipalFactory<PocoUser, PocoRole>(userManager.Object, roleManager.Object, options.Object);
+
+        // Act
+        var principal = await factory.CreateAsync(user);
+        var identity = principal.Identities.First();
+
+        // Assert
+        var manager = userManager.Object;
+        Assert.NotNull(identity);
+        Assert.Single(principal.Identities);
+        Assert.Equal(IdentityConstants.ApplicationScheme, identity.AuthenticationType);
+        var claims = identity.Claims.ToList();
+        Assert.NotNull(claims);
+        Assert.Contains(
+            claims, c => c.Type == manager.Options.ClaimsIdentity.UserNameClaimType && c.Value == user.UserName);
+        Assert.Contains(claims, c => c.Type == manager.Options.ClaimsIdentity.UserIdClaimType && c.Value == user.Id);
+        Assert.Equal(supportsUserEmail, claims.Any(c => c.Type == manager.Options.ClaimsIdentity.EmailClaimType && c.Value == user.Email));
+        Assert.Equal(supportRoles, claims.Any(c => c.Type == manager.Options.ClaimsIdentity.RoleClaimType && c.Value == "Admin"));
+        Assert.Equal(supportRoles, claims.Any(c => c.Type == manager.Options.ClaimsIdentity.RoleClaimType && c.Value == "Local"));
+        foreach (var cl in userClaims)
+        {
+            Assert.Equal(supportClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));
+        }
+        foreach (var cl in adminClaims)
+        {
+            Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));
+        }
+        foreach (var cl in localClaims)
+        {
+            Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));
+        }
+        userManager.VerifyAll();
+        roleManager.VerifyAll();
+    }
+}
+
+77b490fe62a86669c2bc133fcb16a2002159c845 blob 6939
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Shared;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Provides methods to create a claims principal for a given user.
+/// </summary>
+/// <typeparam name="TUser">The type used to represent a user.</typeparam>
+public class UserClaimsPrincipalFactory<TUser> : IUserClaimsPrincipalFactory<TUser>
+    where TUser : class
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserClaimsPrincipalFactory{TUser}"/> class.
+    /// </summary>
+    /// <param name="userManager">The <see cref="UserManager{TUser}"/> to retrieve user information from.</param>
+    /// <param name="optionsAccessor">The configured <see cref="IdentityOptions"/>.</param>
+    public UserClaimsPrincipalFactory(
+        UserManager<TUser> userManager,
+        IOptions<IdentityOptions> optionsAccessor)
+    {
+        ArgumentNullThrowHelper.ThrowIfNull(userManager);
+        if (optionsAccessor == null || optionsAccessor.Value == null)
+        {
+            ArgumentNullThrowHelper.ThrowIfNull(optionsAccessor);
+            throw new ArgumentException($"{nameof(optionsAccessor)} cannot wrap a null value.", nameof(optionsAccessor));
+        }
+        UserManager = userManager;
+        Options = optionsAccessor.Value;
+    }
+
+    /// <summary>
+    /// Gets the <see cref="UserManager{TUser}"/> for this factory.
+    /// </summary>
+    /// <value>
+    /// The current <see cref="UserManager{TUser}"/> for this factory instance.
+    /// </value>
+    public UserManager<TUser> UserManager { get; private set; }
+
+    /// <summary>
+    /// Gets the <see cref="IdentityOptions"/> for this factory.
+    /// </summary>
+    /// <value>
+    /// The current <see cref="IdentityOptions"/> for this factory instance.
+    /// </value>
+    public IdentityOptions Options { get; private set; }
+
+    /// <summary>
+    /// Creates a <see cref="ClaimsPrincipal"/> from an user asynchronously.
+    /// </summary>
+    /// <param name="user">The user to create a <see cref="ClaimsPrincipal"/> from.</param>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous creation operation, containing the created <see cref="ClaimsPrincipal"/>.</returns>
+    public virtual async Task<ClaimsPrincipal> CreateAsync(TUser user)
+    {
+        ArgumentNullThrowHelper.ThrowIfNull(user);
+        var id = await GenerateClaimsAsync(user).ConfigureAwait(false);
+        return new ClaimsPrincipal(id);
+    }
+
+    /// <summary>
+    /// Generate the claims for a user.
+    /// </summary>
+    /// <param name="user">The user to create a <see cref="ClaimsIdentity"/> from.</param>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous creation operation, containing the created <see cref="ClaimsIdentity"/>.</returns>
+    protected virtual async Task<ClaimsIdentity> GenerateClaimsAsync(TUser user)
+    {
+        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
+        var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
+        var id = new ClaimsIdentity("Identity.Application", // REVIEW: Used to match Application scheme
+            Options.ClaimsIdentity.UserNameClaimType,
+            Options.ClaimsIdentity.RoleClaimType);
+        id.AddClaim(new Claim(Options.ClaimsIdentity.UserIdClaimType, userId));
+        id.AddClaim(new Claim(Options.ClaimsIdentity.UserNameClaimType, userName!));
+        if (UserManager.SupportsUserEmail)
+        {
+            var email = await UserManager.GetEmailAsync(user).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(email))
+            {
+                id.AddClaim(new Claim(Options.ClaimsIdentity.EmailClaimType, email));
+            }
+        }
+        if (UserManager.SupportsUserSecurityStamp)
+        {
+            id.AddClaim(new Claim(Options.ClaimsIdentity.SecurityStampClaimType,
+                await UserManager.GetSecurityStampAsync(user).ConfigureAwait(false)));
+        }
+        if (UserManager.SupportsUserClaim)
+        {
+            id.AddClaims(await UserManager.GetClaimsAsync(user).ConfigureAwait(false));
+        }
+        return id;
+    }
+}
+
+/// <summary>
+/// Provides methods to create a claims principal for a given user.
+/// </summary>
+/// <typeparam name="TUser">The type used to represent a user.</typeparam>
+/// <typeparam name="TRole">The type used to represent a role.</typeparam>
+public class UserClaimsPrincipalFactory<TUser, TRole> : UserClaimsPrincipalFactory<TUser>
+    where TUser : class
+    where TRole : class
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserClaimsPrincipalFactory{TUser, TRole}"/> class.
+    /// </summary>
+    /// <param name="userManager">The <see cref="UserManager{TUser}"/> to retrieve user information from.</param>
+    /// <param name="roleManager">The <see cref="RoleManager{TRole}"/> to retrieve a user's roles from.</param>
+    /// <param name="options">The configured <see cref="IdentityOptions"/>.</param>
+    public UserClaimsPrincipalFactory(UserManager<TUser> userManager, RoleManager<TRole> roleManager, IOptions<IdentityOptions> options)
+        : base(userManager, options)
+    {
+        ArgumentNullThrowHelper.ThrowIfNull(roleManager);
+        RoleManager = roleManager;
+    }
+
+    /// <summary>
+    /// Gets the <see cref="RoleManager{TRole}"/> for this factory.
+    /// </summary>
+    /// <value>
+    /// The current <see cref="RoleManager{TRole}"/> for this factory instance.
+    /// </value>
+    public RoleManager<TRole> RoleManager { get; private set; }
+
+    /// <summary>
+    /// Generate the claims for a user.
+    /// </summary>
+    /// <param name="user">The user to create a <see cref="ClaimsIdentity"/> from.</param>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous creation operation, containing the created <see cref="ClaimsIdentity"/>.</returns>
+    protected override async Task<ClaimsIdentity> GenerateClaimsAsync(TUser user)
+    {
+        var id = await base.GenerateClaimsAsync(user).ConfigureAwait(false);
+        if (UserManager.SupportsUserRole)
+        {
+            var roles = await UserManager.GetRolesAsync(user).ConfigureAwait(false);
+            foreach (var roleName in roles)
+            {
+                id.AddClaim(new Claim(Options.ClaimsIdentity.RoleClaimType, roleName));
+                if (RoleManager.SupportsRoleClaims)
+                {
+                    var role = await RoleManager.FindByNameAsync(roleName).ConfigureAwait(false);
+                    if (role != null)
+                    {
+                        id.AddClaims(await RoleManager.GetClaimsAsync(role).ConfigureAwait(false));
+                    }
+                }
+            }
+        }
+        return id;
+    }
+}
+
+59ac13612c8b2e0351ae19519942da1b77db7bf3 blob 1468
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+
+namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Options used to configure the claim types used for well known claims.
+/// </summary>
+public class ClaimsIdentityOptions
+{
+    /// <summary>
+    /// Gets or sets the ClaimType used for a Role claim. Defaults to <see cref="ClaimTypes.Role"/>.
+    /// </summary>
+    public string RoleClaimType { get; set; } = ClaimTypes.Role;
+
+    /// <summary>
+    /// Gets or sets the ClaimType used for the user name claim. Defaults to <see cref="ClaimTypes.Name"/>.
+    /// </summary>
+    public string UserNameClaimType { get; set; } = ClaimTypes.Name;
+
+    /// <summary>
+    /// Gets or sets the ClaimType used for the user identifier claim. Defaults to <see cref="ClaimTypes.NameIdentifier"/>.
+    /// </summary>
+    public string UserIdClaimType { get; set; } = ClaimTypes.NameIdentifier;
+
+    /// <summary>
+    /// Gets or sets the ClaimType used for the user email claim. Defaults to <see cref="ClaimTypes.Email"/>.
+    /// </summary>
+    public string EmailClaimType { get; set; } = ClaimTypes.Email;
+
+    /// <summary>
+    /// Gets or sets the ClaimType used for the security stamp claim. Defaults to "AspNet.Identity.SecurityStamp".
+    /// </summary>
+    public string SecurityStampClaimType { get; set; } = "AspNet.Identity.SecurityStamp";
+}
+
+2f61469600b1cb17ab476d40fd1a094bb8a7e2a1 blob 3636
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(IdentityTestSharedSourceRoot)**\*.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceRoot)Metrics\TestMeterFactory.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Abstractions\src\Microsoft.AspNetCore.Authentication.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Core\src\Microsoft.AspNetCore.Authentication.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Core\src\Microsoft.AspNetCore.Identity.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Specification.Tests\src\Microsoft.AspNetCore.Identity.Specification.Tests.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\UI\src\Microsoft.AspNetCore.Identity.UI.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Cookies\src\Microsoft.AspNetCore.Authentication.Cookies.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Core\src\Microsoft.AspNetCore.Authentication.csproj" />
+  </ItemGroup>
+
+  <Target Name="AddProjectReferenceAssemblyInfo" BeforeTargets="GetAssemblyAttributes" DependsOnTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <_IdentityUIDefaultUI Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)' == 'Microsoft.AspNetCore.Identity.UI'" />
+    </ItemGroup>
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>Microsoft.AspNetCore.InternalTesting.DefaultUIProjectPath</_Parameter1>
+        <_Parameter2>$([System.IO.Path]::GetDirectoryName('%(_IdentityUIDefaultUI.MSBuildSourceProjectFile)'))</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="PublishAssets" AfterTargets="Publish">
+    <ItemGroup>
+      <_IdentityUIContent Include="$(MSBuildThisFileDirectory)..\..\UI\src\assets\**\*" />
+      <_IdentityUIPages Include="$(MSBuildThisFileDirectory)..\..\UI\src\Areas\Identity\Pages\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_IdentityUIContent)" DestinationFiles="$(PublishDir)\UI\assets\%(_IdentityUIContent.RecursiveDir)\%(_IdentityUIContent.FileName)%(_IdentityUIContent.Extension)" />
+    <Copy SourceFiles="@(_IdentityUIPages)" DestinationFiles="$(PublishDir)UI\Areas\Identity\Pages\%(_IdentityUIPages.RecursiveDir)\%(_IdentityUIPages.FileName)%(_IdentityUIPages.Extension)" />
+    <!-- Drop a dummy sln to specify content root location -->
+    <WriteLinesToFile File="$(PublishDir)\contentroot.sln" Lines="Ignored" Overwrite="true" Encoding="Unicode" />
+  </Target>
+
+
+</Project>
+

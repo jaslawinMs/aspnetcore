@@ -1,0 +1,87 @@
+37e809ead5824bc753a1c3d56f11615bdb1296c5 commit 1212
+tree cdbb759178f40aa93a74c67c2370d2590d9788dc
+parent a412ffec9328562a1b7e27945f0e40ebdca3c35d
+parent a61c99060627afe844e49ed09e4d30b4311edcd9
+author Rich Lander <2608468+richlander@users.noreply.github.com> 1794605258 -0800
+committer GitHub <noreply@github.com> 1794605258 -0800
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsFcBAABCAAQBQJq94DKCRC1aQ7uu5UhlAAAyJsQALIbBB7bYSw+o+3UnuTfI6ni
+ YhOUqstm21zV+pEbHq6CIEQb5bAxfHVzNLV5+tAV3RwLZtitR6sK26Tl0IU9J/yv
+ dEAacBuqDcJYx4GRfKlFPyM1mN1nxScEeX6o1zVykjeqMHVS2ZX0CrykuNYZu8U5
+ eCe5dqMtMTpnrcAMM8WdgY/mVK2jbRQwP06cIgXDnIzIsRAZI+h+kIOf0w5x6V6v
+ 42Z+0lWHlqS4f+FIvIXVRorY40pU+WavTCSZG6IXkfwvdexFe34dYbfADnvuAUZL
+ s9yQwRFNbOoEEE3YiZcues3NmzvzxxFgAx3OLsQj1o8kKPUQfbbdaf2tHPvTrM9+
+ E6xILf8Kp7XK1xiH0p01IwOxxUcdoOZcc9UXzwGLVnEs7TQCs8ZiyMF/tvLuMHcU
+ E/nz4Hi9CbkDoMdOxMx+aPKztPH5jvAFYsXGaXtgPm6irkbGvqvFPP8m90tcdGzk
+ zMXAAKv8PdGELM2l3lLZsxLiWc+8OB51vQsFOGINA+aN7yty91S36oc84BCav+D2
+ FDC7kuPT/i1tVKoegrwkGT9TErJhCiFgqmrzppqrEdrLNM9Ek9frFFVvhKBHq7aE
+ 5D3SyPa8n81CcUz5tqNor3HK1FzFQdphb4ncpD/rJGwlehIaIACzDxg0UNrtn8eZ
+ NoOt1NpALPceXfMHJnUc
+ =HA80
+ -----END PGP SIGNATURE-----
+ 
+
+Merge pull request #70560 from dotnet/dev/richlander/linux-ci-utf8-locale
+
+Use C.UTF-8 for Linux build jobs
+9a9c30a6149f9618d498415b463d6d518772ad9b blob 2971
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Runtime compilation support for Razor views and Razor Pages in ASP.NET Core MVC.</Description>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>aspnetcore;aspnetcoremvc;razor</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.Extensions" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Razor" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing.Abstractions\src\Microsoft.AspNetCore.Routing.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Routing\src\Microsoft.AspNetCore.Routing.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics\src\Microsoft.AspNetCore.Diagnostics.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Abstractions\src\Microsoft.AspNetCore.Mvc.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor.Runtime\src\Microsoft.AspNetCore.Razor.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Mvc.Razor\src\ViewPath.cs" />
+    <Compile Include="..\..\Mvc.RazorPages\src\ApplicationModels\PageRouteModelFactory.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SharedSourceRoot)Obsoletions.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="targets\$(PackageId).targets" Pack="true" PackagePath="build\$(DefaultNetCoreTargetFramework)\$(PackageId).targets" />
+    <None Include="targets\$(PackageId).targets" Pack="true" PackagePath="buildTransitive\$(DefaultNetCoreTargetFramework)\$(PackageId).targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" Key="$(MoqPublicKey)" />
+  </ItemGroup>
+</Project>
+
+fa3ccbed37d56f059848fd57c8aa8d6592508e57 blob 828
+# MVC contributor guidance
+
+## Test organization
+
+- Keep unit tests under each product project's `test/` directory. MVC generally uses singular `.Test` project names; preserve each project's exact existing name rather than deriving or normalizing it.
+- Use `src/Mvc/test/Mvc.FunctionalTests` for hosted HTTP behavior and `src/Mvc/test/Mvc.IntegrationTests` for MVC's established model-binding and validation integration scenarios.
+- Reuse the application and fixture that own the functional scenario. Most functional test applications live under `src/Mvc/test/WebSites`; add a new site only when an existing one cannot represent the scenario clearly.
+- Put helpers shared across MVC test projects in the existing `src/Mvc/shared` project that matches their responsibility; keep project-specific helpers with their test project.
+

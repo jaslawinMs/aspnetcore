@@ -1,0 +1,45 @@
+commit 887c7b32d9d6efa0c484350db4ebfe7d46ca7870
+Author:     Safia Abdalla <safia@microsoft.com>
+AuthorDate: Thu May 18 18:40:41 2023 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu May 18 18:40:41 2023 -0700
+
+    Change incorrect usage of ArgumentNullException (#48243)
+    
+    * Change incorrect usage of ArgumentNullException
+    
+    * Fix tests
+    
+    * Split exception
+    
+    * Try using shared source
+    
+    * Fix argument helpers for netstandard and netfx
+    
+    * Address feedback from review
+    
+    * Fix nullability attributes in shared helpers
+    
+    * Fix null or empty check for netfx and netstandard
+    
+    * Use EmptyString again for checks
+    
+    * Update check again
+    
+    ---------
+    
+    Co-authored-by: mla-alm <mla@specialisterne.com>
+
+diff --git a/src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs b/src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs
+index 3eb30c46df..e6ec5f79f5 100644
+--- a/src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs
++++ b/src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs
+@@ -15,7 +15,7 @@ public class UserClaimsPrincipalFactoryTest
+         var userManager = MockHelpers.MockUserManager<PocoUser>().Object;
+         var roleManager = MockHelpers.MockRoleManager<PocoRole>().Object;
+         var options = new Mock<IOptions<IdentityOptions>>();
+-        Assert.Throws<ArgumentNullException>("optionsAccessor",
++        Assert.Throws<ArgumentException>("optionsAccessor",
+             () => new UserClaimsPrincipalFactory<PocoUser, PocoRole>(userManager, roleManager, options.Object));
+         var identityOptions = new IdentityOptions();
+         options.Setup(a => a.Value).Returns(identityOptions);

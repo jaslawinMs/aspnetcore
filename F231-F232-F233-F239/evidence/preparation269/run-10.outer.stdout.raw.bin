@@ -1,0 +1,62 @@
+=== Default inherited normalization symbol source file names (decoded display only; original bytes retained) ===
+1: d3483989953ae3cccd773aea5ea04cb0c7198531:src/Mvc/Mvc.Razor.RuntimeCompilation/src/FileProviderRazorProjectFileSystem.cs
+2: d3483989953ae3cccd773aea5ea04cb0c7198531:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs
+3: 
+=== runs\run-03\command-01\instruction-00.raw.bin (decoded display only; original bytes retained) ===
+55: ### Resource lifetime, disposal, and I/O
+56: 
+57: - Types owning streams, file watchers, pooled buffers, processes, temporary artifacts, native handles, subscriptions, or listeners must make ownership explicit and release deterministically on success, failure, replacement, and cancellation paths.
+58: - Implement `IDisposable`, `IAsyncDisposable`, `SafeHandle`, or try/finally according to the resource owned; do not hide cleanup in unrelated lifecycle methods.
+59: - APIs that start registrations, watches, listeners, or background work must prevent repeated starts from leaking prior instances and define whether the caller or callee owns disposal.
+60: - Use `IFileProvider` for virtual/read-only file access, plus path APIs and platform helpers instead of hard-coded separators, working-directory assumptions, or string concatenation; use `System.IO` or explicit writable abstractions when code must create, write, move, or delete files.
+61: - Treat files, directories, generated outputs, and tool inputs as race-prone: they can be missing, locked, replaced, case-sensitive, URI-shaped, or deleted between an existence check and use.
+62: 
+63: ### Thread-safety, shared state, and lazy initialization
+64: 
+65: - Protect shared mutable state with locks, immutable snapshots, concurrent collections, or one-time initialization that preserves the invariant, not just individual operations.
+66: - Document thread-safety guarantees for caches, options snapshots, pools, file providers, analyzers, and shared singleton services when callers can access them concurrently.
+67: - Do not dispose or null shared `CancellationTokenSource`, watcher, logger, cache, or pooled state while callbacks or lazy work may still observe it; cancel first and coordinate completion.
+68: - Keep lock scopes readable; avoid callbacks, logging fan-out, async continuations, or service resolution while holding a lock unless the reentrancy and deadlock behavior is intentional.
+69: - Use immutable or readonly fields for configuration and shared dependencies after construction; mutable static state needs a concurrency and test-isolation reason.
+70: 
+71: ### Options, configuration, and dependency injection
+72: 
+73: - Use `IConfiguration`, options, and DI for configurable behavior; avoid hard-coded values, environment-specific branches, hidden mutable/environmental static dependencies, or service locators in product APIs, while allowing established factories and BCL shared pools such as `ObjectPool.Create<T>` and `ArrayPool<T>.Shared` when ownership and lifetime semantics are clear.
+74: - Keep configuration keys, option names, defaults, environment-variable mappings, generated element IDs, and casing stable across providers, and document them when users can depend on them.
+75: - Add configuration knobs only for demonstrated scenarios; choose safe defaults and validate options early enough that failures point to the invalid setting.
+76: - Match DI lifetimes to the dependencies they capture; use idempotent `TryAdd`/`TryAddEnumerable` registration when repeated calls should compose with user services.
+77: - Keep compile-time and runtime configuration distinct: MSBuild properties, runtime host configuration, package metadata, and user options must not drift or leak into the wrong layer.
+78: 
+79: ### Diagnostics, logging, exceptions, and tool output
+80: 
+81: - Throw specific exceptions with contextual messages for invalid input, unsupported states, timeouts, external command failures, and configuration errors; catch only exceptions you can handle or enrich.
+82: - For a new or broadened catch, distinguish the original operation failure from secondary failures in logging, cleanup, callbacks, or recovery. Trace what each catch observes, preserves, propagates, or silently loses. Preserving the original error does not by itself justify suppressing a secondary failure; verify the target contract for expected or best-effort handling. A PR-added test establishes implementation intent, not independent authority for that policy. Do not treat every empty catch as a defect: when a reachable failure is newly suppressed but the required policy is unestablished, return the concrete changed edge, observable effect, and missing contract as unresolved rather than LGTM or a proven defect.
+83: - Keep diagnostics actionable — include the invalid value, path, key, package, tool, timeout, or operation where useful — without leaking sensitive data or stack traces in normal output.
+84: - Use structured `ILogger`, EventSource, analyzer diagnostics, and console output at levels matching success, warning, failure, and verbose detail; do not add noisy hot-path logs.
+85: - For tools and scripts, separate normal output from diagnostics, preserve readable ordering under parallel execution, handle no-op cases gracefully, and suppress presentation features when output is redirected.
+86: - Analyzer diagnostics need stable IDs, clear messages, help links, generated-code suppression where appropriate, and tests that verify locations and examples.
+87: 
+88: ### Trust boundaries, security, and sensitive data
+89: 
+90: - Treat file-provider inputs, physical paths, generated outputs, and tool/configuration values as untrusted at boundaries; normalize and validate roots before opening files so traversal, symlink escape, URI confusion, or provider mismatch cannot bypass the intended scope.
+91: - Construct process, script, MSBuild, and external tool invocations with argument lists, response files, and repository helpers; do not concatenate untrusted values into shell commands, script fragments, or properties where command/process injection or quoting bugs can change behavior.
+92: - Redact secrets, connection strings, tokens, user secrets, credentials, sensitive environment values, and unnecessary local paths from logs, exceptions, diagnostics, generated files, and test artifacts.
+93: - Keep security-sensitive defaults fail-closed and preserve validation at trust boundaries even when the changed path is primarily configuration, templates, tests, or tooling.
+94: 
+95: ### Localization, text, paths, and cross-platform behavior
+96: 
+97: - Externalize user-facing strings through resource/localization infrastructure and keep culture, UI culture, fallback, satellite-assembly, and formatting behavior explicit.
+98: - Use culture-aware or ordinal string APIs per the contract; avoid locale-specific assumptions in identifiers, paths, configuration keys, analyzer comparisons, and persisted values.
+99: - Handle text encoding, line endings, and persisted or protocol output deliberately, using canonical repo/protocol formatting instead of platform defaults when tools consume the output.
+100: - Detect operating system, architecture, target framework, SDK, and host capabilities through supported APIs or MSBuild metadata; avoid hard-coded platform configuration or unsupported path assumptions.
+101: - Keep platform-specific tests explicit with platform skip conditions, queue conditions, and separate scenarios rather than burying incompatible behavior in conditional test bodies.
+102: 
+103: ### Analyzers, reflection, source generation, trimming, and AOT
+104: 
+105: - Analyzer logic may stay syntax-only when syntax fully proves the diagnostic; add semantic models, symbols, and related or multiple locations only when needed for correctness, symbol identity, partial declarations, or actionable fixes, and avoid false positives in generated code.
+106: - Cache repeated Roslyn symbol, type, and syntax lookups; combine tree traversal with diagnostic construction when it avoids redundant reflection or compilation work.
+107: - Keep analyzer and code-fix packaging lean; avoid heavy workspace dependencies in analyzer assemblies unless necessary for the shipped scenario.
+108: - Prefer explicit reflection lookups, generic constraints, source-generated metadata, and annotated APIs over broad reflection scans that are fragile under trimming or AOT.
+109: - For shared-framework or template changes whose behavior depends on metadata availability, use the repository's [publish-time trimming and Native AOT validation procedure](Trimming.md#validate-trimming-behavior), including source-generated metadata paths.
+110: 
+{"root":{"pid":9836,"creationFileTime100ns":134397076953730766,"observedUtc":"2026-11-21T04:08:15.9420676Z","creationUtc":"2026-11-21T04:08:15.3730766Z"},"observer":{"pid":32816,"creationFileTime100ns":134397076962504122,"observedUtc":"2026-11-21T04:08:16.2629952Z","creationUtc":"2026-11-21T04:08:16.2504122Z"},"wholeLogicalFileCounts":{"Original":14,"Default":14},"run":"run-10","failure":null,"gitGhRoots":22,"observerExitCode":0}

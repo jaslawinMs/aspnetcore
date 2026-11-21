@@ -1,0 +1,239 @@
+=== src\Mvc\AGENTS.md (decoded display only; original bytes retained) ===
+1: # MVC contributor guidance
+2: 
+3: ## Test organization
+4: 
+5: - Keep unit tests under each product project's `test/` directory. MVC generally uses singular `.Test` project names; preserve each project's exact existing name rather than deriving or normalizing it.
+6: - Use `src/Mvc/test/Mvc.FunctionalTests` for hosted HTTP behavior and `src/Mvc/test/Mvc.IntegrationTests` for MVC's established model-binding and validation integration scenarios.
+7: - Reuse the application and fixture that own the functional scenario. Most functional test applications live under `src/Mvc/test/WebSites`; add a new site only when an existing one cannot represent the scenario clearly.
+8: - Put helpers shared across MVC test projects in the existing `src/Mvc/shared` project that matches their responsibility; keep project-specific helpers with their test project.
+9: 
+=== .github\instructions\cross-cutting-guidance.instructions.md (decoded display only; original bytes retained) ===
+1: ---
+2: description: Shared cross-cutting guidance for source contributors
+3: applyTo: "src/**"
+4: ---
+5: 
+6: For source work, consult the relevant sections of the
+7: [cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+8: Use it as reference material within the requested task and existing area instructions.
+9: 
+=== Fresh upstream repository default branch metadata (decoded display only; original bytes retained) ===
+1: {"default_branch":"main","full_name":"dotnet/aspnetcore","pushed_at":"2026-11-21T02:03:48Z"}
+2: 
+=== Original runtime compilation file names and tracked ancestor guidance (decoded display only; original bytes retained) ===
+1: src/Mvc/AGENTS.md
+2: src/Mvc/Mvc.Razor.RuntimeCompilation/src/AssemblyPartExtensions.cs
+3: src/Mvc/Mvc.Razor.RuntimeCompilation/src/CSharpCompiler.cs
+4: src/Mvc/Mvc.Razor.RuntimeCompilation/src/ChecksumValidator.cs
+5: src/Mvc/Mvc.Razor.RuntimeCompilation/src/CompilationFailedException.cs
+6: src/Mvc/Mvc.Razor.RuntimeCompilation/src/CompilationFailedExceptionFactory.cs
+7: src/Mvc/Mvc.Razor.RuntimeCompilation/src/DependencyInjection/MvcRazorRuntimeCompilationOptionsSetup.cs
+8: src/Mvc/Mvc.Razor.RuntimeCompilation/src/DependencyInjection/RazorRuntimeCompilationMvcBuilderExtensions.cs
+9: src/Mvc/Mvc.Razor.RuntimeCompilation/src/DependencyInjection/RazorRuntimeCompilationMvcCoreBuilderExtensions.cs
+10: src/Mvc/Mvc.Razor.RuntimeCompilation/src/FileProviderRazorProjectFileSystem.cs
+11: src/Mvc/Mvc.Razor.RuntimeCompilation/src/FileProviderRazorProjectItem.cs
+12: src/Mvc/Mvc.Razor.RuntimeCompilation/src/LazyMetadataReferenceFeature.cs
+13: src/Mvc/Mvc.Razor.RuntimeCompilation/src/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.csproj
+14: src/Mvc/Mvc.Razor.RuntimeCompilation/src/MvcRazorRuntimeCompilationOptions.cs
+15: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PACKAGE.md
+16: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PageActionDescriptorChangeProvider.cs
+17: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PageDirectiveFeature.cs
+18: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PageLoaderMatcherPolicy.cs
+19: src/Mvc/Mvc.Razor.RuntimeCompilation/src/Properties/AssemblyInfo.cs
+20: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PublicAPI.Shipped.txt
+21: src/Mvc/Mvc.Razor.RuntimeCompilation/src/PublicAPI.Unshipped.txt
+22: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RazorProjectPageRouteModelProvider.cs
+23: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RazorReferenceManager.cs
+24: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RazorRuntimeCompilationHostingStartup.cs
+25: src/Mvc/Mvc.Razor.RuntimeCompilation/src/Resources.resx
+26: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeCompilationFileProvider.cs
+27: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompiler.cs
+28: src/Mvc/Mvc.Razor.RuntimeCompilation/src/RuntimeViewCompilerProvider.cs
+29: src/Mvc/Mvc.Razor.RuntimeCompilation/src/targets/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.targets
+30: src/Mvc/Mvc.Razor.RuntimeCompilation/test/AssemblyPartExtensionTest.cs
+31: src/Mvc/Mvc.Razor.RuntimeCompilation/test/CSharpCompilerTest.cs
+32: src/Mvc/Mvc.Razor.RuntimeCompilation/test/ChecksumValidatorTest.cs
+33: src/Mvc/Mvc.Razor.RuntimeCompilation/test/CompilerFailedExceptionFactoryTest.cs
+34: src/Mvc/Mvc.Razor.RuntimeCompilation/test/DependencyInjection/RazorRuntimeCompilationMvcCoreBuilderExtensionsTest.cs
+35: src/Mvc/Mvc.Razor.RuntimeCompilation/test/FileProviderRazorProjectFileSystemTest.cs
+36: src/Mvc/Mvc.Razor.RuntimeCompilation/test/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test.csproj
+37: src/Mvc/Mvc.Razor.RuntimeCompilation/test/PageLoaderMatcherPolicyTest.cs
+38: src/Mvc/Mvc.Razor.RuntimeCompilation/test/RazorReferenceManagerTest.cs
+39: src/Mvc/Mvc.Razor.RuntimeCompilation/test/RuntimeCompilationFileProviderTest.cs
+40: src/Mvc/Mvc.Razor.RuntimeCompilation/test/RuntimeViewCompilerTest.cs
+41: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs
+42: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/FileNode.cs
+43: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/NotFoundProjectItem.cs
+44: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/TestRazorProjectItem.cs
+45: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/TestRazorReferenceManager.cs
+46: src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs
+47: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs (decoded display only; original bytes retained) ===
+1: ﻿// Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Diagnostics;
+5: 
+6: namespace Microsoft.AspNetCore.Razor.Language;
+7: 
+8: // Internal for testing
+9: [DebuggerDisplay("{Path}")]
+10: internal class DirectoryNode
+11: {
+12:     public DirectoryNode(string path)
+13:     {
+14:         Path = path;
+15:     }
+16: 
+17:     public string Path { get; }
+18: 
+19:     public List<DirectoryNode> Directories { get; } = new List<DirectoryNode>();
+20: 
+21:     public List<FileNode> Files { get; } = new List<FileNode>();
+22: 
+23:     public void AddFile(FileNode fileNode)
+24:     {
+25:         var filePath = fileNode.Path;
+26:         if (!filePath.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+27:         {
+28:             throw new InvalidOperationException($"File {fileNode.Path} does not belong to {Path}.");
+29:         }
+30: 
+31:         // Look for the first / that appears in the path after the current directory path.
+32:         var directoryPath = GetDirectoryPath(filePath);
+33:         var directory = GetOrAddDirectory(this, directoryPath, createIfNotExists: true);
+34:         Debug.Assert(directory != null);
+35:         directory.Files.Add(fileNode);
+36:         fileNode.Directory = directory;
+37:     }
+38: 
+39:     public DirectoryNode GetDirectory(string path)
+40:     {
+41:         if (!path.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+42:         {
+43:             throw new InvalidOperationException($"File {path} does not belong to {Path}.");
+44:         }
+45: 
+46:         return GetOrAddDirectory(this, path);
+47:     }
+48: 
+49:     public IEnumerable<RazorProjectItem> EnumerateItems()
+50:     {
+51:         foreach (var file in Files)
+52:         {
+53:             yield return file.ProjectItem;
+54:         }
+55: 
+56:         foreach (var directory in Directories)
+57:         {
+58:             foreach (var file in directory.EnumerateItems())
+59:             {
+60:                 yield return file;
+61:             }
+62:         }
+63:     }
+64: 
+65:     public RazorProjectItem GetItem(string path)
+66:     {
+67:         if (!path.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+68:         {
+69:             throw new InvalidOperationException($"File {path} does not belong to {Path}.");
+70:         }
+71: 
+72:         var directoryPath = GetDirectoryPath(path);
+73:         var directory = GetOrAddDirectory(this, directoryPath);
+74:         if (directory == null)
+75:         {
+76:             return new NotFoundProjectItem("/", path);
+77:         }
+78: 
+79:         foreach (var file in directory.Files)
+80:         {
+81:             var filePath = file.Path;
+82:             var directoryLength = directory.Path.Length;
+83: 
+84:             // path, filePath -> /Views/Home/Index.cshtml
+85:             // directory.Path -> /Views/Home/
+86:             // We only need to match the file name portion since we've already matched the directory segment.
+87:             if (string.Compare(path, directoryLength, filePath, directoryLength, path.Length - directoryLength, StringComparison.OrdinalIgnoreCase) == 0)
+88:             {
+89:                 return file.ProjectItem;
+90:             }
+91:         }
+92: 
+93:         return new NotFoundProjectItem("/", path);
+94:     }
+95: 
+96:     private static string GetDirectoryPath(string path)
+97:     {
+98:         // /dir1/dir2/file.cshtml -> /dir1/dir2/
+99:         var fileNameIndex = path.LastIndexOf('/');
+100:         if (fileNameIndex == -1)
+101:         {
+102:             return path;
+103:         }
+104: 
+105:         return path.Substring(0, fileNameIndex + 1);
+106:     }
+107: 
+108:     private static DirectoryNode GetOrAddDirectory(
+109:         DirectoryNode directory,
+110:         string path,
+111:         bool createIfNotExists = false)
+112:     {
+113:         Debug.Assert(!string.IsNullOrEmpty(path));
+114:         if (path[path.Length - 1] != '/')
+115:         {
+116:             path += '/';
+117:         }
+118: 
+119:         int index;
+120:         while ((index = path.IndexOf('/', directory.Path.Length)) != -1 && index != path.Length)
+121:         {
+122:             var subDirectory = FindSubDirectory(directory, path);
+123: 
+124:             if (subDirectory == null)
+125:             {
+126:                 if (createIfNotExists)
+127:                 {
+128:                     var directoryPath = path.Substring(0, index + 1); // + 1 to include trailing slash
+129:                     subDirectory = new DirectoryNode(directoryPath);
+130:                     directory.Directories.Add(subDirectory);
+131:                 }
+132:                 else
+133:                 {
+134:                     return null;
+135:                 }
+136:             }
+137: 
+138:             directory = subDirectory;
+139:         }
+140: 
+141:         return directory;
+142:     }
+143: 
+144:     private static DirectoryNode FindSubDirectory(DirectoryNode parentDirectory, string path)
+145:     {
+146:         for (var i = 0; i < parentDirectory.Directories.Count; i++)
+147:         {
+148:             // ParentDirectory.Path -> /Views/Home/
+149:             // CurrentDirectory.Path -> /Views/Home/SubDir/
+150:             // Path -> /Views/Home/SubDir/MorePath/File.cshtml
+151:             // Each invocation of FindSubDirectory returns the immediate subdirectory along the path to the file.
+152: 
+153:             var currentDirectory = parentDirectory.Directories[i];
+154:             var directoryPath = currentDirectory.Path;
+155:             var startIndex = parentDirectory.Path.Length;
+156: 
+157:             if (string.Compare(path, startIndex, directoryPath, startIndex, directoryPath.Length - startIndex, StringComparison.OrdinalIgnoreCase) == 0)
+158:             {
+159:                 return currentDirectory;
+160:             }
+161:         }
+162: 
+163:         return null;
+164:     }
+165: }
+166: 
+{"run":"run-02","failure":null,"observer":{"creationUtc":"2026-11-21T04:01:20.5197910Z","pid":31432,"observedUtc":"2026-11-21T04:01:20.5311600Z","creationFileTime100ns":134397072805197910},"observerExitCode":0,"wholeLogicalFileCounts":{"Original":3,"Default":2},"gitGhRoots":3,"root":{"creationUtc":"2026-11-21T04:01:19.6263205Z","pid":51716,"observedUtc":"2026-11-21T04:01:20.2334139Z","creationFileTime100ns":134397072796263205}}

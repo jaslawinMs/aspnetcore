@@ -1,0 +1,140 @@
+{
+  "ownerId": "ed471f5e-c998-47a0-a617-4b6bcd83121b",
+  "scope": "267 SOURCE ONLY",
+  "findingIds": ["F231", "F232", "F233"],
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "DefaultBranch": "main",
+    "upstream": "dotnet/aspnetcore",
+    "freshDiscovery": "discovery-267.json",
+    "freshQualificationRecheck": [
+      "roots\\21-qualification-upstream-default-branch-recheck.stdout.bin",
+      "roots\\22-qualification-upstream-default-commit-recheck.stdout.bin"
+    ],
+    "reservedNavigationObjectstoreHeadNotASourceRole": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "wholeBindings": "WHOLE-ROLE-BINDINGS-267.json",
+    "comparison": "The target test, factory, options, real shared mock/model fixtures, manager sources, project, and cross-cutting guidance have identical whole Git blobs in Original and Default. Only the captured root copilot instruction document differs; both versions were read."
+  },
+  "overallSourceDecision": "bounded-source-only-no-material-candidate",
+  "decisionMeaning": "The nested predicate-Any membership scans are genuinely present. The actual retained fixture has two expected claims per site, only twelve declared theory rows, one real factory creation per row, and source-derived claim additions of 2 through 11. No concrete material elapsed/resource cost was observed or established from this source gate. No candidate is recommended. This is neither a measured no-gain result nor a false-positive or duplicate disposition, and it does not complete or alter any canonical campaign finding.",
+  "realWorkload": {
+    "test": "Microsoft.AspNetCore.Identity.Test.UserClaimsPrincipalFactoryTest.EnsureClaimsIdentityHasExpectedClaims",
+    "project": "src/Identity/test/Identity.Test/Microsoft.AspNetCore.Identity.Test.csproj",
+    "projectBoundary": "The project compiles Identity shared test sources through IdentityTestSharedSourceRoot. The csproj names DefaultNetCoreTargetFramework; campaign metadata reports net12.0, but effective MSBuild imports/TFM/runtime/SDK were not evaluated.",
+    "targetEvidence": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs:28-115 in both bound roles",
+    "producerEvidence": "src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs:54-96,134-155 in both bound roles",
+    "helperEvidence": "src/Identity/test/Shared/MockHelpers.cs:17-46; src/Identity/test/Shared/PocoModel/PocoUser.cs; src/Identity/test/Shared/PocoModel/PocoRole.cs",
+    "boundary": "The declared test calls the real factory.CreateAsync(user), not an isolated Any/Contains helper. The factory's manager retrieval/capability calls are Moq setups returning the literal arrays; no real backing-store, HTTP, app, or large user database producer supplies these retained scans. The Poco user/role navigation collections start empty and are not the source of the configured returned arrays.",
+    "user": "One PocoUser per row, UserName Foo, Email foo@bar.com; PocoUser's constructor supplies a Guid-derived string ID.",
+    "roleNames": ["Admin", "Local"],
+    "expectedArrayCardinality": {"userClaims": 2, "adminClaims": 2, "localClaims": 2},
+    "expectedPairs": {
+      "F231": [["Whatever", "Value"], ["Whatever2", "Value2"]],
+      "F232": [["AdminClaim1", "Value1"], ["AdminClaim2", "Value2"]],
+      "F233": [["LocalClaim1", "Value1"], ["LocalClaim2", "Value2"]]
+    },
+    "sourceDerivedAdditionFormula": "2 + E + 2*C + R*(2 + 4*RC), under the declared ordinary-mock/default-false stamp-capability assumption",
+    "declaredAdditionCountsByExistingRow": [4, 6, 8, 10, 3, 5, 2, 4, 5, 7, 9, 11],
+    "sourceAssumption": "SupportsUserSecurityStamp is an unconfigured virtual bool on an ordinary Mock<UserManager<T>> with no CallBase or stamp setup in the helper/target. Its standard default is false; the helper's IUserStore-only backing store would also fail the base manager's capability interface check. This source inference was not runtime-tested.",
+    "frequency": "One factory.CreateAsync(user), one identity.Claims.ToList(), then the three two-element loops per declared row. If producer and prior assertions complete, each finding issues 24 membership queries across one full twelve-row matrix. No repeated workload or surrounding stress loop exists in this whole target. Actual runner discovery, executed rows, CI repeats, suite-wide frequency, and wall time remain unobserved.",
+    "sourceDerivedNotMeasuredBound": "At most 22 predicate visits per site per declared row and a coarse summed full-scan bound of 148 per site over the declared matrix, conditional on preceding completion and the fixture assumptions. This is arithmetic over source cardinalities, not a simulated membership workload or an observed comparison/latency/allocation/savings result; Any can stop earlier.",
+    "staticAnalysis": "STATIC-SOURCE-ANALYSIS-267.json"
+  },
+  "contracts": {
+    "typesAndMaterialization": "Each expected collection is a two-element Claim[]. The scanned claims collection is a List<Claim>, created once by identity.Claims.ToList() before all three sites. The factory creates a new ClaimsIdentity and ClaimsPrincipal for each call; there is no shared lookup/index/cache in these sites.",
+    "equality": "Each predicate compares c.Type == cl.Type && c.Value == cl.Value: case-sensitive ordinal string equality on both strings, Type first with && short-circuiting. It does not compare Claim object/reference identity and ignores issuer, original issuer, value type, subject, and claim properties. No Contains(Claim), ClaimsIdentity.HasClaim, case-normalized key, or reference-based equivalence may be substituted as an assumed contract.",
+    "values": "All six expected type/value pairs are non-null literal Claim constructions. Admin and Local reuse Value1/Value2 but have different claim types; the pair, not value alone, identifies membership. User name, email and user ID are separate claims and do not inflate these expected arrays.",
+    "order": "The source adds base ID/name, optional email/stamp, optional user claims, then the supplied roles in Admin/Local order, adding each role-name claim before that role's optional claims. The assertions ask membership, not collection order, but Any is first-match/short-circuiting and assertion failure ordering is user claims, admin claims, then local claims. The three source loops are distinct occurrences.",
+    "duplicates": "The six explicit expected pairs are distinct. These Any assertions are existential, not multiset equality or exact claim-count assertions: extra matching duplicates would not fail a membership query. The factory does not introduce deduplication at these AddClaim/AddClaims call sites. No deduplication or assertion-strength change is proposed.",
+    "supportGates": "User claims are added only when SupportsUserClaim; role names only when SupportsUserRole; admin/local claims require role support plus SupportsRoleClaims and a non-null role lookup. In the actual twelve rows, supportRoleClaims=true always has supportRoles=true. The four supportRoles=false/supportRoleClaims=true Boolean combinations are not declared tests and were not invented or characterized as passing.",
+    "exceptionsAndFailureOrder": "The factory checks null user in CreateAsync and validates manager/options constructor inputs; the existing CreateIdentityNullChecks Fact covers optionsAccessor ArgumentException and user ArgumentNullException in source. Manager/base-store getters include disposed/unsupported-store/null checks, but the selected test mocks the retrievals: their real bodies are not asserted to run. Awaited producer/lookup failures would stop before these loops; a membership mismatch would stop at that Assert.Equal before later iterations/loops/VerifyAll. Eager alternate materialization or new assertions could change evaluation, exception or message boundaries, and none was authored.",
+    "noExtraCoverageClaim": "Mixed-case, duplicate, null-claim, custom issuer/value-type, arbitrary role-count/claim-count, custom factory subclass, full sixteen-row matrix and framework/runtime implementation behavior were not executed or independently source-qualified."
+  },
+  "findings": [
+    {
+      "id": "F231",
+      "card": "linear-contains-inside-loop",
+      "sourceSite": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs:102-105",
+      "predicateLine": 104,
+      "producer": "userClaims literals at line 61; GetClaimsAsync(user) setup at lines 62-65; real base GenerateClaimsAsync user-claim AddClaims branch",
+      "supportExpectation": "supportClaims",
+      "declaredPositiveRows": 6,
+      "declaredNegativeRows": 6,
+      "expectedItemsPerRow": 2,
+      "sourcePatternPresentInBothRoles": true,
+      "decision": "bounded-source-only-no-material-candidate",
+      "reason": "The user-claim membership scan is real, but this producer supplies exactly two expected user claims and a bounded 2..11-claim declared identity, once per existing row. No genuine larger retained workload, material suite repetition, or concrete material cost was established. Test location alone is not the reason.",
+      "notMeasuredNoGain": true,
+      "notFalsePositive": true,
+      "notDeduplicated": true,
+      "candidateAuthored": false,
+      "canonicalOuterStatusRemains": "pending"
+    },
+    {
+      "id": "F232",
+      "card": "linear-contains-inside-loop",
+      "sourceSite": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs:106-109",
+      "predicateLine": 108,
+      "producer": "adminClaims literals at line 70; Admin lookup/GetClaimsAsync(admin) setups at lines 74,76; real derived GenerateClaimsAsync Admin role branch",
+      "supportExpectation": "supportRoleClaims",
+      "declaredPositiveRows": 4,
+      "declaredNegativeRows": 8,
+      "expectedItemsPerRow": 2,
+      "sourcePatternPresentInBothRoles": true,
+      "decision": "bounded-source-only-no-material-candidate",
+      "reason": "The Admin-role scan is a distinct retained occurrence with its own literal pair and role lookup. There are only two expected admin claims and four positive/eight negative declared rows over the same bounded identity. No concrete material cost or larger real retained producer was established. This is not a duplicate of F231 or F233 and not a test-location-only rejection.",
+      "notMeasuredNoGain": true,
+      "notFalsePositive": true,
+      "notDeduplicated": true,
+      "candidateAuthored": false,
+      "canonicalOuterStatusRemains": "pending"
+    },
+    {
+      "id": "F233",
+      "card": "linear-contains-inside-loop",
+      "sourceSite": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs:110-113",
+      "predicateLine": 112,
+      "producer": "localClaims literals at line 71; Local lookup/GetClaimsAsync(local) setups at lines 75,77; real derived GenerateClaimsAsync Local role branch",
+      "supportExpectation": "supportRoleClaims",
+      "declaredPositiveRows": 4,
+      "declaredNegativeRows": 8,
+      "expectedItemsPerRow": 2,
+      "sourcePatternPresentInBothRoles": true,
+      "decision": "bounded-source-only-no-material-candidate",
+      "reason": "The Local-role scan follows Admin assertions but has a separate role object, setup, expected pair, and source occurrence. Even though Local-role additions occur later in construction, the real fixture still has only two expected local claims and at most eleven declared claims. No concrete material cost was established. It is not merged with either other finding.",
+      "notMeasuredNoGain": true,
+      "notFalsePositive": true,
+      "notDeduplicated": true,
+      "candidateAuthored": false,
+      "canonicalOuterStatusRemains": "pending"
+    }
+  ],
+  "historyAndGuidance": {
+    "boundedHistory": "roots\\14-original-target-producer-history.stdout.bin through roots\\20-producer-last-change-diff.stdout.bin, with source-root receipts and exact argv",
+    "lastTargetAndFactoryChange": "887c7b32d9d6efa0c484350db4ebfe7d46ca7870, 2023-05-18, Change incorrect usage of ArgumentNullException (#48243). The captured last-change patches adjust optionsAccessor exception handling/test expectation, not the retained loops, literal input sizes or producer claim branches.",
+    "historyLimit": "At most five recent path-limited commits for the grouped target/producer/helper trace, four target-specific commits, and one last-change patch for target and producer. This is not an exhaustive origin or repository-wide caller inventory.",
+    "instructions": "Both root copilot instruction versions, shared src instruction pointer, and whole docs/CrossCuttingGuidance.md were read. Relevant performance guidance requires identifying actual workload/material benefit; test guidance preserves observable semantics and truthful evidence limits.",
+    "agentsInventory": "Exact immutable Git tree selectors covered root, src, Identity, test, Identity.Test, Extensions.Core/src, Shared/PocoModel and applicable doc/instruction ancestors in both roles. No AGENTS.md was returned at those selected paths. This is a bounded Git-tree inventory result, not an empty-LSP absence claim."
+  },
+  "executionAndScope": {
+    "SDKActivation": false,
+    "productNativeExecution": false,
+    "buildTestRestoreOrBrowser": false,
+    "behavioralRuntimeOrCompilationPassClaimed": false,
+    "performanceOrAllocationMeasurement": false,
+    "candidateOrSourceEdits": false,
+    "sharedOrPublicationWrites": false,
+    "remoteOrNestedAgents": false,
+    "sourceUtilityFailuresPreserved": [
+      "outer-01-discovery-tool-failure-observed.json",
+      "outer-03-04-tool-failure-observed.json",
+      "roots\\09-original-support-and-instruction-inventory.prestart-failure.json",
+      "failure-04-support-inventory.json"
+    ],
+    "failureDisposition": "The Python app-alias wrapper returned actual exit 9009 without executing its inner helper or any Git/gh source root. The second failure was null empty-stdin persistence before the ninth source process started. Executed failed helpers were not edited/replayed; original versions and failed inputs/receipts remain. Fresh corrected v3 completed the finite source work.",
+    "budget": "13 whole logical files per immutable role (shared docs counted in each); 21 actual Git/gh source processes plus one conservatively counted prestart failure = 22/32 source-root budget.",
+    "furtherWork": "No budget broadening or native plan is started or requested. Any future materiality/implementation work needs a distinct bounded authorization; no fabricated claim lists, repeated loops or isolated Contains benchmark is justified by this handoff.",
+    "campaignAuthority": "All three canonical outer statuses remain pending. Only the parent may independently accept, retire, update the ledger or publish."
+  }
+}

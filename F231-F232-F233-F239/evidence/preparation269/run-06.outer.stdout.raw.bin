@@ -1,0 +1,352 @@
+=== runs\run-04\command-05\object-01.blob.bin (decoded display only; original bytes retained) ===
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using Microsoft.AspNetCore.Razor.Hosting;
+5: using Microsoft.AspNetCore.Razor.Language;
+6: using static Microsoft.AspNetCore.Razor.Hosting.TestRazorCompiledItem;
+7: 
+8: namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+9: 
+10: public class ChecksumValidatorTest
+11: {
+12:     private VirtualRazorProjectFileSystem ProjectFileSystem { get; } = new VirtualRazorProjectFileSystem();
+13: 
+14:     [Fact]
+15:     public void IsRecompilationSupported_NoChecksumAttributes_ReturnsFalse()
+16:     {
+17:         // Arrange
+18:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[] { });
+19: 
+20:         // Act
+21:         var result = ChecksumValidator.IsRecompilationSupported(item);
+22: 
+23:         // Assert
+24:         Assert.False(result);
+25:     }
+26: 
+27:     [Fact]
+28:     public void IsRecompilationSupported_NoPrimaryChecksumAttribute_ReturnsFalse()
+29:     {
+30:         // Arrange
+31:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+32:         {
+33:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+34:         });
+35: 
+36:         // Act
+37:         var result = ChecksumValidator.IsRecompilationSupported(item);
+38: 
+39:         // Assert
+40:         Assert.False(result);
+41:     }
+42: 
+43:     [Fact]
+44:     public void IsRecompilationSupported_HasPrimaryChecksumAttribute_ReturnsTrue()
+45:     {
+46:         // Arrange
+47:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+48:         {
+49:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+50:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+51:         });
+52: 
+53:         // Act
+54:         var result = ChecksumValidator.IsRecompilationSupported(item);
+55: 
+56:         // Assert
+57:         Assert.True(result);
+58:     }
+59: 
+60:     [Fact]
+61:     public void IsItemValid_NoChecksumAttributes_ReturnsTrue()
+62:     {
+63:         // Arrange
+64:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[] { });
+65: 
+66:         // Act
+67:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+68: 
+69:         // Assert
+70:         Assert.True(result);
+71:     }
+72: 
+73:     [Fact]
+74:     public void IsItemValid_NoPrimaryChecksumAttribute_ReturnsTrue()
+75:     {
+76:         // Arrange
+77:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+78:         {
+79:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+80:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/About.cstml"),
+81:         });
+82: 
+83:         // Act
+84:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+85: 
+86:         // Assert
+87:         Assert.True(result);
+88:     }
+89: 
+90:     [Fact]
+91:     public void IsItemValid_PrimaryFileDoesNotExist_ReturnsTrue()
+92:     {
+93:         // Arrange
+94:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+95:         {
+96:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+97:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+98:         });
+99: 
+100:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "dkdkfkdf")); // This will be ignored
+101: 
+102:         // Act
+103:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+104: 
+105:         // Assert
+106:         Assert.True(result);
+107:     }
+108: 
+109:     [Fact]
+110:     public void IsItemValid_PrimaryFileExistsButDoesNotMatch_ReturnsFalse()
+111:     {
+112:         // Arrange
+113:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+114:         {
+115:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+116:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+117:         });
+118: 
+119:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "other content"));
+120: 
+121:         // Act
+122:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+123: 
+124:         // Assert
+125:         Assert.False(result);
+126:     }
+127: 
+128:     [Fact]
+129:     public void IsItemValid_ImportFileDoesNotExist_ReturnsFalse()
+130:     {
+131:         // Arrange
+132:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+133:         {
+134:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+135:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+136:         });
+137: 
+138:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+139: 
+140:         // Act
+141:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+142: 
+143:         // Assert
+144:         Assert.False(result);
+145:     }
+146: 
+147:     [Fact]
+148:     public void IsItemValid_ImportFileExistsButDoesNotMatch_ReturnsFalse()
+149:     {
+150:         // Arrange
+151:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+152:         {
+153:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+154:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+155:         });
+156: 
+157:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+158:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some other import"));
+159: 
+160:         // Act
+161:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+162: 
+163:         // Assert
+164:         Assert.False(result);
+165:     }
+166: 
+167:     [Fact]
+168:     public void IsItemValid_AllFilesMatch_ReturnsTrue()
+169:     {
+170:         // Arrange
+171:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+172:         {
+173:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some other import"), "/Views/_ViewImports.cstml"),
+174:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+175:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+176:         });
+177: 
+178:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+179:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some import"));
+180:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/_ViewImports.cstml", "some other import"));
+181: 
+182:         // Act
+183:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+184: 
+185:         // Assert
+186:         Assert.True(result);
+187:     }
+188: 
+189:     [Fact]
+190:     public void IsItemValid_AllFilesMatch_UsingSHA256_ReturnsTrue()
+191:     {
+192:         // Arrange
+193:         var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+194:         {
+195:                 new RazorSourceChecksumAttribute("SHA256", GetChecksumSHA256("some other import"), "/Views/_ViewImports.cstml"),
+196:                 new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+197:                 new RazorSourceChecksumAttribute("Sha256", GetChecksumSHA256("some content"), "/Views/Home/Index.cstml"),
+198:         });
+199: 
+200:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+201:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some import"));
+202:         ProjectFileSystem.Add(new TestRazorProjectItem("/Views/_ViewImports.cstml", "some other import"));
+203: 
+204:         // Act
+205:         var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+206: 
+207:         // Assert
+208:         Assert.True(result);
+209:     }
+210: }
+211: 
+=== runs\run-04\command-05\object-03.blob.bin (decoded display only; original bytes retained) ===
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Globalization;
+5: using System.Linq;
+6: using System.Security.Cryptography;
+7: using Microsoft.AspNetCore.Razor.Hosting;
+8: using Microsoft.AspNetCore.Razor.Language;
+9: 
+10: namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+11: 
+12: internal static class ChecksumValidator
+13: {
+14:     public static bool IsRecompilationSupported(RazorCompiledItem item)
+15:     {
+16:         ArgumentNullException.ThrowIfNull(item);
+17: 
+18:         // A Razor item only supports recompilation if its primary source file has a checksum.
+19:         //
+20:         // Other files (view imports) may or may not have existed at the time of compilation,
+21:         // so we may not have checksums for them.
+22:         var checksums = item.GetChecksumMetadata();
+23:         return checksums.Any(c => string.Equals(item.Identifier, c.Identifier, StringComparison.OrdinalIgnoreCase));
+24:     }
+25: 
+26:     // Validates that we can use an existing precompiled view by comparing checksums with files on
+27:     // disk.
+28:     public static bool IsItemValid(RazorProjectFileSystem fileSystem, RazorCompiledItem item)
+29:     {
+30:         ArgumentNullException.ThrowIfNull(fileSystem);
+31:         ArgumentNullException.ThrowIfNull(item);
+32: 
+33:         var checksums = item.GetChecksumMetadata();
+34: 
+35:         // The checksum that matches 'Item.Identity' in this list is significant. That represents the main file.
+36:         //
+37:         // We don't really care about the validation unless the main file exists. This is because we expect
+38:         // most sites to have some _ViewImports in common location. That means that in the case you're
+39:         // using views from a 3rd party library, you'll always have **some** conflicts.
+40:         //
+41:         // The presence of the main file with the same content is a very strong signal that you're in a
+42:         // development scenario.
+43:         var primaryChecksum = checksums
+44:             .FirstOrDefault(c => string.Equals(item.Identifier, c.Identifier, StringComparison.OrdinalIgnoreCase));
+45:         if (primaryChecksum == null)
+46:         {
+47:             // No primary checksum, assume valid.
+48:             return true;
+49:         }
+50: 
+51:         var projectItem = fileSystem.GetItem(primaryChecksum.Identifier, fileKind: null);
+52:         if (!projectItem.Exists)
+53:         {
+54:             // Main file doesn't exist - assume valid.
+55:             return true;
+56:         }
+57: 
+58:         var sourceDocumentChecksum = ComputeChecksum(projectItem, primaryChecksum.ChecksumAlgorithm);
+59:         if (!string.Equals(sourceDocumentChecksum.algorithm, primaryChecksum.ChecksumAlgorithm, StringComparison.OrdinalIgnoreCase) ||
+60:             !ChecksumsEqual(primaryChecksum.Checksum, sourceDocumentChecksum.checksum))
+61:         {
+62:             // Main file exists, but checksums not equal.
+63:             return false;
+64:         }
+65: 
+66:         for (var i = 0; i < checksums.Count; i++)
+67:         {
+68:             var checksum = checksums[i];
+69:             if (string.Equals(item.Identifier, checksum.Identifier, StringComparison.OrdinalIgnoreCase))
+70:             {
+71:                 // Ignore primary checksum on this pass.
+72:                 continue;
+73:             }
+74: 
+75:             var importItem = fileSystem.GetItem(checksum.Identifier, fileKind: null);
+76:             if (!importItem.Exists)
+77:             {
+78:                 // Import file doesn't exist - assume invalid.
+79:                 return false;
+80:             }
+81: 
+82:             sourceDocumentChecksum = ComputeChecksum(importItem, checksum.ChecksumAlgorithm);
+83:             if (!string.Equals(sourceDocumentChecksum.algorithm, checksum.ChecksumAlgorithm, StringComparison.OrdinalIgnoreCase) ||
+84:                 !ChecksumsEqual(checksum.Checksum, sourceDocumentChecksum.checksum))
+85:             {
+86:                 // Import file exists, but checksums not equal.
+87:                 return false;
+88:             }
+89:         }
+90: 
+91:         return true;
+92:     }
+93: 
+94:     private static (byte[] checksum, string algorithm) ComputeChecksum(RazorProjectItem projectItem, string checksumAlgorithm)
+95:     {
+96:         ArgumentNullException.ThrowIfNull(projectItem);
+97: 
+98:         Func<Stream, byte[]> hashData;
+99:         string algorithmName;
+100: 
+101:         //only SHA1 and SHA256 are supported.  Default to SHA1
+102:         if (nameof(SHA256).Equals(checksumAlgorithm, StringComparison.OrdinalIgnoreCase))
+103:         {
+104:             hashData = SHA256.HashData;
+105:             algorithmName = nameof(SHA256);
+106:         }
+107:         else
+108:         {
+109:             hashData = SHA1.HashData;
+110:             algorithmName = nameof(SHA1);
+111:         }
+112: 
+113:         using (var stream = projectItem.Read())
+114:         {
+115:             return (hashData(stream), algorithmName);
+116:         }
+117:     }
+118: 
+119:     private static bool ChecksumsEqual(string checksum, byte[] bytes)
+120:     {
+121:         if (bytes.Length * 2 != checksum.Length)
+122:         {
+123:             return false;
+124:         }
+125: 
+126:         for (var i = 0; i < bytes.Length; i++)
+127:         {
+128:             var text = bytes[i].ToString("x2", CultureInfo.InvariantCulture);
+129:             if (checksum[i * 2] != text[0] || checksum[i * 2 + 1] != text[1])
+130:             {
+131:                 return false;
+132:             }
+133:         }
+134: 
+135:         return true;
+136:     }
+137: }
+138: 
+{"observerExitCode":0,"wholeLogicalFileCounts":{"Default":13,"Original":13},"root":{"creationFileTime100ns":134397075156304146,"pid":51272,"creationUtc":"2026-11-21T04:05:15.6304146Z","observedUtc":"2026-11-21T04:05:16.2228172Z"},"run":"run-06","failure":null,"gitGhRoots":13,"observer":{"creationFileTime100ns":134397075165450915,"pid":48052,"creationUtc":"2026-11-21T04:05:16.5450915Z","observedUtc":"2026-11-21T04:05:16.5613639Z"}}

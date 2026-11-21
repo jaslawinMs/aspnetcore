@@ -1,0 +1,1223 @@
+d3483989953ae3cccd773aea5ea04cb0c7198531 commit 1718
+tree 8d6072e5a4000dbff4553c4a9222c3c37db8b76a
+parent cf1e24ed9df31aefd81344883cd1087c522e085f
+author dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1795183738 +0000
+committer GitHub <noreply@github.com> 1795183738 +0000
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsFcBAABCAAQBQJrAFR6CRC1aQ7uu5UhlAAAEooQABlQLP9uqXEmupezrhPdlvnD
+ OV9ZJR5SzMWf4WpxqSLzidaA77PriaJHRfErX8c4+y8jI+AS5qXBSXpLHLgx/Dev
+ wic0lpxy453yQCN3b05Cr/aoahLBg16l1KoRKqxno0A14hpr40pWHAt/RQP79OoP
+ Ab+gnecU6fOWf2tvlp5/rEpFCTnkFWama+gA+ippdTzsuVZiCFj6QQKRrmSpoI9J
+ yM0RalNo89hCd8zp+LCaOYY9q5Lt8Bz8v+jhHwF9e/L5MboCIGWDHwEVFErDD8hp
+ kPsgwk5m6urA6UzZdHv5yoI1tZaqisC8GeuXt1bUjpjrUxTkhUfO4CiMFw92dFJU
+ K2X66+/aPDL2QulnYujuc30gzahveqg11fkBwy8fMWxeMayjTx7J/z5S6QQv9KJU
+ It6/59nV2d3rY0+fgewy6rwRevddoiCxcVZjxMJ/R5FljppcNnISoryhku4HTo8c
+ D5++jmSBORR1/X8nhVzs9ir+aNiOtMkWeTL2d//q+oVS42vZ7fxbfPOb6kAbDaEg
+ o8pF+GnnUQQbjzGlD8K6SHCe/nIogfjG1sAVOPF0A9xlsftIZ/LB6leuNIC0ffOP
+ WqlXXYnPLp9pA505Dcqyx47FnXshOfJF5WVTdDFUkwyfpfryoqDzXNUGKCocbsvZ
+ ikg/R1Wc61cXVEfW10Mx
+ =wLrV
+ -----END PGP SIGNATURE-----
+ 
+
+[main] (deps): Bump src/submodules/MessagePack-CSharp (#70748)
+
+Bumps [src/submodules/MessagePack-CSharp](https://github.com/aspnet/MessagePack-CSharp) from `be938cd` to `8dafb0f`.
+- [Commits](https://github.com/aspnet/MessagePack-CSharp/compare/be938cda59c823ee4a672d45d1d7d642a3f34396...8dafb0f4ad0045ccdefdf9baf30eda05392caee2)
+
+---
+updated-dependencies:
+- dependency-name: src/submodules/MessagePack-CSharp
+  dependency-version: 8dafb0f4ad0045ccdefdf9baf30eda05392caee2
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+8f226903cd9ea7b7ed8dec147e6b550967155770 blob 5221
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+// Internal for testing
+[DebuggerDisplay("{Path}")]
+internal class DirectoryNode
+{
+    public DirectoryNode(string path)
+    {
+        Path = path;
+    }
+
+    public string Path { get; }
+
+    public List<DirectoryNode> Directories { get; } = new List<DirectoryNode>();
+
+    public List<FileNode> Files { get; } = new List<FileNode>();
+
+    public void AddFile(FileNode fileNode)
+    {
+        var filePath = fileNode.Path;
+        if (!filePath.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"File {fileNode.Path} does not belong to {Path}.");
+        }
+
+        // Look for the first / that appears in the path after the current directory path.
+        var directoryPath = GetDirectoryPath(filePath);
+        var directory = GetOrAddDirectory(this, directoryPath, createIfNotExists: true);
+        Debug.Assert(directory != null);
+        directory.Files.Add(fileNode);
+        fileNode.Directory = directory;
+    }
+
+    public DirectoryNode GetDirectory(string path)
+    {
+        if (!path.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"File {path} does not belong to {Path}.");
+        }
+
+        return GetOrAddDirectory(this, path);
+    }
+
+    public IEnumerable<RazorProjectItem> EnumerateItems()
+    {
+        foreach (var file in Files)
+        {
+            yield return file.ProjectItem;
+        }
+
+        foreach (var directory in Directories)
+        {
+            foreach (var file in directory.EnumerateItems())
+            {
+                yield return file;
+            }
+        }
+    }
+
+    public RazorProjectItem GetItem(string path)
+    {
+        if (!path.StartsWith(Path, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"File {path} does not belong to {Path}.");
+        }
+
+        var directoryPath = GetDirectoryPath(path);
+        var directory = GetOrAddDirectory(this, directoryPath);
+        if (directory == null)
+        {
+            return new NotFoundProjectItem("/", path);
+        }
+
+        foreach (var file in directory.Files)
+        {
+            var filePath = file.Path;
+            var directoryLength = directory.Path.Length;
+
+            // path, filePath -> /Views/Home/Index.cshtml
+            // directory.Path -> /Views/Home/
+            // We only need to match the file name portion since we've already matched the directory segment.
+            if (string.Compare(path, directoryLength, filePath, directoryLength, path.Length - directoryLength, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                return file.ProjectItem;
+            }
+        }
+
+        return new NotFoundProjectItem("/", path);
+    }
+
+    private static string GetDirectoryPath(string path)
+    {
+        // /dir1/dir2/file.cshtml -> /dir1/dir2/
+        var fileNameIndex = path.LastIndexOf('/');
+        if (fileNameIndex == -1)
+        {
+            return path;
+        }
+
+        return path.Substring(0, fileNameIndex + 1);
+    }
+
+    private static DirectoryNode GetOrAddDirectory(
+        DirectoryNode directory,
+        string path,
+        bool createIfNotExists = false)
+    {
+        Debug.Assert(!string.IsNullOrEmpty(path));
+        if (path[path.Length - 1] != '/')
+        {
+            path += '/';
+        }
+
+        int index;
+        while ((index = path.IndexOf('/', directory.Path.Length)) != -1 && index != path.Length)
+        {
+            var subDirectory = FindSubDirectory(directory, path);
+
+            if (subDirectory == null)
+            {
+                if (createIfNotExists)
+                {
+                    var directoryPath = path.Substring(0, index + 1); // + 1 to include trailing slash
+                    subDirectory = new DirectoryNode(directoryPath);
+                    directory.Directories.Add(subDirectory);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            directory = subDirectory;
+        }
+
+        return directory;
+    }
+
+    private static DirectoryNode FindSubDirectory(DirectoryNode parentDirectory, string path)
+    {
+        for (var i = 0; i < parentDirectory.Directories.Count; i++)
+        {
+            // ParentDirectory.Path -> /Views/Home/
+            // CurrentDirectory.Path -> /Views/Home/SubDir/
+            // Path -> /Views/Home/SubDir/MorePath/File.cshtml
+            // Each invocation of FindSubDirectory returns the immediate subdirectory along the path to the file.
+
+            var currentDirectory = parentDirectory.Directories[i];
+            var directoryPath = currentDirectory.Path;
+            var startIndex = parentDirectory.Path.Length;
+
+            if (string.Compare(path, startIndex, directoryPath, startIndex, directoryPath.Length - startIndex, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                return currentDirectory;
+            }
+        }
+
+        return null;
+    }
+}
+
+963fcd79e7ca0b53a0211c4695617edb66a0e08d blob 1481
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+internal class VirtualRazorProjectFileSystem : RazorProjectFileSystem
+{
+    private readonly DirectoryNode _root = new DirectoryNode("/");
+
+    public override IEnumerable<RazorProjectItem> EnumerateItems(string basePath)
+    {
+        basePath = NormalizeAndEnsureValidPath(basePath);
+        var directory = _root.GetDirectory(basePath);
+        return directory?.EnumerateItems() ?? Enumerable.Empty<RazorProjectItem>();
+    }
+
+    public override RazorProjectItem GetItem(string path)
+    {
+        return GetItem(path, fileKind: null);
+    }
+
+    public override RazorProjectItem GetItem(string path, string fileKind)
+    {
+        // We ignore fileKind here because the _root is pre-filled with project items that already have fileKinds defined. This is
+        // a unique circumstance where the RazorProjectFileSystem is actually pre-filled with all of its project items on construction.
+
+        path = NormalizeAndEnsureValidPath(path);
+        return _root.GetItem(path) ?? new NotFoundProjectItem(string.Empty, path);
+    }
+
+    public void Add(RazorProjectItem projectItem)
+    {
+        ArgumentNullException.ThrowIfNull(projectItem);
+
+        var filePath = NormalizeAndEnsureValidPath(projectItem.FilePath);
+        _root.AddFile(new FileNode(filePath, projectItem));
+    }
+}
+
+ae245557361fa7c8c442915efa112c2caacde67b blob 565
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+// Internal for testing
+[DebuggerDisplay("{Path}")]
+internal class FileNode
+{
+    public FileNode(string path, RazorProjectItem projectItem)
+    {
+        Path = path;
+        ProjectItem = projectItem;
+    }
+
+    public DirectoryNode Directory { get; set; }
+
+    public string Path { get; }
+
+    public RazorProjectItem ProjectItem { get; set; }
+}
+
+c91505e6d34f5133880a034aa01c87f9627011a2 blob 661
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+internal class NotFoundProjectItem : RazorProjectItem
+{
+    public NotFoundProjectItem(string basePath, string path)
+    {
+        BasePath = basePath;
+        FilePath = path;
+    }
+
+    public override string BasePath { get; }
+
+    public override string FilePath { get; }
+
+    public override bool Exists => false;
+
+    public override string PhysicalPath => throw new NotSupportedException();
+
+    public override Stream Read() => throw new NotSupportedException();
+}
+
+106f70aec8f8e7f73c02639c5e7c81f0ea8a3479 blob 1092
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Text;
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+public class TestRazorProjectItem : RazorProjectItem
+{
+    public TestRazorProjectItem(
+        string filePath,
+        string content = "Default content",
+        string physicalPath = null,
+        string relativePhysicalPath = null,
+        string basePath = "/")
+    {
+        FilePath = filePath;
+        PhysicalPath = physicalPath;
+        RelativePhysicalPath = relativePhysicalPath;
+        BasePath = basePath;
+        Content = content;
+    }
+
+    public override string BasePath { get; }
+
+    public override string FilePath { get; }
+
+    public override string PhysicalPath { get; }
+
+    public override string RelativePhysicalPath { get; }
+
+    public override bool Exists => true;
+
+    public string Content { get; set; }
+
+    public override Stream Read()
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(Content));
+
+        return stream;
+    }
+}
+
+65117fb9aaf92b4aa89fbbbbb60cbcfd72f2011d blob 1284
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor.RuntimeCompilation\src\Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc\src\Microsoft.AspNetCore.Mvc.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\shared\Mvc.Views.TestCommon\Microsoft.AspNetCore.Mvc.Views.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+  </ItemGroup>
+
+</Project>
+
+d631f220d885ebc7616122318ee5c1883886a6fa blob 8216
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Razor.Hosting;
+using Microsoft.AspNetCore.Razor.Language;
+using static Microsoft.AspNetCore.Razor.Hosting.TestRazorCompiledItem;
+
+namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+
+public class ChecksumValidatorTest
+{
+    private VirtualRazorProjectFileSystem ProjectFileSystem { get; } = new VirtualRazorProjectFileSystem();
+
+    [Fact]
+    public void IsRecompilationSupported_NoChecksumAttributes_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[] { });
+
+        // Act
+        var result = ChecksumValidator.IsRecompilationSupported(item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsRecompilationSupported_NoPrimaryChecksumAttribute_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+        });
+
+        // Act
+        var result = ChecksumValidator.IsRecompilationSupported(item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsRecompilationSupported_HasPrimaryChecksumAttribute_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        // Act
+        var result = ChecksumValidator.IsRecompilationSupported(item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsItemValid_NoChecksumAttributes_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[] { });
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsItemValid_NoPrimaryChecksumAttribute_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/About.cstml"),
+        });
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsItemValid_PrimaryFileDoesNotExist_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "dkdkfkdf")); // This will be ignored
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsItemValid_PrimaryFileExistsButDoesNotMatch_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "other content"));
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsItemValid_ImportFileDoesNotExist_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsItemValid_ImportFileExistsButDoesNotMatch_ReturnsFalse()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some other import"));
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsItemValid_AllFilesMatch_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some other import"), "/Views/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some import"));
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/_ViewImports.cstml", "some other import"));
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsItemValid_AllFilesMatch_UsingSHA256_ReturnsTrue()
+    {
+        // Arrange
+        var item = new TestRazorCompiledItem(typeof(string), "mvc.1.0.view", "/Views/Home/Index.cstml", new object[]
+        {
+                new RazorSourceChecksumAttribute("SHA256", GetChecksumSHA256("some other import"), "/Views/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("SHA1", GetChecksum("some import"), "/Views/Home/_ViewImports.cstml"),
+                new RazorSourceChecksumAttribute("Sha256", GetChecksumSHA256("some content"), "/Views/Home/Index.cstml"),
+        });
+
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/Index.cstml", "some content"));
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/Home/_ViewImports.cstml", "some import"));
+        ProjectFileSystem.Add(new TestRazorProjectItem("/Views/_ViewImports.cstml", "some other import"));
+
+        // Act
+        var result = ChecksumValidator.IsItemValid(ProjectFileSystem, item);
+
+        // Assert
+        Assert.True(result);
+    }
+}
+
+742b7526e649409a9b3d27bbf6da96f7deb7a627 blob 14925
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Globalization;
+using System.Text;
+using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
+
+namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+
+public class CompilerFailedExceptionFactoryTest
+{
+    [Fact]
+    public void GetCompilationFailedResult_ReadsRazorErrorsFromPage()
+    {
+        // Arrange
+        var viewPath = "/Views/Home/Index.cshtml";
+
+        var fileSystem = new VirtualRazorProjectFileSystem();
+        var projectItem = new TestRazorProjectItem(viewPath, "<span name=\"@(User.Id\">");
+
+        var razorEngine = RazorProjectEngine.Create(RazorConfiguration.Default, fileSystem).Engine;
+        var codeDocument = GetCodeDocument(projectItem);
+
+        // Act
+        razorEngine.Process(codeDocument);
+        var csharpDocument = codeDocument.GetCSharpDocument();
+        var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+
+        // Assert
+        var failure = Assert.Single(compilationResult.CompilationFailures);
+        Assert.Equal(viewPath, failure.SourceFilePath);
+        var orderedMessages = failure.Messages.OrderByDescending(messages => messages.Message);
+        Assert.Collection(orderedMessages,
+            message => Assert.StartsWith(
+                @"Unterminated string literal.",
+                message.Message),
+            message => Assert.StartsWith(
+                @"The explicit expression block is missing a closing "")"" character.",
+                message.Message));
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_WithMissingReferences()
+    {
+        // Arrange
+        var expected = "One or more compilation references may be missing. If you're seeing this in a published application, set 'CopyRefAssembliesToPublishDirectory' to true in your project file to ensure files in the refs directory are published.";
+        var compilation = CSharpCompilation.Create("Test", options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var syntaxTree = CSharpSyntaxTree.ParseText("@class Test { public string Test { get; set; } }");
+        compilation = compilation.AddSyntaxTrees(syntaxTree);
+        var emitResult = compilation.Emit(new MemoryStream());
+
+        // Act
+        var exception = CompilationFailedExceptionFactory.Create(
+            RazorCodeDocument.Create(RazorSourceDocument.Create("Test", "Index.cshtml"), Enumerable.Empty<RazorSourceDocument>()),
+            syntaxTree.ToString(),
+            "Test",
+            emitResult.Diagnostics);
+
+        // Assert
+        Assert.Collection(
+            exception.CompilationFailures,
+            failure => Assert.Equal(expected, failure.FailureSummary));
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_UsesPhysicalPath()
+    {
+        // Arrange
+        var viewPath = "/Views/Home/Index.cshtml";
+        var physicalPath = @"x:\myapp\views\home\index.cshtml";
+
+        var projectItem = new TestRazorProjectItem(viewPath, "<span name=\"@(User.Id\">", physicalPath: physicalPath);
+
+        var codeDocument = GetCodeDocument(projectItem);
+        var csharpDocument = codeDocument.GetCSharpDocument();
+
+        // Act
+        var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+
+        // Assert
+        var failure = Assert.Single(compilationResult.CompilationFailures);
+        Assert.Equal(physicalPath, failure.SourceFilePath);
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_ReadsContentFromSourceDocuments()
+    {
+        // Arrange
+        var viewPath = "/Views/Home/Index.cshtml";
+        var fileContent =
+@"
+@if (User.IsAdmin)
+{
+    <span>
+}
+</span>";
+
+        var projectItem = new TestRazorProjectItem(viewPath, fileContent);
+        var codeDocument = GetCodeDocument(projectItem);
+        var csharpDocument = codeDocument.GetCSharpDocument();
+
+        // Act
+        var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+
+        // Assert
+        var failure = Assert.Single(compilationResult.CompilationFailures);
+        Assert.Equal(fileContent, failure.SourceFileContent);
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_ReadsContentFromImports()
+    {
+        // Arrange
+        var viewPath = "/Views/Home/Index.cshtml";
+        var importsPath = "/Views/_MyImports.cshtml";
+        var fileContent = "@ ";
+        var importsContent = "@(abc";
+
+        var projectItem = new TestRazorProjectItem(viewPath, fileContent);
+        var importsItem = new TestRazorProjectItem(importsPath, importsContent);
+        var codeDocument = GetCodeDocument(projectItem, importsItem);
+        var csharpDocument = codeDocument.GetCSharpDocument();
+
+        // Act
+        var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+
+        // Assert
+        Assert.Collection(
+            compilationResult.CompilationFailures,
+            failure =>
+            {
+                Assert.Equal(viewPath, failure.SourceFilePath);
+                Assert.Collection(failure.Messages,
+                    message =>
+                    {
+                        Assert.Equal(@"A space or line break was encountered after the ""@"" character.  Only valid identifiers, keywords, comments, ""("" and ""{"" are valid at the start of a code block and they must occur immediately following ""@"" with no space in between.",
+                            message.Message);
+                    });
+            },
+            failure =>
+            {
+                Assert.Equal(importsPath, failure.SourceFilePath);
+                Assert.Collection(failure.Messages,
+                    message =>
+                    {
+                        Assert.Equal(@"The explicit expression block is missing a closing "")"" character.  Make sure you have a matching "")"" character for all the ""("" characters within this block, and that none of the "")"" characters are being interpreted as markup.",
+                        message.Message);
+                    });
+            });
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_GroupsMessages()
+    {
+        // Arrange
+        var viewPath = "views/index.razor";
+        var viewImportsPath = "views/global.import.cshtml";
+        var codeDocument = RazorCodeDocument.Create(
+            Create(viewPath, "View Content"),
+            new[] { Create(viewImportsPath, "Global Import Content") });
+        var diagnostics = new[]
+        {
+                GetRazorDiagnostic("message-1", new SourceLocation(1, 2, 17), length: 1),
+                GetRazorDiagnostic("message-2", new SourceLocation(viewPath, 1, 4, 6), length: 7),
+                GetRazorDiagnostic("message-3", SourceLocation.Undefined, length: -1),
+                GetRazorDiagnostic("message-4", new SourceLocation(viewImportsPath, 1, 3, 8), length: 4),
+            };
+
+        // Act
+        var result = CompilationFailedExceptionFactory.Create(codeDocument, diagnostics);
+
+        // Assert
+        Assert.Collection(result.CompilationFailures,
+        failure =>
+        {
+            Assert.Equal(viewPath, failure.SourceFilePath);
+            Assert.Equal("View Content", failure.SourceFileContent);
+            Assert.Collection(failure.Messages,
+                message =>
+                {
+                    Assert.Equal(diagnostics[0].GetMessage(CultureInfo.CurrentCulture), message.Message);
+                    Assert.Equal(viewPath, message.SourceFilePath);
+                    Assert.Equal(3, message.StartLine);
+                    Assert.Equal(17, message.StartColumn);
+                    Assert.Equal(3, message.EndLine);
+                    Assert.Equal(18, message.EndColumn);
+                },
+                message =>
+                {
+                    Assert.Equal(diagnostics[1].GetMessage(CultureInfo.CurrentCulture), message.Message);
+                    Assert.Equal(viewPath, message.SourceFilePath);
+                    Assert.Equal(5, message.StartLine);
+                    Assert.Equal(6, message.StartColumn);
+                    Assert.Equal(5, message.EndLine);
+                    Assert.Equal(13, message.EndColumn);
+                },
+                message =>
+                {
+                    Assert.Equal(diagnostics[2].GetMessage(CultureInfo.CurrentCulture), message.Message);
+                    Assert.Equal(viewPath, message.SourceFilePath);
+                    Assert.Equal(0, message.StartLine);
+                    Assert.Equal(-1, message.StartColumn);
+                    Assert.Equal(0, message.EndLine);
+                    Assert.Equal(-2, message.EndColumn);
+                });
+        },
+        failure =>
+        {
+            Assert.Equal(viewImportsPath, failure.SourceFilePath);
+            Assert.Equal("Global Import Content", failure.SourceFileContent);
+            Assert.Collection(failure.Messages,
+                message =>
+                {
+                    Assert.Equal(diagnostics[3].GetMessage(CultureInfo.CurrentCulture), message.Message);
+                    Assert.Equal(viewImportsPath, message.SourceFilePath);
+                    Assert.Equal(4, message.StartLine);
+                    Assert.Equal(8, message.StartColumn);
+                    Assert.Equal(4, message.EndLine);
+                    Assert.Equal(12, message.EndColumn);
+                });
+        });
+    }
+
+    [Fact]
+    public void GetCompilationFailedResult_ReturnsCompilationResult_WithGroupedMessages()
+    {
+        // Arrange
+        var viewPath = "Views/Home/Index";
+        var generatedCodeFileName = "Generated Code";
+        var codeDocument = RazorCodeDocument.Create(RazorSourceDocument.Create("view-content", viewPath));
+        var assemblyName = "random-assembly-name";
+
+        var diagnostics = new[]
+        {
+                Diagnostic.Create(
+                    GetRoslynDiagnostic("message-1"),
+                    Location.Create(
+                        viewPath,
+                        new TextSpan(10, 5),
+                        new LinePositionSpan(new LinePosition(10, 1), new LinePosition(10, 2)))),
+                Diagnostic.Create(
+                    GetRoslynDiagnostic("message-2"),
+                    Location.Create(
+                        assemblyName,
+                        new TextSpan(1, 6),
+                        new LinePositionSpan(new LinePosition(1, 2), new LinePosition(3, 4)))),
+                Diagnostic.Create(
+                    GetRoslynDiagnostic("message-3"),
+                    Location.Create(
+                        viewPath,
+                        new TextSpan(40, 50),
+                        new LinePositionSpan(new LinePosition(30, 5), new LinePosition(40, 12)))),
+            };
+
+        // Act
+        var compilationResult = CompilationFailedExceptionFactory.Create(
+            codeDocument,
+            "compilation-content",
+            assemblyName,
+            diagnostics);
+
+        // Assert
+        Assert.Collection(compilationResult.CompilationFailures,
+            failure =>
+            {
+                Assert.Equal(viewPath, failure.SourceFilePath);
+                Assert.Equal("view-content", failure.SourceFileContent);
+                Assert.Collection(failure.Messages,
+                    message =>
+                    {
+                        Assert.Equal("message-1", message.Message);
+                        Assert.Equal(viewPath, message.SourceFilePath);
+                        Assert.Equal(11, message.StartLine);
+                        Assert.Equal(2, message.StartColumn);
+                        Assert.Equal(11, message.EndLine);
+                        Assert.Equal(3, message.EndColumn);
+                    },
+                    message =>
+                    {
+                        Assert.Equal("message-3", message.Message);
+                        Assert.Equal(viewPath, message.SourceFilePath);
+                        Assert.Equal(31, message.StartLine);
+                        Assert.Equal(6, message.StartColumn);
+                        Assert.Equal(41, message.EndLine);
+                        Assert.Equal(13, message.EndColumn);
+                    });
+            },
+            failure =>
+            {
+                Assert.Equal(generatedCodeFileName, failure.SourceFilePath);
+                Assert.Equal("compilation-content", failure.SourceFileContent);
+                Assert.Collection(failure.Messages,
+                    message =>
+                    {
+                        Assert.Equal("message-2", message.Message);
+                        Assert.Equal(assemblyName, message.SourceFilePath);
+                        Assert.Equal(2, message.StartLine);
+                        Assert.Equal(3, message.StartColumn);
+                        Assert.Equal(4, message.EndLine);
+                        Assert.Equal(5, message.EndColumn);
+                    });
+            });
+    }
+
+    private static RazorSourceDocument Create(string path, string template)
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(template));
+        return RazorSourceDocument.ReadFrom(stream, path);
+    }
+
+    private static RazorDiagnostic GetRazorDiagnostic(string message, SourceLocation sourceLocation, int length)
+    {
+        var diagnosticDescriptor = new RazorDiagnosticDescriptor("test-id", () => message, RazorDiagnosticSeverity.Error);
+        var sourceSpan = new SourceSpan(sourceLocation, length);
+
+        return RazorDiagnostic.Create(diagnosticDescriptor, sourceSpan);
+    }
+
+    private static DiagnosticDescriptor GetRoslynDiagnostic(string messageFormat)
+    {
+        return new DiagnosticDescriptor(
+            id: "someid",
+            title: "sometitle",
+            messageFormat: messageFormat,
+            category: "some-category",
+            defaultSeverity: DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+    }
+
+    private static RazorCodeDocument GetCodeDocument(TestRazorProjectItem projectItem, TestRazorProjectItem imports = null)
+    {
+        var sourceDocument = RazorSourceDocument.ReadFrom(projectItem);
+        var fileSystem = new VirtualRazorProjectFileSystem();
+        fileSystem.Add(projectItem);
+
+        var codeDocument = RazorCodeDocument.Create(sourceDocument);
+
+        if (imports != null)
+        {
+            fileSystem.Add(imports);
+            codeDocument = RazorCodeDocument.Create(sourceDocument, new[] { RazorSourceDocument.ReadFrom(imports) });
+        }
+
+        var razorEngine = RazorProjectEngine.Create(RazorConfiguration.Default, fileSystem).Engine;
+
+        razorEngine.Process(codeDocument);
+        return codeDocument;
+    }
+
+}
+
+794f2694e63e65b6e874b27a1a6e888a9a7c005c blob 5126
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Globalization;
+using System.Linq;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Razor.Hosting;
+using Microsoft.AspNetCore.Razor.Language;
+
+namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+
+internal static class ChecksumValidator
+{
+    public static bool IsRecompilationSupported(RazorCompiledItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        // A Razor item only supports recompilation if its primary source file has a checksum.
+        //
+        // Other files (view imports) may or may not have existed at the time of compilation,
+        // so we may not have checksums for them.
+        var checksums = item.GetChecksumMetadata();
+        return checksums.Any(c => string.Equals(item.Identifier, c.Identifier, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Validates that we can use an existing precompiled view by comparing checksums with files on
+    // disk.
+    public static bool IsItemValid(RazorProjectFileSystem fileSystem, RazorCompiledItem item)
+    {
+        ArgumentNullException.ThrowIfNull(fileSystem);
+        ArgumentNullException.ThrowIfNull(item);
+
+        var checksums = item.GetChecksumMetadata();
+
+        // The checksum that matches 'Item.Identity' in this list is significant. That represents the main file.
+        //
+        // We don't really care about the validation unless the main file exists. This is because we expect
+        // most sites to have some _ViewImports in common location. That means that in the case you're
+        // using views from a 3rd party library, you'll always have **some** conflicts.
+        //
+        // The presence of the main file with the same content is a very strong signal that you're in a
+        // development scenario.
+        var primaryChecksum = checksums
+            .FirstOrDefault(c => string.Equals(item.Identifier, c.Identifier, StringComparison.OrdinalIgnoreCase));
+        if (primaryChecksum == null)
+        {
+            // No primary checksum, assume valid.
+            return true;
+        }
+
+        var projectItem = fileSystem.GetItem(primaryChecksum.Identifier, fileKind: null);
+        if (!projectItem.Exists)
+        {
+            // Main file doesn't exist - assume valid.
+            return true;
+        }
+
+        var sourceDocumentChecksum = ComputeChecksum(projectItem, primaryChecksum.ChecksumAlgorithm);
+        if (!string.Equals(sourceDocumentChecksum.algorithm, primaryChecksum.ChecksumAlgorithm, StringComparison.OrdinalIgnoreCase) ||
+            !ChecksumsEqual(primaryChecksum.Checksum, sourceDocumentChecksum.checksum))
+        {
+            // Main file exists, but checksums not equal.
+            return false;
+        }
+
+        for (var i = 0; i < checksums.Count; i++)
+        {
+            var checksum = checksums[i];
+            if (string.Equals(item.Identifier, checksum.Identifier, StringComparison.OrdinalIgnoreCase))
+            {
+                // Ignore primary checksum on this pass.
+                continue;
+            }
+
+            var importItem = fileSystem.GetItem(checksum.Identifier, fileKind: null);
+            if (!importItem.Exists)
+            {
+                // Import file doesn't exist - assume invalid.
+                return false;
+            }
+
+            sourceDocumentChecksum = ComputeChecksum(importItem, checksum.ChecksumAlgorithm);
+            if (!string.Equals(sourceDocumentChecksum.algorithm, checksum.ChecksumAlgorithm, StringComparison.OrdinalIgnoreCase) ||
+                !ChecksumsEqual(checksum.Checksum, sourceDocumentChecksum.checksum))
+            {
+                // Import file exists, but checksums not equal.
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static (byte[] checksum, string algorithm) ComputeChecksum(RazorProjectItem projectItem, string checksumAlgorithm)
+    {
+        ArgumentNullException.ThrowIfNull(projectItem);
+
+        Func<Stream, byte[]> hashData;
+        string algorithmName;
+
+        //only SHA1 and SHA256 are supported.  Default to SHA1
+        if (nameof(SHA256).Equals(checksumAlgorithm, StringComparison.OrdinalIgnoreCase))
+        {
+            hashData = SHA256.HashData;
+            algorithmName = nameof(SHA256);
+        }
+        else
+        {
+            hashData = SHA1.HashData;
+            algorithmName = nameof(SHA1);
+        }
+
+        using (var stream = projectItem.Read())
+        {
+            return (hashData(stream), algorithmName);
+        }
+    }
+
+    private static bool ChecksumsEqual(string checksum, byte[] bytes)
+    {
+        if (bytes.Length * 2 != checksum.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            var text = bytes[i].ToString("x2", CultureInfo.InvariantCulture);
+            if (checksum[i * 2] != text[0] || checksum[i * 2 + 1] != text[1])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+2a4495860309d3cc5ec17d9045ccfee9070f42d5 blob 6107
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Globalization;
+using System.Linq;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+
+namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+
+internal static class CompilationFailedExceptionFactory
+{
+    // error CS0234: The type or namespace name 'C' does not exist in the namespace 'N' (are you missing
+    // an assembly reference?)
+    private const string CS0234 = nameof(CS0234);
+    // error CS0246: The type or namespace name 'T' could not be found (are you missing a using directive
+    // or an assembly reference?)
+    private const string CS0246 = nameof(CS0246);
+
+    public static CompilationFailedException Create(
+        RazorCodeDocument codeDocument,
+        IEnumerable<RazorDiagnostic> diagnostics)
+    {
+        // If a SourceLocation does not specify a file path, assume it is produced from parsing the current file.
+        var messageGroups = diagnostics.GroupBy(
+            razorError => razorError.Span.FilePath ?? codeDocument.Source.FilePath,
+            StringComparer.Ordinal);
+
+        var failures = new List<CompilationFailure>();
+        foreach (var group in messageGroups)
+        {
+            var filePath = group.Key;
+            var fileContent = ReadContent(codeDocument, filePath);
+            var compilationFailure = new CompilationFailure(
+                filePath,
+                fileContent,
+                compiledContent: string.Empty,
+                messages: group.Select(parserError => CreateDiagnosticMessage(parserError, filePath)));
+            failures.Add(compilationFailure);
+        }
+
+        return new CompilationFailedException(failures);
+    }
+
+    public static CompilationFailedException Create(
+        RazorCodeDocument codeDocument,
+        string compilationContent,
+        string assemblyName,
+        IEnumerable<Diagnostic> diagnostics)
+    {
+        var diagnosticGroups = diagnostics
+            .Where(diagnostic => diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
+            .GroupBy(diagnostic => GetFilePath(codeDocument, diagnostic), StringComparer.Ordinal);
+
+        var failures = new List<CompilationFailure>();
+        foreach (var group in diagnosticGroups)
+        {
+            var sourceFilePath = group.Key;
+            string sourceFileContent;
+            if (string.Equals(assemblyName, sourceFilePath, StringComparison.Ordinal))
+            {
+                // The error is in the generated code and does not have a mapping line pragma
+                sourceFileContent = compilationContent;
+                sourceFilePath = Resources.GeneratedCodeFileName;
+            }
+            else
+            {
+                sourceFileContent = ReadContent(codeDocument, sourceFilePath);
+            }
+
+            string? additionalMessage = null;
+            if (group.Any(g =>
+                string.Equals(CS0234, g.Id, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(CS0246, g.Id, StringComparison.OrdinalIgnoreCase)))
+            {
+                additionalMessage = Resources.FormatCompilation_MissingReferences(
+                    "CopyRefAssembliesToPublishDirectory");
+            }
+
+            var compilationFailure = new CompilationFailure(
+                sourceFilePath,
+                sourceFileContent,
+                compilationContent,
+                group.Select(GetDiagnosticMessage),
+                additionalMessage);
+
+            failures.Add(compilationFailure);
+        }
+
+        return new CompilationFailedException(failures);
+    }
+
+    private static string ReadContent(RazorCodeDocument codeDocument, string filePath)
+    {
+        RazorSourceDocument? sourceDocument;
+        if (string.IsNullOrEmpty(filePath) || string.Equals(codeDocument.Source.FilePath, filePath, StringComparison.Ordinal))
+        {
+            sourceDocument = codeDocument.Source;
+        }
+        else
+        {
+            sourceDocument = codeDocument.Imports.FirstOrDefault(f => string.Equals(f.FilePath, filePath, StringComparison.Ordinal));
+        }
+
+        if (sourceDocument != null)
+        {
+            var contentChars = new char[sourceDocument.Length];
+            sourceDocument.CopyTo(0, contentChars, 0, sourceDocument.Length);
+            return new string(contentChars);
+        }
+
+        return string.Empty;
+    }
+
+    private static DiagnosticMessage GetDiagnosticMessage(Diagnostic diagnostic)
+    {
+        var mappedLineSpan = diagnostic.Location.GetMappedLineSpan();
+        return new DiagnosticMessage(
+            diagnostic.GetMessage(CultureInfo.CurrentCulture),
+            CSharpDiagnosticFormatter.Instance.Format(diagnostic, CultureInfo.CurrentCulture),
+            mappedLineSpan.Path,
+            mappedLineSpan.StartLinePosition.Line + 1,
+            mappedLineSpan.StartLinePosition.Character + 1,
+            mappedLineSpan.EndLinePosition.Line + 1,
+            mappedLineSpan.EndLinePosition.Character + 1);
+    }
+
+    private static DiagnosticMessage CreateDiagnosticMessage(
+        RazorDiagnostic razorDiagnostic,
+        string filePath)
+    {
+        var sourceSpan = razorDiagnostic.Span;
+        var message = razorDiagnostic.GetMessage(CultureInfo.CurrentCulture);
+        return new DiagnosticMessage(
+            message: message,
+            formattedMessage: razorDiagnostic.ToString(),
+            filePath: filePath,
+            startLine: sourceSpan.LineIndex + 1,
+            startColumn: sourceSpan.CharacterIndex,
+            endLine: sourceSpan.LineIndex + 1,
+            endColumn: sourceSpan.CharacterIndex + sourceSpan.Length);
+    }
+
+    private static string GetFilePath(RazorCodeDocument codeDocument, Diagnostic diagnostic)
+    {
+        if (diagnostic.Location == Location.None)
+        {
+            return codeDocument.Source.FilePath;
+        }
+
+        return diagnostic.Location.GetMappedLineSpan().Path;
+    }
+}
+

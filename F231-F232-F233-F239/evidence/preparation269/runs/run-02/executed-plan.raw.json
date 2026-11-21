@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "kind": "local-instructions",
+      "label": "Applicable ancestor and MVC guidance",
+      "paths": [
+        "AGENTS.md",
+        "src\\AGENTS.md",
+        "src\\Mvc\\AGENTS.md",
+        "src\\Mvc\\Mvc.Razor.RuntimeCompilation\\AGENTS.md",
+        "src\\Mvc\\Mvc.Razor.RuntimeCompilation\\test\\AGENTS.md",
+        "src\\Mvc\\Mvc.Razor.RuntimeCompilation\\test\\TestInfrastructure\\AGENTS.md",
+        ".github\\instructions\\cross-cutting-guidance.instructions.md"
+      ],
+      "display": true
+    },
+    {
+      "kind": "utility",
+      "label": "Fresh upstream repository default branch metadata",
+      "executable": "gh",
+      "args": [
+        "api",
+        "repos/dotnet/aspnetcore",
+        "--jq",
+        "{full_name,default_branch,pushed_at}"
+      ],
+      "display": true
+    },
+    {
+      "kind": "utility",
+      "label": "Original runtime compilation file names and tracked ancestor guidance",
+      "executable": "git",
+      "args": [
+        "--no-pager",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "--",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation",
+        "AGENTS.md",
+        "src/AGENTS.md",
+        "src/Mvc/AGENTS.md"
+      ],
+      "display": true
+    },
+    {
+      "kind": "batch",
+      "label": "Original whole DirectoryNode and immutable commit raw Git objects",
+      "role": "Original",
+      "commit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "paths": [
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs"
+      ],
+      "displayPaths": [
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs"
+      ]
+    }
+  ]
+}

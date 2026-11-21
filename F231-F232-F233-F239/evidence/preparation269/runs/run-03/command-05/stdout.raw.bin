@@ -1,0 +1,183 @@
+37e809ead5824bc753a1c3d56f11615bdb1296c5 commit 1212
+tree cdbb759178f40aa93a74c67c2370d2590d9788dc
+parent a412ffec9328562a1b7e27945f0e40ebdca3c35d
+parent a61c99060627afe844e49ed09e4d30b4311edcd9
+author Rich Lander <2608468+richlander@users.noreply.github.com> 1794605258 -0800
+committer GitHub <noreply@github.com> 1794605258 -0800
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsFcBAABCAAQBQJq94DKCRC1aQ7uu5UhlAAAyJsQALIbBB7bYSw+o+3UnuTfI6ni
+ YhOUqstm21zV+pEbHq6CIEQb5bAxfHVzNLV5+tAV3RwLZtitR6sK26Tl0IU9J/yv
+ dEAacBuqDcJYx4GRfKlFPyM1mN1nxScEeX6o1zVykjeqMHVS2ZX0CrykuNYZu8U5
+ eCe5dqMtMTpnrcAMM8WdgY/mVK2jbRQwP06cIgXDnIzIsRAZI+h+kIOf0w5x6V6v
+ 42Z+0lWHlqS4f+FIvIXVRorY40pU+WavTCSZG6IXkfwvdexFe34dYbfADnvuAUZL
+ s9yQwRFNbOoEEE3YiZcues3NmzvzxxFgAx3OLsQj1o8kKPUQfbbdaf2tHPvTrM9+
+ E6xILf8Kp7XK1xiH0p01IwOxxUcdoOZcc9UXzwGLVnEs7TQCs8ZiyMF/tvLuMHcU
+ E/nz4Hi9CbkDoMdOxMx+aPKztPH5jvAFYsXGaXtgPm6irkbGvqvFPP8m90tcdGzk
+ zMXAAKv8PdGELM2l3lLZsxLiWc+8OB51vQsFOGINA+aN7yty91S36oc84BCav+D2
+ FDC7kuPT/i1tVKoegrwkGT9TErJhCiFgqmrzppqrEdrLNM9Ek9frFFVvhKBHq7aE
+ 5D3SyPa8n81CcUz5tqNor3HK1FzFQdphb4ncpD/rJGwlehIaIACzDxg0UNrtn8eZ
+ NoOt1NpALPceXfMHJnUc
+ =HA80
+ -----END PGP SIGNATURE-----
+ 
+
+Merge pull request #70560 from dotnet/dev/richlander/linux-ci-utf8-locale
+
+Use C.UTF-8 for Linux build jobs
+963fcd79e7ca0b53a0211c4695617edb66a0e08d blob 1481
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+internal class VirtualRazorProjectFileSystem : RazorProjectFileSystem
+{
+    private readonly DirectoryNode _root = new DirectoryNode("/");
+
+    public override IEnumerable<RazorProjectItem> EnumerateItems(string basePath)
+    {
+        basePath = NormalizeAndEnsureValidPath(basePath);
+        var directory = _root.GetDirectory(basePath);
+        return directory?.EnumerateItems() ?? Enumerable.Empty<RazorProjectItem>();
+    }
+
+    public override RazorProjectItem GetItem(string path)
+    {
+        return GetItem(path, fileKind: null);
+    }
+
+    public override RazorProjectItem GetItem(string path, string fileKind)
+    {
+        // We ignore fileKind here because the _root is pre-filled with project items that already have fileKinds defined. This is
+        // a unique circumstance where the RazorProjectFileSystem is actually pre-filled with all of its project items on construction.
+
+        path = NormalizeAndEnsureValidPath(path);
+        return _root.GetItem(path) ?? new NotFoundProjectItem(string.Empty, path);
+    }
+
+    public void Add(RazorProjectItem projectItem)
+    {
+        ArgumentNullException.ThrowIfNull(projectItem);
+
+        var filePath = NormalizeAndEnsureValidPath(projectItem.FilePath);
+        _root.AddFile(new FileNode(filePath, projectItem));
+    }
+}
+
+ae245557361fa7c8c442915efa112c2caacde67b blob 565
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+// Internal for testing
+[DebuggerDisplay("{Path}")]
+internal class FileNode
+{
+    public FileNode(string path, RazorProjectItem projectItem)
+    {
+        Path = path;
+        ProjectItem = projectItem;
+    }
+
+    public DirectoryNode Directory { get; set; }
+
+    public string Path { get; }
+
+    public RazorProjectItem ProjectItem { get; set; }
+}
+
+c91505e6d34f5133880a034aa01c87f9627011a2 blob 661
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+internal class NotFoundProjectItem : RazorProjectItem
+{
+    public NotFoundProjectItem(string basePath, string path)
+    {
+        BasePath = basePath;
+        FilePath = path;
+    }
+
+    public override string BasePath { get; }
+
+    public override string FilePath { get; }
+
+    public override bool Exists => false;
+
+    public override string PhysicalPath => throw new NotSupportedException();
+
+    public override Stream Read() => throw new NotSupportedException();
+}
+
+106f70aec8f8e7f73c02639c5e7c81f0ea8a3479 blob 1092
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Text;
+
+namespace Microsoft.AspNetCore.Razor.Language;
+
+public class TestRazorProjectItem : RazorProjectItem
+{
+    public TestRazorProjectItem(
+        string filePath,
+        string content = "Default content",
+        string physicalPath = null,
+        string relativePhysicalPath = null,
+        string basePath = "/")
+    {
+        FilePath = filePath;
+        PhysicalPath = physicalPath;
+        RelativePhysicalPath = relativePhysicalPath;
+        BasePath = basePath;
+        Content = content;
+    }
+
+    public override string BasePath { get; }
+
+    public override string FilePath { get; }
+
+    public override string PhysicalPath { get; }
+
+    public override string RelativePhysicalPath { get; }
+
+    public override bool Exists => true;
+
+    public string Content { get; set; }
+
+    public override Stream Read()
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(Content));
+
+        return stream;
+    }
+}
+
+65117fb9aaf92b4aa89fbbbbb60cbcfd72f2011d blob 1284
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor.RuntimeCompilation\src\Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc\src\Microsoft.AspNetCore.Mvc.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Mvc\shared\Mvc.Views.TestCommon\Microsoft.AspNetCore.Mvc.Views.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+  </ItemGroup>
+
+</Project>
+

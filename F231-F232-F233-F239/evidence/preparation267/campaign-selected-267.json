@@ -1,0 +1,83 @@
+[
+  {
+    "id": "F231",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+      "line_start": 102,
+      "line_end": 105,
+      "project": "Microsoft.AspNetCore.Identity.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "The user-claim assertion rescans the materialized claims list for every expected claim.",
+      "explanation": "claims is a List<Claim>, and claims.Any is evaluated once per userClaims element, yielding nested linear work. This is retained as informational because it is assertion code in a unit test.",
+      "snippet": "foreach (var cl in userClaims)\n{\n    Assert.Equal(supportClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F232",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+      "line_start": 106,
+      "line_end": 109,
+      "project": "Microsoft.AspNetCore.Identity.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "The admin-role-claim assertion rescans the claims list for every expected claim.",
+      "explanation": "The foreach over adminClaims performs a predicate Any scan over the retained claims List<Claim> on every iteration. The match is informational because this is unit-test verification code.",
+      "snippet": "foreach (var cl in adminClaims)\n{\n    Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F233",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+      "line_start": 110,
+      "line_end": 113,
+      "project": "Microsoft.AspNetCore.Identity.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "The local-role-claim assertion rescans the claims list for every expected claim.",
+      "explanation": "The foreach over localClaims invokes claims.Any for each expected role claim, creating nested linear scans. The occurrence is retained as informational because it is unit-test assertion code.",
+      "snippet": "foreach (var cl in localClaims)\n{\n    Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

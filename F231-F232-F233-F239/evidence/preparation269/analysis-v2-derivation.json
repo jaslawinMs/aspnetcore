@@ -1,0 +1,88 @@
+{
+  "correction": "ConvertFrom-Json already creates a DateTime. Direct DateTime casting preserves its UTC creation identity and 100ns precision; reparsing its culture-formatted string had changed timezone and discarded fractional seconds. All nine existing source root identities were independently shown to match by direct casting. Only artifact analysis is resumed; no source command is replayed.",
+  "inputSha256": "94D0DA7A426597403C009B7303FE35AC35C0E0DACAC0120D4AC8CAC92A3AED67",
+  "observedUtc": "2026-11-21T04:13:04.2019153Z",
+  "generatedExecutedHelper": "analyze_captures_269_v2.executed.ps1",
+  "preservedFailedInput": "analyze_captures_269_v1.ps1",
+  "parserErrors": [],
+  "changes": [
+    {
+      "exactOccurrences": 1,
+      "old": "'analysis-observation'",
+      "replacement": "'analysis-v2-observation'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "[DateTime]::Parse($outer.childCreationUtc).ToUniversalTime().ToFileTimeUtc()",
+      "replacement": "([DateTime]$outer.childCreationUtc).ToUniversalTime().ToFileTimeUtc()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'whole-source-bindings.json'",
+      "replacement": "'whole-source-bindings-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'all-git-object-bindings.json'",
+      "replacement": "'all-git-object-bindings-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'role-byte-comparison.json'",
+      "replacement": "'role-byte-comparison-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'source-test-inventory.json'",
+      "replacement": "'source-test-inventory-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'source-process-summary.json'",
+      "replacement": "'source-process-summary-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "'analysis-result.json'",
+      "replacement": "'analysis-result-v2.json'"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($sources)",
+      "replacement": "$sources.ToArray()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($objects)",
+      "replacement": "$objects.ToArray()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($pairs)",
+      "replacement": "$pairs.ToArray()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($checksumRows)",
+      "replacement": "$checksumRows.ToArray()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($runRows)",
+      "replacement": "$runRows.ToArray()"
+    },
+    {
+      "exactOccurrences": 1,
+      "old": "@($commands)",
+      "replacement": "$commands.ToArray()"
+    }
+  ],
+  "listMaterialization": "Use explicit generic-list ToArray calls for deterministic artifact serialization.",
+  "previousFailurePreserved": [
+    "analysis-observation",
+    "analysis.outer.stdout.raw.bin",
+    "analysis.outer.stderr.raw.bin",
+    "analysis.outer-wait.json"
+  ],
+  "generatedSha256": "658CFFA8CEA5322352C4233E85CDE34180677D6D736AC1540C1C04B5644C82C7"
+}

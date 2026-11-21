@@ -1,0 +1,356 @@
+=== runs\run-04\command-05\object-02.blob.bin (decoded display only; original bytes retained) ===
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Globalization;
+5: using System.Text;
+6: using Microsoft.AspNetCore.Razor.Language;
+7: using Microsoft.CodeAnalysis;
+8: using Microsoft.CodeAnalysis.CSharp;
+9: using Microsoft.CodeAnalysis.Text;
+10: 
+11: namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+12: 
+13: public class CompilerFailedExceptionFactoryTest
+14: {
+15:     [Fact]
+16:     public void GetCompilationFailedResult_ReadsRazorErrorsFromPage()
+17:     {
+18:         // Arrange
+19:         var viewPath = "/Views/Home/Index.cshtml";
+20: 
+21:         var fileSystem = new VirtualRazorProjectFileSystem();
+22:         var projectItem = new TestRazorProjectItem(viewPath, "<span name=\"@(User.Id\">");
+23: 
+24:         var razorEngine = RazorProjectEngine.Create(RazorConfiguration.Default, fileSystem).Engine;
+25:         var codeDocument = GetCodeDocument(projectItem);
+26: 
+27:         // Act
+28:         razorEngine.Process(codeDocument);
+29:         var csharpDocument = codeDocument.GetCSharpDocument();
+30:         var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+31: 
+32:         // Assert
+33:         var failure = Assert.Single(compilationResult.CompilationFailures);
+34:         Assert.Equal(viewPath, failure.SourceFilePath);
+35:         var orderedMessages = failure.Messages.OrderByDescending(messages => messages.Message);
+36:         Assert.Collection(orderedMessages,
+37:             message => Assert.StartsWith(
+38:                 @"Unterminated string literal.",
+39:                 message.Message),
+40:             message => Assert.StartsWith(
+41:                 @"The explicit expression block is missing a closing "")"" character.",
+42:                 message.Message));
+43:     }
+44: 
+45:     [Fact]
+46:     public void GetCompilationFailedResult_WithMissingReferences()
+47:     {
+48:         // Arrange
+49:         var expected = "One or more compilation references may be missing. If you're seeing this in a published application, set 'CopyRefAssembliesToPublishDirectory' to true in your project file to ensure files in the refs directory are published.";
+50:         var compilation = CSharpCompilation.Create("Test", options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+51:         var syntaxTree = CSharpSyntaxTree.ParseText("@class Test { public string Test { get; set; } }");
+52:         compilation = compilation.AddSyntaxTrees(syntaxTree);
+53:         var emitResult = compilation.Emit(new MemoryStream());
+54: 
+55:         // Act
+56:         var exception = CompilationFailedExceptionFactory.Create(
+57:             RazorCodeDocument.Create(RazorSourceDocument.Create("Test", "Index.cshtml"), Enumerable.Empty<RazorSourceDocument>()),
+58:             syntaxTree.ToString(),
+59:             "Test",
+60:             emitResult.Diagnostics);
+61: 
+62:         // Assert
+63:         Assert.Collection(
+64:             exception.CompilationFailures,
+65:             failure => Assert.Equal(expected, failure.FailureSummary));
+66:     }
+67: 
+68:     [Fact]
+69:     public void GetCompilationFailedResult_UsesPhysicalPath()
+70:     {
+71:         // Arrange
+72:         var viewPath = "/Views/Home/Index.cshtml";
+73:         var physicalPath = @"x:\myapp\views\home\index.cshtml";
+74: 
+75:         var projectItem = new TestRazorProjectItem(viewPath, "<span name=\"@(User.Id\">", physicalPath: physicalPath);
+76: 
+77:         var codeDocument = GetCodeDocument(projectItem);
+78:         var csharpDocument = codeDocument.GetCSharpDocument();
+79: 
+80:         // Act
+81:         var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+82: 
+83:         // Assert
+84:         var failure = Assert.Single(compilationResult.CompilationFailures);
+85:         Assert.Equal(physicalPath, failure.SourceFilePath);
+86:     }
+87: 
+88:     [Fact]
+89:     public void GetCompilationFailedResult_ReadsContentFromSourceDocuments()
+90:     {
+91:         // Arrange
+92:         var viewPath = "/Views/Home/Index.cshtml";
+93:         var fileContent =
+94: @"
+95: @if (User.IsAdmin)
+96: {
+97:     <span>
+98: }
+99: </span>";
+100: 
+101:         var projectItem = new TestRazorProjectItem(viewPath, fileContent);
+102:         var codeDocument = GetCodeDocument(projectItem);
+103:         var csharpDocument = codeDocument.GetCSharpDocument();
+104: 
+105:         // Act
+106:         var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+107: 
+108:         // Assert
+109:         var failure = Assert.Single(compilationResult.CompilationFailures);
+110:         Assert.Equal(fileContent, failure.SourceFileContent);
+111:     }
+112: 
+113:     [Fact]
+114:     public void GetCompilationFailedResult_ReadsContentFromImports()
+115:     {
+116:         // Arrange
+117:         var viewPath = "/Views/Home/Index.cshtml";
+118:         var importsPath = "/Views/_MyImports.cshtml";
+119:         var fileContent = "@ ";
+120:         var importsContent = "@(abc";
+121: 
+122:         var projectItem = new TestRazorProjectItem(viewPath, fileContent);
+123:         var importsItem = new TestRazorProjectItem(importsPath, importsContent);
+124:         var codeDocument = GetCodeDocument(projectItem, importsItem);
+125:         var csharpDocument = codeDocument.GetCSharpDocument();
+126: 
+127:         // Act
+128:         var compilationResult = CompilationFailedExceptionFactory.Create(codeDocument, csharpDocument.Diagnostics);
+129: 
+130:         // Assert
+131:         Assert.Collection(
+132:             compilationResult.CompilationFailures,
+133:             failure =>
+134:             {
+135:                 Assert.Equal(viewPath, failure.SourceFilePath);
+136:                 Assert.Collection(failure.Messages,
+137:                     message =>
+138:                     {
+139:                         Assert.Equal(@"A space or line break was encountered after the ""@"" character.  Only valid identifiers, keywords, comments, ""("" and ""{"" are valid at the start of a code block and they must occur immediately following ""@"" with no space in between.",
+140:                             message.Message);
+141:                     });
+142:             },
+143:             failure =>
+144:             {
+145:                 Assert.Equal(importsPath, failure.SourceFilePath);
+146:                 Assert.Collection(failure.Messages,
+147:                     message =>
+148:                     {
+149:                         Assert.Equal(@"The explicit expression block is missing a closing "")"" character.  Make sure you have a matching "")"" character for all the ""("" characters within this block, and that none of the "")"" characters are being interpreted as markup.",
+150:                         message.Message);
+151:                     });
+152:             });
+153:     }
+154: 
+155:     [Fact]
+156:     public void GetCompilationFailedResult_GroupsMessages()
+157:     {
+158:         // Arrange
+159:         var viewPath = "views/index.razor";
+160:         var viewImportsPath = "views/global.import.cshtml";
+161:         var codeDocument = RazorCodeDocument.Create(
+162:             Create(viewPath, "View Content"),
+163:             new[] { Create(viewImportsPath, "Global Import Content") });
+164:         var diagnostics = new[]
+165:         {
+166:                 GetRazorDiagnostic("message-1", new SourceLocation(1, 2, 17), length: 1),
+167:                 GetRazorDiagnostic("message-2", new SourceLocation(viewPath, 1, 4, 6), length: 7),
+168:                 GetRazorDiagnostic("message-3", SourceLocation.Undefined, length: -1),
+169:                 GetRazorDiagnostic("message-4", new SourceLocation(viewImportsPath, 1, 3, 8), length: 4),
+170:             };
+171: 
+172:         // Act
+173:         var result = CompilationFailedExceptionFactory.Create(codeDocument, diagnostics);
+174: 
+175:         // Assert
+176:         Assert.Collection(result.CompilationFailures,
+177:         failure =>
+178:         {
+179:             Assert.Equal(viewPath, failure.SourceFilePath);
+180:             Assert.Equal("View Content", failure.SourceFileContent);
+181:             Assert.Collection(failure.Messages,
+182:                 message =>
+183:                 {
+184:                     Assert.Equal(diagnostics[0].GetMessage(CultureInfo.CurrentCulture), message.Message);
+185:                     Assert.Equal(viewPath, message.SourceFilePath);
+186:                     Assert.Equal(3, message.StartLine);
+187:                     Assert.Equal(17, message.StartColumn);
+188:                     Assert.Equal(3, message.EndLine);
+189:                     Assert.Equal(18, message.EndColumn);
+190:                 },
+191:                 message =>
+192:                 {
+193:                     Assert.Equal(diagnostics[1].GetMessage(CultureInfo.CurrentCulture), message.Message);
+194:                     Assert.Equal(viewPath, message.SourceFilePath);
+195:                     Assert.Equal(5, message.StartLine);
+196:                     Assert.Equal(6, message.StartColumn);
+197:                     Assert.Equal(5, message.EndLine);
+198:                     Assert.Equal(13, message.EndColumn);
+199:                 },
+200:                 message =>
+201:                 {
+202:                     Assert.Equal(diagnostics[2].GetMessage(CultureInfo.CurrentCulture), message.Message);
+203:                     Assert.Equal(viewPath, message.SourceFilePath);
+204:                     Assert.Equal(0, message.StartLine);
+205:                     Assert.Equal(-1, message.StartColumn);
+206:                     Assert.Equal(0, message.EndLine);
+207:                     Assert.Equal(-2, message.EndColumn);
+208:                 });
+209:         },
+210:         failure =>
+211:         {
+212:             Assert.Equal(viewImportsPath, failure.SourceFilePath);
+213:             Assert.Equal("Global Import Content", failure.SourceFileContent);
+214:             Assert.Collection(failure.Messages,
+215:                 message =>
+216:                 {
+217:                     Assert.Equal(diagnostics[3].GetMessage(CultureInfo.CurrentCulture), message.Message);
+218:                     Assert.Equal(viewImportsPath, message.SourceFilePath);
+219:                     Assert.Equal(4, message.StartLine);
+220:                     Assert.Equal(8, message.StartColumn);
+221:                     Assert.Equal(4, message.EndLine);
+222:                     Assert.Equal(12, message.EndColumn);
+223:                 });
+224:         });
+225:     }
+226: 
+227:     [Fact]
+228:     public void GetCompilationFailedResult_ReturnsCompilationResult_WithGroupedMessages()
+229:     {
+230:         // Arrange
+231:         var viewPath = "Views/Home/Index";
+232:         var generatedCodeFileName = "Generated Code";
+233:         var codeDocument = RazorCodeDocument.Create(RazorSourceDocument.Create("view-content", viewPath));
+234:         var assemblyName = "random-assembly-name";
+235: 
+236:         var diagnostics = new[]
+237:         {
+238:                 Diagnostic.Create(
+239:                     GetRoslynDiagnostic("message-1"),
+240:                     Location.Create(
+241:                         viewPath,
+242:                         new TextSpan(10, 5),
+243:                         new LinePositionSpan(new LinePosition(10, 1), new LinePosition(10, 2)))),
+244:                 Diagnostic.Create(
+245:                     GetRoslynDiagnostic("message-2"),
+246:                     Location.Create(
+247:                         assemblyName,
+248:                         new TextSpan(1, 6),
+249:                         new LinePositionSpan(new LinePosition(1, 2), new LinePosition(3, 4)))),
+250:                 Diagnostic.Create(
+251:                     GetRoslynDiagnostic("message-3"),
+252:                     Location.Create(
+253:                         viewPath,
+254:                         new TextSpan(40, 50),
+255:                         new LinePositionSpan(new LinePosition(30, 5), new LinePosition(40, 12)))),
+256:             };
+257: 
+258:         // Act
+259:         var compilationResult = CompilationFailedExceptionFactory.Create(
+260:             codeDocument,
+261:             "compilation-content",
+262:             assemblyName,
+263:             diagnostics);
+264: 
+265:         // Assert
+266:         Assert.Collection(compilationResult.CompilationFailures,
+267:             failure =>
+268:             {
+269:                 Assert.Equal(viewPath, failure.SourceFilePath);
+270:                 Assert.Equal("view-content", failure.SourceFileContent);
+271:                 Assert.Collection(failure.Messages,
+272:                     message =>
+273:                     {
+274:                         Assert.Equal("message-1", message.Message);
+275:                         Assert.Equal(viewPath, message.SourceFilePath);
+276:                         Assert.Equal(11, message.StartLine);
+277:                         Assert.Equal(2, message.StartColumn);
+278:                         Assert.Equal(11, message.EndLine);
+279:                         Assert.Equal(3, message.EndColumn);
+280:                     },
+281:                     message =>
+282:                     {
+283:                         Assert.Equal("message-3", message.Message);
+284:                         Assert.Equal(viewPath, message.SourceFilePath);
+285:                         Assert.Equal(31, message.StartLine);
+286:                         Assert.Equal(6, message.StartColumn);
+287:                         Assert.Equal(41, message.EndLine);
+288:                         Assert.Equal(13, message.EndColumn);
+289:                     });
+290:             },
+291:             failure =>
+292:             {
+293:                 Assert.Equal(generatedCodeFileName, failure.SourceFilePath);
+294:                 Assert.Equal("compilation-content", failure.SourceFileContent);
+295:                 Assert.Collection(failure.Messages,
+296:                     message =>
+297:                     {
+298:                         Assert.Equal("message-2", message.Message);
+299:                         Assert.Equal(assemblyName, message.SourceFilePath);
+300:                         Assert.Equal(2, message.StartLine);
+301:                         Assert.Equal(3, message.StartColumn);
+302:                         Assert.Equal(4, message.EndLine);
+303:                         Assert.Equal(5, message.EndColumn);
+304:                     });
+305:             });
+306:     }
+307: 
+308:     private static RazorSourceDocument Create(string path, string template)
+309:     {
+310:         var stream = new MemoryStream(Encoding.UTF8.GetBytes(template));
+311:         return RazorSourceDocument.ReadFrom(stream, path);
+312:     }
+313: 
+314:     private static RazorDiagnostic GetRazorDiagnostic(string message, SourceLocation sourceLocation, int length)
+315:     {
+316:         var diagnosticDescriptor = new RazorDiagnosticDescriptor("test-id", () => message, RazorDiagnosticSeverity.Error);
+317:         var sourceSpan = new SourceSpan(sourceLocation, length);
+318: 
+319:         return RazorDiagnostic.Create(diagnosticDescriptor, sourceSpan);
+320:     }
+321: 
+322:     private static DiagnosticDescriptor GetRoslynDiagnostic(string messageFormat)
+323:     {
+324:         return new DiagnosticDescriptor(
+325:             id: "someid",
+326:             title: "sometitle",
+327:             messageFormat: messageFormat,
+328:             category: "some-category",
+329:             defaultSeverity: DiagnosticSeverity.Error,
+330:             isEnabledByDefault: true);
+331:     }
+332: 
+333:     private static RazorCodeDocument GetCodeDocument(TestRazorProjectItem projectItem, TestRazorProjectItem imports = null)
+334:     {
+335:         var sourceDocument = RazorSourceDocument.ReadFrom(projectItem);
+336:         var fileSystem = new VirtualRazorProjectFileSystem();
+337:         fileSystem.Add(projectItem);
+338: 
+339:         var codeDocument = RazorCodeDocument.Create(sourceDocument);
+340: 
+341:         if (imports != null)
+342:         {
+343:             fileSystem.Add(imports);
+344:             codeDocument = RazorCodeDocument.Create(sourceDocument, new[] { RazorSourceDocument.ReadFrom(imports) });
+345:         }
+346: 
+347:         var razorEngine = RazorProjectEngine.Create(RazorConfiguration.Default, fileSystem).Engine;
+348: 
+349:         razorEngine.Process(codeDocument);
+350:         return codeDocument;
+351:     }
+352: 
+353: }
+354: 
+{"root":{"observedUtc":"2026-11-21T04:05:43.3042805Z","pid":11692,"creationFileTime100ns":134397075427134607,"creationUtc":"2026-11-21T04:05:42.7134607Z"},"observerExitCode":0,"observer":{"observedUtc":"2026-11-21T04:05:44.1437644Z","pid":30644,"creationFileTime100ns":134397075441310143,"creationUtc":"2026-11-21T04:05:44.1310143Z"},"failure":null,"run":"run-07","gitGhRoots":13,"wholeLogicalFileCounts":{"Default":13,"Original":13}}

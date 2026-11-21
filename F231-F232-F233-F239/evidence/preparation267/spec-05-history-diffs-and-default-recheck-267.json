@@ -1,0 +1,36 @@
+{
+  "commands": [
+    {
+      "label": "target-last-change-diff",
+      "argv": [
+        "git", "log", "-1", "-p", "--format=fuller",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5", "--",
+        "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs"
+      ],
+      "display": true
+    },
+    {
+      "label": "producer-last-change-diff",
+      "argv": [
+        "git", "log", "-1", "-p", "--format=fuller",
+        "d3483989953ae3cccd773aea5ea04cb0c7198531", "--",
+        "src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs"
+      ],
+      "display": true
+    },
+    {
+      "label": "qualification-upstream-default-branch-recheck",
+      "argv": [
+        "gh", "api", "repos/dotnet/aspnetcore", "--jq", "{full_name,default_branch}"
+      ],
+      "display": true
+    },
+    {
+      "label": "qualification-upstream-default-commit-recheck",
+      "argv": [
+        "gh", "api", "repos/dotnet/aspnetcore/git/ref/heads/main"
+      ],
+      "display": true
+    }
+  ]
+}

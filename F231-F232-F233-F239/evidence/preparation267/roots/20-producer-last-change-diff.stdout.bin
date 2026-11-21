@@ -1,0 +1,46 @@
+commit 887c7b32d9d6efa0c484350db4ebfe7d46ca7870
+Author:     Safia Abdalla <safia@microsoft.com>
+AuthorDate: Thu May 18 18:40:41 2023 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu May 18 18:40:41 2023 -0700
+
+    Change incorrect usage of ArgumentNullException (#48243)
+    
+    * Change incorrect usage of ArgumentNullException
+    
+    * Fix tests
+    
+    * Split exception
+    
+    * Try using shared source
+    
+    * Fix argument helpers for netstandard and netfx
+    
+    * Address feedback from review
+    
+    * Fix nullability attributes in shared helpers
+    
+    * Fix null or empty check for netfx and netstandard
+    
+    * Use EmptyString again for checks
+    
+    * Update check again
+    
+    ---------
+    
+    Co-authored-by: mla-alm <mla@specialisterne.com>
+
+diff --git a/src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs b/src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs
+index f25cd3c0f7..77b490fe62 100644
+--- a/src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs
++++ b/src/Identity/Extensions.Core/src/UserClaimsPrincipalFactory.cs
+@@ -28,7 +28,8 @@ public class UserClaimsPrincipalFactory<TUser> : IUserClaimsPrincipalFactory<TUs
+         ArgumentNullThrowHelper.ThrowIfNull(userManager);
+         if (optionsAccessor == null || optionsAccessor.Value == null)
+         {
+-            throw new ArgumentNullException(nameof(optionsAccessor));
++            ArgumentNullThrowHelper.ThrowIfNull(optionsAccessor);
++            throw new ArgumentException($"{nameof(optionsAccessor)} cannot wrap a null value.", nameof(optionsAccessor));
+         }
+         UserManager = userManager;
+         Options = optionsAccessor.Value;

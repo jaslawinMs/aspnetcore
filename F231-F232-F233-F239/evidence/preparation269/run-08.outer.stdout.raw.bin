@@ -1,0 +1,278 @@
+=== runs\run-04\command-05\object-04.blob.bin (decoded display only; original bytes retained) ===
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Globalization;
+5: using System.Linq;
+6: using Microsoft.AspNetCore.Diagnostics;
+7: using Microsoft.AspNetCore.Razor.Language;
+8: using Microsoft.CodeAnalysis;
+9: using Microsoft.CodeAnalysis.CSharp;
+10: 
+11: namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+12: 
+13: internal static class CompilationFailedExceptionFactory
+14: {
+15:     // error CS0234: The type or namespace name 'C' does not exist in the namespace 'N' (are you missing
+16:     // an assembly reference?)
+17:     private const string CS0234 = nameof(CS0234);
+18:     // error CS0246: The type or namespace name 'T' could not be found (are you missing a using directive
+19:     // or an assembly reference?)
+20:     private const string CS0246 = nameof(CS0246);
+21: 
+22:     public static CompilationFailedException Create(
+23:         RazorCodeDocument codeDocument,
+24:         IEnumerable<RazorDiagnostic> diagnostics)
+25:     {
+26:         // If a SourceLocation does not specify a file path, assume it is produced from parsing the current file.
+27:         var messageGroups = diagnostics.GroupBy(
+28:             razorError => razorError.Span.FilePath ?? codeDocument.Source.FilePath,
+29:             StringComparer.Ordinal);
+30: 
+31:         var failures = new List<CompilationFailure>();
+32:         foreach (var group in messageGroups)
+33:         {
+34:             var filePath = group.Key;
+35:             var fileContent = ReadContent(codeDocument, filePath);
+36:             var compilationFailure = new CompilationFailure(
+37:                 filePath,
+38:                 fileContent,
+39:                 compiledContent: string.Empty,
+40:                 messages: group.Select(parserError => CreateDiagnosticMessage(parserError, filePath)));
+41:             failures.Add(compilationFailure);
+42:         }
+43: 
+44:         return new CompilationFailedException(failures);
+45:     }
+46: 
+47:     public static CompilationFailedException Create(
+48:         RazorCodeDocument codeDocument,
+49:         string compilationContent,
+50:         string assemblyName,
+51:         IEnumerable<Diagnostic> diagnostics)
+52:     {
+53:         var diagnosticGroups = diagnostics
+54:             .Where(diagnostic => diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
+55:             .GroupBy(diagnostic => GetFilePath(codeDocument, diagnostic), StringComparer.Ordinal);
+56: 
+57:         var failures = new List<CompilationFailure>();
+58:         foreach (var group in diagnosticGroups)
+59:         {
+60:             var sourceFilePath = group.Key;
+61:             string sourceFileContent;
+62:             if (string.Equals(assemblyName, sourceFilePath, StringComparison.Ordinal))
+63:             {
+64:                 // The error is in the generated code and does not have a mapping line pragma
+65:                 sourceFileContent = compilationContent;
+66:                 sourceFilePath = Resources.GeneratedCodeFileName;
+67:             }
+68:             else
+69:             {
+70:                 sourceFileContent = ReadContent(codeDocument, sourceFilePath);
+71:             }
+72: 
+73:             string? additionalMessage = null;
+74:             if (group.Any(g =>
+75:                 string.Equals(CS0234, g.Id, StringComparison.OrdinalIgnoreCase) ||
+76:                 string.Equals(CS0246, g.Id, StringComparison.OrdinalIgnoreCase)))
+77:             {
+78:                 additionalMessage = Resources.FormatCompilation_MissingReferences(
+79:                     "CopyRefAssembliesToPublishDirectory");
+80:             }
+81: 
+82:             var compilationFailure = new CompilationFailure(
+83:                 sourceFilePath,
+84:                 sourceFileContent,
+85:                 compilationContent,
+86:                 group.Select(GetDiagnosticMessage),
+87:                 additionalMessage);
+88: 
+89:             failures.Add(compilationFailure);
+90:         }
+91: 
+92:         return new CompilationFailedException(failures);
+93:     }
+94: 
+95:     private static string ReadContent(RazorCodeDocument codeDocument, string filePath)
+96:     {
+97:         RazorSourceDocument? sourceDocument;
+98:         if (string.IsNullOrEmpty(filePath) || string.Equals(codeDocument.Source.FilePath, filePath, StringComparison.Ordinal))
+99:         {
+100:             sourceDocument = codeDocument.Source;
+101:         }
+102:         else
+103:         {
+104:             sourceDocument = codeDocument.Imports.FirstOrDefault(f => string.Equals(f.FilePath, filePath, StringComparison.Ordinal));
+105:         }
+106: 
+107:         if (sourceDocument != null)
+108:         {
+109:             var contentChars = new char[sourceDocument.Length];
+110:             sourceDocument.CopyTo(0, contentChars, 0, sourceDocument.Length);
+111:             return new string(contentChars);
+112:         }
+113: 
+114:         return string.Empty;
+115:     }
+116: 
+117:     private static DiagnosticMessage GetDiagnosticMessage(Diagnostic diagnostic)
+118:     {
+119:         var mappedLineSpan = diagnostic.Location.GetMappedLineSpan();
+120:         return new DiagnosticMessage(
+121:             diagnostic.GetMessage(CultureInfo.CurrentCulture),
+122:             CSharpDiagnosticFormatter.Instance.Format(diagnostic, CultureInfo.CurrentCulture),
+123:             mappedLineSpan.Path,
+124:             mappedLineSpan.StartLinePosition.Line + 1,
+125:             mappedLineSpan.StartLinePosition.Character + 1,
+126:             mappedLineSpan.EndLinePosition.Line + 1,
+127:             mappedLineSpan.EndLinePosition.Character + 1);
+128:     }
+129: 
+130:     private static DiagnosticMessage CreateDiagnosticMessage(
+131:         RazorDiagnostic razorDiagnostic,
+132:         string filePath)
+133:     {
+134:         var sourceSpan = razorDiagnostic.Span;
+135:         var message = razorDiagnostic.GetMessage(CultureInfo.CurrentCulture);
+136:         return new DiagnosticMessage(
+137:             message: message,
+138:             formattedMessage: razorDiagnostic.ToString(),
+139:             filePath: filePath,
+140:             startLine: sourceSpan.LineIndex + 1,
+141:             startColumn: sourceSpan.CharacterIndex,
+142:             endLine: sourceSpan.LineIndex + 1,
+143:             endColumn: sourceSpan.CharacterIndex + sourceSpan.Length);
+144:     }
+145: 
+146:     private static string GetFilePath(RazorCodeDocument codeDocument, Diagnostic diagnostic)
+147:     {
+148:         if (diagnostic.Location == Location.None)
+149:         {
+150:             return codeDocument.Source.FilePath;
+151:         }
+152: 
+153:         return diagnostic.Location.GetMappedLineSpan().Path;
+154:     }
+155: }
+156: 
+=== runs\run-03\command-01\instruction-00.raw.bin (decoded display only; original bytes retained) ===
+1: # Cross-cutting guidance
+2: 
+3: This guidance covers ASP.NET Core source work. Consult the relevant sections alongside the
+4: requested task and applicable repository and area instructions.
+5: 
+6: ## Overarching principles
+7: 
+8: - Preserve compatibility and public API discipline over local convenience. New APIs, constructors, options, packages, templates, analyzer IDs, and shared-framework metadata become long-lived contracts.
+9: - Prefer existing ASP.NET Core, BCL, SDK, and repository infrastructure over custom helpers. Add abstractions only when they keep user code testable, composable, and stable.
+10: - Treat nullability, validation, cancellation, disposal, and thread-safety annotations as executable design contracts, not comments.
+11: - Separate startup, build-time, analyzer-time, and hot-path runtime work. Per-request, per-diagnostic, file-watcher, and template paths need allocation, caching, and determinism scrutiny.
+12: - Treat filesystem paths, tool commands, configuration, generated output, logs, and package attribution as trust boundaries that can regress even when builds and tests pass.
+13: 
+14: ## Topics
+15: 
+16: ### Cross-cutting scope and change shape
+17: 
+18: - Apply the [contribution scope requirements](../CONTRIBUTING.md#before-submitting-the-pull-request) to product, tool, template, analyzer, and test-utility changes, including unrelated file moves, generated-file churn, version churn, and refactors beyond the affected scenario.
+19: - Preserve ownership boundaries between product code, shared source, templates, test infrastructure, and build infrastructure; do not expose shared implementation details through public namespaces or packages.
+20: - Prefer established shared helpers for process handling, retries, cancellation, file enumeration, CLI parsing, package metadata, and test hosting before adding one-off infrastructure.
+21: - Remove vestigial debug hooks, unused files, stale comments, obsolete workarounds, and duplicate conditional logic only once the scenario they protected is understood and still covered.
+22: 
+23: ### Public API surface, compatibility, and lifecycle
+24: 
+25: - Minimize public surface area; keep speculative hooks, options, extension points, and constructor overloads internal until a demonstrated scenario and API review justify them.
+26: - Preserve public member names, constructor signatures, enum values, default option values, extension-method behavior, analyzer IDs, template identifiers, package identities, and shared-framework metadata unless the breaking change is deliberate and reviewed.
+27: - Use `[Obsolete]` with actionable migration guidance for deprecated APIs, and keep parallel or additive overloads when compatibility requires old members to remain.
+28: - Use applicable public API design criteria for changed public/protected APIs and shipped defaults/conventions. The [API review process](APIReviewProcess.md#process) governs that process; verify any concern against source signatures and contracts rather than reporting a design preference as a defect.
+29: - Public XML docs must accurately describe purpose, parameters, return values, exceptions, defaults, consumer-observable lifecycle, and non-obvious examples for IntelliSense and generated docs; follow the repository's [public XML-documentation requirement](../.github/copilot-instructions.md#formatting).
+30: 
+31: ### Nullability, validation, and correctness invariants
+32: 
+33: - Validate public API arguments and externally supplied data at entry points with precise exception types, parameter names, and actionable messages; do not let invalid input surface later as `NullReferenceException` or an ambiguous failure.
+34: - Keep nullable annotations, member initialization, `MemberNotNull`-style attributes, and guard clauses aligned with real control-flow invariants; do not use annotations to hide possible null states.
+35: - Model unknown, unsupported, or partially restored states explicitly instead of silently mapping them into an existing known bucket; keep classification separate from filtering so tests can prove both.
+36: - Preserve producer-consumer invariants for buffers, streams, collections, and generated metadata; never advance, reuse, mutate, or expose data beyond what the owner granted.
+37: - Use explicit comparers, culture rules, and case-sensitivity decisions for strings, keys, file names, template identifiers, and configuration names when default equality is not the contract.
+38: 
+39: ### Async, cancellation, and background work
+40: 
+41: - Use Task-based async through the whole call chain; avoid `.Result`, `.Wait()`, sync-over-async wrappers, and synchronous exception behavior that differs from the async contract.
+42: - Flow `CancellationToken` to cancellation-aware async I/O, process execution, analyzer APIs, and long-running test utility APIs; for `IFileProvider.Watch` and file-change notifications, manage `IChangeToken` registration and disposable lifetimes through a documented shutdown path.
+43: - Use `ConfigureAwait(false)` in library code that should not capture a synchronization context, while preserving app/test patterns that intentionally rely on one.
+44: - Wrap fire-and-forget or callback-started async work in explicit error handling so failures are observed, logged, or propagated instead of crashing later or being silently swallowed.
+45: - Prefer `IAsyncDisposable` and async fixture/helper patterns when cleanup is asynchronous; do not block during teardown or replace cancellation with unsafe object nulling.
+46: 
+47: ### Performance, allocations, caching, and pooling
+48: 
+49: - Determine whether code runs at startup, build time, analyzer time, or on a hot runtime path before raising performance findings; optimize hot paths and repeated analyzer traversals first.
+50: - Minimize avoidable allocations in per-request, per-diagnostic, file-provider, localization, cache, and template-generation paths using spans, pooled buffers, capacity hints, cached symbols, and lazy computation where they materially help.
+51: - Use object pooling, `ArrayPool<T>`, shared immutable singleton results, and cache consolidation only when ownership, reset, invalidation, contention, and lifetime semantics are clear.
+52: - Defer expensive or failure-prone work until a caller needs it; avoid constructor, registration, or startup work that eagerly resolves files, assemblies, projects, reflection, or external tools without benefit.
+53: - Measure durations with elapsed-time APIs and keep benchmark or performance validation focused on the changed path rather than wall-clock or environment-sensitive measurements.
+54: 
+55: ### Resource lifetime, disposal, and I/O
+=== runs\run-02\command-04\object-00.commit.bin (decoded display only; original bytes retained) ===
+1: tree cdbb759178f40aa93a74c67c2370d2590d9788dc
+2: parent a412ffec9328562a1b7e27945f0e40ebdca3c35d
+3: parent a61c99060627afe844e49ed09e4d30b4311edcd9
+4: author Rich Lander <2608468+richlander@users.noreply.github.com> 1794605258 -0800
+5: committer GitHub <noreply@github.com> 1794605258 -0800
+6: gpgsig -----BEGIN PGP SIGNATURE-----
+7:  
+8:  wsFcBAABCAAQBQJq94DKCRC1aQ7uu5UhlAAAyJsQALIbBB7bYSw+o+3UnuTfI6ni
+9:  YhOUqstm21zV+pEbHq6CIEQb5bAxfHVzNLV5+tAV3RwLZtitR6sK26Tl0IU9J/yv
+10:  dEAacBuqDcJYx4GRfKlFPyM1mN1nxScEeX6o1zVykjeqMHVS2ZX0CrykuNYZu8U5
+11:  eCe5dqMtMTpnrcAMM8WdgY/mVK2jbRQwP06cIgXDnIzIsRAZI+h+kIOf0w5x6V6v
+12:  42Z+0lWHlqS4f+FIvIXVRorY40pU+WavTCSZG6IXkfwvdexFe34dYbfADnvuAUZL
+13:  s9yQwRFNbOoEEE3YiZcues3NmzvzxxFgAx3OLsQj1o8kKPUQfbbdaf2tHPvTrM9+
+14:  E6xILf8Kp7XK1xiH0p01IwOxxUcdoOZcc9UXzwGLVnEs7TQCs8ZiyMF/tvLuMHcU
+15:  E/nz4Hi9CbkDoMdOxMx+aPKztPH5jvAFYsXGaXtgPm6irkbGvqvFPP8m90tcdGzk
+16:  zMXAAKv8PdGELM2l3lLZsxLiWc+8OB51vQsFOGINA+aN7yty91S36oc84BCav+D2
+17:  FDC7kuPT/i1tVKoegrwkGT9TErJhCiFgqmrzppqrEdrLNM9Ek9frFFVvhKBHq7aE
+18:  5D3SyPa8n81CcUz5tqNor3HK1FzFQdphb4ncpD/rJGwlehIaIACzDxg0UNrtn8eZ
+19:  NoOt1NpALPceXfMHJnUc
+20:  =HA80
+21:  -----END PGP SIGNATURE-----
+22:  
+23: 
+24: Merge pull request #70560 from dotnet/dev/richlander/linux-ci-utf8-locale
+25: 
+26: Use C.UTF-8 for Linux build jobs
+=== runs\run-04\command-06\object-00.commit.bin (decoded display only; original bytes retained) ===
+1: tree 8d6072e5a4000dbff4553c4a9222c3c37db8b76a
+2: parent cf1e24ed9df31aefd81344883cd1087c522e085f
+3: author dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> 1795183738 +0000
+4: committer GitHub <noreply@github.com> 1795183738 +0000
+5: gpgsig -----BEGIN PGP SIGNATURE-----
+6:  
+7:  wsFcBAABCAAQBQJrAFR6CRC1aQ7uu5UhlAAAEooQABlQLP9uqXEmupezrhPdlvnD
+8:  OV9ZJR5SzMWf4WpxqSLzidaA77PriaJHRfErX8c4+y8jI+AS5qXBSXpLHLgx/Dev
+9:  wic0lpxy453yQCN3b05Cr/aoahLBg16l1KoRKqxno0A14hpr40pWHAt/RQP79OoP
+10:  Ab+gnecU6fOWf2tvlp5/rEpFCTnkFWama+gA+ippdTzsuVZiCFj6QQKRrmSpoI9J
+11:  yM0RalNo89hCd8zp+LCaOYY9q5Lt8Bz8v+jhHwF9e/L5MboCIGWDHwEVFErDD8hp
+12:  kPsgwk5m6urA6UzZdHv5yoI1tZaqisC8GeuXt1bUjpjrUxTkhUfO4CiMFw92dFJU
+13:  K2X66+/aPDL2QulnYujuc30gzahveqg11fkBwy8fMWxeMayjTx7J/z5S6QQv9KJU
+14:  It6/59nV2d3rY0+fgewy6rwRevddoiCxcVZjxMJ/R5FljppcNnISoryhku4HTo8c
+15:  D5++jmSBORR1/X8nhVzs9ir+aNiOtMkWeTL2d//q+oVS42vZ7fxbfPOb6kAbDaEg
+16:  o8pF+GnnUQQbjzGlD8K6SHCe/nIogfjG1sAVOPF0A9xlsftIZ/LB6leuNIC0ffOP
+17:  WqlXXYnPLp9pA505Dcqyx47FnXshOfJF5WVTdDFUkwyfpfryoqDzXNUGKCocbsvZ
+18:  ikg/R1Wc61cXVEfW10Mx
+19:  =wLrV
+20:  -----END PGP SIGNATURE-----
+21:  
+22: 
+23: [main] (deps): Bump src/submodules/MessagePack-CSharp (#70748)
+24: 
+25: Bumps [src/submodules/MessagePack-CSharp](https://github.com/aspnet/MessagePack-CSharp) from `be938cd` to `8dafb0f`.
+26: - [Commits](https://github.com/aspnet/MessagePack-CSharp/compare/be938cda59c823ee4a672d45d1d7d642a3f34396...8dafb0f4ad0045ccdefdf9baf30eda05392caee2)
+27: 
+28: ---
+29: updated-dependencies:
+30: - dependency-name: src/submodules/MessagePack-CSharp
+31:   dependency-version: 8dafb0f4ad0045ccdefdf9baf30eda05392caee2
+32:   dependency-type: direct:production
+33: ...
+34: 
+35: Signed-off-by: dependabot[bot] <support@github.com>
+36: Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+{"run":"run-08","observer":{"creationUtc":"2026-11-21T04:06:42.7334196Z","creationFileTime100ns":134397076027334196,"observedUtc":"2026-11-21T04:06:42.7445454Z","pid":50724},"failure":null,"observerExitCode":0,"wholeLogicalFileCounts":{"Original":13,"Default":13},"gitGhRoots":13,"root":{"creationUtc":"2026-11-21T04:06:41.8708847Z","creationFileTime100ns":134397076018708847,"observedUtc":"2026-11-21T04:06:42.4369539Z","pid":45528}}

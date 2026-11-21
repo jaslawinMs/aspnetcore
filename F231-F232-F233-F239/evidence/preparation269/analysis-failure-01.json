@@ -1,0 +1,19 @@
+{
+  "observedToolShellId": "4701",
+  "actualToolExitCode": 1,
+  "failedHelper": "analyze_captures_269_v1.ps1",
+  "stage": "Artifact-only validation, first recorded source-root identity comparison",
+  "cause": "ConvertFrom-Json returned System.DateTime. DateTime.Parse then implicitly reparsed its culture-rendered string, losing 100ns precision and reinterpreting the timezone. This analysis check failed before writing any proposed source-analysis output.",
+  "diagnosticObservedToolShellId": "4702",
+  "diagnostic": "For all nine existing source runs, direct DateTime casting exactly reproduced the recorded creation FILETIME; source direct waits and observer exits were all actually zero. No source capture was deficient and none was repeated.",
+  "gitGhRootsStartedByFailedAnalysis": 0,
+  "newProductInputs": 0,
+  "retained": [
+    "analyze_captures_269_v1.ps1",
+    "analysis-observation",
+    "analysis.outer.stdout.raw.bin",
+    "analysis.outer.stderr.raw.bin",
+    "analysis.outer-wait.json"
+  ],
+  "correction": "Fresh v2 analyzer, fresh generated executed helper, fresh observation directory, fresh output report names, explicit DateTime cast and explicit list materialization. The v1 helper and all failed results remain immutable."
+}

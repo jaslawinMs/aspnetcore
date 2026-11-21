@@ -1,0 +1,173 @@
+=== Fresh upstream main immutable commit reference (decoded display only; original bytes retained) ===
+1: {"ref":"refs/heads/main","node_id":"MDM6UmVmMTc2MjAzNDc6cmVmcy9oZWFkcy9tYWlu","url":"https://api.github.com/repos/dotnet/aspnetcore/git/refs/heads/main","object":{"sha":"d3483989953ae3cccd773aea5ea04cb0c7198531","type":"commit","url":"https://api.github.com/repos/dotnet/aspnetcore/git/commits/d3483989953ae3cccd773aea5ea04cb0c7198531"}}
+=== Original exact symbol consumer file names (decoded display only; original bytes retained) ===
+1: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/ChecksumValidatorTest.cs
+2: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/CompilerFailedExceptionFactoryTest.cs
+3: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs
+4: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/FileNode.cs
+5: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs
+6: 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.TagHelpers/test/GlobbingUrlBuilderTest.cs
+7: 
+=== Original DirectoryNode bounded history without patch content (decoded display only; original bytes retained) ===
+1: c85baf8db0c72ae8e68643029d514b2e737c9fae	2022-01-02T20:09:22+05:30	chore : Remove unwanted `using` statement (#39176)
+2: a450cb69b5e4549f5515cdb057a68771f56cefd7	2021-11-05T17:52:08-07:00	Use file scoped namespaces (#38076)
+3: 9da42b9fab4c61fe46627ac0c6877905ec845d5a	2021-07-20T13:29:55-07:00	Find and Replace Apache License -> MIT
+4: 0f072a9565037a9efa2559ad49d229d3b10c22c6	2019-01-29T09:34:43-08:00	Reintroduce a package for Razor runtime compilation (#6653)
+5: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs (decoded display only; original bytes retained) ===
+1: ﻿// Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: namespace Microsoft.AspNetCore.Razor.Language;
+5: 
+6: internal class VirtualRazorProjectFileSystem : RazorProjectFileSystem
+7: {
+8:     private readonly DirectoryNode _root = new DirectoryNode("/");
+9: 
+10:     public override IEnumerable<RazorProjectItem> EnumerateItems(string basePath)
+11:     {
+12:         basePath = NormalizeAndEnsureValidPath(basePath);
+13:         var directory = _root.GetDirectory(basePath);
+14:         return directory?.EnumerateItems() ?? Enumerable.Empty<RazorProjectItem>();
+15:     }
+16: 
+17:     public override RazorProjectItem GetItem(string path)
+18:     {
+19:         return GetItem(path, fileKind: null);
+20:     }
+21: 
+22:     public override RazorProjectItem GetItem(string path, string fileKind)
+23:     {
+24:         // We ignore fileKind here because the _root is pre-filled with project items that already have fileKinds defined. This is
+25:         // a unique circumstance where the RazorProjectFileSystem is actually pre-filled with all of its project items on construction.
+26: 
+27:         path = NormalizeAndEnsureValidPath(path);
+28:         return _root.GetItem(path) ?? new NotFoundProjectItem(string.Empty, path);
+29:     }
+30: 
+31:     public void Add(RazorProjectItem projectItem)
+32:     {
+33:         ArgumentNullException.ThrowIfNull(projectItem);
+34: 
+35:         var filePath = NormalizeAndEnsureValidPath(projectItem.FilePath);
+36:         _root.AddFile(new FileNode(filePath, projectItem));
+37:     }
+38: }
+39: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/FileNode.cs (decoded display only; original bytes retained) ===
+1: ﻿// Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Diagnostics;
+5: 
+6: namespace Microsoft.AspNetCore.Razor.Language;
+7: 
+8: // Internal for testing
+9: [DebuggerDisplay("{Path}")]
+10: internal class FileNode
+11: {
+12:     public FileNode(string path, RazorProjectItem projectItem)
+13:     {
+14:         Path = path;
+15:         ProjectItem = projectItem;
+16:     }
+17: 
+18:     public DirectoryNode Directory { get; set; }
+19: 
+20:     public string Path { get; }
+21: 
+22:     public RazorProjectItem ProjectItem { get; set; }
+23: }
+24: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/NotFoundProjectItem.cs (decoded display only; original bytes retained) ===
+1: ﻿// Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: namespace Microsoft.AspNetCore.Razor.Language;
+5: 
+6: internal class NotFoundProjectItem : RazorProjectItem
+7: {
+8:     public NotFoundProjectItem(string basePath, string path)
+9:     {
+10:         BasePath = basePath;
+11:         FilePath = path;
+12:     }
+13: 
+14:     public override string BasePath { get; }
+15: 
+16:     public override string FilePath { get; }
+17: 
+18:     public override bool Exists => false;
+19: 
+20:     public override string PhysicalPath => throw new NotSupportedException();
+21: 
+22:     public override Stream Read() => throw new NotSupportedException();
+23: }
+24: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/TestRazorProjectItem.cs (decoded display only; original bytes retained) ===
+1: ﻿// Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Text;
+5: 
+6: namespace Microsoft.AspNetCore.Razor.Language;
+7: 
+8: public class TestRazorProjectItem : RazorProjectItem
+9: {
+10:     public TestRazorProjectItem(
+11:         string filePath,
+12:         string content = "Default content",
+13:         string physicalPath = null,
+14:         string relativePhysicalPath = null,
+15:         string basePath = "/")
+16:     {
+17:         FilePath = filePath;
+18:         PhysicalPath = physicalPath;
+19:         RelativePhysicalPath = relativePhysicalPath;
+20:         BasePath = basePath;
+21:         Content = content;
+22:     }
+23: 
+24:     public override string BasePath { get; }
+25: 
+26:     public override string FilePath { get; }
+27: 
+28:     public override string PhysicalPath { get; }
+29: 
+30:     public override string RelativePhysicalPath { get; }
+31: 
+32:     public override bool Exists => true;
+33: 
+34:     public string Content { get; set; }
+35: 
+36:     public override Stream Read()
+37:     {
+38:         var stream = new MemoryStream(Encoding.UTF8.GetBytes(Content));
+39: 
+40:         return stream;
+41:     }
+42: }
+43: 
+=== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Mvc/Mvc.Razor.RuntimeCompilation/test/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test.csproj (decoded display only; original bytes retained) ===
+1: ﻿<Project Sdk="Microsoft.NET.Sdk">
+2: 
+3:   <PropertyGroup>
+4:     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+5:     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+6:     <PreserveCompilationContext>true</PreserveCompilationContext>
+7:   </PropertyGroup>
+8: 
+9:   <ItemGroup>
+10:     <ProjectReference Include="$(RepoRoot)src\Middleware\Diagnostics.Abstractions\src\Microsoft.AspNetCore.Diagnostics.Abstractions.csproj" />
+11:     <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Core\src\Microsoft.AspNetCore.Mvc.Core.csproj" />
+12:     <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor.RuntimeCompilation\src\Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.csproj" />
+13:     <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.Razor\src\Microsoft.AspNetCore.Mvc.Razor.csproj" />
+14:     <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc.RazorPages\src\Microsoft.AspNetCore.Mvc.RazorPages.csproj" />
+15:     <ProjectReference Include="$(RepoRoot)src\Mvc\Mvc\src\Microsoft.AspNetCore.Mvc.csproj" />
+16:     <ProjectReference Include="$(RepoRoot)src\Mvc\shared\Mvc.Views.TestCommon\Microsoft.AspNetCore.Mvc.Views.TestCommon.csproj" />
+17:     <ProjectReference Include="$(RepoRoot)src\Razor\Razor\src\Microsoft.AspNetCore.Razor.csproj" />
+18:   </ItemGroup>
+19: 
+20: </Project>
+21: 
+{"wholeLogicalFileCounts":{"Default":3,"Original":9},"observer":{"creationFileTime100ns":134397073129369151,"observedUtc":"2026-11-21T04:01:52.9480097Z","pid":48148,"creationUtc":"2026-11-21T04:01:52.9369151Z"},"observerExitCode":0,"run":"run-03","root":{"creationFileTime100ns":134397073120875153,"observedUtc":"2026-11-21T04:01:52.6595821Z","pid":53676,"creationUtc":"2026-11-21T04:01:52.0875153Z"},"failure":null,"gitGhRoots":7}

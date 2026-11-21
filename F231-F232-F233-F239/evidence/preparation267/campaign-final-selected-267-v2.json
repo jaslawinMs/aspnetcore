@@ -1,0 +1,98 @@
+{
+  "observedAt": "2026-11-21T04:12:57.9342884Z",
+  "canonicalPath": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-campaign.json",
+  "canonicalWholeFileSha256AtObservation": "36C7E7019F3B5F50CB627F90E30E773272BC95D06AFDFFB69FD16E7D9E15D417",
+  "selectionAuthority": "Outer candidates[].id/status; nested finding is metadata only",
+  "selected": [
+    {
+      "id": "F231",
+      "finding": {
+        "card_id": "linear-contains-inside-loop",
+        "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+        "line_start": 102,
+        "line_end": 105,
+        "project": "Microsoft.AspNetCore.Identity.Test",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "The user-claim assertion rescans the materialized claims list for every expected claim.",
+        "explanation": "claims is a List<Claim>, and claims.Any is evaluated once per userClaims element, yielding nested linear work. This is retained as informational because it is assertion code in a unit test.",
+        "snippet": "foreach (var cl in userClaims)\n{\n    Assert.Equal(supportClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F232",
+      "finding": {
+        "card_id": "linear-contains-inside-loop",
+        "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+        "line_start": 106,
+        "line_end": 109,
+        "project": "Microsoft.AspNetCore.Identity.Test",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "The admin-role-claim assertion rescans the claims list for every expected claim.",
+        "explanation": "The foreach over adminClaims performs a predicate Any scan over the retained claims List<Claim> on every iteration. The match is informational because this is unit-test verification code.",
+        "snippet": "foreach (var cl in adminClaims)\n{\n    Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    },
+    {
+      "id": "F233",
+      "finding": {
+        "card_id": "linear-contains-inside-loop",
+        "file": "src/Identity/test/Identity.Test/UserClaimsPrincipalFactoryTest.cs",
+        "line_start": 110,
+        "line_end": 113,
+        "project": "Microsoft.AspNetCore.Identity.Test",
+        "target_frameworks": [
+          "net12.0"
+        ],
+        "severity": "informational",
+        "confidence": "high",
+        "classification": "informational",
+        "hot_path": "low",
+        "tfm_sensitive": false,
+        "summary": "The local-role-claim assertion rescans the claims list for every expected claim.",
+        "explanation": "The foreach over localClaims invokes claims.Any for each expected role claim, creating nested linear scans. The occurrence is retained as informational because it is unit-test assertion code.",
+        "snippet": "foreach (var cl in localClaims)\n{\n    Assert.Equal(supportRoleClaims, claims.Any(c => c.Type == cl.Type && c.Value == cl.Value));\n}",
+        "suppressed": false
+      },
+      "status": "pending",
+      "notes": [],
+      "branch": null,
+      "pr_url": null,
+      "updated_at": null
+    }
+  ],
+  "noCanonicalWrite": true,
+  "pointOnly": true,
+  "observer": {
+    "pid": 19700,
+    "startUtc": "2026-11-21T04:12:57.2086043Z",
+    "creationFileTimeUtc": 134397079772086043,
+    "processPath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "role": "Data-only final source sealer; actual outer tool return must be observed after this script returns"
+  }
+}

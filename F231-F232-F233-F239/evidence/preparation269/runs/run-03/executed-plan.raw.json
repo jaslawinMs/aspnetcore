@@ -1,0 +1,62 @@
+{
+  "commands": [
+    {
+      "kind": "local-instructions",
+      "label": "Referenced whole cross-cutting guidance charged conservatively to both roles",
+      "paths": ["docs\\CrossCuttingGuidance.md"],
+      "display": false
+    },
+    {
+      "kind": "utility",
+      "label": "Fresh upstream main immutable commit reference",
+      "executable": "gh",
+      "args": ["api", "repos/dotnet/aspnetcore/git/ref/heads/main"],
+      "display": true
+    },
+    {
+      "kind": "utility",
+      "label": "Original exact symbol consumer file names",
+      "executable": "git",
+      "args": [
+        "--no-pager", "grep", "-l", "-w",
+        "-e", "DirectoryNode", "-e", "VirtualRazorProjectFileSystem", "-e", "FileNode",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "--", ":(glob)src/**/*.cs"
+      ],
+      "display": true
+    },
+    {
+      "kind": "utility",
+      "label": "Original DirectoryNode bounded history without patch content",
+      "executable": "git",
+      "args": [
+        "--no-pager", "log", "--follow", "-n", "8",
+        "--format=%H%x09%aI%x09%s",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "--",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/DirectoryNode.cs"
+      ],
+      "display": true
+    },
+    {
+      "kind": "batch",
+      "label": "Original whole actual tree producer nodes and owning test project",
+      "role": "Original",
+      "commit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "paths": [
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/FileNode.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/NotFoundProjectItem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/TestRazorProjectItem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test.csproj"
+      ],
+      "displayPaths": [
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/VirtualRazorProjectFileSystem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/FileNode.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/NotFoundProjectItem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/TestInfrastructure/TestRazorProjectItem.cs",
+        "src/Mvc/Mvc.Razor.RuntimeCompilation/test/Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.Test.csproj"
+      ]
+    }
+  ]
+}
