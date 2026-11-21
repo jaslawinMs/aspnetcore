@@ -1,0 +1,93 @@
+{
+  "finding": "F268",
+  "qualificationBoundary": "Pinned source, resolved local references, and published BCL/Pipelines contracts; no managed execution or runtime verification.",
+  "sourceIdentity": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "observedDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "affectedGitBlobBothRoles": "ca0b398d812784c11c1bef714aafcd5f6badf195",
+    "affectedRawSha256BothRoles": "9A629EFA36E7AA9E5721B1AD0E573484C770A32C4EA67C05BDDD3FB5A98CC3E9",
+    "entireSocialWeatherTreeIdenticalBetweenRoles": true,
+    "all18InitiallyInspectedProducerConsumerFilesMatchLocalAndBothPins": true,
+    "rawSnapshotsAndExactRetrievalArguments": "raw-source-index.json"
+  },
+  "realProducerTrace": [
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\wwwroot\\index.html:8-20,64-102",
+      "observation": "The supplied page opens one raw WebSocket to /weather?formatType=json when DOMContentLoaded fires. It sends once per manual form submission, with Temperature, Weather, ReportTime and ZipCode. Default inputs are 72, Sunny and 98052; ReportTime is Date.now(). There is no timer, batching, synthetic load, or fan-out client loop in this page.",
+      "limits": "One socket per page is not a bound on total users/connections. ZipCode is editable and unbounded in the page; no exact serialized byte length, total active connection count, rate or deployed workload was observed."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\Startup.cs:12-19,33-43; src\\SignalR\\common\\Http.Connections\\src\\ConnectionEndpointRouteBuilderExtensions.cs:53-65,85-103,130-137; src\\Servers\\Connections.Abstractions\\src\\ConnectionBuilderExtensions.cs:22-27",
+      "observation": "Startup maps /weather to SocialWeatherConnectionHandler, registers a transient manager and singleton formatter resolver/formatters, and registers the three WeatherReport formats. Endpoint construction creates one handler from ApplicationServices and captures handler.OnConnectedAsync as the terminal connection delegate. The handler therefore retains its injected manager across connections to this endpoint despite the manager's transient registration."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\SocialWeatherConnectionHandler.cs:24-62; src\\SignalR\\samples\\SocialWeather\\PersistentConnectionLifeTimeManager.cs:20-51",
+      "observation": "OnConnectedAsync adds the real ConnectionContext before ProcessRequests. Each nonempty transport-input ReadAsync buffer is copied to an inbound stream, rewound and deserialized into one WeatherReport; ProcessRequests then awaits SendToAllAsync. Its finally advances the input reader only after deserialization/broadcast completes. OnDisconnectedAsync removes the connection after ProcessRequests returns normally; this existing control flow is unchanged.",
+      "resolvedEvidence": "LSP incomingCalls found ProcessRequests at line 48 as the sole resolved SendToAllAsync caller. LSP findReferences found the manager declaration/constructor, handler field/constructor and Startup registration only."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\ConnectionList.cs:10-52; src\\SignalR\\samples\\SocialWeather\\PersistentConnectionLifeTimeManager.cs:41-51; src\\SignalR\\samples\\SocialWeather\\FormatterResolver.cs:18-39",
+      "observation": "ConnectionList is a ConcurrentDictionary keyed by ConnectionId. A broadcast enumerates its live collection and, serially for each enumerated recipient, resolves that recipient's formatter using Items[format], constructs a fresh ordinary MemoryStream, awaits serialization, calls ToArray once and awaits that recipient's Output.WriteAsync. No connection snapshot, per-format serialization cache, parallel fan-out, pooled buffer or reused stream exists.",
+      "cardinality": "For a successfully reached recipient the code performs one serialization and one ToArray call. Empty output uses Array.Empty<byte> in the documented runtime source; nonempty output causes one logical-length byte-array copy. Exceptions can stop enumeration before later recipients. No fixed recipient count or stable enumeration order is established; active users and concurrent modifications determine it."
+    }
+  ],
+  "formatters": [
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\Json\\JSonStreamFormatter.cs:19-25",
+      "format": "json",
+      "observation": "Creates JsonTextWriter over StreamWriter, synchronously serializes with JsonSerializer, explicitly Flushes the writer and returns a completed Task. Neither writer is disposed by this method. The manager awaits that Task before accessing stream contents. JSON property names, enum conversion and encoding must remain untouched."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\Protobuf\\ProtobufWeatherStreamFormatter.cs:25-41",
+      "format": "protobuf",
+      "observation": "Creates CodedOutputStream with leaveOpen:true, writes the projected WeatherReport message, Flushes it and awaits stream.FlushAsync. The connection's transfer format is changed to binary by the existing OnConnectedAsync branch. The exact length-prefix/protobuf bytes are not reinterpreted."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\Pipe\\PipeWeatherStreamFormatter.cs:52-65",
+      "format": "pipe",
+      "observation": "Creates a StreamWriter, applies its existing UTF8-to-ASCII conversion and line formatting, awaits WriteLineAsync and FlushAsync. It does not dispose the writer. Newline, conversion and formatter behavior are outside F268."
+    }
+  ],
+  "byteBoundariesAndOwnership": {
+    "baseline": "The manager always constructs new MemoryStream(), not an array-backed stream, subclass, owner or pool rental. It has logical origin zero. The built-in formatters write/flush before their returned Task completes; the manager makes no later stream mutation. ToArray takes all logical contents independently of Position, excluding Capacity slack. Reading from the current Position would usually read nothing because serialization leaves it at the end.",
+    "getBufferAloneIsNotEquivalent": "GetBuffer exposes the entire backing array, which may be larger than logical Length. Sending that array unbounded can transmit excess bytes. Capacity is a bound/allocation detail, not the message length.",
+    "positionLengthAndOffset": "Any segment-based alternative must use the logical segment's Offset and Count, not Position or Capacity. The published MemoryStream implementation returns new ArraySegment<byte>(_buffer, _origin, _length - _origin). Actual newly-created streams have zero origin; general nonzero-origin semantics are documented, not produced by this sample.",
+    "closedStreamBoundary": "The public IStreamFormatter<T>.WriteAsync contract has no explicit leave-open promise. Existing ToArray works after a formatter closes the stream. A replacement that reads ms.Length after serialization can introduce ObjectDisposedException for that case. TryGetBuffer also works when closed and is guaranteed exposable by the actual new MemoryStream() constructor, so it avoids that particular mismatch without a fallback/catch. No closed-formatter case was executed.",
+    "candidateShapeConsideredButNotApplied": "Use the logical ArraySegment from TryGetBuffer and retain the existing awaited Output.WriteAsync. No extra cache, pool, preallocation, disposal, stream reuse, truncation, formatter change or serialization hoist is required for that source-level alternative.",
+    "snapshotCaveat": "ToArray is a detached snapshot; a segment aliases the formatter's stream buffer. Built-in registered formatters do not retain/mutate that buffer after their Task completes. The public custom-formatter boundary has no explicit non-retention contract. A runtime test of actual producer/transport behavior would still be needed before making a general equivalence claim.",
+    "noOwnershipTransfer": "The current stream and its copied array are ordinary GC-owned objects. The stream is not disposed by the manager. No pooled/owned buffer is introduced, returned, disposed or allowed to outlive an unawaited operation in this task."
+  },
+  "transportAndCompletion": [
+    {
+      "source": "src\\SignalR\\common\\Http.Connections\\src\\Internal\\HttpConnectionManager.cs:133-174; src\\SignalR\\common\\Shared\\DuplexPipe.cs:18-35; src\\SignalR\\common\\Http.Connections\\src\\Internal\\HttpConnectionContext.cs:88-101,875-902,1096-1107",
+      "observation": "The dispatcher/manager creates a pair of real System.IO.Pipelines.Pipe instances. HttpConnectionContext.Transport.Output is one pipe's writer; the transport Application.Input is that pipe's reader. The actual endpoint delegate runs against this HttpConnectionContext. This is not a direct write of the MemoryStream array to a WebSocket."
+    },
+    {
+      "source": "runtime-documentation-DefaultPipeWriter.cs.raw:48-51; runtime-documentation-Pipe.cs.raw:1055-1129; runtime-documentation-PipeWriter.cs.raw:113-117",
+      "observation": "In the published runtime source linked from the API docs, DefaultPipeWriter delegates to Pipe.WriteAsync, which copies the supplied region into pipe-owned segments synchronously before preparing/returning the flush result. The base PipeWriter implementation likewise copies source.Span then Flushes. Removing the intermediate ToArray would not remove that transport-pipe copy.",
+      "limit": "These are explicitly pinned documentation implementations, not a claim about a selected or executed net12.0 runtime. No managed process was launched."
+    },
+    {
+      "source": "src\\SignalR\\common\\Http.Connections\\src\\HttpConnectionDispatcherOptions.cs:19,30-38,203-205; pipelines-docs.md.raw:Backpressure and flow control",
+      "observation": "The sample uses default dispatcher options: application and transport pipe pause thresholds are 65536 bytes, with resume at half. The awaited WriteAsync wraps FlushAsync, which may remain incomplete under real accumulated backpressure. Completion is not an acknowledgement that the remote peer consumed the message. There is no basis to inflate report size or connection count to force a desired performance result."
+    },
+    {
+      "source": "src\\SignalR\\common\\Http.Connections\\src\\Internal\\Transports\\WebSocketsServerTransport.cs:60-129,131-198,200-298",
+      "observation": "The page-selected WebSocket transport receives into the opposite pipe. Its send loop awaits Application.Input.ReadAsync, uses ActiveFormat to select binary/text, awaits socket.SendAsync with its send-cancellation token, and advances the read buffer only in finally after the send attempt. Slow sends therefore hold pipe-owned bytes and can eventually backpressure the awaited broadcast flush."
+    },
+    {
+      "source": "src\\SignalR\\samples\\SocialWeather\\PersistentConnectionLifeTimeManager.cs:41-51; src\\SignalR\\common\\Http.Connections\\src\\Internal\\HttpConnectionContext.cs:764-872; src\\SignalR\\common\\Http.Connections\\src\\Internal\\Transports\\WebSocketsServerTransport.cs:60-129,235-253",
+      "observation": "SendToAllAsync exposes no CancellationToken and passes the existing default token to Output.WriteAsync. It ignores the returned FlushResult but propagates thrown exceptions. Socket receive/send cancellation, pipe completion, disconnect and timeout behavior belong to the transport/context. The manager's serial recipient awaits mean one pending flush delays later recipients in that invocation. Concurrent broadcasts can still execute independently against the same recipients; no new synchronization or shared buffer state is introduced.",
+      "limits": "No cancellation, disconnect, concurrent-broadcast, backpressure or byte-delivery behavior was executed. SSE/LongPolling are allowed by dispatcher defaults but not exercised or fully traced here; the supplied page selects WebSockets."
+    }
+  ],
+  "materialityDecision": {
+    "sourceFinding": "Confirmed avoidable detached copy for nonempty serialized outputs; not dismissed as a false positive.",
+    "promotion": "No candidate promoted.",
+    "reason": "The only observed workload is a non-production inner-loop sample with a manually submitted four-field report and one connection per page. There is no representative deployed rate, payload distribution, active-recipient count or measured contribution from this copy. A real copy count alone does not establish a material improvement. Increasing payload or connection counts to manufacture a gain would not be justified.",
+    "notAClaimOfImmateriality": "No claim is made that the optimization cannot help a real user. Materiality remains unestablished, not disproved.",
+    "correctnessSurface": "The sample is a Web SDK executable. The inspected Http.Connections.Tests, SignalR.Client.FunctionalTests and SignalR.Tests projects do not reference the sample; bounded SocialWeather searches in those test trees returned no matches and resolved references stayed inside the sample. No existing sample-owned correctness boundary was located. A native sample build alone would not test the broadcast/transport assertions. No framework project, test seam, linked-source harness or public API was invented to turn this observation into a purported test.",
+    "prerequisiteHonesty": "The reserved checkout's local SDK directory and SocialWeather project.assets.json exist. They were only observed, never executed or reused. This handoff does not claim an SDK/package failure or that a native build is impossible; native work was intentionally not started because a material candidate was not justified."
+  },
+  "F271Overlap": "Only the same new MemoryStream() line and logical Length-versus-Capacity distinction were inspected to qualify F268 byte boundaries. There is no source edit, growth finding, capacity hint, pooling/reuse change or separate F271 work."
+}

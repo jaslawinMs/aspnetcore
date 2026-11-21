@@ -1,0 +1,101 @@
+{
+  "finding": "F268",
+  "boundary": "Source and contract qualification only; no implementation or runtime correctness claim.",
+  "checks": [
+    {
+      "executable": "git",
+      "arguments": [
+        "--no-pager",
+        "-C",
+        "C:\\src\\aspnetcore",
+        "diff",
+        "--exit-code",
+        "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+        "d3483989953ae3cccd773aea5ea04cb0c7198531",
+        "--",
+        "src/SignalR/samples/SocialWeather"
+      ],
+      "exitCode": 0,
+      "result": "Passed: entire SocialWeather sample has no difference between Original and observed Default.",
+      "shellId": "4389"
+    },
+    {
+      "executable": "git",
+      "arguments": ["--no-pager", "-C", "C:\\src\\aspnetcore", "diff", "--exit-code"],
+      "exitCode": 0,
+      "result": "Passed: reserved tracked worktree remains clean.",
+      "shellId": "4390"
+    },
+    {
+      "executable": "git",
+      "arguments": ["--no-pager", "-C", "C:\\src\\aspnetcore", "status", "--porcelain=v1", "--untracked-files=normal"],
+      "exitCode": 0,
+      "result": "Passed: saved before/after status bytes are identical, including the same four unrelated untracked reports.",
+      "evidence": ["reserved-status-before.txt", "reserved-status-after.txt"],
+      "shellId": "4390"
+    },
+    {
+      "executable": "PowerShell",
+      "arguments": ["&", "..\\..\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F268-201\\capture-source-evidence.ps1"],
+      "exitCode": 0,
+      "result": "Passed: captured 32 exact default source/guidance snapshots and both-role Git blob identities, raw SHA256, exact git argument arrays and terminal source-reader stream receipts.",
+      "evidence": "raw-source-index.json",
+      "shellId": "4386"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["api", "repos/dotnet/aspnetcore/commits/main", "--jq", "{sha,committedAt:.commit.committer.date}"],
+      "exitCode": 0,
+      "result": "Passed: reobserved upstream default remains d3483989953ae3cccd773aea5ea04cb0c7198531.",
+      "evidence": "upstream-default-reobserved-before-handoff.json",
+      "shellId": "4390"
+    }
+  ],
+  "nativeCorrectnessCommands": [],
+  "nativeBuildCommands": [],
+  "automatedTestNames": [],
+  "parameterizedRows": [],
+  "testResults": {
+    "discovered": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "notRunReason": "No material candidate was promoted. No existing SocialWeather producer/transport test consumer was located in the inspected native projects; building unrelated framework tests or inventing a harness would not qualify this sample."
+  },
+  "redGreenBoundary": {
+    "originalRuntimeExecuted": false,
+    "candidateRuntimeExecuted": false,
+    "originalFailureObserved": false,
+    "candidatePassObserved": false,
+    "claimed": false,
+    "reason": "No functional bug fix, test case, runtime execution or applied candidate. Copy elimination is an opportunity, not a verified behavior/performance change."
+  },
+  "runtimeIdentity": {
+    "requiredSdkFromPinnedGlobalJson": "12.0.100-alpha.1.26557.102",
+    "observedReservedSdkDirectoryExists": true,
+    "executedSdk": null,
+    "executedRuntime": null,
+    "privateGraphsCreated": [],
+    "priorMeasuredImagesReused": false,
+    "ambientDotnetUsed": false
+  },
+  "ownedManagedNativeWork": {
+    "startedRoots": [],
+    "observedChildren": [],
+    "openStreams": [],
+    "terminal": true,
+    "terminationNeeded": false,
+    "reason": "No dotnet, native build, test runner, server, profiler or benchmark was started. All synchronous source retrieval commands completed; exact Git snapshot readers explicitly waited for process exit and drained/closed streams."
+  },
+  "measurements": {
+    "timings": 0,
+    "warmups": 0,
+    "allocationProfiles": 0,
+    "performanceCounters": 0,
+    "benchmarkLikeLoops": 0,
+    "comparisons": 0,
+    "budgetChanged": false,
+    "performanceGainClaimed": false
+  },
+  "preservedFailures": "preserved-tool-failures.json"
+}

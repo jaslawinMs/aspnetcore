@@ -1,0 +1,151 @@
+{
+  "finding": "F240",
+  "decision": "No candidate retained: the quadratic shape is real, but material benefit is not established for a real workload at this bounded source gate.",
+  "sourceRoles": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "freshDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "providerGitBlobBothRoles": "c0e725cf013e36a87c939f85fce1144c41589c35",
+    "reservedCheckoutIsNotABaseline": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "rawEvidence": "source\\original-raw-source.zip and source\\default-raw-source.zip; exact Git blobs listed in their corresponding raw-source-tree.txt files",
+    "sdkVersionBothRoles": "12.0.100-alpha.1.26557.102",
+    "originalArcadeSdk": "12.0.0-beta.26562.105",
+    "defaultArcadeSdk": "12.0.0-beta.26569.107",
+    "roleBoundary": "Selected product source blobs match. global.json differs only in the Arcade/Helix/SharedFramework build SDK versions; both unmodified role-local manifests are archived. No native runtime was launched and no build images were borrowed."
+  },
+  "realProducerAndConsumer": [
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\DependencyInjection\\MvcCoreServiceCollectionExtensions.cs",
+      "methods": ["AddMvcCore", "GetApplicationPartManager"],
+      "evidence": "Reuses an explicitly registered ApplicationPartManager, otherwise constructs one and calls PopulateDefaultParts when a hosting application name exists. Registers the manager as a singleton."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ApplicationParts\\ApplicationPartManager.cs",
+      "methods": ["PopulateDefaultParts", "GetApplicationPartAssemblies", "GetAssemblyClosure", "PopulateFeature"],
+      "evidence": "Entry assembly first, then ApplicationPartAttribute assemblies and related assemblies sorted by full name. HashSet<Assembly> removes repeated assembly identities before each factory creates its parts. PopulateFeature invokes matching providers sequentially on the same feature and live ApplicationParts list."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Core\\src\\ApplicationParts\\AssemblyPart.cs",
+      "methods": ["Types"],
+      "evidence": "The real assembly producer returns Assembly.DefinedTypes. The feature provider visits every supplied type but performs Contains only after IncludeType accepts a concrete, non-generic ITagHelper."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Razor\\src\\DependencyInjection\\MvcRazorMvcCoreBuilderExtensions.cs",
+      "methods": ["AddRazorViewEngineFeatureProviders"],
+      "evidence": "Registers one TagHelperFeatureProvider if no provider of that type or a derived type exists. Registering the provider does not populate TagHelperFeature."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Razor\\src\\DependencyInjection\\TagHelpersAsServices.cs",
+      "methods": ["AddTagHelpersAsServices"],
+      "evidence": "The sole in-repository shipping consumer found by local C# references plus bounded pinned MVC source search creates a fresh feature, populates it, registers its types as transient services and replaces the activator. Both public builder overloads delegate here."
+    },
+    {
+      "source": "src\\Mvc\\Mvc.Razor\\src\\DefaultTagHelperFactory.cs",
+      "methods": ["CreateTagHelper"],
+      "evidence": "Request/render activation uses the activator and property-injection cache; it does not populate TagHelperFeature. Do not equate tag-helper render count with discovery frequency."
+    }
+  ],
+  "cardinality": {
+    "boundary": "Pinned real repository source, not a runtime reflection census or deployment sample. Compiler-generated types and actual loaded assembly/type totals were not observed.",
+    "realOptInSite": {
+      "source": "src\\Mvc\\test\\WebSites\\ControllersFromServicesWebSite\\Startup.cs",
+      "producer": "ConfigureServices clears default parts; adds the ControllersFromServicesClassLibrary assembly, one explicit three-type TypesPart, and one CompiledRazorAssemblyPart for the web site; then calls AddTagHelpersAsServices once.",
+      "configuredPartsFromSource": 3,
+      "typeProvidingPartsFromSource": 2,
+      "assemblyBackedTypeProvidingPartsFromSource": 1,
+      "explicitTypesPartCount": 3,
+      "explicitTypes": ["AnotherController", "ComponentFromServicesViewComponent", "InServicesTagHelper"],
+      "acceptedHelpersFromSource": ["InServicesTagHelper"],
+      "classLibraryCSharpFiles": 9,
+      "classLibraryExplicitClassDeclarations": 10,
+      "classLibraryTagHelperReferences": 0,
+      "actualAssemblyDefinedTypes": null,
+      "actualRuntimeFeatureCount": null,
+      "meaning": "This actual opt-in fixture supplies one accepted helper, not a large growing accepted-helper list. Its compiled-view part is not IApplicationPartTypeProvider."
+    },
+    "builtInSourcePopulations": {
+      "Microsoft.AspNetCore.Mvc.TagHelpersConcreteDeclarations": 20,
+      "Microsoft.AspNetCore.Mvc.RazorAdditionalConcreteDeclarations": 3,
+      "abstractBasesExcluded": ["CacheTagHelperBase", "TagHelperComponentTagHelper"],
+      "boundary": "These are real concrete source declarations in two assemblies, not a claim that every application includes both as application parts. No artificial types or repeated discovery were generated."
+    },
+    "normalTagHelpersSite": {
+      "source": "src\\Mvc\\test\\WebSites\\TagHelpersWebSite\\Startup.cs",
+      "registration": "AddControllersWithViews",
+      "AddTagHelpersAsServicesCallsInStartup": 0
+    }
+  },
+  "lifecycle": {
+    "frameworkPath": "Discovery occurs once per explicit AddTagHelpersAsServices service-registration call, ordinarily at startup. The manager and registered service descriptors persist; this framework path does not retain the feature.",
+    "notAUniversalFrequencyGuarantee": "Public callers can populate and retain features later or repeat registration. No telemetry or runtime count was collected for third-party applications; arbitrary caller repetition is not a justified workload.",
+    "historicalIntent": "a6d97d35e3b0f19ed92aaf0ce44459eeb7a53ef5 (2017) explicitly reintroduced discovery separately from Razor's compiler tag-helper pipeline. Provider's latest change is the 2022 using cleanup; pinned original and Default retain the same implementation.",
+    "hotReload": "support-hot-reload loaded. The provider has no process-wide cache; no cache or metadata-update handler was added. Existing RazorHotReload clears activation/view caches and does not repopulate TagHelperFeature."
+  },
+  "semanticsToPreserve": {
+    "existingEntries": "TagHelperFeature.TagHelpers is a getter-only IList<TypeInfo> backed by List<TypeInfo>. The provider never clears it. Preexisting non-discovered entries and preexisting duplicates remain unchanged.",
+    "duplicates": "Existing equal entries suppress new additions. Repeated accepted types within or across parts are added only at their first currently absent occurrence. Default assembly discovery already removes repeated assembly identities; explicit AddApplicationPart appends parts without deduplication.",
+    "equality": "List<TypeInfo>.Contains uses EqualityComparer<TypeInfo>.Default. Names, FullName strings and reference-identity comparers are not replacements for this equality contract. A prospective hash set would additionally rely on matching hashes.",
+    "order": "Existing list prefix and duplicates remain; newly accepted absent types append in part/type enumeration order. IApplicationFeatureProvider<TFeature> explicitly documents the ordered part sequence and precedence use. Replacing the list with a set is not equivalent.",
+    "liveMutation": "IncludePart and IncludeType are protected virtual, type-provider Types is an application-extensible IEnumerable<TypeInfo>, and all feature providers receive the same mutable feature. A prior provider may retain the feature. During a later callback/enumerator step it can synchronously add/remove/clear entries; current Contains observes the list after IncludeType returns. Concurrent mutation is not assumed or endorsed.",
+    "snapshotObligation": "A once-seeded method-local HashSet would preserve initial duplicates only if used solely as membership metadata, but would miss subsequent externally produced list mutations. Count checks alone miss same-count replacement. No deployed mutation case or failing native test was claimed; this is a source-visible preservation obligation, not a verified product defect."
+  },
+  "candidateAssessment": {
+    "considered": "A method-local HashSet<TypeInfo> for accepted-type membership while preserving list order.",
+    "notImplemented": true,
+    "reasons": [
+      "The real framework consumer is opt-in registration, not a render/request hot path.",
+      "The actual repository opt-in site supplies one accepted helper; the real built-in source populations are 20 and 3 concrete helper declarations, not evidence of large accepted-type sets.",
+      "No real large application or repeated production lifecycle was established that would justify extra membership storage and the preservation burden.",
+      "A naive snapshot changes live-list mutation behavior at public extension seams. A safe specialized/fallback design would add complexity without established material benefit."
+    ],
+    "notClaimed": [
+      "That a hash set can never help a real larger application.",
+      "That runtime performance is unchanged or improved.",
+      "That runtime assembly populations, callback reachability or consumer results were exercised by a native test."
+    ]
+  },
+  "relatedWork": {
+    "evidenceDirectory": "related-work",
+    "boundedSearchResult": "Exact provider searches returned zero upstream/fork issues or PRs. Broader upstream discovery search returned four PRs; broader taghelper/performance search four PRs. Fork tag-helper PR search returned F113 #115.",
+    "inspected": [
+      "dotnet/aspnetcore#30560 changes Razor compiler symbol-based descriptor discovery, not TagHelperFeatureProvider.",
+      "jaslawinMs/aspnetcore#115 changes DistributedCacheTagHelperService buffers and its tests, not discovery.",
+      "Fork main is still original baseline 37e809ead5824bc753a1c3d56f11615bdb1296c5."
+    ],
+    "limitation": "Bounded issue/PR and relevant-file history retrieval is not an exhaustive audit of every fork branch or differently named unpublished change."
+  },
+  "nativeValidation": {
+    "commandsExecuted": [],
+    "testsExecuted": [],
+    "nativeRowsExecuted": 0,
+    "candidateTestsAdded": [],
+    "reason": "No candidate survived the source/materiality gate, so no private graph was created and no native build/test was needed or started. This is not a build failure or a claim that prerequisites are unavailable.",
+    "reviewedExistingTestsNotRun": [
+      {
+        "name": "MvcRazorMvcBuilderExtensionsTest.AddTagHelpersAsServices_RegistersDiscoveredTagHelpers",
+        "kind": "Fact",
+        "rowsExecuted": 0,
+        "boundary": "Existing real TagHelperFeatureProvider with a two-type TestApplicationPart."
+      },
+      {
+        "name": "MvcRazorMvcCoreBuilderExtensionsTest.AddTagHelpersAsServices_RegistersDiscoveredTagHelpers",
+        "kind": "Fact",
+        "rowsExecuted": 0,
+        "boundary": "Uses a custom TestFeatureProvider, so not proof of the F240 producer."
+      },
+      {
+        "name": "ApplicationPartManagerTest.PopulateFeature_InvokesAllProvidersSequentially_ForAGivenFeature",
+        "kind": "Fact",
+        "rowsExecuted": 0,
+        "boundary": "Source coverage for sequential provider mutation of a shared feature."
+      },
+      {
+        "name": "TagHelpersFromServicesTest.TagHelpersWithConstructorInjectionAreCreatedAndActivated",
+        "kind": "Fact",
+        "rowsExecuted": 0,
+        "boundary": "Existing HTTP fixture drives ControllersFromServicesWebSite and expects rendered output 3. Not run; no consumer result asserted by this task."
+      }
+    ],
+    "runtimeIdentity": null,
+    "comparisons": 0
+  }
+}

@@ -1,0 +1,54 @@
+commit 4cceccd5689ebf7712c03789df536cbb4cfc2efc
+Author: Ajay Bhargav Baaskaran <ajaybhargavb@gmail.com>
+Date:   Wed Feb 13 10:53:39 2019 -0800
+
+    Make Mvc repo folder layout consistent (#7518)
+
+diff --git a/src/Mvc/Mvc.Razor/src/TagHelpers/TagHelperFeatureProvider.cs b/src/Mvc/Mvc.Razor/src/TagHelpers/TagHelperFeatureProvider.cs
+new file mode 100644
+index 0000000000..1b24fb7480
+--- /dev/null
++++ b/src/Mvc/Mvc.Razor/src/TagHelpers/TagHelperFeatureProvider.cs
+@@ -0,0 +1,42 @@
++﻿// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Collections.Generic;
++using System.Reflection;
++using Microsoft.AspNetCore.Mvc.ApplicationParts;
++using Microsoft.AspNetCore.Razor.TagHelpers;
++
++namespace Microsoft.AspNetCore.Mvc.Razor.TagHelpers
++{
++    public class TagHelperFeatureProvider : IApplicationFeatureProvider<TagHelperFeature>
++    {
++        public void PopulateFeature(IEnumerable<ApplicationPart> parts, TagHelperFeature feature)
++        {
++            foreach (var part in parts)
++            {
++                if (IncludePart(part) && part is IApplicationPartTypeProvider typeProvider)
++                {
++                    foreach (var type in typeProvider.Types)
++                    {
++                        var typeInfo = type.GetTypeInfo();
++                        if (IncludeType(typeInfo) && !feature.TagHelpers.Contains(typeInfo))
++                        {
++                            feature.TagHelpers.Add(typeInfo);
++                        }
++                    }
++                }
++            }
++        }
++
++        protected virtual bool IncludePart(ApplicationPart part) => true;
++
++        protected virtual bool IncludeType(TypeInfo type)
++        {
++            // We don't need to check visibility here, that's handled by the type provider.
++            return
++                typeof(ITagHelper).GetTypeInfo().IsAssignableFrom(type) &&
++                !type.IsAbstract &&
++                !type.IsGenericType;
++        }
++    }
++}

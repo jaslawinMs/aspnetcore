@@ -1,0 +1,19 @@
+commit a6d97d35e3b0f19ed92aaf0ce44459eeb7a53ef5
+Author:     Ryan Nowak <nowakra@gmail.com>
+AuthorDate: Mon May 22 21:04:12 2017 -0700
+Commit:     Ryan Nowak <nowakra@gmail.com>
+CommitDate: Tue May 23 14:04:42 2017 -0700
+
+    Add back support for AddTagHelpersAsServices
+    
+    This doesn't go through the Razor tag helper discovery pipeline because
+    this can really only ever work for ITagHelper based taghelpers. So
+    there's really no point in reusing that logic, which would be hard
+    anyway.
+
+M	src/Microsoft.AspNetCore.Mvc.Razor/DependencyInjection/MvcRazorMvcCoreBuilderExtensions.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/TagHelpers/TagHelperFeatureProvider.cs
+M	test/Microsoft.AspNetCore.Mvc.FunctionalTests/TagHelpersFromServicesTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Test/DependencyInjection/MvcRazorMvcBuilderExtensionsTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Test/DependencyInjection/MvcRazorMvcCoreBuilderExtensionsTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Test/MvcServiceCollectionExtensionsTest.cs

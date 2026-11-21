@@ -1,0 +1,47 @@
+{
+  "failures": [
+    {
+      "tool": "view",
+      "operation": "Initial policy.json read without a line range",
+      "result": "File too large to read at once (26.8 KB).",
+      "effect": "No native command or code edit. Read bounded policy ranges and the exact selected live properties instead."
+    },
+    {
+      "tool": "view",
+      "operation": "Initial assumed autoperf-parallelism\\benchmark-exclusive.lease.json path",
+      "result": "Path does not exist.",
+      "effect": "Did not treat the assumed path as the benchmark gate. Located policy.runsRoot and checked the actual autoperf-runs\\benchmark-exclusive.lease.json."
+    },
+    {
+      "tool": "session_store_sql",
+      "operation": "Time-bounded recent session discovery",
+      "result": "analytics_not_configured; automatic local fallback rejected DuckDB INTERVAL syntax.",
+      "effect": "One explicit local SQLite query then returned zero F268 rows. No session-tree recursion."
+    },
+    {
+      "tool": "lsp",
+      "operation": "Startup.cs:42:23 goToDefinition and PersistentConnectionLifeTimeManager.cs:50:47 goToDefinition",
+      "result": "No definition found.",
+      "effect": "Used the existing successful SendToAllAsync incomingCalls result, a symbol search for UseConnectionHandler, and bounded named-file reads. No Bluebird call."
+    },
+    {
+      "tool": "powershell",
+      "shellId": "4378",
+      "exitCode": 1,
+      "operation": "Read-only source pin and prerequisite inventory",
+      "result": "ParserError: An empty pipe element is not allowed at foreach (...) { ... } | ConvertTo-Json.",
+      "failureBeforeExecution": true,
+      "managedNativeStarts": 0,
+      "effect": "Preserved as a failed source-observation command, not a build/test. Replaced only the invalid statement syntax with $observations = foreach (...); $observations | ConvertTo-Json in shell 4381, which exited zero."
+    },
+    {
+      "tool": "view",
+      "operation": "HttpConnectionDispatcherOptions.cs range 305-355",
+      "result": "Invalid view_range: file has 206 lines.",
+      "effect": "Read exact range 175-206 instead; source observation only, no managed process or edit."
+    }
+  ],
+  "buildFailures": [],
+  "testFailures": [],
+  "performanceAttempts": 0
+}

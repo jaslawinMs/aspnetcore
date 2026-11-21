@@ -1,0 +1,99 @@
+{
+  "applicableGuidance": {
+    "discovery": "applicable-instruction-discovery.json",
+    "ancestorAgentsFilesLocated": [],
+    "read": [
+      ".editorconfig",
+      ".github\\instructions\\cross-cutting-guidance.instructions.md",
+      "docs\\CrossCuttingGuidance.md",
+      "docs\\BuildFromSource.md",
+      "src\\SignalR\\README.md",
+      "src\\SignalR\\samples\\README.md",
+      "src\\SignalR\\build.cmd"
+    ],
+    "sampleDocumentation": "Samples README explicitly says these apps are not for production and primarily support inner-loop feature testing.",
+    "buildDocumentation": "BuildFromSource recommends focused project/area commands after repository SDK activation, not full-repository builds. SignalR's area build includes Java/TypeScript by default; no area build was started.",
+    "editsRequiringAdditionalAreaGuidance": []
+  },
+  "publicContracts": [
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.io.memorystream.toarray?view=net-10.0",
+      "observation": "Returns a copy of the logical stream contents regardless of Position, omits unused bytes, works after the stream closes.",
+      "publishedDocsCommit": "811380060dbb079b5055078147534ffde66a1cca"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.io.memorystream.trygetbuffer?view=net-10.0",
+      "observation": "Parameterless MemoryStream creates an exposable buffer, TryGetBuffer returns a logical ArraySegment and also works after close.",
+      "publishedDocsCommit": "811380060dbb079b5055078147534ffde66a1cca"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.io.pipelines.pipewriter.writeasync?view=net-10.0",
+      "observation": "Writes the specified byte-memory region; its ValueTask wraps the asynchronous flush operation. Default cancellation token is None.",
+      "publishedDocsCommit": "b0e445eb311c94a27954d8478b4a6732e1e3b352"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/io/pipelines",
+      "observation": "FlushAsync can pause at the pause threshold and resume below the resume threshold; PipeReader buffers remain valid only until AdvanceTo. These are ownership/backpressure contracts, not measured sample behavior.",
+      "publishedDocsCommit": "3fe59ab7c2970e2927bbf94e68e5268ba88ff7c3",
+      "rawSnapshot": "pipelines-docs.md.raw"
+    }
+  ],
+  "runtimeContractSnapshots": {
+    "index": "external-contract-source-index.json",
+    "runtimeSourcePin": "9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3",
+    "selection": "Immutable runtime source linked by the published API pages, not an asserted exact-match SDK/runtime for any managed execution.",
+    "executedRuntime": null
+  },
+  "history": {
+    "upstream": "upstream-history.json",
+    "follow": "source-follow-history.txt",
+    "fork": "fork-file-history.json",
+    "latestAffectedFileCommit": "667f0685b56adc1586464a200766e9b172ad06af",
+    "latestAffectedFileChange": "2022-01-03 unused-usings enforcement; preceding visible history is file-scoped namespaces, license replacement and the 2018 repository reorganization. The current source still contains ToArray."
+  },
+  "searches": [
+    {
+      "executable": "gh",
+      "arguments": ["search", "prs", "PersistentConnectionLifeTimeManager", "--repo", "dotnet/aspnetcore", "--limit", "20", "--json", "number,title,state,url,updatedAt"],
+      "result": "No matches.",
+      "artifact": "upstream-related-prs-exact.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["search", "prs", "SocialWeather", "--repo", "dotnet/aspnetcore", "--limit", "20", "--json", "number,title,state,url,updatedAt"],
+      "result": "Six search matches, including merged PR 65560 Fix transitive framework references in sample projects. Search results do not identify a broadcast-buffer optimization.",
+      "artifact": "upstream-related-prs-sample.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["search", "prs", "SocialWeather", "--repo", "jaslawinMs/aspnetcore", "--limit", "20", "--json", "number,title,state,url,updatedAt"],
+      "result": "No matches.",
+      "artifact": "fork-related-prs-sample.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["search", "issues", "SocialWeather MemoryStream", "--repo", "dotnet/aspnetcore", "--limit", "15", "--json", "number,title,state,url,updatedAt"],
+      "result": "No matches.",
+      "artifact": "upstream-related-issues.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["search", "prs", "SocialWeather MemoryStream", "--repo", "dotnet/aspnetcore", "--limit", "15", "--json", "number,title,state,url,updatedAt"],
+      "result": "No matches.",
+      "artifact": "upstream-related-prs-buffer.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["search", "prs", "SocialWeather MemoryStream", "--repo", "jaslawinMs/aspnetcore", "--limit", "15", "--json", "number,title,state,url,updatedAt"],
+      "result": "No matches.",
+      "artifact": "fork-related-prs-buffer.json"
+    },
+    {
+      "executable": "gh",
+      "arguments": ["api", "repos/jaslawinMs/aspnetcore/branches?per_page=100", "--jq", "[.[] | select(.name | test(\"F268|F271|social|weather|memorystream\";\"i\")) | {name,commit:.commit.sha}]"],
+      "result": "No matching branch in this bounded first page.",
+      "artifact": "fork-related-branches-first100.json"
+    }
+  ],
+  "searchCoverageLimits": "Bounded GitHub search and first-page fork branch inspection do not prove absence of all related unindexed work or differently named branches. There was no remote write/publication."
+}

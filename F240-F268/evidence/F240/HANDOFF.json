@@ -1,0 +1,86 @@
+{
+  "finding": "F240",
+  "workerId": "2121c01b-0f70-428c-8b29-a0d10657db8f",
+  "status": "complete-no-candidate-at-source-materiality-gate",
+  "rationale": "Contains-inside-loop is present, but the framework consumer is opt-in AddTagHelpersAsServices registration, not per-render discovery. The real repository opt-in fixture supplies one accepted helper; the two built-in assemblies declare 20 and 3 concrete helpers. No real large accepted-type population or repeated production lifecycle was established to justify membership storage and extra semantic complexity. A once-seeded HashSet also misses live-list mutations through public provider/enumerator extension seams. No optimization was made merely to close a count.",
+  "sourcePins": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "freshDefaultBeforeAndAfter": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "providerBlobBothRoles": "c0e725cf013e36a87c939f85fce1144c41589c35",
+    "selectedProductSourceBlobsIdentical": true,
+    "sdkBothRoles": "12.0.100-alpha.1.26557.102",
+    "originalArcadeSdk": "12.0.0-beta.26562.105",
+    "defaultArcadeSdk": "12.0.0-beta.26569.107",
+    "rawSources": ["source\\original-raw-source.zip", "source\\default-raw-source.zip"],
+    "blobIndexes": ["source\\original-raw-source-tree.txt", "source\\default-raw-source-tree.txt"],
+    "nativeFunctionalBoundarySources": ["source\\original-functional-boundary.zip", "source\\default-functional-boundary.zip"]
+  },
+  "qualification": {
+    "details": "SOURCE_ANALYSIS.json",
+    "acceptanceCriteria": "ACCEPTANCE.json",
+    "realProducer": "ApplicationPartManager default assembly/factory discovery -> AssemblyPart.Assembly.DefinedTypes -> TagHelperFeatureProvider.IncludeType -> current List<TypeInfo>.Contains/Add",
+    "realConsumer": "Both builder AddTagHelpersAsServices overloads -> fresh TagHelperFeature -> transient service registrations. Default framework code does not retain this feature; custom providers may.",
+    "realOptInFixture": "ControllersFromServicesWebSite clears default parts and supplies one class-library AssemblyPart, a three-type TypesPart with one helper, and a compiled-view part that does not supply types.",
+    "countsBoundary": "Counts are from pinned real source. No native reflection census or actual loaded assembly/type totals were collected.",
+    "preservedContracts": "No changes. Existing entries/duplicates, default TypeInfo equality, append/part order, sequential shared-feature provider mutations and synchronous live-list callback/enumerator mutation remain untouched.",
+    "historyAndRelatedWork": "history and related-work retain bounded fresh upstream/fork searches and source history. Inspected upstream #30560 is compiler descriptor discovery; fork #115 is distributed-cache buffers, not this provider.",
+    "hotReload": "support-hot-reload loaded; stateless provider, no long-lived cache, API or invalidation changes."
+  },
+  "validation": {
+    "sourceCommand": "& '.\\source-checks.ps1'",
+    "initialSourceAttempt": {
+      "exitCode": 1,
+      "passed": 7,
+      "total": 8,
+      "cause": "Overbroad static assertion required global.json to match across roles. Actual difference is Arcade/Helix/SharedFramework build SDK versions, not selected product code.",
+      "preserved": "validation\\source-check-attempt1"
+    },
+    "finalSourceAttempt": {
+      "exitCode": 0,
+      "passed": 8,
+      "total": 8,
+      "results": "validation\\source-check-results.json",
+      "receipt": "validation\\source-check-execution.json",
+      "boundary": "Finite source qualification, not native test execution or production red/green evidence."
+    },
+    "nativeCommandsExecuted": [],
+    "nativeTestsExecuted": [],
+    "nativeRowsExecuted": 0,
+    "nativeTestNamesReviewedButNotRun": "SOURCE_ANALYSIS.json nativeValidation.reviewedExistingTestsNotRun",
+    "nativeRuntimeIdentity": null,
+    "reasonNoNativeExecution": "No candidate survived qualification. No private graph was needed, no target runtime was launched, and no prerequisite/build failure is claimed.",
+    "comparisons": 0,
+    "timingWarmupAllocationProfilerOrCounters": false,
+    "materialityOrPerformanceVerified": false
+  },
+  "changes": {
+    "productFiles": [],
+    "testFiles": [],
+    "privateGraphsCreated": [],
+    "candidate": null,
+    "diffAndHashIndex": "changed-file-index.json",
+    "artifactHashIndex": "ARTIFACT_SHA256.json",
+    "reservedCheckout": {
+      "branch": "autoperf/F145-hoist-large-response-utf8-encoding",
+      "head": "24875ef5dabb55567870b39f6eb0002170435e2f",
+      "statusAndFourInheritedReportsUnchanged": true,
+      "trackedDiffBytes": 0,
+      "evidence": "validation\\reserved-preservation-checks.json"
+    }
+  },
+  "unverifiedBoundaries": [
+    "Actual loaded assembly counts, compiler-generated type counts and final runtime feature cardinalities.",
+    "Native unit/functional assertions and callback-driven live-mutation reachability; existing native test sources were inspected only.",
+    "Startup elapsed time, memory/allocation effects, large third-party workloads and any material performance benefit.",
+    "Unpublished fork branches and differently named related work outside the recorded bounded searches."
+  ],
+  "terminalState": {
+    "ownedNativeBuildOrTestRoots": [],
+    "ownedObservedNativeBuildOrTestChildren": [],
+    "pendingNativeBuildOrTestStreams": [],
+    "allOwnedNativeWorkTerminal": true,
+    "allComparisons": 0,
+    "finalActualGateObservation": "validation\\final-state.json",
+    "publicationCommitsPushesPrIssuesPolicyRegistryLedgerLeaseOrMachineChanges": false
+  }
+}

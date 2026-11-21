@@ -1,0 +1,41 @@
+commit 574ecbb3ebfbb53697be3b1ad69a0a0232a548db
+Author:     jacalvar <jacalvar@microsoft.com>
+AuthorDate: Thu Mar 24 22:33:42 2016 -0700
+Commit:     jacalvar <jacalvar@microsoft.com>
+CommitDate: Sat Apr 2 10:32:48 2016 -0700
+
+    [Fixes #4087] Add support for AddTagHelpersAsServices()
+    
+    * Added TagHelperFeature and TagHelperFeatureProvider to perform tag helper discovery.
+    * Changed tag helper discovery to use application parts when using tag helpers as services.
+    * Added FeatureTagHelperTypeResolver to resolve tag helper type definitions from the list of application parts.
+    * Added AddTagHelpersAsServices extension method on IMvcBuilder and IMvcCoreBuilder that
+      performs tag helper discovery through the ApplicationPartManager and registers those tag helpers as
+      services in the service collection. Assemblies should be added to the ApplicationPartManager
+      in order to discover tag helpers in them in them. The @addTagHelper directive is still required on
+      Razor pages to indicate what tag helpers to use.
+
+M	src/Microsoft.AspNetCore.Mvc.Razor.Host/MvcRazorHost.cs
+M	src/Microsoft.AspNetCore.Mvc.Razor/DependencyInjection/MvcRazorMvcBuilderExtensions.cs
+M	src/Microsoft.AspNetCore.Mvc.Razor/DependencyInjection/MvcRazorMvcCoreBuilderExtensions.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/Internal/ServiceBasedTagHelperActivator.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/Internal/TagHelpersAsServices.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/TagHelpers/FeatureTagHelperTypeResolver.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/TagHelpers/TagHelperFeature.cs
+A	src/Microsoft.AspNetCore.Mvc.Razor/TagHelpers/TagHelperFeatureProvider.cs
+M	src/Microsoft.AspNetCore.Mvc/MvcServiceCollectionExtensions.cs
+A	test/Microsoft.AspNetCore.Mvc.FunctionalTests/TagHelpersFromServicesTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Host.Test/Directives/ChunkInheritanceUtilityTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Host.Test/InjectChunkVisitorTest.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Host.Test/MvcRazorHostTest.cs
+A	test/Microsoft.AspNetCore.Mvc.Razor.Test/DependencyInjection/MvcRazorMvcBuilderExtensionsTest.cs
+A	test/Microsoft.AspNetCore.Mvc.Razor.Test/DependencyInjection/MvcRazorMvcCoreBuilderExtensionsTest.cs
+A	test/Microsoft.AspNetCore.Mvc.Razor.Test/TagHelpers/FeatureTagHelperTypeResolverTest.cs
+A	test/Microsoft.AspNetCore.Mvc.Razor.Test/TagHelpers/TagHelperFeatureProviderTest.cs
+A	test/Microsoft.AspNetCore.Mvc.Razor.Test/TestApplicationPart.cs
+M	test/Microsoft.AspNetCore.Mvc.Razor.Test/project.json
+M	test/Microsoft.AspNetCore.Mvc.Test/MvcServiceCollectionExtensionsTest.cs
+M	test/WebSites/ControllersFromServicesWebSite/AnotherController.cs
+M	test/WebSites/ControllersFromServicesWebSite/Startup.cs
+A	test/WebSites/ControllersFromServicesWebSite/TagHelpers/InServicesTagHelper.cs
+A	test/WebSites/ControllersFromServicesWebSite/Views/Another/InServicesTagHelper.cshtml
