@@ -1,0 +1,188 @@
+{
+  "findingId": "F191",
+  "preparation": 204,
+  "decision": "no-candidate",
+  "reasonCode": "REAL_PRODUCER_ALREADY_MATERIALIZES_INDEXED_ARRAY",
+  "summary": "The only located direct caller passes the Diagnostic[] returned by GetSortedDiagnostics. The real producer filters into List<Diagnostic>, completes OrderBy(...).ToArray(), clears the temporary list, then returns that array. Declaring the consumer parameter IEnumerable<Diagnostic> does not remove the array's IList<Diagnostic>/ICollection<Diagnostic> implementations. ElementAt(int) uses indexed access; the alleged repeated non-indexed traversal is absent.",
+  "classification": {
+    "card": "enumerable-elementat-on-non-indexed-sequence",
+    "originalRetainedClassification": "informational/test-only/lowhotpath",
+    "disposition": "Lexical pattern exists, but its non-indexed-input premise does not hold for the located real producer paths.",
+    "productionRequestPath": false,
+    "severityEscalated": false,
+    "candidateCreated": false,
+    "privateGraphsCreated": false,
+    "shippingOrTestSourceEdits": false
+  },
+  "producerAndConsumer": [
+    {
+      "stage": "Test wrappers",
+      "source": "src\\Components\\Analyzers\\test\\Verifiers\\DiagnosticVerifier.cs",
+      "lines": [44, 79],
+      "finding": "Four wrapper declarations cover C#/VB single strings and source arrays. Single-source wrappers create new[] { source }; all four call the same private VerifyDiagnostics. No located canonical VB caller exists. Local LSP overload results overlap and are not used to assign precise C# overload counts."
+    },
+    {
+      "stage": "Sole direct target caller",
+      "source": "src\\Components\\Analyzers\\test\\Verifiers\\DiagnosticVerifier.cs",
+      "lines": [90, 106],
+      "finding": "VerifyDiagnostics obtains GetSortedDiagnostics(...) at line 92 and passes the unchanged diagnostics local at line 93. VerifyDiagnosticResults is private static. Local LSP reports only this incoming call and independently hovers the local as Diagnostic[]."
+    },
+    {
+      "stage": "Document/project producer",
+      "source": "src\\Components\\Analyzers\\test\\Helpers\\DiagnosticVerifier.Helper.cs",
+      "lines": [39, 170],
+      "finding": "GetSortedDiagnostics explicitly returns Diagnostic[]. GetDocuments builds an AdhocWorkspace project from the supplied source strings, materializes project.Documents.ToArray(), checks the document/source count, and returns Document[]. GetSortedDiagnosticsFromDocuments accumulates the documents' projects in HashSet<Project>."
+    },
+    {
+      "stage": "Analyzer diagnostics",
+      "source": "src\\Components\\Analyzers\\test\\Helpers\\DiagnosticVerifier.Helper.cs",
+      "lines": [51, 83],
+      "finding": "For each collected project, its completed compilation is analyzed with ImmutableArray.Create(analyzer). GetAnalyzerDiagnosticsAsync().Result is consumed once into a local List<Diagnostic>. Authoritative Roslyn API docs declare Task<ImmutableArray<Diagnostic>>; the local LSP did not resolve that external intermediate type, and no loaded Roslyn assembly is claimed.",
+      "filter": "Location.None and metadata diagnostics are kept. Source diagnostics are added for each supplied document whose syntax tree equals diag.Location.SourceTree. No deduplication or secondary ordering is added."
+    },
+    {
+      "stage": "Eager final collection",
+      "source": "src\\Components\\Analyzers\\test\\Helpers\\DiagnosticVerifier.Helper.cs",
+      "lines": [85, 97],
+      "finding": "SortDiagnostics explicitly returns Diagnostic[] from diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray(). The call completes before diagnostics.Clear() and return results. Neither the temporary List nor the deferred OrderBy escapes to the target consumer."
+    },
+    {
+      "stage": "Target consumption",
+      "source": "src\\Components\\Analyzers\\test\\Verifiers\\DiagnosticVerifier.cs",
+      "lines": [106, 177],
+      "finding": "The declared IEnumerable<Diagnostic> references the already-materialized single-dimensional Diagnostic[]. There is no intervening Select/Where/yield/custom enumerable wrapper in the located target path."
+    }
+  ],
+  "concreteShapes": {
+    "suppliedSources": "string[]; the scalar wrapper constructs a one-element array",
+    "documents": "Document[]",
+    "projectAccumulator": "HashSet<Project>",
+    "analyzerArgument": "ImmutableArray<DiagnosticAnalyzer>",
+    "analyzerApiResultByPublishedContract": "ImmutableArray<Diagnostic> after Task completion",
+    "filteredAccumulator": "List<Diagnostic>",
+    "sortExpressionBeforeMaterialization": "IOrderedEnumerable<Diagnostic>",
+    "actualResultsAtPrivateConsumerByConstruction": "Diagnostic[]",
+    "expectedResults": "DiagnosticResult[] from params arguments or explicit collection expressions",
+    "diagnosticsRuntimeTypeObservation": "Not executed. Diagnostic[] is established by the explicit real producer return types, body and unchanged call seam, not inferred from IEnumerable."
+  },
+  "orderAndLifetime": {
+    "ordering": "Ascending Location.SourceSpan.Start only. LINQ OrderBy is stable, so equal keys preserve the accumulated diagnostic order. No independent promise of deterministic order across projects/concurrent analyzer production or extra file/ID tie-breaking is assumed.",
+    "snapshotBoundary": "ToArray completes inside SortDiagnostics before the producer clears its List and before any target Count/ElementAt call.",
+    "consumerLifetime": "Synchronous local use of the returned snapshot in VerifyDiagnostics/VerifyDiagnosticResults; no consumer enumeration reruns compilation, the analyzer, filtering or sorting.",
+    "unexpectedCounts": "An analyzer failure or unexpected diagnostic population could differ from expectations, but it still passes through the same array-producing method. The no-traversal conclusion does not depend on a small actual count."
+  },
+  "consumedOperations": [
+    {
+      "operation": "actualResults.Count()",
+      "path": "Once on entry",
+      "implementationEvidence": "external\\source\\runtime-Count.cs:11-21 and runtime-Array-CoreCLR.cs:422-427",
+      "effect": "Array ICollection<Diagnostic>.Count / Length; no sequence traversal."
+    },
+    {
+      "operation": "actualResults.ElementAt(i)",
+      "path": "Once per expected diagnostic on the equality-verification path",
+      "implementationEvidence": "external\\source\\runtime-ElementAt.cs:12-22 and runtime-Array-CoreCLR.cs:430-440",
+      "effect": "IList<Diagnostic>[i] with array indexed access. The loop performs n indexed reads, not repeated traversal from the sequence's beginning."
+    },
+    {
+      "operation": "actualResults.Any()",
+      "path": "Diagnostic-count mismatch branch only",
+      "implementationEvidence": "external\\source\\runtime-AnyAll.cs:11-21",
+      "effect": "Array collection Count check; no analyzer rerun."
+    },
+    {
+      "operation": "actualResults.ToArray() followed by FormatDiagnostics",
+      "path": "Nonempty diagnostic-count mismatch branch before Assert.Fail",
+      "implementationEvidence": "external\\source\\runtime-ToCollection.cs:12-22,45-55; target lines 111-116,237-285",
+      "effect": "Copies the existing array once for failure formatting, which then indexes that copy. This is not a deferred diagnostic producer and is not changed."
+    },
+    {
+      "operation": "Location/additional-location/ID/severity/message verification",
+      "path": "Each expected/actual pair",
+      "effect": "Retained unchanged. AdditionalLocations.ToArray and expected.Locations.First concern per-diagnostic location checks, not a non-indexed actualResults producer."
+    }
+  ],
+  "canonicalPopulations": {
+    "completeInventory": "CANONICAL_CALLERS-002.json",
+    "original": {
+      "targetCallSites": 189,
+      "classes": 19,
+      "expectedCountHistogramSourceOnly": { "0": 89, "1": 80, "2": 10, "3": 5, "4": 5 }
+    },
+    "default": {
+      "targetCallSites": 201,
+      "classes": 20,
+      "expectedCountHistogramSourceOnly": { "0": 97, "1": 83, "2": 11, "3": 5, "4": 5 }
+    },
+    "basis": "Every located canonical test-source invocation, its enclosing test name/attributes, arguments, analyzer override and source-declared expected diagnostics are preserved. Bounded git-grep caller evidence is cross-checked against the token inventory. The two explicit JSInvokable DiagnosticResult collection-expression calls have three and four elements, not one.",
+    "largestRealSourceExamples": [
+      "ComponentParametersShouldBePublicTest.ErrorsForNonPublicParameters: four expected diagnostics for four declared nonpublic parameters",
+      "ForLoopIteratorInClosureAnalyzerTest.IteratorVariableDifferentIncrementationsUsedInLambdaShouldThrowWarnings: four expected diagnostics for four real source loops",
+      "JSInvokableAnalyzerTest.DiagnosticForNonPublicJSInvokableMethods: four expected diagnostics",
+      "JSInvokableCodeFixProviderTest.AddsDiagnosticAndFixForMultiModifierMethodsWithJSInvokableAttribute: explicit four-element expected array",
+      "StateHasChangedAnalyzerTest.OnAsyncLifecycleEvents_WithStateHasChanged_ReportsDiagnostic: four expected diagnostics"
+    ],
+    "defaultDelta": "Default adds ten RazorComponentResultParameterAnalyzerTest call sites and two ForLoopIteratorInClosureAnalyzerTest call sites. Its target verifier, diagnostic producer and code-fix verifier are byte-identical to Original. Default source was separately read, not substituted with the reserved checkout.",
+    "runtimeLimitation": "These are source expectations/call-site counts, not observed diagnostic counts or executed theory rows. No native test was run and no maximum of four is imposed on all possible actual diagnostics. No large, deferred or repeated-enumeration workload was fabricated."
+  },
+  "otherLocatedConsumersOfSharedProducer": {
+    "GetSortedDiagnostics": "One internal delegation to GetSortedDiagnosticsFromDocuments; this is the route to the target private verifier.",
+    "CodeFixVerifier": "Two call sites, before fixing and after each applied fix. They receive Diagnostic[], use Length/index 0/Any, and do not call VerifyDiagnosticResults. Seventeen canonical VerifyCSharpFix invocation sites per source role are inventoried separately.",
+    "VirtualizeSpacerElementAnalyzerTest": [
+      "DiagnosticLocationMapsToRazorSource: Assert.Single on the producer array, then mapped source path/line assertions",
+      "DirectVirtualizeWithExplicitTItemDiagnosticLocationMapsToRazorSource: Assert.Single on the producer array, then mapped source path/line assertions"
+    ],
+    "separateDeferredSequence": "CodeFixVerifier.Helper.GetNewDiagnostics is a yield iterator over compiler-diagnostic arrays, used only in the code-fix compiler-diagnostic check. It is not passed to the target VerifyDiagnosticResults and is not treated as a reachable F191 producer."
+  },
+  "historyAndRelatedWork": {
+    "history": "Raw --follow --name-status history and blame are stored for both source roles. Historical paths were resolved before git show.",
+    "initialSource": "Commit 18b9a70dbe356dfebae2f42e1c129b50b71055f1 (2018-05-01), under test\\Microsoft.AspNetCore.Blazor.Analyzers.Test, already combines the private IEnumerable consumer's ElementAt with the explicit Diagnostic[] / OrderBy(...).ToArray producer. Both complete historical files are preserved.",
+    "laterChangesInspected": [
+      "a450cb69b5e4549f5515cdb057a68771f56cefd7: file-scoped namespace change",
+      "c85baf8db0c72ae8e68643029d514b2e737c9fae / PR39176: unused using removal",
+      "92097249f384278f5b0f5309757e5f7fff4eb917 / PR57303: Assert.True(false, ...) changed to Assert.Fail; the target ElementAt/array producer is not changed"
+    ],
+    "relatedSearch": "Four bounded read-only GitHub searches: DiagnosticVerifier and ElementAt analyzers, separately for issues and PRs. Exact raw query argv/results are retained; search absence is not an exhaustive GitHub deduplication guarantee.",
+    "openPr67969": "The DiagnosticVerifier search locates open PR67969. Its complete 16-file name list, metadata and exact patches to these two helper/verifier files are retained. The patches add compiler-error validation, multiple-analyzer wrappers/mapping and failure context, but retain the Diagnostic[] return route and do not replace the target ElementAt loop. It is unmerged related work, not the observed Default or an F191 candidate.",
+    "otherSearchHits": "PR67383, PR67730, PR67137 and PR22235 are recorded as search leads, not claimed to fix F191.",
+    "authoritativeRuntimeSource": "dotnet/runtime main commit 1078913f561abffd961345666c3126b42f4afc68; exact LINQ/array source and response metadata are retained.",
+    "runtimeBoundary": "Current source and published contracts support indexed dispatch; no installed runtime, native instruction count, exact loaded image, elapsed time, allocation or speedup was observed.",
+    "sourcePins": "Original and Default both declare SDK 12.0.100-alpha.1.26557.102 and DefaultNetCoreTargetFramework net12.0. Those files were read only; the SDK was not invoked or installed."
+  },
+  "candidateJustification": {
+    "eligible": false,
+    "explanation": "A replacement would not remove the claimed non-indexed repeated traversal, because that traversal is not present for any located target producer. The canonical source expectations are small, and no independent material constant-overhead workload is established. Changing a private signature to Diagnostic[] or replacing the loop solely for style would be unqualified cleanup, not this performance finding.",
+    "faithfulBoundary": "The actual private-caller/producer seam in both immutable source roles, with explicit eager materialization and authoritative indexed LINQ dispatch evidence.",
+    "excludedProbe": "Directly invoking the private verifier with an invented yield/linked-list/large deferred sequence would bypass its real producer and would not establish a canonical performance candidate."
+  },
+  "nativeAndTests": {
+    "nativeBuildStarts": 0,
+    "nativeTestStarts": 0,
+    "dotnetInvocations": 0,
+    "restoreOrInstallInvocations": 0,
+    "comparisonCount": 0,
+    "timingWarmupAllocationOrPerformanceCounters": 0,
+    "nativeCommands": [],
+    "executedTestNames": [],
+    "executedTheoryRows": [],
+    "redGreenEvidence": "Not applicable: no candidate or changed behavior. No tests are described as passing, and no bug fix is described as runtime-verified.",
+    "whyNoNative": "The user explicitly permits a no-candidate result when actual arrays already avoid traversal. The real source producer proves exactly that. Creating private graphs and invoking native tooling would not be needed to reject this card's input premise.",
+    "existingProjectIfFutureBehaviorChanges": "src\\Components\\Analyzers\\test\\Microsoft.AspNetCore.Components.Analyzers.Tests.csproj",
+    "browserEvidence": "Not applicable to this analyzer-test-only/source qualification.",
+    "sdkAvailability": "Not tested; no ambient SDK fallback or custom compiler/project was used."
+  },
+  "preservedAttemptsAndLimits": [
+    "attempt-001-python-launch.json and collect_source_evidence.py: existing python command was an unavailable Microsoft Store alias (exit9009); no script or native build/test started. An existing Node runtime completed read-only evidence collection instead; no install or dependency change.",
+    "CANONICAL_CALLERS.json and inventory_canonical_callers.cjs: first source inventory intentionally left two explicit collection-expression expected counts per role unresolved. The original is retained; manually inspected three/four-element cases are resolved in CANONICAL_CALLERS-002.json.",
+    "LSP_EVIDENCE.json: package intermediate diags hover was unresolved; wrapper overload references overlap. Neither response is used to infer non-indexed collections or exact overload counts.",
+    "LSP_EVIDENCE-002.json: direct caller local resolves as Diagnostic[]; ElementAt metadata go-to-definition returned no definition. Requested server-log read for the supplied lsp-csharp ID returned No agent found; no replacement server/agent or native build was launched.",
+    "missing-role-context.json: scoped test Directory.Build.props does not exist in either role; expected missing-path cat-file exits are retained. Repository verifier-source-link grep exits1 mean no explicit matching XML source link, not a native failure."
+  ],
+  "materialityAndPerformanceLimits": [
+    "No measured performance claim, speedup estimate, allocation claim or timing protocol is produced.",
+    "No comparison budget is consumed or reopened.",
+    "This disposition is bounded to the located real producer paths at the recorded immutable Original and Default commits. Future producer changes require requalification.",
+    "No claim is made that every canonical analyzer test currently passes or that source expectations equal observed runtime populations.",
+    "The source-level absence of repeated non-indexed traversal is independent of diagnostic count; it is not justified by assuming one diagnostic or never repeating the loop."
+  ]
+}

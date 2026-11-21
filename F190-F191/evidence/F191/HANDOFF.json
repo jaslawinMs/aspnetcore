@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "findingId": "F191",
+  "preparation": 204,
+  "owner": "e051f4ea-f79b-4489-a81a-f4dac19b087d",
+  "sealedAtUtc": "2026-11-21T00:27:08.425Z",
+  "status": "complete-no-candidate",
+  "decision": "no-candidate",
+  "reasonCode": "REAL_PRODUCER_ALREADY_MATERIALIZES_INDEXED_ARRAY",
+  "summary": "The only located direct caller passes the Diagnostic[] returned by GetSortedDiagnostics. The real producer filters into List<Diagnostic>, completes OrderBy(...).ToArray(), clears the temporary list, then returns that array. Declaring the consumer parameter IEnumerable<Diagnostic> does not remove the array's IList<Diagnostic>/ICollection<Diagnostic> implementations. ElementAt(int) uses indexed access; the alleged repeated non-indexed traversal is absent.",
+  "requestedAcceptance": "ACCEPTANCE.json",
+  "acceptanceResult": "F191 no-candidate source-qualification branch satisfied; no behavioral fix or runtime test pass is claimed.",
+  "analysis": "RESULT_ANALYSIS.json",
+  "sourceRoles": {
+    "observedAtUtc": "2026-11-21T00:12:52.405Z",
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "refs/heads/main",
+    "reserved": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "sourceAcquisition": "Read-only existing local git objects; no fetch, checkout or graph creation.",
+    "finalDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "freshHeadUnchanged": true
+  },
+  "rawEvidence": {
+    "sourceIndex": "SOURCE_FILES.json",
+    "sourceRoleCounts": {
+      "Original": 77,
+      "Default": 79,
+      "ReservedGuidance": 16
+    },
+    "sourceCommands": "COMMANDS-complete.json",
+    "canonicalCallers": "CANONICAL_CALLERS-002.json",
+    "originalCanonicalCallSites": 189,
+    "defaultCanonicalCallSites": 201,
+    "sourceExpectationRange": [
+      0,
+      4
+    ],
+    "runtimeDiagnosticCountsObserved": false,
+    "lspEvidence": [
+      "LSP_EVIDENCE.json",
+      "LSP_EVIDENCE-002.json"
+    ],
+    "externalResources": "external\\RESOURCES.json",
+    "externalCommands": "external\\COMMANDS.json",
+    "historyCommands": "history-detail\\COMMANDS.json",
+    "relatedUnmergedPrPatches": "history-detail\\current-related-pr-67969-verifier-patches.stdout",
+    "qualificationChecks": "SOURCE_QUALIFICATION_CHECKS.json",
+    "diffIndex": "DIFF_INDEX.json",
+    "hashIndex": "HASH_INDEX.json"
+  },
+  "privateGraphs": [
+    {
+      "path": "C:\\src\\ap-F191-o204",
+      "exists": false,
+      "createdByThisTask": false
+    },
+    {
+      "path": "C:\\src\\ap-F191-d204",
+      "exists": false,
+      "createdByThisTask": false
+    }
+  ],
+  "candidate": {
+    "created": false,
+    "sourceChanges": 0,
+    "testChanges": 0,
+    "emptyPatchesAreNoChangesNotCandidateImages": true
+  },
+  "nativeAndTests": {
+    "nativeBuildStarts": 0,
+    "nativeTestStarts": 0,
+    "dotnetInvocations": 0,
+    "restoreOrInstallInvocations": 0,
+    "comparisonCount": 0,
+    "timingWarmupAllocationOrPerformanceCounters": 0,
+    "nativeCommands": [],
+    "executedTestNames": [],
+    "executedTheoryRows": [],
+    "redGreenEvidence": "Not applicable: no candidate or changed behavior. No tests are described as passing, and no bug fix is described as runtime-verified.",
+    "whyNoNative": "The user explicitly permits a no-candidate result when actual arrays already avoid traversal. The real source producer proves exactly that. Creating private graphs and invoking native tooling would not be needed to reject this card's input premise.",
+    "existingProjectIfFutureBehaviorChanges": "src\\Components\\Analyzers\\test\\Microsoft.AspNetCore.Components.Analyzers.Tests.csproj",
+    "browserEvidence": "Not applicable to this analyzer-test-only/source qualification.",
+    "sdkAvailability": "Not tested; no ambient SDK fallback or custom compiler/project was used."
+  },
+  "materialityAndPerformanceLimits": [
+    "No measured performance claim, speedup estimate, allocation claim or timing protocol is produced.",
+    "No comparison budget is consumed or reopened.",
+    "This disposition is bounded to the located real producer paths at the recorded immutable Original and Default commits. Future producer changes require requalification.",
+    "No claim is made that every canonical analyzer test currently passes or that source expectations equal observed runtime populations.",
+    "The source-level absence of repeated non-indexed traversal is independent of diagnostic count; it is not justified by assuming one diagnostic or never repeating the loop."
+  ],
+  "preservedAttemptsAndLimits": [
+    "attempt-001-python-launch.json and collect_source_evidence.py: existing python command was an unavailable Microsoft Store alias (exit9009); no script or native build/test started. An existing Node runtime completed read-only evidence collection instead; no install or dependency change.",
+    "CANONICAL_CALLERS.json and inventory_canonical_callers.cjs: first source inventory intentionally left two explicit collection-expression expected counts per role unresolved. The original is retained; manually inspected three/four-element cases are resolved in CANONICAL_CALLERS-002.json.",
+    "LSP_EVIDENCE.json: package intermediate diags hover was unresolved; wrapper overload references overlap. Neither response is used to infer non-indexed collections or exact overload counts.",
+    "LSP_EVIDENCE-002.json: direct caller local resolves as Diagnostic[]; ElementAt metadata go-to-definition returned no definition. Requested server-log read for the supplied lsp-csharp ID returned No agent found; no replacement server/agent or native build was launched.",
+    "missing-role-context.json: scoped test Directory.Build.props does not exist in either role; expected missing-path cat-file exits are retained. Repository verifier-source-link grep exits1 mean no explicit matching XML source link, not a native failure."
+  ],
+  "processDisposition": {
+    "ownedNativeBuildTestRoots": [],
+    "observedOwnedNativeBuildTestChildren": [],
+    "ownedNativeBuildTestStreams": [],
+    "allOwnedNativeWorkTerminal": true,
+    "nativeLaunches": 0,
+    "comparisons": 0,
+    "closedBudgetsPreserved": true,
+    "readOnlyCollectors": "All git/gh children use synchronous spawnSync with captured stdout/stderr. Collector shells 4420,4435,4436,4447,4448,4450 completed exit0. Python launch4414 completed exit9009 without starting its script. No persistent helper was started.",
+    "universalUnrelatedProcessInactivityClaim": false
+  },
+  "governance": {
+    "initial": "governance-initial-observation.json",
+    "final": {
+      "observedAtUtc": "2026-11-21T00:27:08.418Z",
+      "policySha256": "60f7cd0cfb43e57e605bd3b4b2702d262854d4487b2f8e55e0c46b3a6974c694",
+      "findingOwner": "e051f4ea-f79b-4489-a81a-f4dac19b087d",
+      "findingScope": "204 independent DiagnosticVerifier actual diagnostic producer/concrete runtime collection shape, count/order/deferred-lifetime and source/default/history qualification, with precise private-worktree candidate/tests only if justified. Bounded untimed native builds/tests authorized under actual no-benchmark-lease and explicit HOLD checks; max2 build nodes, no node reuse/shared compilation, exact graph activation, separate argv and recorded exits. No fabricated large input/loops, timing/warmup/allocation/performance counters, remote/API, publication, policy/ledger/lease or reserved-worktree changes. Stop after evidence-backed handoff with owned native work terminal.",
+      "registeredOwners": 4,
+      "maximumRegisteredPreparationOwners": 4,
+      "actualWorkerBuildHoldActive": false,
+      "buildAndTestWorkQuiesced": false,
+      "actualBenchmarkExclusiveLeaseExists": false,
+      "nativeStartRequested": false,
+      "nativeStartCount": 0
+    },
+    "sharedGovernanceWrittenByThisTask": false
+  },
+  "reservedWorktree": {
+    "initial": "reserved-initial.json",
+    "final": "reserved-final.json",
+    "unchangedAgainstInitial": true
+  },
+  "exclusions": [
+    "No runtime population, passing analyzer suite, performance, allocation or exact loaded-runtime claim.",
+    "No native build/test, restore/install, private graph, benchmark-like workload or browser execution.",
+    "No remote/API write, publication, commit/push/PR/issue, policy/registry/lease/ledger or machine change.",
+    "No other finding scope, public API/default/convention, cache, IVT/UnsafeAccessor, manifest or unrelated source change."
+  ]
+}

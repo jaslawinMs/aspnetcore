@@ -1,0 +1,74 @@
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  30)     #region  Get Diagnostics
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  31) 
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  32)     /// <summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  33)     /// Given classes in the form of strings, their language, and an IDiagnosticAnalyzer to apply to it, return the diagnostics found in the string after converting it to a document.
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  34)     /// </summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  35)     /// <param name="sources">Classes in the form of strings</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  36)     /// <param name="language">The language the source classes are in</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  37)     /// <param name="analyzer">The analyzer to be run on the sources</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  38)     /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  39)     private static Diagnostic[] GetSortedDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  40)     {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  41)         return GetSortedDiagnosticsFromDocuments(analyzer, GetDocuments(sources, language));
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  42)     }
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  43) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  44)     /// <summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  45)     /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  46)     /// The returned diagnostics are then ordered by location in the source document.
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  47)     /// </summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  48)     /// <param name="analyzer">The analyzer to run on the documents</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  49)     /// <param name="documents">The Documents that the analyzer will be run on</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  50)     /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  51)     protected static Diagnostic[] GetSortedDiagnosticsFromDocuments(DiagnosticAnalyzer analyzer, Document[] documents)
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  52)     {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  53)         var projects = new HashSet<Project>();
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  54)         foreach (var document in documents)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  55)         {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  56)             projects.Add(document.Project);
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  57)         }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  58) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  59)         var diagnostics = new List<Diagnostic>();
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  60)         foreach (var project in projects)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  61)         {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  62)             var compilationWithAnalyzers = project.GetCompilationAsync().Result.WithAnalyzers(ImmutableArray.Create(analyzer));
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  63)             var diags = compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().Result;
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  64)             foreach (var diag in diags)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  65)             {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  66)                 if (diag.Location == Location.None || diag.Location.IsInMetadata)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  67)                 {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  68)                     diagnostics.Add(diag);
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  69)                 }
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  70)                 else
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  71)                 {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  72)                     for (int i = 0; i < documents.Length; i++)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  73)                     {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  74)                         var document = documents[i];
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  75)                         var tree = document.GetSyntaxTreeAsync().Result;
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  76)                         if (tree == diag.Location.SourceTree)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  77)                         {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  78)                             diagnostics.Add(diag);
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  79)                         }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  80)                     }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  81)                 }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  82)             }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  83)         }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  84) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  85)         var results = SortDiagnostics(diagnostics);
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  86)         diagnostics.Clear();
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  87)         return results;
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  88)     }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  89) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  90)     /// <summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  91)     /// Sort diagnostics by location in source document
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  92)     /// </summary>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  93)     /// <param name="diagnostics">The list of Diagnostics to be sorted</param>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  94)     /// <returns>An IEnumerable containing the Diagnostics in order of Location</returns>
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  95)     private static Diagnostic[] SortDiagnostics(IEnumerable<Diagnostic> diagnostics)
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  96)     {
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  97)         return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700  98)     }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100  99) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700 100)     #endregion
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Helpers/DiagnosticVerifier.Helper.cs (Steve Sanderson 2018-05-01 10:08:01 +0100 101) 
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700 102)     #region Set up compilation and documents
+a450cb69b5 src/Components/Analyzers/test/Helpers/DiagnosticVerifier.Helper.cs                   (Pranav K        2021-11-05 17:52:08 -0700 103)     /// <summary>

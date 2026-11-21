@@ -1,0 +1,24 @@
+{
+  "supplements": "LSP_EVIDENCE.json",
+  "queries": [
+    {
+      "operation": "hover",
+      "position": "C:\\src\\aspnetcore\\src\\Components\\Analyzers\\test\\Verifiers\\DiagnosticVerifier.cs:92:16",
+      "rawResult": "```csharp\n(local variable) Diagnostic[] diagnostics\n```",
+      "meaning": "Local LSP independently resolves the sole direct caller's local to Diagnostic[]."
+    },
+    {
+      "operation": "goToDefinition",
+      "position": "C:\\src\\aspnetcore\\src\\Components\\Analyzers\\test\\Verifiers\\DiagnosticVerifier.cs:121:40",
+      "symbolName": "ElementAt",
+      "rawResult": "No definition found at line 121, character 40.",
+      "limitation": "No package/runtime metadata binding is claimed from LSP. Authoritative LINQ source/docs and explicit array producer source support the source-level disposition; no native execution or loaded-runtime claim."
+    }
+  ],
+  "boundedAreaLiteralCrossCheck": [
+    "Verifiers\\DiagnosticVerifier.cs:121: actualResults.ElementAt(i)",
+    "Verifiers\\CodeFixVerifier.cs:100: actions.ElementAt((int)codeFixIndex)",
+    "Verifiers\\CodeFixVerifier.cs:104: actions.ElementAt(0)"
+  ],
+  "crossCheckInterpretation": "No local ElementAt definition in the located analyzer area. Code-fix action-list access is not the F191 diagnostic-results consumer and is not changed."
+}

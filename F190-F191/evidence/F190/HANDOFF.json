@@ -1,0 +1,275 @@
+{
+  "finding": "F190",
+  "scope": 207,
+  "owner": "0f21ad7f-ffb1-4ca5-9ee5-54f1e0543725",
+  "card": "enumerable-count-vs-any",
+  "classification": {
+    "severity": "informational",
+    "area": "test infrastructure",
+    "frequency": "cold generated-template validation, not an application request hot path"
+  },
+  "disposition": "bounded-no-candidate",
+  "candidateRetained": false,
+  "reason": "The declared IEnumerable<string> does not imply a counting traversal. All 16 real non-null initializer sites are either small string arrays or fixed-depth Concat/Append pipelines over a three-element List<string> or string array and a one-element string array. Both dependency-pinned LINQ source versions obtain all these counts without enumerating elements. With the default LINQ feature switch, Any uses the same cheap-count path. No source-qualified material traversal saving remains.",
+  "notAClaim": [
+    "This is not a measured no-gain result or a performance comparison.",
+    "No native executing test-host runtime, actual JIT behavior, switch state, elapsed cost, allocations, throughput or end-to-end template behavior was observed.",
+    "This does not prove that every possible external consumer, future producer or alternative runtime has the same collection shape or performance.",
+    "Small fixed sizes and cold infrastructure placement do not prove zero cost. They provide no justification for manufacturing a material candidate after the traversal premise fails."
+  ],
+  "sourcePins": {
+    "independentOriginal": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "actualUpstreamDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "main",
+    "identicalProjectTemplatesTree": "b29d825ba287dc360512f8da8e3e6a06e235c96a",
+    "target": "src\\ProjectTemplates\\Shared\\AspNetProcess.cs",
+    "targetLine": 117,
+    "guard": "if (page.Links?.Count() > 0)",
+    "completeRawAspNetCoreFiles": 36,
+    "completeRawPinnedLinqFiles": 14,
+    "bindings": [
+      "source-bindings.json",
+      "linq-source-bindings.json"
+    ],
+    "runtimeSourcePins": {
+      "original": {
+        "version": "12.0.0-alpha.1.26562.105",
+        "repository": "dotnet/dotnet",
+        "commit": "dfd6ac738610ea05f42e704be82b386e71052e12"
+      },
+      "default": {
+        "version": "12.0.0-alpha.1.26569.107",
+        "repository": "dotnet/dotnet",
+        "commit": "4f30608f5e5220a5671e61f4bd5dece130657f47"
+      },
+      "qualification": "These are the roles' Microsoft.NETCore.App.Ref dependency-source pins, not observations of executing test-host binaries. All seven inspected LINQ files have identical Git blobs between these two pins."
+    }
+  },
+  "producerSummary": {
+    "detail": "producer-matrix.json",
+    "nonNullInitializerSites": 16,
+    "stringArraySites": 12,
+    "stringArraySizeDistribution": {
+      "4": 1,
+      "5": 1,
+      "6": 4,
+      "7": 4,
+      "10": 2
+    },
+    "realDeferredPipelineSites": 4,
+    "pipelineSizeDistribution": {
+      "4": 2,
+      "5": 2
+    },
+    "pipelineTypes": [
+      "System.Linq.Enumerable+Concat2Iterator<System.String>",
+      "System.Linq.Enumerable+AppendPrepend1Iterator<System.String> nested as the first source for the two five-link pages"
+    ],
+    "underlyingMenuShapes": [
+      "MvcTemplateCore: System.Collections.Generic.List<System.String>, three entries, even though its local is declared IEnumerable<string>",
+      "MvcTemplate_SingleFileExe: System.String[], three entries"
+    ],
+    "footerShape": "System.String[], one entry",
+    "blazorNullConstructionSites": 7,
+    "blazorOuterIterator": "GetExpectedPages is a compiler-generated IEnumerable<Page> producer; its Page.Links auto-properties are null. The outer page iterator is not a deferred Links producer.",
+    "observedNativeRuntimeTypes": false,
+    "evidenceBoundary": "Concrete array/list construction is fixed by the actual source initializers. Concrete LINQ implementation type names and metadata-count paths are derived from the exact pinned implementation source. No native collection probe was run.",
+    "emptyLinkProducersInScope": 0,
+    "customSingleUseOrSideEffectingLinkProducersFound": 0,
+    "largeOrDeferredProducersFabricated": false
+  },
+  "countAndAny": {
+    "array": "Count first matches ICollection<string> and reads Count. Any first matches ICollection<string> and tests Count != 0. No array element traversal is removed.",
+    "concat": "Count matches Iterator<string> and unconditionally calls GetCount(false). Concat2Iterator.GetCount asks both sources for TryGetNonEnumeratedCount. The direct List<string>/string[] sources answer through ICollection<string>.Count.",
+    "append": "For the two appended home-page pipelines, TryGetNonEnumeratedCount recognizes AppendPrepend1Iterator<string>.GetCount(true). Its actual source is ICollection<string>, so it uses the source Count plus one. Concat adds the one-element footer count. There is no element traversal here either.",
+    "any": "With IsSizeOptimized false, Any recognizes Iterator<string> and requests GetCount(true). All actual sources are cheap-countable, so this follows the same metadata-count chain rather than saving a full enumeration.",
+    "featureSwitch": "The pinned Enumerable source defaults System.Linq.Enumerable.IsSizeOptimized to false; no explicit setting was found in the bounded ProjectTemplates/eng/root-build search. Actual host configuration was not observed. Count's Iterator specialization is unconditional in both inspected versions. If the switch is true, Any can instead take the enumerator path, so replacing Count with Any cannot simply be presumed cheaper.",
+    "remainingConsumerCounts": "ContainsLinks at line 162 evaluates page.Links.Count() twice: once for the condition and once while eagerly constructing the assertion message, including on success. These counts are metadata-only for the real shapes. The subsequent Zip must still enumerate expected links in order.",
+    "asymptoticConclusion": "The proposed Count-to-Any edit removes no O(n) traversal from any established real non-null Links producer on the inspected implementations. No claim is made about a small constant-factor difference."
+  },
+  "ownershipLifetimeAndSemantics": {
+    "owner": "Templates.Mvc.Tests source-links Shared\\AspNetProcess.cs into the test assembly. Other template test projects also source-link the helper; the complete-repository AssertPagesOk/ContainsLinks inventories identify calls only in Templates.Mvc.Tests for this path.",
+    "producerLifetime": "MVC/Razor test methods allocate local List<Page> fixtures and their arrays/lists after generation/build/publish prerequisites. The same fixtures are consumed sequentially by built and published AspNetProcess instances. The single-file test consumes its fixture once.",
+    "deferredLifetime": "The genuine MVC pipelines retain their local collection sources across awaits and across the two process validations in MvcTemplateCore. No in-tree mutation of those local lists, arrays, Page.Links properties or expected values was found after fixture construction. They are mutable types, not immutable guarantees.",
+    "blazorLifetime": "The outer GetExpectedPages iterator is enumerated for built and published validation and creates fresh Pages; Links remains null. Its source-declared page count ranges from one to seven depending on arguments, not an unbounded Links collection.",
+    "processLifetime": "Project.StartBuiltProjectAsync and StartPublishedProjectAsync create AspNetProcess, which owns its HttpClient and ProcessEx. Existing using scopes dispose each process after its sequential checks; AspNetProcess.Dispose disposes HttpClient and ProcessEx.",
+    "order": [
+      "AssertPagesOk walks pages sequentially.",
+      "It awaits AssertOk(page.Url) before evaluating Links or Count. A failed page status prevents subsequent link validation.",
+      "Only a positive non-null count invokes and awaits ContainsLinks.",
+      "ContainsLinks performs another GET, asserts OK, and parses the response with AngleSharp.",
+      "Stylesheet validations precede external-script validations.",
+      "The exact expected anchor count is checked next, before positional Zip validation.",
+      "Zip preserves source order and duplicate expected URLs; each anchor is compared and eligible in-app destinations are requested sequentially."
+    ],
+    "sideEffects": "The real link fixtures contain constant strings. Their metadata counts have no element-producing callbacks to suppress. The consumer does issue HTTP requests, parse HTML and make assertions; changing/removing the positive-count guard could alter those material actions. These actions were traced in source, not executed.",
+    "nullLinks": "Page.Links is an uninitialized auto-property when omitted. Links?.Count() short-circuits the extension method on null; the nullable greater-than comparison is false. AssertOk still runs, but ContainsLinks and all its secondary actions are skipped.",
+    "emptyLinks": "No real empty non-null Links initializer was found. As a source-level contract, count zero skips ContainsLinks; it does not assert that HTML has zero anchors. This was not exercised with an invented input.",
+    "nullPagesOrPage": "There are no explicit null checks for the pages enumerable or each Page. A null pages enumerable faults at foreach; a null Page faults when page.Url is read, before the Links condition. No such input was introduced.",
+    "exceptions": "HTTP/retry/status/parser/assertion failures retain their source ordering. List/array metadata counts and the checked sums of the actual 4-10 entries have no overflow or producer-tail exception to avoid. Generic Count versus Any can differ for side-effecting or throwing deferred enumerables, one-shot sources, custom collections and huge counts; none is a real Links producer here.",
+    "noSnapshotGuarantee": "ContainsLinks re-reads the mutable Page.Links property after awaits. The helper does not freeze it or guarantee safety against concurrent replacement/mutation. No such in-tree writer was found, and no new cache/snapshot/default/convention was proposed."
+  },
+  "historyAndRelatedWork": {
+    "guardIntroduced": {
+      "commit": "426b8b46f9c7cad8b2f0ab502902109ff09be9e6",
+      "pullRequest": "https://github.com/dotnet/aspnetcore/pull/48285",
+      "evidence": "commands\\guard-introduction-diff.stdout",
+      "meaning": "The 2023 full-stack Blazor template change added the null/positive-count guard around an existing ContainsLinks call."
+    },
+    "originalValidationIntent": {
+      "pullRequest": "https://github.com/dotnet/aspnetcore/pull/8628",
+      "commit": "fefffd7751db43e61e14b0af61fac976dbfaf6d1",
+      "title": "Test all links in templates"
+    },
+    "laterValidationOrdering": {
+      "commit": "02e5cfb094800bb6592487dbe0ab116aa2c76831",
+      "pullRequest": "https://github.com/dotnet/aspnetcore/pull/59195",
+      "meaning": "External HTTPS link validity checks were deliberately restricted to avoid flakiness; expected URL comparison remains."
+    },
+    "latestTargetHistory": {
+      "commit": "fc4e6e0915a59f2e1a9bf18955df2eca1de8f96c",
+      "pullRequest": "https://github.com/dotnet/aspnetcore/pull/67898",
+      "meaning": "AngleSharp update; no Count-to-Any change."
+    },
+    "originalToObservedDefault": "The entire ProjectTemplates subtree is byte-identical by Git tree identity, not just a selected line.",
+    "boundedSearches": "Exact gh search prs/issue argv, JSON results, exits and both streams are retained. Upstream queries covered AspNetProcess, AssertPagesOk, Page.Links, PageUrls and Count/template. Fork queries covered AspNetProcess, F190 and enumerable-count-vs-any; no matching fork work was returned.",
+    "openRelatedPullRequest": {
+      "url": "https://github.com/dotnet/aspnetcore/pull/66269",
+      "head": "e79d656e5c4f73dac2a36cd837c04a230195ab54",
+      "actualFilesInspected": "commands\\upstream-open-66269-files.stdout",
+      "meaning": "Its sole changed file is the browser-based BlazorWebTemplateTest.cs. The inspected diff adds no Page.Links producer and does not change AssertPagesOk."
+    },
+    "searchLimits": "Bounded textual GitHub queries are not an exhaustive proof that no differently worded or future related work exists.",
+    "localCodeIntelligenceLimit": "LSP resolved the linked Shared file but returned no external AssertPagesOk callers and only six Page references in that linked file. Those results were not treated as complete. Exact whole-repository Git source inventories supplied the caller bound; targeted source reads established producers. The unrelated Bluebird scope was not queried."
+  },
+  "implementation": {
+    "shippingFilesEdited": [],
+    "testFilesEdited": [],
+    "privateGraphsCreated": [],
+    "privateCandidateCreated": false,
+    "diff": "candidate.diff",
+    "diffBytes": 0,
+    "diffSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "publicApiChanges": 0,
+    "otherFindingGraphsOrMeasuredImagesTouched": false,
+    "policyRegistryLeaseLedgerOrMachineChanges": false,
+    "remoteWritesCommitsPushesIssuesPullRequestsOrBrowserActions": false
+  },
+  "validation": {
+    "acceptanceDefinedBeforeImplementation": "acceptance.json",
+    "sourceAudit": "source-audit-results.json",
+    "sourceAuditCommandReceipt": "source-audit-command-receipt.json",
+    "sourceAuditChecksPassed": 67,
+    "sourceAuditChecksFailed": 0,
+    "nativeBoundary": "native-boundary.json",
+    "nativeCommands": [],
+    "nativeRowsExecuted": 0,
+    "redGreen": "Not applicable: no code candidate or changed behavior. No native behavioral or performance verification is claimed.",
+    "comparisonCount": 0,
+    "timingWarmupsProfilersAllocationOrPerformanceCountersUsed": false,
+    "buildRestoreOrDependencyInstallationAttempted": false,
+    "sourceToolFailuresPreserved": "failures\\",
+    "failureMeaning": "Only source-collection/audit utility failures occurred. All were terminal, preserved and replaced by successful source-only capture/audit. No .NET native test, compiler, application or performance workload was started."
+  },
+  "acceptanceResults": [
+    {
+      "criterion": "Pin Original, actual default, history, docs and relevant related work",
+      "result": "met",
+      "evidence": [
+        "source-bindings.json",
+        "runtime-source-pins.json",
+        "source-command-receipts.json",
+        "related-command-receipts.json",
+        "instruction-observations.json"
+      ]
+    },
+    {
+      "criterion": "Establish real producer shapes, exact sizes, null cases and consumer semantics",
+      "result": "met at the explicitly source-only boundary",
+      "evidence": [
+        "producer-matrix.json",
+        "linq-source-bindings.json",
+        "source-audit-results.json",
+        "assessment.json"
+      ]
+    },
+    {
+      "criterion": "Retain only a material source-qualified candidate; do not fabricate inputs",
+      "result": "met: no candidate",
+      "evidence": [
+        "assessment.json",
+        "candidate.diff"
+      ]
+    },
+    {
+      "criterion": "Implement and run focused faithful native red/green only if a candidate survives",
+      "result": "not applicable; conditional candidate gate did not pass",
+      "evidence": [
+        "native-boundary.json"
+      ]
+    },
+    {
+      "criterion": "Persist bounded handoff/hash index; reserved worktree unchanged, native work terminal, comparisons zero",
+      "result": "verified during final sealing",
+      "evidence": [
+        "final-observations.json",
+        "HASHES.json",
+        "HASHES.sha256"
+      ]
+    }
+  ],
+  "stopState": {
+    "f190NativeWorkEverStarted": false,
+    "f190NativeRoots": [],
+    "f190NativeObservedChildren": [],
+    "f190NativeStdoutStreams": [],
+    "f190NativeStderrStreams": [],
+    "allOwnedNativeWorkTerminal": true,
+    "comparisonCount": 0,
+    "budgetConsumption": 0,
+    "noGlobalQuiescenceClaimForOtherOwners": true,
+    "noFurtherWorkStartedAfterHandoff": true,
+    "coordinatorOnlyNextStep": "Consume the bounded no-candidate assessment. This handoff changes no registry or ledger and authorizes no native work, comparison, publication or follow-on finding."
+  },
+  "schemaVersion": 1,
+  "completedUtc": "2026-11-21T00:29:52.6034306Z",
+  "outputRoot": "C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F190-207",
+  "finalObservations": {
+    "observedUtc": "2026-11-21T00:29:52.5903187Z",
+    "reservedWorktree": {
+      "path": "C:\\src\\aspnetcore",
+      "head": "24875ef5dabb55567870b39f6eb0002170435e2f",
+      "branch": "refs/heads/autoperf/F145-hoist-large-response-utf8-encoding",
+      "statusIdenticalToInitialCapturedStatus": true,
+      "status": "## autoperf/F145-hoist-large-response-utf8-encoding\n?? autoperf-issue-70219-deduplicated-report.html\n?? autoperf-issue-70219-duplicate-report.html\n?? autoperf-scan-report.md\n?? performance-antipattern-findings.md\n",
+      "relevantUncommittedDiffBytes": 0,
+      "unchanged": true,
+      "gitOptionalLocksDisabled": true,
+      "writesByThisOwner": 0
+    },
+    "actualDefaultBranch": "main",
+    "actualDefaultCommit": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "exactPolicy": "policy-final-observed.json",
+    "registeredOwner": "0f21ad7f-ffb1-4ca5-9ee5-54f1e0543725",
+    "registeredOwners": 4,
+    "maximumRegisteredOwners": 4,
+    "scope": "207 independent AspNetProcess Page.Links real producers/concrete collection types and sizes, validation consumer/order/lifetime/null semantics and source/default/history qualification, with precise private-worktree candidate/tests only if justified. Bounded untimed native builds/tests under actual no-benchmark-lease/no-HOLD checks; max2 nodes, no reuse/shared compilation, exact graph activation and separate argv. No invented deferred/large workloads or full external template/browser workflow merely to characterize collections. No timing/warmup/allocation/performance counters, remote/API, publication, policy/ledger/lease, machine or reserved-worktree changes. Stop after bounded handoff with owned native work terminal.",
+    "actualWorkerBuildHoldActive": false,
+    "buildAndTestWorkQuiesced": false,
+    "benchmarkLeasePresent": false,
+    "gateInterpretation": "Observation only. No F190 native work was started, including before or after this final observation. No global process/quiescence claim is made for other owners.",
+    "nativeBuildTestRuntimeStarts": 0,
+    "nativeOwnedRoots": [],
+    "nativeObservedChildren": [],
+    "nativeStdoutStreams": [],
+    "nativeStderrStreams": [],
+    "allOwnedNativeWorkTerminal": true,
+    "comparisons": 0,
+    "sourceReadRootsCaptured": 133,
+    "successfulSourceAuditRoots": 1,
+    "recordedSourceRootsAndBothStreamsTerminal": true,
+    "sourceReadChildrenBoundary": "No universal descendant census for Git/GitHub source tools; each recorded root and both streams were awaited. No native build/test/application roots were launched."
+  },
+  "hashIndex": "HASHES.json",
+  "hashIndexChecksum": "HASHES.sha256"
+}

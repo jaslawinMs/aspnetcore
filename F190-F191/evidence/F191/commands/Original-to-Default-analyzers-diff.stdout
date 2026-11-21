@@ -1,0 +1,709 @@
+diff --git a/src/Components/Analyzers/src/ComponentsApi.cs b/src/Components/Analyzers/src/ComponentsApi.cs
+index d358c584fb..7567392fff 100644
+--- a/src/Components/Analyzers/src/ComponentsApi.cs
++++ b/src/Components/Analyzers/src/ComponentsApi.cs
+@@ -72,4 +72,12 @@ internal static class ComponentsApi
+         public const string FullTypeName = "Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder";
+         public const string MetadataName = FullTypeName;
+     }
++
++    public static class RazorComponentResultOfT
++    {
++        public const string FullTypeName = "Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TComponent>";
++
++        // The generic type is defined in Microsoft.AspNetCore.Components.Endpoints and has arity 1.
++        public const string MetadataName = "Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult`1";
++    }
+ }
+diff --git a/src/Components/Analyzers/src/DiagnosticDescriptors.cs b/src/Components/Analyzers/src/DiagnosticDescriptors.cs
+index 2edb6ef78d..64e23b1578 100644
+--- a/src/Components/Analyzers/src/DiagnosticDescriptors.cs
++++ b/src/Components/Analyzers/src/DiagnosticDescriptors.cs
+@@ -183,4 +183,13 @@ internal static class DiagnosticDescriptors
+         DiagnosticSeverity.Warning,
+         isEnabledByDefault: true,
+         description: CreateLocalizableResourceString(nameof(Resources.VirtualizeSpacerElementIsInvalid_Description)));
++
++    public static readonly DiagnosticDescriptor RazorComponentResultParameterDoesNotExist = new(
++        "BL0020",
++        CreateLocalizableResourceString(nameof(Resources.RazorComponentResultParameterDoesNotExist_Title)),
++        CreateLocalizableResourceString(nameof(Resources.RazorComponentResultParameterDoesNotExist_Format)),
++        Usage,
++        DiagnosticSeverity.Warning,
++        isEnabledByDefault: true,
++        description: CreateLocalizableResourceString(nameof(Resources.RazorComponentResultParameterDoesNotExist_Description)));
+ }
+diff --git a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+index 91f8dc7028..f0e0fd0419 100644
+--- a/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
++++ b/src/Components/Analyzers/src/ForLoopIteratorInClosureAnalyzer.cs
+@@ -196,7 +196,7 @@ public sealed class ForLoopIteratorInClosureAnalyzer : DiagnosticAnalyzer
+             }
+             else if (valueArgument is IConversionOperation conversionOperation
+                 && conversionOperation.Operand.Type is not null
+-                && conversionOperation.Operand.Type.ContainingNamespace.ToString().StartsWith(ComponentsApi.AssemblyName, StringComparison.Ordinal))
++                && conversionOperation.Operand.Type.ContainingNamespace?.ToString().StartsWith(ComponentsApi.AssemblyName, StringComparison.Ordinal) == true)
+             {
+                 // If the value is a conversion operation, search if a delegate is created like RenderFragment or an EventCallback.
+                 // Multiple delegates at once shouldn't be possible.
+diff --git a/src/Components/Analyzers/src/RazorComponentResultParameterAnalyzer.cs b/src/Components/Analyzers/src/RazorComponentResultParameterAnalyzer.cs
+new file mode 100644
+index 0000000000..0656a63af5
+--- /dev/null
++++ b/src/Components/Analyzers/src/RazorComponentResultParameterAnalyzer.cs
+@@ -0,0 +1,182 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++using System.Collections.Generic;
++using System.Collections.Immutable;
++using Microsoft.CodeAnalysis;
++using Microsoft.CodeAnalysis.CSharp;
++using Microsoft.CodeAnalysis.CSharp.Syntax;
++using Microsoft.CodeAnalysis.Diagnostics;
++using Microsoft.CodeAnalysis.Operations;
++
++#nullable enable
++
++namespace Microsoft.AspNetCore.Components.Analyzers;
++
++[DiagnosticAnalyzer(LanguageNames.CSharp)]
++public sealed class RazorComponentResultParameterAnalyzer : DiagnosticAnalyzer
++{
++    public RazorComponentResultParameterAnalyzer()
++    {
++        SupportedDiagnostics = ImmutableArray.Create(
++            DiagnosticDescriptors.RazorComponentResultParameterDoesNotExist);
++    }
++
++    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
++
++    public override void Initialize(AnalysisContext context)
++    {
++        context.EnableConcurrentExecution();
++        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
++        context.RegisterCompilationStartAction(context =>
++        {
++            if (!ComponentSymbols.TryCreate(context.Compilation, out var symbols))
++            {
++                // Types we need are not defined.
++                return;
++            }
++
++            var razorComponentResultOfT = context.Compilation.GetTypeByMetadataName(ComponentsApi.RazorComponentResultOfT.MetadataName);
++            if (razorComponentResultOfT is null)
++            {
++                // RazorComponentResult<TComponent> is not referenced by this compilation.
++                return;
++            }
++
++            context.RegisterOperationAction(context =>
++            {
++                var objectCreation = (IObjectCreationOperation)context.Operation;
++
++                // We only care about constructing RazorComponentResult<TComponent> with a single loosely-typed
++                // parameters argument, which is the ergonomic (and error-prone) overload from the issue.
++                if (objectCreation.Type is not INamedTypeSymbol createdType ||
++                    !SymbolEqualityComparer.Default.Equals(createdType.OriginalDefinition, razorComponentResultOfT))
++                {
++                    return;
++                }
++
++                if (createdType.TypeArguments.Length != 1 ||
++                    createdType.TypeArguments[0] is not INamedTypeSymbol componentType)
++                {
++                    // The component type is an open generic type parameter; we cannot resolve its parameters.
++                    return;
++                }
++
++                if (objectCreation.Arguments.Length != 1)
++                {
++                    return;
++                }
++
++                if (UnwrapConversions(objectCreation.Arguments[0].Value) is not IAnonymousObjectCreationOperation anonymousObject)
++                {
++                    // Only anonymous objects (e.g. new { Foo = 1 }) expose statically known parameter names.
++                    // Dictionaries and named types are matched by name at runtime and are intentionally ignored.
++                    return;
++                }
++
++                if (symbols.ComponentBaseType is null || !InheritsFrom(componentType, symbols.ComponentBaseType))
++                {
++                    // Parameter binding for custom IComponent implementations that do not derive from
++                    // ComponentBase is not guaranteed to follow the [Parameter]/[CascadingParameter] conventions,
++                    // so we cannot safely determine the set of valid parameter names.
++                    return;
++                }
++
++                if (!TryGetComponentParameterNames(symbols, componentType, out var parameterNames))
++                {
++                    // The component captures unmatched values, so any parameter name is accepted at runtime.
++                    return;
++                }
++
++                foreach (var initializer in anonymousObject.Initializers)
++                {
++                    if (initializer is not ISimpleAssignmentOperation { Target: IPropertyReferenceOperation propertyReference })
++                    {
++                        continue;
++                    }
++
++                    var parameterName = propertyReference.Property.Name;
++                    if (parameterNames.Contains(parameterName))
++                    {
++                        continue;
++                    }
++
++                    context.ReportDiagnostic(Diagnostic.Create(
++                        DiagnosticDescriptors.RazorComponentResultParameterDoesNotExist,
++                        GetParameterNameLocation(initializer.Syntax),
++                        componentType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
++                        parameterName));
++                }
++            }, OperationKind.ObjectCreation);
++        });
++    }
++
++    private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
++    {
++        for (var current = type; current is not null; current = current.BaseType)
++        {
++            if (SymbolEqualityComparer.Default.Equals(current, baseType))
++            {
++                return true;
++            }
++        }
++
++        return false;
++    }
++
++    private static IOperation UnwrapConversions(IOperation operation)
++    {
++        while (operation is IConversionOperation conversion)
++        {
++            operation = conversion.Operand;
++        }
++
++        return operation;
++    }
++
++    private static bool TryGetComponentParameterNames(
++        ComponentSymbols symbols,
++        INamedTypeSymbol componentType,
++        out HashSet<string> parameterNames)
++    {
++        parameterNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++
++        for (INamedTypeSymbol? type = componentType; type is not null; type = type.BaseType)
++        {
++            foreach (var member in type.GetMembers())
++            {
++                if (member is not IPropertySymbol property)
++                {
++                    continue;
++                }
++
++                if (ComponentFacts.IsParameterWithCaptureUnmatchedValues(symbols, property))
++                {
++                    // The component accepts arbitrary parameter names via CaptureUnmatchedValues,
++                    // so no name can be considered invalid.
++                    return false;
++                }
++
++                if (ComponentFacts.IsParameter(symbols, property) &&
++                    !ComponentFacts.IsCascadingParameter(symbols, property))
++                {
++                    parameterNames.Add(property.Name);
++                }
++            }
++        }
++
++        return true;
++    }
++
++    private static Location GetParameterNameLocation(SyntaxNode syntax)
++    {
++        // Point the diagnostic at the member name (e.g. `Foo` in `Foo = 1`) rather than the whole declarator.
++        return syntax switch
++        {
++            AnonymousObjectMemberDeclaratorSyntax { NameEquals: { } nameEquals } => nameEquals.Name.GetLocation(),
++            AnonymousObjectMemberDeclaratorSyntax { Expression: IdentifierNameSyntax identifier } => identifier.GetLocation(),
++            _ => syntax.GetLocation(),
++        };
++    }
++}
+diff --git a/src/Components/Analyzers/src/Resources.resx b/src/Components/Analyzers/src/Resources.resx
+index 51a22b797a..891a77e221 100644
+--- a/src/Components/Analyzers/src/Resources.resx
++++ b/src/Components/Analyzers/src/Resources.resx
+@@ -300,4 +300,13 @@
+   <data name="ComponentHasDisposeAsyncWithoutIAsyncDisposable_Title" xml:space="preserve">
+     <value>Component has 'DisposeAsync()' but does not implement 'IAsyncDisposable'</value>
+   </data>
++  <data name="RazorComponentResultParameterDoesNotExist_Description" xml:space="preserve">
++    <value>Parameters passed to RazorComponentResult&lt;TComponent&gt; are matched by name to [Parameter] properties on the component when it renders. Supplying a name that does not correspond to a component parameter throws an InvalidOperationException at runtime.</value>
++  </data>
++  <data name="RazorComponentResultParameterDoesNotExist_Format" xml:space="preserve">
++    <value>Component '{0}' does not have a [Parameter] property matching the name '{1}'.</value>
++  </data>
++  <data name="RazorComponentResultParameterDoesNotExist_Title" xml:space="preserve">
++    <value>RazorComponentResult parameter does not match a component parameter</value>
++  </data>
+ </root>
+diff --git a/src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs b/src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs
+index 588f03738d..ca3a870ff3 100644
+--- a/src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs
++++ b/src/Components/Analyzers/test/ForLoopIteratorInClosureAnalyzerTest.cs
+@@ -65,7 +65,10 @@ namespace Microsoft.AspNetCore.Components
+         {
+             public void OpenElement(int sequence, string elementName) { }
+             public void CloseElement() { }
+-            public void AddAttribute<T>(int sequence, string name, T value) { }
++            public void AddAttribute(int sequence, string name, string value) { }
++            public void AddAttribute(int sequence, string name, MulticastDelegate value) { }
++            public void AddAttribute<T>(int sequence, string name, EventCallback<T> value) { }
++            public void AddAttribute(int sequence, string name, object value) { }
+             public void AddMarkupContent(int sequence, string markupContent) { }
+             public void SetUpdatesAttributeName(string name) { }
+             public void AddContent(int sequence, object textContent) { }
+@@ -103,6 +106,66 @@ namespace ConsoleApplication1
+ }
+ ";
+ 
++    [Theory]
++    [InlineData("AddAttribute", "new int[0]", true)]
++    [InlineData("AddAttribute", "new int[0]", false)]
++    [InlineData("AddComponentParameter", "Microsoft.AspNetCore.Components.CompilerServices.RuntimeHelpers.TypeCheck<string[]>(stringArray)", true)]
++    [InlineData("AddComponentParameter", "Microsoft.AspNetCore.Components.CompilerServices.RuntimeHelpers.TypeCheck<string[]>(stringArray)", false)]
++    public void ArrayValuesInsideOrAfterForLoopDoNotThrow(string method, string expression, bool insideLoop)
++    {
++        var addValue = $"__builder.{method}(0, \"value\", {expression});";
++        var test = $@"
++namespace ConsoleApplication1
++{{
++    partial class TestComponent : Microsoft.AspNetCore.Components.ComponentBase
++    {{
++        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder __builder)
++        {{
++            for (var i = 0; i < 1; i++)
++            {{
++                {(insideLoop ? addValue : "")}
++            }}
++            {(insideLoop ? "" : addValue)}
++        }}
++    }}
++}}" + BaseComponentDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void ArrayAttributeAfterForLoopDoesNotHideWarning()
++    {
++        var test = @"
++namespace ConsoleApplication1
++{
++    partial class TestComponent : Microsoft.AspNetCore.Components.ComponentBase
++    {
++        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder __builder)
++        {
++            for (var i = 0; i < 1; i++)
++            {
++                __builder.AddAttribute(0, ""onclick"", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this,
++                    () => SelectItem(i)));
++            }
++            __builder.AddAttribute(1, ""data-x"", new int[0]);
++        }
++    }
++}" + BaseComponentDeclarations;
++
++        VerifyCSharpDiagnostic(test,
++            new DiagnosticResult
++            {
++                Id = DiagnosticDescriptors.ForLoopIteratorVariableUsedInClosure.Id,
++                Message = "For loop iterator 'i' is used in a closure or RenderFragment/ChildContent. This can lead to unexpected runtime behavior.",
++                Severity = DiagnosticSeverity.Warning,
++                Locations = new[]
++                {
++                    new DiagnosticResultLocation("Test0.cs", 11, 38)
++                }
++            });
++    }
++
+     [Fact]
+     public void IteratorVariableDifferentIncrementationsUsedInLambdaShouldThrowWarnings()
+     {
+diff --git a/src/Components/Analyzers/test/RazorComponentResultParameterAnalyzerTest.cs b/src/Components/Analyzers/test/RazorComponentResultParameterAnalyzerTest.cs
+new file mode 100644
+index 0000000000..9fd9af908a
+--- /dev/null
++++ b/src/Components/Analyzers/test/RazorComponentResultParameterAnalyzerTest.cs
+@@ -0,0 +1,366 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using Microsoft.CodeAnalysis;
++using Microsoft.CodeAnalysis.Diagnostics;
++using TestHelper;
++
++namespace Microsoft.AspNetCore.Components.Analyzers.Test;
++
++public class RazorComponentResultParameterAnalyzerTest : DiagnosticVerifier
++{
++    protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() => new RazorComponentResultParameterAnalyzer();
++
++    // Minimal stand-ins for the framework types the analyzer looks up by name. The analyzed compilation does not
++    // reference the real Components/Endpoints assemblies, so redeclaring them here avoids type conflicts.
++    private static readonly string RazorComponentResultDeclarations = $@"
++    namespace {typeof(ParameterAttribute).Namespace}
++    {{
++        public class {typeof(ParameterAttribute).Name} : System.Attribute
++        {{
++            public bool CaptureUnmatchedValues {{ get; set; }}
++        }}
++
++        public class {typeof(CascadingParameterAttribute).Name} : System.Attribute
++        {{
++        }}
++
++        public interface {typeof(IComponent).Name}
++        {{
++        }}
++
++        public abstract class ComponentBase : {typeof(IComponent).Name}
++        {{
++        }}
++    }}
++
++    namespace Microsoft.AspNetCore.Http.HttpResults
++    {{
++        public class RazorComponentResult<TComponent>
++            where TComponent : {typeof(IComponent).Namespace}.{typeof(IComponent).Name}
++        {{
++            public RazorComponentResult() {{ }}
++            public RazorComponentResult(object parameters) {{ }}
++            public RazorComponentResult(System.Collections.Generic.IReadOnlyDictionary<string, object> parameters) {{ }}
++        }}
++    }}
++";
++
++    [Fact]
++    public void ReportsWarningWhenParameterNameDoesNotExist()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                var result = new RazorComponentResult<TestComponent>(new
++                {{
++                    AuthorId = 5,
++                }});
++
++                return result;
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        var expected = new DiagnosticResult
++        {
++            Id = "BL0020",
++            Message = "Component 'ConsoleApplication1.TestComponent' does not have a [Parameter] property matching the name 'AuthorId'.",
++            Severity = DiagnosticSeverity.Warning,
++            Locations = new[]
++            {
++                new DiagnosticResultLocation("Test0.cs", 18, 21)
++            }
++        };
++
++        VerifyCSharpDiagnostic(test, expected);
++    }
++
++    [Fact]
++    public void ReportsWarningForEachUnknownParameterName()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                var result = new RazorComponentResult<TestComponent>(new
++                {{
++                    AuthorId = 5,
++                    Missing = 6,
++                }});
++
++                return result;
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test,
++            new DiagnosticResult
++            {
++                Id = "BL0020",
++                Message = "Component 'ConsoleApplication1.TestComponent' does not have a [Parameter] property matching the name 'AuthorId'.",
++                Severity = DiagnosticSeverity.Warning,
++                Locations = new[] { new DiagnosticResultLocation("Test0.cs", 18, 21) }
++            },
++            new DiagnosticResult
++            {
++                Id = "BL0020",
++                Message = "Component 'ConsoleApplication1.TestComponent' does not have a [Parameter] property matching the name 'Missing'.",
++                Severity = DiagnosticSeverity.Warning,
++                Locations = new[] { new DiagnosticResultLocation("Test0.cs", 19, 21) }
++            });
++    }
++
++    [Fact]
++    public void DoesNotReportWhenAllParameterNamesExist()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++            [Parameter] public int Count {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>(new {{ UserId = ""abc"", Count = 5 }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void ReportsWarningWhenParameterIsAlsoCascadingParameter()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter, CascadingParameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>(new {{ UserId = ""abc"" }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        var expected = new DiagnosticResult
++        {
++            Id = "BL0020",
++            Message = "Component 'ConsoleApplication1.TestComponent' does not have a [Parameter] property matching the name 'UserId'.",
++            Severity = DiagnosticSeverity.Warning,
++            Locations = new[]
++            {
++                new DiagnosticResultLocation("Test0.cs", 16, 70)
++            }
++        };
++
++        VerifyCSharpDiagnostic(test, expected);
++    }
++
++    [Fact]
++    public void DoesNotReportForParameterlessConstructor()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{ 
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>();
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void RecognizesInheritedParameters()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class BaseComponent : ComponentBase
++        {{
++            [Parameter] public string InheritedParam {{ get; set; }}
++        }}
++
++        class TestComponent : BaseComponent
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>(new {{ InheritedParam = ""abc"" }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void DoesNotReportWhenComponentCapturesUnmatchedValues()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter(CaptureUnmatchedValues = true)]
++            public System.Collections.Generic.Dictionary<string, object> Attributes {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>(new {{ AnythingGoes = 5 }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void IgnoresDictionaryParameters()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get(System.Collections.Generic.IReadOnlyDictionary<string, object> parameters)
++            {{
++                return new RazorComponentResult<TestComponent>(parameters);
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void IgnoresUnrelatedObjectCreations()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++
++        class TestComponent : ComponentBase
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class NotAResult<TComponent>
++        {{
++            public NotAResult(object parameters) {{ }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new NotAResult<TestComponent>(new {{ AuthorId = 5 }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++
++    [Fact]
++    public void DoesNotReportForCustomIComponentImplementationsNotDerivingFromComponentBase()
++    {
++        var test = $@"
++    namespace ConsoleApplication1
++    {{
++        using {typeof(ParameterAttribute).Namespace};
++        using Microsoft.AspNetCore.Http.HttpResults;
++
++        class TestComponent : IComponent
++        {{
++            [Parameter] public string UserId {{ get; set; }}
++        }}
++
++        class TestEndpoints
++        {{
++            object Get()
++            {{
++                return new RazorComponentResult<TestComponent>(new {{ AnythingGoes = 5 }});
++            }}
++        }}
++    }}" + RazorComponentResultDeclarations;
++
++        VerifyCSharpDiagnostic(test);
++    }
++}

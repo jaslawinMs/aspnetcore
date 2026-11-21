@@ -1,0 +1,43 @@
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  88)     /// <param name="analyzer">The analyzer to be run on the source code</param>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  89)     /// <param name="expected">DiagnosticResults that should appear after the analyzer is run on the sources</param>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  90)     private void VerifyDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer, params DiagnosticResult[] expected)
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  91)     {
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  92)         var diagnostics = GetSortedDiagnostics(sources, language, analyzer);
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  93)         VerifyDiagnosticResults(diagnostics, analyzer, expected);
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  94)     }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100  95) 
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  96)     #endregion
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100  97) 
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  98)     #region Actual comparisons and verifications
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700  99)     /// <summary>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 100)     /// Checks each of the actual Diagnostics found and compares them with the corresponding DiagnosticResult in the array of expected results.
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 101)     /// Diagnostics are considered equal only if the DiagnosticResultLocation, Id, Severity, and Message of the DiagnosticResult match the actual diagnostic.
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 102)     /// </summary>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 103)     /// <param name="actualResults">The Diagnostics found by the compiler after running the analyzer on the source code</param>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 104)     /// <param name="analyzer">The analyzer that was being run on the sources</param>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 105)     /// <param name="expectedResults">Diagnostic Results that should have appeared in the code</param>
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 106)     private static void VerifyDiagnosticResults(IEnumerable<Diagnostic> actualResults, DiagnosticAnalyzer analyzer, params DiagnosticResult[] expectedResults)
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 107)     {
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 108)         int expectedCount = expectedResults.Length;
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 109)         int actualCount = actualResults.Count();
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100 110) 
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 111)         if (expectedCount != actualCount)
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 112)         {
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 113)             string diagnosticsOutput = actualResults.Any() ? FormatDiagnostics(analyzer, actualResults.ToArray()) : "    NONE.";
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100 114) 
+92097249f3 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Alexander Köplinger 2024-08-23 19:27:53 +0200 115)             Assert.Fail(
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 116)                 string.Format(CultureInfo.InvariantCulture, "Mismatch between number of diagnostics returned, expected \"{0}\" actual \"{1}\"\r\n\r\nDiagnostics:\r\n{2}\r\n", expectedCount, actualCount, diagnosticsOutput));
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 117)         }
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100 118) 
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 119)         for (int i = 0; i < expectedResults.Length; i++)
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 120)         {
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 121)             var actual = actualResults.ElementAt(i);
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 122)             var expected = expectedResults[i];
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100 123) 
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 124)             if (expected.Line == -1 && expected.Column == -1)
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 125)             {
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 126)                 if (actual.Location != Location.None)
+18b9a70dbe test/Microsoft.AspNetCore.Blazor.Analyzers.Test/Verifiers/DiagnosticVerifier.cs (Steve Sanderson     2018-05-01 10:08:01 +0100 127)                 {
+92097249f3 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Alexander Köplinger 2024-08-23 19:27:53 +0200 128)                     Assert.Fail(
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 129)                         string.Format(CultureInfo.InvariantCulture, "Expected:\nA project diagnostic with No location\nActual:\n{0}",
+a450cb69b5 src/Components/Analyzers/test/Verifiers/DiagnosticVerifier.cs                   (Pranav K            2021-11-05 17:52:08 -0700 130)                         FormatDiagnostics(analyzer, actual)));
