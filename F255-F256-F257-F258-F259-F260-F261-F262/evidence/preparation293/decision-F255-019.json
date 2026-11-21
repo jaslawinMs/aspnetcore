@@ -1,0 +1,95 @@
+{
+  "findingId": "F255",
+  "ownerTaskId": "c4be5bf1-94ec-4920-96aa-1829191ac1e6",
+  "scope": "293 SOURCE ONLY",
+  "decision": "No material performance candidate established from the bounded source evidence; do not advance as an equality-membership HashSet replacement.",
+  "decisionKind": "Independent source-only disposition for package-prefix discovery",
+  "outerLedgerStatus": "pending; parent alone may accept, retire, qualify provenance, or finalize",
+  "notMeasuredNoGain": true,
+  "runtimeOrPerformanceQualified": false,
+  "notDuplicateOfF256": true,
+  "source": {
+    "gitPath": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "lines": [95, 97],
+    "originalCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "observedDefaultCommit": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "blobInBothRoles": "0a7f80bdb3e1e1b311cebc3567d6790718dfbe4c",
+    "sha256InBothRoles": "4418D8588245F2C6C22B9F4C06FAFD1329370B0160B71EBE135B28C00C5A7130",
+    "bytesInEachRole": 6333,
+    "evidence": "capture-index-r006-initial-whole-bodies.json; full r006 cat-file framing and r004/r005 mode/blob metadata streams"
+  },
+  "producerAndConsumer": [
+    {
+      "source": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj:34-35,62-78,87",
+      "fact": "The concrete Templates.Tests assembly embeds template-baselines.json, compiles the Shared helpers, imports PrepareForTest.targets, and references the MCP, Web.Client.ItemTemplates, Web.ItemTemplates, and Web.ProjectTemplates producer projects."
+    },
+    {
+      "source": "src/ProjectTemplates/README.md:Package-only validation; src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj:3-9,58-76",
+      "fact": "The area README documents four template packages in the configuration's NonShipping directory. The captured web producer explicitly declares PackageId Microsoft.DotNet.Web.ProjectTemplates, IsShippingPackage=false, and generated project content, including the Blazor server/client project outputs. This is a declared producer graph, not observed package output."
+    },
+    {
+      "source": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets:54-60,82-95",
+      "fact": "The build target produces the ArtifactsNonShippingPackagesDir, TestTemplateCreationFolder, and CustomTemplateHivePath assembly metadata. Installer discovery reads that NonShipping directory locally, or '.' when the installer's helix environment flag is set. The actual Helix payload composition was not inspected."
+    },
+    {
+      "source": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs:27-45; src/ProjectTemplates/Shared/AssemblyInfo.AssemblyFixtures.cs:8-9; src/ProjectTemplates/Shared/TemplatePackageInstaller.cs:52-63",
+      "fact": "Both CreateProject overloads await EnsureTemplatingEngineInitializedAsync. Shared assembly attributes install an assembly fixture and disable test parallelization. The static success flag bypasses subsequent installation after a successful initialization in that loaded test assembly. It is not a per-generated-file or per-request lookup."
+    },
+    {
+      "source": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs:73-78; src/ProjectTemplates/Shared/TemplatePackageInstaller.cs:95-120",
+      "fact": "The real baseline theory reaches CreateProject before template generation. Initializer discovery snapshots matching packages before asserting their count and running its verification/install commands."
+    }
+  ],
+  "normalSourceScaleAndFrequency": {
+    "retainedPrefixArrayLength": 21,
+    "acceptedPackageCountRequiredByExistingAssertion": 4,
+    "acceptedPackageCountObservedAtRuntime": null,
+    "wildcardCandidateFileCountObservedAtRuntime": null,
+    "doNotEquateFourRetainedPackagesWithFourWildcardCandidates": true,
+    "frequency": "One installation/discovery on the normal successful serialized initialization path per loaded test assembly. The flag is assigned only after installation succeeds; failures leave it false. No actual retries, repeated suite runs, cross-assembly multiplier, or caller concurrency were observed or invented.",
+    "successfulControlFlow": "Four cannot-find verification calls, four package-install calls when the existing count assertion passes, then three can-find verification calls: eleven source-level RunDotNetNew calls. These are not observed process launches or elapsed-time evidence.",
+    "algorithmicBoundary": "For D wildcard-enumerated files, the predicate can inspect up to 21 ordered prefixes per file and short-circuits on a match. D is not established by the four-result assertion. No measured comparison count, allocation count, or timing is claimed."
+  },
+  "contracts": {
+    "equalityVersusPrefix": "The inner operation is Any with StartsWith(..., StringComparison.OrdinalIgnoreCase), not equality-based Contains. Full package filenames have version/extension suffixes. An equality HashSet of the retained prefixes would not implement this predicate. No invented package filename is needed for that semantic distinction.",
+    "overlap": "The actual retained array includes the unversioned Microsoft.DotNet.Web.ProjectTemplates prefix as well as thirteen more-specific historical Web.ProjectTemplates prefixes. A file matching multiple prefixes still appears once per outer enumeration entry because Any returns one Boolean. See prefix-contract-017.json for the exact ordered values and coverage pairs.",
+    "order": "Any evaluates prefixes in array order. The outer enumeration's matching order is materialized by ToArray and later drives sequential logged installations. No ordering guarantee is inferred for Directory.EnumerateFiles itself. Reordering or deduplicating the package-result collection is not justified by this finding.",
+    "duplicatesAndMutation": "The retained prefix literals are distinct and private. The readonly field does not itself make array elements immutable, but the complete captured owner contains no element mutation or exposure. Overlapping prefixes are not duplicate outer results. No result deduplication is present.",
+    "evaluation": "Directory.EnumerateFiles and Where remain deferred until ToArray. Path.GetFileName(p) is evaluated inside the prefix predicate, possibly more than once for an outer file. Hoisting it is a separate possible local seam, not a validated material optimization or an equality-membership fix.",
+    "exceptionsAndSideEffects": "The existing hive can be deleted before discovery. Enumeration/materialization occurs before the no-match InvalidOperationException, the four-count assertion, and any verification/install command in InstallTemplatePackages. Initialization success is recorded only after all of that completes. These ordering and failure boundaries must not be silently moved.",
+    "lifetime": "The retained prefix array and success flag belong to the loaded helper's static lifetime. Each discovery creates a local result array; the source does not repeatedly rebuild a per-file set or expose a persistent mutable lookup to generated applications."
+  },
+  "history": {
+    "method": "Eight metadata-only --follow entries for this exact path in each role, plus an Original..ObservedDefault path-limited history query; no historical source snippets or patches were consumed.",
+    "latestReturnedChange": "c7bd3dd4616af5efce3b59634c4d946399b4095a, 2026-10-22, Source code updates from dotnet/dotnet (#69836), whose raw new blob is the current captured blob.",
+    "otherReturnedMetadata": "Includes the MCP template transfer (#66260, 2026-04-28) and earlier branding/template changes. Subjects do not establish which individual statement those commits changed.",
+    "roleRangeQueryBytes": 0,
+    "allFifteenSelectedBodyPairsByteEqual": true,
+    "patternIntroductionCommitNotProven": true,
+    "evidence": "r011/r012 full raw history streams; r015 empty full stream; source-role-equivalence-017.json"
+  },
+  "materialityDecision": {
+    "positiveFinding": "There is a genuine linear prefix scan nested in package-file enumeration, including repeated basename extraction in the predicate.",
+    "whyNotAdvance": "The card's usual equality-set substitution is semantically inapplicable. The real source bounds the retained prefix table to 21 and puts the work in successful assembly initialization rather than recurring generated-application execution. It documents/asserts four selected packages, but does not establish a large wildcard-candidate directory or repeated successful reinitialization. No material end-to-end benefit follows from these sources alone.",
+    "notAColdLocationOnlyRejection": "The decision uses the actual predicate, producer graph, success cache, assembly fixture/parallelization declarations, selected-count contract, and distinction between candidates and retained files, not merely the test-directory location.",
+    "notClaimed": [
+      "No assertion that prefix scanning is negligible or slower/faster than an alternative.",
+      "No assertion that eleven tool invocations dominate elapsed time.",
+      "No fabricated packages, directory size, repeated initialization workload, benchmark, or measured no-gain outcome.",
+      "No duplicate-by-card, duplicate-by-snapshot, or alias disposition."
+    ]
+  },
+  "unrunValidation": {
+    "test": "Templates.Test.BaselineTest.Template_Produces_The_Right_Set_Of_FilesAsync (all 75 source-declared MemberData rows)",
+    "installerBoundary": "Its ProjectFactory.CreateProject call reaches the actual initialization producer; no installer integration path was executed.",
+    "reason": "The exact source-only scope prohibits SDK activation, dotnet, restore/build/test, package installation, template creation, and timing.",
+    "documentedPrerequisitesNotProbed": "ProjectTemplates README/AGENTS require the real matching Shipping/NonShipping package graph, delayed Templates.Tests build/imports, and appropriate SDK setup. Availability was not checked and missing prerequisites are not asserted.",
+    "faithfulBoundaryActuallyUsed": "Whole immutable helper/fixture/build-project bodies and the embedded baseline producer, with raw Git provenance and static data-only checks; not generated output or runtime producer reachability."
+  },
+  "gaps": [
+    "The other three referenced template-package project bodies, inherited pack targets, and Helix staging rules were not captured.",
+    "Actual directory candidates, produced nupkg contents, installer execution, package ordering observed at runtime, and test discovery/execution remain unobserved.",
+    "External template-engine and xUnit implementations were not inspected; no full transitive producer closure or runtime qualification is claimed."
+  ],
+  "finiteContinuation": "finite-unread-source-proposal-017.json names exactly four metadata-established, currently unread bodies per role. It is not authorized now; accepting it would require an explicit new cumulative body budget. No recursive source broadening, native execution, performance window, or PR is proposed under this scope."
+}

@@ -1,0 +1,1834 @@
+fbaf8aec0443d5d9ffaee184301d3118e38f9724 blob 3492
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Linq;
+using Microsoft.AspNetCore.App.Analyzers.Infrastructure;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class ISymbolExtensions
+{
+    /// <summary>
+    /// Inspects the symbol's <c>[Display]</c> and <c>[DisplayName]</c> attributes and returns
+    /// (a) the literal display name to bake into the generated metadata, and
+    /// (b) whether <c>[Display]</c> uses <see cref="System.ComponentModel.DataAnnotations.DisplayAttribute.ResourceType"/>
+    /// (in which case the generator must emit a runtime accessor for the attribute instead of a literal).
+    /// </summary>
+    public static (string? LiteralDisplayName, bool HasResourceDisplayAttribute) GetDisplayInfo(
+        this ISymbol symbol,
+        INamedTypeSymbol displayAttributeSymbol,
+        INamedTypeSymbol displayNameAttributeSymbol)
+    {
+        var displayAttr = symbol.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass is { } ac && SymbolEqualityComparer.Default.Equals(ac, displayAttributeSymbol));
+
+        if (displayAttr is not null)
+        {
+            string? name = null;
+            bool hasResourceType = false;
+
+            foreach (var arg in displayAttr.NamedArguments)
+            {
+                if (string.Equals(arg.Key, "Name", StringComparison.Ordinal) && arg.Value.Kind == TypedConstantKind.Primitive)
+                {
+                    name = arg.Value.Value as string;
+                }
+                else if (string.Equals(arg.Key, "ResourceType", StringComparison.Ordinal) && arg.Value.Kind == TypedConstantKind.Type)
+                {
+                    hasResourceType = arg.Value.Value is INamedTypeSymbol;
+                }
+            }
+
+            // ResourceType is only meaningful when Name is also set; DisplayAttribute.GetName()
+            // returns null otherwise.
+            if (hasResourceType && name is not null)
+            {
+                // Defer to DisplayAttribute.GetName() at runtime; do not bake the literal Name.
+                return (LiteralDisplayName: null, HasResourceDisplayAttribute: true);
+            }
+
+            // [Display(Name = "X")] without ResourceType → bake literal.
+            if (name is not null)
+            {
+                return (LiteralDisplayName: name, HasResourceDisplayAttribute: false);
+            }
+        }
+
+        var displayNameAttr = symbol.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass is { } ac && SymbolEqualityComparer.Default.Equals(ac, displayNameAttributeSymbol));
+
+        if (displayNameAttr is not null
+            && !displayNameAttr.ConstructorArguments.IsDefaultOrEmpty
+            && displayNameAttr.ConstructorArguments[0].Value is string dn)
+        {
+            // [DisplayName("X")] → bake literal. (No ResourceType to consider.)
+            return (LiteralDisplayName: dn, HasResourceDisplayAttribute: false);
+        }
+
+        return (LiteralDisplayName: null, HasResourceDisplayAttribute: false);
+    }
+
+    public static bool IsEqualityContract(this IPropertySymbol prop, WellKnownTypes wellKnownTypes) =>
+        prop.Name == "EqualityContract"
+        && SymbolEqualityComparer.Default.Equals(prop.Type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_Type))
+        && prop.DeclaredAccessibility == Accessibility.Protected;
+}
+
+fb3f1f87a57cb5acd490d72e6a97fdc7b1904e16 blob 12043
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
+using Microsoft.AspNetCore.App.Analyzers.Infrastructure;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class ITypeSymbolExtensions
+{
+    public static bool IsGenericEnumerable(this INamedTypeSymbol type, [NotNullWhen(true)] out ITypeSymbol? elementType)
+    {
+        elementType = null;
+
+        if (type.SpecialType == SpecialType.System_String)
+        {
+            return false;
+        }
+
+        // TODO: Remove this check in .NET 12.
+        // It doesn't accurately reflect enumerables.
+        // The given type itself couldn't be generic, but it could be implementing IEnumerable<T>.
+        // For example:
+        // public class StudentList : List<Student> { }
+        // Note that this fix might bring us dictionary support for free.
+        // https://github.com/dotnet/aspnetcore/issues/61953
+        if (type.TypeArguments.Length != 1)
+        {
+            return false;
+        }
+
+        if (type.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+        {
+            elementType = type.TypeArguments[0];
+            return true;
+        }
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (iface.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+            {
+                // TODO: Use iface.TypeArguments[0] instead of type.TypeArguments[0] in .NET 12.
+                // This is the right way to get the element type of the IEnumerable<T>.
+                elementType = type.TypeArguments[0];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool ImplementsValidationAttribute(this ITypeSymbol typeSymbol, INamedTypeSymbol validationAttributeSymbol)
+    {
+        var baseType = typeSymbol.BaseType;
+        while (baseType != null)
+        {
+            if (SymbolEqualityComparer.Default.Equals(baseType, validationAttributeSymbol))
+            {
+                return true;
+            }
+            baseType = baseType.BaseType;
+        }
+
+        return false;
+    }
+
+    public static ITypeSymbol UnwrapType(this ITypeSymbol type)
+    {
+        if (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T &&
+            type is INamedTypeSymbol { TypeArguments.Length: 1 })
+        {
+            // Extract the T from a Nullable<T>
+            type = ((INamedTypeSymbol)type).TypeArguments[0];
+        }
+
+        if (type.NullableAnnotation == NullableAnnotation.Annotated)
+        {
+            // Remove the nullable annotation but keep any generic arguments, e.g. List<int>? → List<int>
+            // so we can retain them in future steps.
+            type = type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+        }
+
+        // Extract the T from an IEnumerable<T> or List<T>
+        if (type is INamedTypeSymbol namedType && namedType.IsGenericEnumerable(out var elementType))
+        {
+            type = elementType;
+        }
+
+        if (type is IArrayTypeSymbol arrayType)
+        {
+            // Extract the T from an array type T[]
+            type = arrayType.ElementType;
+        }
+
+        return type;
+    }
+
+    internal static bool ImplementsInterface(this ITypeSymbol type, ITypeSymbol interfaceType)
+    {
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (SymbolEqualityComparer.Default.Equals(interfaceType, iface))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    internal static ImmutableArray<INamedTypeSymbol>? GetJsonDerivedTypes(this ITypeSymbol type, INamedTypeSymbol jsonDerivedTypeAttribute)
+    {
+        var derivedTypes = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+        foreach (var attribute in type.GetAttributes())
+        {
+            if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, jsonDerivedTypeAttribute))
+            {
+                var derivedType = (INamedTypeSymbol?)attribute.ConstructorArguments[0].Value;
+                if (derivedType is not null && !SymbolEqualityComparer.Default.Equals(derivedType, type))
+                {
+                    derivedTypes.Add(derivedType);
+                }
+            }
+        }
+
+        return derivedTypes.Count == 0 ? null : derivedTypes.ToImmutable();
+    }
+
+    // Types exempted here have special binding rules in RDF and RDG and are not validatable
+    // types themselves so we short-circuit on them.
+    internal static bool IsExemptType(this ITypeSymbol type, WellKnownTypes wellKnownTypes)
+    {
+        return SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpContext))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpRequest))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpResponse))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_Threading_CancellationToken))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormCollection))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormFileCollection))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormFile))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_IO_Stream))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_IO_Pipelines_PipeReader));
+    }
+
+    internal static IPropertySymbol? FindPropertyIncludingBaseTypes(this INamedTypeSymbol typeSymbol, string propertyName)
+    {
+        var property = typeSymbol.GetMembers()
+            .OfType<IPropertySymbol>()
+            .FirstOrDefault(p => string.Equals(p.Name, propertyName, System.StringComparison.OrdinalIgnoreCase));
+
+        if (property != null)
+        {
+            return property;
+        }
+
+        // If not found, recursively search base types
+        if (typeSymbol.BaseType is INamedTypeSymbol baseType)
+        {
+            return FindPropertyIncludingBaseTypes(baseType, propertyName);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if the parameter is marked with [FromService] or [FromKeyedService] attributes.
+    /// </summary>
+    /// <param name="parameter">The parameter to check.</param>
+    /// <param name="fromServiceMetadataSymbol">The symbol representing the [FromService] attribute.</param>
+    /// <param name="fromKeyedServiceAttributeSymbol">The symbol representing the [FromKeyedService] attribute.</param>
+    internal static bool IsServiceParameter(this IParameterSymbol parameter, INamedTypeSymbol fromServiceMetadataSymbol, INamedTypeSymbol fromKeyedServiceAttributeSymbol)
+    {
+        return parameter.GetAttributes().Any(attr =>
+            attr.AttributeClass is not null &&
+            (attr.AttributeClass.ImplementsInterface(fromServiceMetadataSymbol) ||
+             attr.AttributeClass.InheritsFrom(fromKeyedServiceAttributeSymbol)));
+    }
+
+    /// <summary>
+    /// Checks if the property is marked with [FromServices] or [FromKeyedServices] attributes.
+    /// </summary>
+    /// <param name="property">The property to check.</param>
+    /// <param name="fromServiceMetadataSymbol">The symbol representing the [FromServices] attribute.</param>
+    /// <param name="fromKeyedServiceAttributeSymbol">The symbol representing the [FromKeyedServices] attribute.</param>
+    internal static bool IsServiceProperty(this IPropertySymbol property, INamedTypeSymbol fromServiceMetadataSymbol, INamedTypeSymbol fromKeyedServiceAttributeSymbol)
+    {
+        return property.GetAttributes().Any(attr =>
+            attr.AttributeClass is not null &&
+            (attr.AttributeClass.ImplementsInterface(fromServiceMetadataSymbol) ||
+             SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromKeyedServiceAttributeSymbol)));
+    }
+
+    /// <summary>
+    /// Checks if the property is marked with [JsonIgnore] attribute with a condition that affects deserialization.
+    /// Only skips validation when the condition is Always or WhenReading, as these affect the reading/deserialization process.
+    /// Properties with conditions that only affect writing (WhenWritingDefault, WhenWritingNull, WhenWriting) or Never are still validated.
+    /// </summary>
+    /// <param name="property">The property to check.</param>
+    /// <param name="jsonIgnoreAttributeSymbol">The symbol representing the [JsonIgnore] attribute.</param>
+    internal static bool IsJsonIgnoredProperty(this IPropertySymbol property, INamedTypeSymbol jsonIgnoreAttributeSymbol)
+    {
+        // JsonIgnoreCondition enum values from System.Text.Json.Serialization
+        const int JsonIgnoreCondition_Always = 1;      // Property is always ignored
+        const int JsonIgnoreCondition_WhenReading = 5; // Property is ignored during deserialization
+
+        foreach (var attr in property.GetAttributes())
+        {
+            if (attr.AttributeClass is not null &&
+                SymbolEqualityComparer.Default.Equals(attr.AttributeClass, jsonIgnoreAttributeSymbol))
+            {
+                // Check if the Condition property is set
+                if (!attr.NamedArguments.IsDefaultOrEmpty)
+                {
+                    foreach (var namedArgument in attr.NamedArguments)
+                    {
+                        if (string.Equals(namedArgument.Key, "Condition", System.StringComparison.Ordinal))
+                        {
+                            // The value is an enum represented as an int
+                            if (namedArgument.Value.Value is int conditionValue)
+                            {
+                                // Only skip validation for Always or WhenReading (conditions that affect reading/deserialization)
+                                return conditionValue == JsonIgnoreCondition_Always || conditionValue == JsonIgnoreCondition_WhenReading;
+                            }
+                        }
+                    }
+                }
+
+                // If no Condition is specified, the default behavior is Always (skip validation)
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal static bool IsSkippedValidationProperty(this IPropertySymbol property, INamedTypeSymbol skipValidationAttributeSymbol)
+    {
+        return property.HasAttribute(skipValidationAttributeSymbol) || property.Type.HasAttribute(skipValidationAttributeSymbol);
+    }
+
+    internal static bool IsSkippedValidationParameter(this IParameterSymbol parameter, INamedTypeSymbol skipValidationAttributeSymbol)
+    {
+        return parameter.HasAttribute(skipValidationAttributeSymbol) || parameter.Type.HasAttribute(skipValidationAttributeSymbol);
+    }
+
+    internal static bool IsInaccessibleFromGeneratedCode(this ITypeSymbol type)
+    {
+        for (ITypeSymbol? current = type; current is not null; current = current.ContainingType)
+        {
+            if (current is INamedTypeSymbol { IsFileLocal: true } ||
+                current.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+45e30b2efcd1f61fe7d77c37e36ae462ce6b27cf blob 4260
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class IncrementalValuesProviderExtensions
+{
+    public static IncrementalValuesProvider<TSource> Distinct<TSource>(this IncrementalValuesProvider<TSource> source, IEqualityComparer<TSource> comparer)
+    {
+        return source
+            .Collect()
+            .WithComparer(ImmutableArrayEqualityComparer<TSource>.Instance)
+            .SelectMany((values, cancellationToken) =>
+            {
+                if (values.IsEmpty)
+                {
+                    return values;
+                }
+
+                var results = ImmutableArray.CreateBuilder<TSource>(values.Length);
+                HashSet<TSource> set = new(comparer);
+
+                foreach (var value in values)
+                {
+                    if (set.Add(value))
+                    {
+                        results.Add(value);
+                    }
+                }
+
+                return results.DrainToImmutable();
+            });
+    }
+
+    public static IncrementalValuesProvider<T> Concat<T>(
+        this IncrementalValuesProvider<ImmutableArray<T>> first,
+        IncrementalValuesProvider<ImmutableArray<T>> second)
+    {
+        return first.Collect()
+            .Combine(second.Collect())
+            .SelectMany((tuple, _) =>
+            {
+                if (tuple.Left.IsEmpty && tuple.Right.IsEmpty)
+                {
+                    return [];
+                }
+
+                var results = ImmutableArray.CreateBuilder<T>(tuple.Left.Length + tuple.Right.Length);
+                for (var i = 0; i < tuple.Left.Length; i++)
+                {
+                    results.AddRange(tuple.Left[i]);
+                }
+                for (var i = 0; i < tuple.Right.Length; i++)
+                {
+                    results.AddRange(tuple.Right[i]);
+                }
+                return results.DrainToImmutable();
+            });
+    }
+
+    public static IncrementalValuesProvider<T> Concat<T>(
+        this IncrementalValuesProvider<ImmutableArray<T>> first,
+        IncrementalValuesProvider<T> second)
+    {
+        return first.Collect()
+            .Combine(second.Collect())
+            .SelectMany((tuple, _) =>
+            {
+                if (tuple.Left.IsEmpty)
+                {
+                    return tuple.Right;
+                }
+
+                var results = ImmutableArray.CreateBuilder<T>(tuple.Left.Length + tuple.Right.Length);
+                for (var i = 0; i < tuple.Left.Length; i++)
+                {
+                    results.AddRange(tuple.Left[i]);
+                }
+                for (var i = 0; i < tuple.Right.Length; i++)
+                {
+                    results.AddRange(tuple.Right[i]);
+                }
+                return results.DrainToImmutable();
+            });
+    }
+
+    private sealed class ImmutableArrayEqualityComparer<T> : IEqualityComparer<ImmutableArray<T>>
+    {
+        public static readonly ImmutableArrayEqualityComparer<T> Instance = new();
+
+        public bool Equals(ImmutableArray<T> x, ImmutableArray<T> y)
+        {
+            if (x.IsDefault)
+            {
+                return y.IsDefault;
+            }
+            else if (y.IsDefault)
+            {
+                return false;
+            }
+
+            if (x.Length != y.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < x.Length; i++)
+            {
+                if (!EqualityComparer<T>.Default.Equals(x[i], y[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public int GetHashCode(ImmutableArray<T> obj)
+        {
+            if (obj.IsDefault)
+            {
+                return 0;
+            }
+            var hashCode = -450793227;
+            foreach (var item in obj)
+            {
+                hashCode = (hashCode * -1521134295) + EqualityComparer<T>.Default.GetHashCode(item);
+            }
+
+            return hashCode;
+        }
+    }
+}
+
+81ed66ad2e23a89c3d31c7cb33916cc0eab42d99 blob 22786
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+using System.Text;
+using Microsoft.CodeAnalysis.CSharp;
+using System.IO;
+
+namespace Microsoft.Extensions.Validation;
+
+public sealed partial class ValidationsGenerator : IIncrementalGenerator
+{
+    public static string GeneratedCodeConstructor => $@"global::System.CodeDom.Compiler.GeneratedCodeAttribute(""{typeof(ValidationsGenerator).Assembly.FullName}"", ""{typeof(ValidationsGenerator).Assembly.GetName().Version}"")";
+    public static string GeneratedCodeAttribute => $"[{GeneratedCodeConstructor}]";
+
+    internal static void Emit(SourceProductionContext context, (ImmutableArray<InterceptableLocation?> AddValidationLocations, ImmutableArray<ValidatableType> ValidatableTypes) emitInputs)
+    {
+        var locations = emitInputs.AddValidationLocations.OfType<InterceptableLocation>().ToImmutableArray();
+        if (locations.IsEmpty)
+        {
+            // Avoid generating code if no AddValidation call was found.
+            return;
+        }
+        var source = Emit(locations, emitInputs.ValidatableTypes);
+        context.AddSource("ValidatableInfoResolver.g.cs", SourceText.From(source, Encoding.UTF8));
+    }
+
+    private static string Emit(ImmutableArray<InterceptableLocation> addValidationLocations, ImmutableArray<ValidatableType> validatableTypes) => $$"""
+#nullable enable annotations
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+#nullable enable
+#pragma warning disable CS8767
+
+namespace System.Runtime.CompilerServices
+{
+    {{GeneratedCodeAttribute}}
+    [global::System.AttributeUsage(global::System.AttributeTargets.Method, AllowMultiple = true)]
+    file sealed class InterceptsLocationAttribute : global::System.Attribute
+    {
+        public InterceptsLocationAttribute(int version, string data)
+        {
+        }
+    }
+}
+
+namespace Microsoft.Extensions.Validation.Generated
+{
+    {{GeneratedCodeAttribute}}
+    file sealed class GeneratedValidatablePropertyInfo : global::Microsoft.Extensions.Validation.Generated.ValidatablePropertyInfo
+    {
+        public GeneratedValidatablePropertyInfo(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            global::System.Type propertyType,
+            string name,
+            global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo? displayNameInfo = null,
+            bool isUnionValue = false,
+            global::System.Func<object, bool>? skipValidation = null) : base(containingType, propertyType, name, displayNameInfo, isUnionValue, skipValidation)
+        {
+            ContainingType = containingType;
+        }
+
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+        internal global::System.Type ContainingType { get; }
+
+        protected override global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetValidationAttributes()
+            => ValidationAttributeCache.GetPropertyValidationAttributes(ContainingType, Name);
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class GeneratedValidatableTypeInfo : global::Microsoft.Extensions.Validation.Generated.ValidatableTypeInfo
+    {
+        public GeneratedValidatableTypeInfo(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type,
+            ValidatablePropertyInfo[] members,
+            global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo? displayNameInfo = null) : base(type, members, displayNameInfo)
+        {
+        }
+
+        protected override global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetValidationAttributes()
+            => ValidationAttributeCache.GetTypeValidationAttributes(Type);
+    }
+
+    {{GeneratedCodeAttribute}}
+    file class GeneratedValidatableInfoResolver : global::Microsoft.Extensions.Validation.IValidatableInfoResolver
+    {
+        public bool TryGetValidatableTypeInfo(global::System.Type type, out global::Microsoft.Extensions.Validation.IValidatableTypeInfo? validatableTypeInfo)
+        {
+            validatableTypeInfo = null;
+{{EmitTypeChecks(validatableTypes)}}
+            return false;
+        }
+
+        // No-ops, rely on runtime code for ParameterInfo-based resolution
+        public bool TryGetValidatableParameterInfo(global::System.Reflection.ParameterInfo parameterInfo, out global::Microsoft.Extensions.Validation.IValidatableParameterInfo? validatableParameterInfo)
+        {
+            validatableParameterInfo = null;
+            return false;
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class GeneratedServiceCollectionExtensions
+    {
+        {{EmitAddValidationInterceptorAttributes(addValidationLocations)}}
+        public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection AddValidation(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, global::System.Action<global::Microsoft.Extensions.Validation.ValidationOptions>? configureOptions = null)
+        {
+            // Use non-extension method to avoid infinite recursion.
+            return global::Microsoft.Extensions.DependencyInjection.ValidationServiceCollectionExtensions.AddValidation(services, options =>
+            {
+                options.Resolvers.Insert(0, new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatableInfoResolver());
+                if (configureOptions is not null)
+                {
+                    configureOptions(options);
+                }
+                // Support ParameterInfo resolution at runtime. Appended last so it runs after any
+                // user-registered resolvers, matching the previous ordering in AddValidation.
+                options.Resolvers.Add(new global::Microsoft.Extensions.Validation.Generated.RuntimeValidatableParameterInfoResolver());
+            });
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class ValidationAttributeCache
+    {
+        private sealed record CacheKey(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [property: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type ContainingType,
+            string PropertyName);
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<CacheKey, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]> _propertyCache = new();
+        private static readonly global::System.Lazy<global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]>> _lazyTypeCache = new (() => new ());
+        private static global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]> TypeCache => _lazyTypeCache.Value;
+
+        public static global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetPropertyValidationAttributes(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            var key = new CacheKey(containingType, propertyName);
+            return _propertyCache.GetOrAdd(key, static k =>
+            {
+                var results = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationAttribute>();
+
+                // Get attributes from the property
+                var property = k.ContainingType.GetProperty(
+                    k.PropertyName,
+                    global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.DeclaredOnly);
+                if (property != null)
+                {
+                    var propertyAttributes = global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(property, inherit: true);
+
+                    results.AddRange(propertyAttributes);
+                }
+
+                // Check constructors for parameters that match the property name
+                // to handle record scenarios
+                foreach (var constructor in k.ContainingType.GetConstructors())
+                {
+                    // Look for parameter with matching name (case insensitive)
+                    var parameter = global::System.Linq.Enumerable.FirstOrDefault(
+                        constructor.GetParameters(),
+                        p => string.Equals(p.Name, k.PropertyName, global::System.StringComparison.OrdinalIgnoreCase));
+
+                    if (parameter != null)
+                    {
+                        var paramAttributes = global::System.Reflection.CustomAttributeExtensions
+                            .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(parameter, inherit: true);
+
+                        results.AddRange(paramAttributes);
+
+                        break;
+                    }
+                }
+
+                return results.ToArray();
+            });
+        }
+
+
+        public static global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetTypeValidationAttributes(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type
+        )
+        {
+            return TypeCache.GetOrAdd(type, static t =>
+            {
+                var typeAttributes = global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(t, inherit: true);
+                return global::System.Linq.Enumerable.ToArray(typeAttributes);
+            });
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class LiteralDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        private readonly string _literal;
+
+        public LiteralDisplayName(string literal)
+        {
+            _literal = literal;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+        {
+            var factory = context.ServiceProvider?.GetService(typeof(global::Microsoft.Extensions.Localization.IStringLocalizerFactory)) as global::Microsoft.Extensions.Localization.IStringLocalizerFactory;
+            if (factory is null)
+            {
+                return _literal;
+            }
+            var localizer = LocalizationHelpers.CreateStringLocalizer(context, type, factory);
+            var localizedName = localizer[_literal];
+
+            return localizedName.ResourceNotFound ? _literal : localizedName.Value;
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class PropertyResourceDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+        private readonly global::System.Type _containingType;
+        private readonly string _propertyName;
+
+        public PropertyResourceDisplayName(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            _containingType = containingType;
+            _propertyName = propertyName;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+            => DisplayAttributeCache.GetPropertyDisplayAttribute(_containingType, _propertyName)?.GetName();
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class TypeResourceDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+        private readonly global::System.Type _type;
+
+        public TypeResourceDisplayName(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type)
+        {
+            _type = type;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+            => DisplayAttributeCache.GetTypeDisplayAttribute(_type)?.GetName();
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class DisplayAttributeCache
+    {
+        private sealed record CacheKey(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [property: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type ContainingType,
+            string PropertyName);
+
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<CacheKey, global::System.ComponentModel.DataAnnotations.DisplayAttribute?> _propertyCache = new();
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.DisplayAttribute?> _typeCache = new();
+
+        public static global::System.ComponentModel.DataAnnotations.DisplayAttribute? GetPropertyDisplayAttribute(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            var key = new CacheKey(containingType, propertyName);
+            return _propertyCache.GetOrAdd(key, static k =>
+            {
+                // Check primary-constructor parameters first to handle record scenarios where
+                // [Display(ResourceType = ..., Name = ...)] is on the parameter rather than the property.
+                foreach (var constructor in k.ContainingType.GetConstructors())
+                {
+                    var parameter = global::System.Linq.Enumerable.FirstOrDefault(
+                        constructor.GetParameters(),
+                        p => string.Equals(p.Name, k.PropertyName, global::System.StringComparison.Ordinal));
+
+                    if (parameter != null)
+                    {
+                        var paramDisplayAttr = global::System.Reflection.CustomAttributeExtensions
+                            .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(parameter);
+                        if (paramDisplayAttr is not null)
+                        {
+                            return paramDisplayAttr;
+                        }
+
+                        break;
+                    }
+                }
+
+                var property = k.ContainingType.GetProperty(
+                    k.PropertyName,
+                    global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.DeclaredOnly);
+                return property is null
+                    ? null
+                    : global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(property, inherit: true);
+            });
+        }
+
+        public static global::System.ComponentModel.DataAnnotations.DisplayAttribute? GetTypeDisplayAttribute(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type)
+        {
+            return _typeCache.GetOrAdd(type, static t =>
+                global::System.Reflection.CustomAttributeExtensions
+                    .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(t, inherit: true));
+        }
+    }
+
+{{EmitInfoClasses()}}
+}
+""";
+
+    private static string EmitAddValidationInterceptorAttributes(ImmutableArray<InterceptableLocation> addValidations)
+    {
+        // We filtered early for empty locations, so we are sure we have at least one.
+        var firstAttribute = addValidations[0].GetInterceptsLocationAttributeSyntax();
+        if (addValidations.Length == 1)
+        {
+            // Common case
+            return firstAttribute;
+        }
+
+        // This is the less common case.
+        var sb = new StringBuilder(firstAttribute);
+        for (var i = 1; i < addValidations.Length; i++)
+        {
+            sb.AppendLine().Append("        ").Append(addValidations[i].GetInterceptsLocationAttributeSyntax());
+        }
+
+        return sb.ToString();
+    }
+
+    private static string EmitTypeChecks(ImmutableArray<ValidatableType> validatableTypes)
+    {
+        var sw = new StringWriter();
+        var cw = new CodeWriter(sw, baseIndent: 3);
+        foreach (var validatableType in validatableTypes)
+        {
+            var typeName = validatableType.TypeFQN;
+            cw.WriteLine($"if (type == typeof({typeName}))");
+            cw.StartBlock();
+            cw.WriteLine($"validatableTypeInfo = new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatableTypeInfo(");
+            cw.Indent++;
+            cw.WriteLine($"type: typeof({typeName}),");
+            if (validatableType.Members.IsDefaultOrEmpty)
+            {
+                cw.WriteLine("members: [],");
+            }
+            else
+            {
+                cw.WriteLine("members: [");
+                cw.Indent++;
+                foreach (var member in validatableType.Members)
+                {
+                    EmitValidatableMemberForCreate(member, cw);
+                }
+                cw.Indent--;
+                cw.WriteLine("],");
+            }
+            cw.WriteLine($"displayNameInfo: {FormatTypeDisplayNameInfo(validatableType)}");
+            cw.Indent--;
+            cw.WriteLine(");");
+            cw.WriteLine("return true;");
+            cw.EndBlock();
+        }
+        return sw.ToString();
+    }
+
+    private static void EmitValidatableMemberForCreate(ValidatableProperty member, CodeWriter cw)
+    {
+        cw.WriteLine("new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatablePropertyInfo(");
+        cw.Indent++;
+        cw.WriteLine($"containingType: typeof({member.ContainingTypeFQN}),");
+        cw.WriteLine($"propertyType: typeof({member.TypeFQN}),");
+        cw.WriteLine($"name: \"{member.Name}\",");
+        if (member.IsUnionValue)
+        {
+            cw.WriteLine("isUnionValue: true,");
+        }
+        if (!member.SkippedUnionCaseTypes.IsDefaultOrEmpty)
+        {
+            cw.WriteLine($"skipValidation: static value => value is {string.Join(" or ", member.SkippedUnionCaseTypes)},");
+        }
+        cw.WriteLine($"displayNameInfo: {FormatPropertyDisplayNameInfo(member)}");
+        cw.Indent--;
+        cw.WriteLine("),");
+    }
+
+    private static string FormatPropertyDisplayNameInfo(ValidatableProperty member)
+    {
+        if (member.HasResourceDisplayAttribute)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.PropertyResourceDisplayName(typeof({member.ContainingTypeFQN}), \"{member.Name}\")";
+        }
+        if (member.DisplayName is not null)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.LiteralDisplayName({SymbolDisplay.FormatLiteral(member.DisplayName, quote: true)})";
+        }
+        return "null";
+    }
+
+    private static string FormatTypeDisplayNameInfo(ValidatableType validatableType)
+    {
+        if (validatableType.HasResourceDisplayAttribute)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.TypeResourceDisplayName(typeof({validatableType.TypeFQN}))";
+        }
+        if (validatableType.DisplayName is not null)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.LiteralDisplayName({SymbolDisplay.FormatLiteral(validatableType.DisplayName, quote: true)})";
+        }
+        return "null";
+    }
+}
+
+fbaf8aec0443d5d9ffaee184301d3118e38f9724 blob 3492
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Linq;
+using Microsoft.AspNetCore.App.Analyzers.Infrastructure;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class ISymbolExtensions
+{
+    /// <summary>
+    /// Inspects the symbol's <c>[Display]</c> and <c>[DisplayName]</c> attributes and returns
+    /// (a) the literal display name to bake into the generated metadata, and
+    /// (b) whether <c>[Display]</c> uses <see cref="System.ComponentModel.DataAnnotations.DisplayAttribute.ResourceType"/>
+    /// (in which case the generator must emit a runtime accessor for the attribute instead of a literal).
+    /// </summary>
+    public static (string? LiteralDisplayName, bool HasResourceDisplayAttribute) GetDisplayInfo(
+        this ISymbol symbol,
+        INamedTypeSymbol displayAttributeSymbol,
+        INamedTypeSymbol displayNameAttributeSymbol)
+    {
+        var displayAttr = symbol.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass is { } ac && SymbolEqualityComparer.Default.Equals(ac, displayAttributeSymbol));
+
+        if (displayAttr is not null)
+        {
+            string? name = null;
+            bool hasResourceType = false;
+
+            foreach (var arg in displayAttr.NamedArguments)
+            {
+                if (string.Equals(arg.Key, "Name", StringComparison.Ordinal) && arg.Value.Kind == TypedConstantKind.Primitive)
+                {
+                    name = arg.Value.Value as string;
+                }
+                else if (string.Equals(arg.Key, "ResourceType", StringComparison.Ordinal) && arg.Value.Kind == TypedConstantKind.Type)
+                {
+                    hasResourceType = arg.Value.Value is INamedTypeSymbol;
+                }
+            }
+
+            // ResourceType is only meaningful when Name is also set; DisplayAttribute.GetName()
+            // returns null otherwise.
+            if (hasResourceType && name is not null)
+            {
+                // Defer to DisplayAttribute.GetName() at runtime; do not bake the literal Name.
+                return (LiteralDisplayName: null, HasResourceDisplayAttribute: true);
+            }
+
+            // [Display(Name = "X")] without ResourceType → bake literal.
+            if (name is not null)
+            {
+                return (LiteralDisplayName: name, HasResourceDisplayAttribute: false);
+            }
+        }
+
+        var displayNameAttr = symbol.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass is { } ac && SymbolEqualityComparer.Default.Equals(ac, displayNameAttributeSymbol));
+
+        if (displayNameAttr is not null
+            && !displayNameAttr.ConstructorArguments.IsDefaultOrEmpty
+            && displayNameAttr.ConstructorArguments[0].Value is string dn)
+        {
+            // [DisplayName("X")] → bake literal. (No ResourceType to consider.)
+            return (LiteralDisplayName: dn, HasResourceDisplayAttribute: false);
+        }
+
+        return (LiteralDisplayName: null, HasResourceDisplayAttribute: false);
+    }
+
+    public static bool IsEqualityContract(this IPropertySymbol prop, WellKnownTypes wellKnownTypes) =>
+        prop.Name == "EqualityContract"
+        && SymbolEqualityComparer.Default.Equals(prop.Type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_Type))
+        && prop.DeclaredAccessibility == Accessibility.Protected;
+}
+
+fb3f1f87a57cb5acd490d72e6a97fdc7b1904e16 blob 12043
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
+using Microsoft.AspNetCore.App.Analyzers.Infrastructure;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class ITypeSymbolExtensions
+{
+    public static bool IsGenericEnumerable(this INamedTypeSymbol type, [NotNullWhen(true)] out ITypeSymbol? elementType)
+    {
+        elementType = null;
+
+        if (type.SpecialType == SpecialType.System_String)
+        {
+            return false;
+        }
+
+        // TODO: Remove this check in .NET 12.
+        // It doesn't accurately reflect enumerables.
+        // The given type itself couldn't be generic, but it could be implementing IEnumerable<T>.
+        // For example:
+        // public class StudentList : List<Student> { }
+        // Note that this fix might bring us dictionary support for free.
+        // https://github.com/dotnet/aspnetcore/issues/61953
+        if (type.TypeArguments.Length != 1)
+        {
+            return false;
+        }
+
+        if (type.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+        {
+            elementType = type.TypeArguments[0];
+            return true;
+        }
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (iface.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+            {
+                // TODO: Use iface.TypeArguments[0] instead of type.TypeArguments[0] in .NET 12.
+                // This is the right way to get the element type of the IEnumerable<T>.
+                elementType = type.TypeArguments[0];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool ImplementsValidationAttribute(this ITypeSymbol typeSymbol, INamedTypeSymbol validationAttributeSymbol)
+    {
+        var baseType = typeSymbol.BaseType;
+        while (baseType != null)
+        {
+            if (SymbolEqualityComparer.Default.Equals(baseType, validationAttributeSymbol))
+            {
+                return true;
+            }
+            baseType = baseType.BaseType;
+        }
+
+        return false;
+    }
+
+    public static ITypeSymbol UnwrapType(this ITypeSymbol type)
+    {
+        if (type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T &&
+            type is INamedTypeSymbol { TypeArguments.Length: 1 })
+        {
+            // Extract the T from a Nullable<T>
+            type = ((INamedTypeSymbol)type).TypeArguments[0];
+        }
+
+        if (type.NullableAnnotation == NullableAnnotation.Annotated)
+        {
+            // Remove the nullable annotation but keep any generic arguments, e.g. List<int>? → List<int>
+            // so we can retain them in future steps.
+            type = type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+        }
+
+        // Extract the T from an IEnumerable<T> or List<T>
+        if (type is INamedTypeSymbol namedType && namedType.IsGenericEnumerable(out var elementType))
+        {
+            type = elementType;
+        }
+
+        if (type is IArrayTypeSymbol arrayType)
+        {
+            // Extract the T from an array type T[]
+            type = arrayType.ElementType;
+        }
+
+        return type;
+    }
+
+    internal static bool ImplementsInterface(this ITypeSymbol type, ITypeSymbol interfaceType)
+    {
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (SymbolEqualityComparer.Default.Equals(interfaceType, iface))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    internal static ImmutableArray<INamedTypeSymbol>? GetJsonDerivedTypes(this ITypeSymbol type, INamedTypeSymbol jsonDerivedTypeAttribute)
+    {
+        var derivedTypes = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+        foreach (var attribute in type.GetAttributes())
+        {
+            if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, jsonDerivedTypeAttribute))
+            {
+                var derivedType = (INamedTypeSymbol?)attribute.ConstructorArguments[0].Value;
+                if (derivedType is not null && !SymbolEqualityComparer.Default.Equals(derivedType, type))
+                {
+                    derivedTypes.Add(derivedType);
+                }
+            }
+        }
+
+        return derivedTypes.Count == 0 ? null : derivedTypes.ToImmutable();
+    }
+
+    // Types exempted here have special binding rules in RDF and RDG and are not validatable
+    // types themselves so we short-circuit on them.
+    internal static bool IsExemptType(this ITypeSymbol type, WellKnownTypes wellKnownTypes)
+    {
+        return SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpContext))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpRequest))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_HttpResponse))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_Threading_CancellationToken))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormCollection))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormFileCollection))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.GetOptional(WellKnownTypeData.WellKnownType.Microsoft_AspNetCore_Http_IFormFile))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_IO_Stream))
+               || SymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Get(WellKnownTypeData.WellKnownType.System_IO_Pipelines_PipeReader));
+    }
+
+    internal static IPropertySymbol? FindPropertyIncludingBaseTypes(this INamedTypeSymbol typeSymbol, string propertyName)
+    {
+        var property = typeSymbol.GetMembers()
+            .OfType<IPropertySymbol>()
+            .FirstOrDefault(p => string.Equals(p.Name, propertyName, System.StringComparison.OrdinalIgnoreCase));
+
+        if (property != null)
+        {
+            return property;
+        }
+
+        // If not found, recursively search base types
+        if (typeSymbol.BaseType is INamedTypeSymbol baseType)
+        {
+            return FindPropertyIncludingBaseTypes(baseType, propertyName);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if the parameter is marked with [FromService] or [FromKeyedService] attributes.
+    /// </summary>
+    /// <param name="parameter">The parameter to check.</param>
+    /// <param name="fromServiceMetadataSymbol">The symbol representing the [FromService] attribute.</param>
+    /// <param name="fromKeyedServiceAttributeSymbol">The symbol representing the [FromKeyedService] attribute.</param>
+    internal static bool IsServiceParameter(this IParameterSymbol parameter, INamedTypeSymbol fromServiceMetadataSymbol, INamedTypeSymbol fromKeyedServiceAttributeSymbol)
+    {
+        return parameter.GetAttributes().Any(attr =>
+            attr.AttributeClass is not null &&
+            (attr.AttributeClass.ImplementsInterface(fromServiceMetadataSymbol) ||
+             attr.AttributeClass.InheritsFrom(fromKeyedServiceAttributeSymbol)));
+    }
+
+    /// <summary>
+    /// Checks if the property is marked with [FromServices] or [FromKeyedServices] attributes.
+    /// </summary>
+    /// <param name="property">The property to check.</param>
+    /// <param name="fromServiceMetadataSymbol">The symbol representing the [FromServices] attribute.</param>
+    /// <param name="fromKeyedServiceAttributeSymbol">The symbol representing the [FromKeyedServices] attribute.</param>
+    internal static bool IsServiceProperty(this IPropertySymbol property, INamedTypeSymbol fromServiceMetadataSymbol, INamedTypeSymbol fromKeyedServiceAttributeSymbol)
+    {
+        return property.GetAttributes().Any(attr =>
+            attr.AttributeClass is not null &&
+            (attr.AttributeClass.ImplementsInterface(fromServiceMetadataSymbol) ||
+             SymbolEqualityComparer.Default.Equals(attr.AttributeClass, fromKeyedServiceAttributeSymbol)));
+    }
+
+    /// <summary>
+    /// Checks if the property is marked with [JsonIgnore] attribute with a condition that affects deserialization.
+    /// Only skips validation when the condition is Always or WhenReading, as these affect the reading/deserialization process.
+    /// Properties with conditions that only affect writing (WhenWritingDefault, WhenWritingNull, WhenWriting) or Never are still validated.
+    /// </summary>
+    /// <param name="property">The property to check.</param>
+    /// <param name="jsonIgnoreAttributeSymbol">The symbol representing the [JsonIgnore] attribute.</param>
+    internal static bool IsJsonIgnoredProperty(this IPropertySymbol property, INamedTypeSymbol jsonIgnoreAttributeSymbol)
+    {
+        // JsonIgnoreCondition enum values from System.Text.Json.Serialization
+        const int JsonIgnoreCondition_Always = 1;      // Property is always ignored
+        const int JsonIgnoreCondition_WhenReading = 5; // Property is ignored during deserialization
+
+        foreach (var attr in property.GetAttributes())
+        {
+            if (attr.AttributeClass is not null &&
+                SymbolEqualityComparer.Default.Equals(attr.AttributeClass, jsonIgnoreAttributeSymbol))
+            {
+                // Check if the Condition property is set
+                if (!attr.NamedArguments.IsDefaultOrEmpty)
+                {
+                    foreach (var namedArgument in attr.NamedArguments)
+                    {
+                        if (string.Equals(namedArgument.Key, "Condition", System.StringComparison.Ordinal))
+                        {
+                            // The value is an enum represented as an int
+                            if (namedArgument.Value.Value is int conditionValue)
+                            {
+                                // Only skip validation for Always or WhenReading (conditions that affect reading/deserialization)
+                                return conditionValue == JsonIgnoreCondition_Always || conditionValue == JsonIgnoreCondition_WhenReading;
+                            }
+                        }
+                    }
+                }
+
+                // If no Condition is specified, the default behavior is Always (skip validation)
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal static bool IsSkippedValidationProperty(this IPropertySymbol property, INamedTypeSymbol skipValidationAttributeSymbol)
+    {
+        return property.HasAttribute(skipValidationAttributeSymbol) || property.Type.HasAttribute(skipValidationAttributeSymbol);
+    }
+
+    internal static bool IsSkippedValidationParameter(this IParameterSymbol parameter, INamedTypeSymbol skipValidationAttributeSymbol)
+    {
+        return parameter.HasAttribute(skipValidationAttributeSymbol) || parameter.Type.HasAttribute(skipValidationAttributeSymbol);
+    }
+
+    internal static bool IsInaccessibleFromGeneratedCode(this ITypeSymbol type)
+    {
+        for (ITypeSymbol? current = type; current is not null; current = current.ContainingType)
+        {
+            if (current is INamedTypeSymbol { IsFileLocal: true } ||
+                current.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+45e30b2efcd1f61fe7d77c37e36ae462ce6b27cf blob 4260
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+
+namespace Microsoft.Extensions.Validation;
+
+internal static class IncrementalValuesProviderExtensions
+{
+    public static IncrementalValuesProvider<TSource> Distinct<TSource>(this IncrementalValuesProvider<TSource> source, IEqualityComparer<TSource> comparer)
+    {
+        return source
+            .Collect()
+            .WithComparer(ImmutableArrayEqualityComparer<TSource>.Instance)
+            .SelectMany((values, cancellationToken) =>
+            {
+                if (values.IsEmpty)
+                {
+                    return values;
+                }
+
+                var results = ImmutableArray.CreateBuilder<TSource>(values.Length);
+                HashSet<TSource> set = new(comparer);
+
+                foreach (var value in values)
+                {
+                    if (set.Add(value))
+                    {
+                        results.Add(value);
+                    }
+                }
+
+                return results.DrainToImmutable();
+            });
+    }
+
+    public static IncrementalValuesProvider<T> Concat<T>(
+        this IncrementalValuesProvider<ImmutableArray<T>> first,
+        IncrementalValuesProvider<ImmutableArray<T>> second)
+    {
+        return first.Collect()
+            .Combine(second.Collect())
+            .SelectMany((tuple, _) =>
+            {
+                if (tuple.Left.IsEmpty && tuple.Right.IsEmpty)
+                {
+                    return [];
+                }
+
+                var results = ImmutableArray.CreateBuilder<T>(tuple.Left.Length + tuple.Right.Length);
+                for (var i = 0; i < tuple.Left.Length; i++)
+                {
+                    results.AddRange(tuple.Left[i]);
+                }
+                for (var i = 0; i < tuple.Right.Length; i++)
+                {
+                    results.AddRange(tuple.Right[i]);
+                }
+                return results.DrainToImmutable();
+            });
+    }
+
+    public static IncrementalValuesProvider<T> Concat<T>(
+        this IncrementalValuesProvider<ImmutableArray<T>> first,
+        IncrementalValuesProvider<T> second)
+    {
+        return first.Collect()
+            .Combine(second.Collect())
+            .SelectMany((tuple, _) =>
+            {
+                if (tuple.Left.IsEmpty)
+                {
+                    return tuple.Right;
+                }
+
+                var results = ImmutableArray.CreateBuilder<T>(tuple.Left.Length + tuple.Right.Length);
+                for (var i = 0; i < tuple.Left.Length; i++)
+                {
+                    results.AddRange(tuple.Left[i]);
+                }
+                for (var i = 0; i < tuple.Right.Length; i++)
+                {
+                    results.AddRange(tuple.Right[i]);
+                }
+                return results.DrainToImmutable();
+            });
+    }
+
+    private sealed class ImmutableArrayEqualityComparer<T> : IEqualityComparer<ImmutableArray<T>>
+    {
+        public static readonly ImmutableArrayEqualityComparer<T> Instance = new();
+
+        public bool Equals(ImmutableArray<T> x, ImmutableArray<T> y)
+        {
+            if (x.IsDefault)
+            {
+                return y.IsDefault;
+            }
+            else if (y.IsDefault)
+            {
+                return false;
+            }
+
+            if (x.Length != y.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < x.Length; i++)
+            {
+                if (!EqualityComparer<T>.Default.Equals(x[i], y[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public int GetHashCode(ImmutableArray<T> obj)
+        {
+            if (obj.IsDefault)
+            {
+                return 0;
+            }
+            var hashCode = -450793227;
+            foreach (var item in obj)
+            {
+                hashCode = (hashCode * -1521134295) + EqualityComparer<T>.Default.GetHashCode(item);
+            }
+
+            return hashCode;
+        }
+    }
+}
+
+81ed66ad2e23a89c3d31c7cb33916cc0eab42d99 blob 22786
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+using System.Text;
+using Microsoft.CodeAnalysis.CSharp;
+using System.IO;
+
+namespace Microsoft.Extensions.Validation;
+
+public sealed partial class ValidationsGenerator : IIncrementalGenerator
+{
+    public static string GeneratedCodeConstructor => $@"global::System.CodeDom.Compiler.GeneratedCodeAttribute(""{typeof(ValidationsGenerator).Assembly.FullName}"", ""{typeof(ValidationsGenerator).Assembly.GetName().Version}"")";
+    public static string GeneratedCodeAttribute => $"[{GeneratedCodeConstructor}]";
+
+    internal static void Emit(SourceProductionContext context, (ImmutableArray<InterceptableLocation?> AddValidationLocations, ImmutableArray<ValidatableType> ValidatableTypes) emitInputs)
+    {
+        var locations = emitInputs.AddValidationLocations.OfType<InterceptableLocation>().ToImmutableArray();
+        if (locations.IsEmpty)
+        {
+            // Avoid generating code if no AddValidation call was found.
+            return;
+        }
+        var source = Emit(locations, emitInputs.ValidatableTypes);
+        context.AddSource("ValidatableInfoResolver.g.cs", SourceText.From(source, Encoding.UTF8));
+    }
+
+    private static string Emit(ImmutableArray<InterceptableLocation> addValidationLocations, ImmutableArray<ValidatableType> validatableTypes) => $$"""
+#nullable enable annotations
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+#nullable enable
+#pragma warning disable CS8767
+
+namespace System.Runtime.CompilerServices
+{
+    {{GeneratedCodeAttribute}}
+    [global::System.AttributeUsage(global::System.AttributeTargets.Method, AllowMultiple = true)]
+    file sealed class InterceptsLocationAttribute : global::System.Attribute
+    {
+        public InterceptsLocationAttribute(int version, string data)
+        {
+        }
+    }
+}
+
+namespace Microsoft.Extensions.Validation.Generated
+{
+    {{GeneratedCodeAttribute}}
+    file sealed class GeneratedValidatablePropertyInfo : global::Microsoft.Extensions.Validation.Generated.ValidatablePropertyInfo
+    {
+        public GeneratedValidatablePropertyInfo(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            global::System.Type propertyType,
+            string name,
+            global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo? displayNameInfo = null,
+            bool isUnionValue = false,
+            global::System.Func<object, bool>? skipValidation = null) : base(containingType, propertyType, name, displayNameInfo, isUnionValue, skipValidation)
+        {
+            ContainingType = containingType;
+        }
+
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+        internal global::System.Type ContainingType { get; }
+
+        protected override global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetValidationAttributes()
+            => ValidationAttributeCache.GetPropertyValidationAttributes(ContainingType, Name);
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class GeneratedValidatableTypeInfo : global::Microsoft.Extensions.Validation.Generated.ValidatableTypeInfo
+    {
+        public GeneratedValidatableTypeInfo(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type,
+            ValidatablePropertyInfo[] members,
+            global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo? displayNameInfo = null) : base(type, members, displayNameInfo)
+        {
+        }
+
+        protected override global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetValidationAttributes()
+            => ValidationAttributeCache.GetTypeValidationAttributes(Type);
+    }
+
+    {{GeneratedCodeAttribute}}
+    file class GeneratedValidatableInfoResolver : global::Microsoft.Extensions.Validation.IValidatableInfoResolver
+    {
+        public bool TryGetValidatableTypeInfo(global::System.Type type, out global::Microsoft.Extensions.Validation.IValidatableTypeInfo? validatableTypeInfo)
+        {
+            validatableTypeInfo = null;
+{{EmitTypeChecks(validatableTypes)}}
+            return false;
+        }
+
+        // No-ops, rely on runtime code for ParameterInfo-based resolution
+        public bool TryGetValidatableParameterInfo(global::System.Reflection.ParameterInfo parameterInfo, out global::Microsoft.Extensions.Validation.IValidatableParameterInfo? validatableParameterInfo)
+        {
+            validatableParameterInfo = null;
+            return false;
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class GeneratedServiceCollectionExtensions
+    {
+        {{EmitAddValidationInterceptorAttributes(addValidationLocations)}}
+        public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection AddValidation(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, global::System.Action<global::Microsoft.Extensions.Validation.ValidationOptions>? configureOptions = null)
+        {
+            // Use non-extension method to avoid infinite recursion.
+            return global::Microsoft.Extensions.DependencyInjection.ValidationServiceCollectionExtensions.AddValidation(services, options =>
+            {
+                options.Resolvers.Insert(0, new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatableInfoResolver());
+                if (configureOptions is not null)
+                {
+                    configureOptions(options);
+                }
+                // Support ParameterInfo resolution at runtime. Appended last so it runs after any
+                // user-registered resolvers, matching the previous ordering in AddValidation.
+                options.Resolvers.Add(new global::Microsoft.Extensions.Validation.Generated.RuntimeValidatableParameterInfoResolver());
+            });
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class ValidationAttributeCache
+    {
+        private sealed record CacheKey(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [property: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type ContainingType,
+            string PropertyName);
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<CacheKey, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]> _propertyCache = new();
+        private static readonly global::System.Lazy<global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]>> _lazyTypeCache = new (() => new ());
+        private static global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.ValidationAttribute[]> TypeCache => _lazyTypeCache.Value;
+
+        public static global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetPropertyValidationAttributes(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            var key = new CacheKey(containingType, propertyName);
+            return _propertyCache.GetOrAdd(key, static k =>
+            {
+                var results = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationAttribute>();
+
+                // Get attributes from the property
+                var property = k.ContainingType.GetProperty(
+                    k.PropertyName,
+                    global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.DeclaredOnly);
+                if (property != null)
+                {
+                    var propertyAttributes = global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(property, inherit: true);
+
+                    results.AddRange(propertyAttributes);
+                }
+
+                // Check constructors for parameters that match the property name
+                // to handle record scenarios
+                foreach (var constructor in k.ContainingType.GetConstructors())
+                {
+                    // Look for parameter with matching name (case insensitive)
+                    var parameter = global::System.Linq.Enumerable.FirstOrDefault(
+                        constructor.GetParameters(),
+                        p => string.Equals(p.Name, k.PropertyName, global::System.StringComparison.OrdinalIgnoreCase));
+
+                    if (parameter != null)
+                    {
+                        var paramAttributes = global::System.Reflection.CustomAttributeExtensions
+                            .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(parameter, inherit: true);
+
+                        results.AddRange(paramAttributes);
+
+                        break;
+                    }
+                }
+
+                return results.ToArray();
+            });
+        }
+
+
+        public static global::System.ComponentModel.DataAnnotations.ValidationAttribute[] GetTypeValidationAttributes(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type
+        )
+        {
+            return TypeCache.GetOrAdd(type, static t =>
+            {
+                var typeAttributes = global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttributes<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(t, inherit: true);
+                return global::System.Linq.Enumerable.ToArray(typeAttributes);
+            });
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class LiteralDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        private readonly string _literal;
+
+        public LiteralDisplayName(string literal)
+        {
+            _literal = literal;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+        {
+            var factory = context.ServiceProvider?.GetService(typeof(global::Microsoft.Extensions.Localization.IStringLocalizerFactory)) as global::Microsoft.Extensions.Localization.IStringLocalizerFactory;
+            if (factory is null)
+            {
+                return _literal;
+            }
+            var localizer = LocalizationHelpers.CreateStringLocalizer(context, type, factory);
+            var localizedName = localizer[_literal];
+
+            return localizedName.ResourceNotFound ? _literal : localizedName.Value;
+        }
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class PropertyResourceDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+        private readonly global::System.Type _containingType;
+        private readonly string _propertyName;
+
+        public PropertyResourceDisplayName(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            _containingType = containingType;
+            _propertyName = propertyName;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+            => DisplayAttributeCache.GetPropertyDisplayAttribute(_containingType, _propertyName)?.GetName();
+    }
+
+    {{GeneratedCodeAttribute}}
+    file sealed class TypeResourceDisplayName : global::Microsoft.Extensions.Validation.Generated.DisplayNameInfo
+    {
+        [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+        private readonly global::System.Type _type;
+
+        public TypeResourceDisplayName(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type)
+        {
+            _type = type;
+        }
+
+        public override string? GetDisplayName(global::Microsoft.Extensions.Validation.ValidateContext context, global::System.Type type)
+            => DisplayAttributeCache.GetTypeDisplayAttribute(_type)?.GetName();
+    }
+
+    {{GeneratedCodeAttribute}}
+    file static class DisplayAttributeCache
+    {
+        private sealed record CacheKey(
+            [param: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [property: global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type ContainingType,
+            string PropertyName);
+
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<CacheKey, global::System.ComponentModel.DataAnnotations.DisplayAttribute?> _propertyCache = new();
+        private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<global::System.Type, global::System.ComponentModel.DataAnnotations.DisplayAttribute?> _typeCache = new();
+
+        public static global::System.ComponentModel.DataAnnotations.DisplayAttribute? GetPropertyDisplayAttribute(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
+            global::System.Type containingType,
+            string propertyName)
+        {
+            var key = new CacheKey(containingType, propertyName);
+            return _propertyCache.GetOrAdd(key, static k =>
+            {
+                // Check primary-constructor parameters first to handle record scenarios where
+                // [Display(ResourceType = ..., Name = ...)] is on the parameter rather than the property.
+                foreach (var constructor in k.ContainingType.GetConstructors())
+                {
+                    var parameter = global::System.Linq.Enumerable.FirstOrDefault(
+                        constructor.GetParameters(),
+                        p => string.Equals(p.Name, k.PropertyName, global::System.StringComparison.Ordinal));
+
+                    if (parameter != null)
+                    {
+                        var paramDisplayAttr = global::System.Reflection.CustomAttributeExtensions
+                            .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(parameter);
+                        if (paramDisplayAttr is not null)
+                        {
+                            return paramDisplayAttr;
+                        }
+
+                        break;
+                    }
+                }
+
+                var property = k.ContainingType.GetProperty(
+                    k.PropertyName,
+                    global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.DeclaredOnly);
+                return property is null
+                    ? null
+                    : global::System.Reflection.CustomAttributeExtensions
+                        .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(property, inherit: true);
+            });
+        }
+
+        public static global::System.ComponentModel.DataAnnotations.DisplayAttribute? GetTypeDisplayAttribute(
+            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
+            global::System.Type type)
+        {
+            return _typeCache.GetOrAdd(type, static t =>
+                global::System.Reflection.CustomAttributeExtensions
+                    .GetCustomAttribute<global::System.ComponentModel.DataAnnotations.DisplayAttribute>(t, inherit: true));
+        }
+    }
+
+{{EmitInfoClasses()}}
+}
+""";
+
+    private static string EmitAddValidationInterceptorAttributes(ImmutableArray<InterceptableLocation> addValidations)
+    {
+        // We filtered early for empty locations, so we are sure we have at least one.
+        var firstAttribute = addValidations[0].GetInterceptsLocationAttributeSyntax();
+        if (addValidations.Length == 1)
+        {
+            // Common case
+            return firstAttribute;
+        }
+
+        // This is the less common case.
+        var sb = new StringBuilder(firstAttribute);
+        for (var i = 1; i < addValidations.Length; i++)
+        {
+            sb.AppendLine().Append("        ").Append(addValidations[i].GetInterceptsLocationAttributeSyntax());
+        }
+
+        return sb.ToString();
+    }
+
+    private static string EmitTypeChecks(ImmutableArray<ValidatableType> validatableTypes)
+    {
+        var sw = new StringWriter();
+        var cw = new CodeWriter(sw, baseIndent: 3);
+        foreach (var validatableType in validatableTypes)
+        {
+            var typeName = validatableType.TypeFQN;
+            cw.WriteLine($"if (type == typeof({typeName}))");
+            cw.StartBlock();
+            cw.WriteLine($"validatableTypeInfo = new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatableTypeInfo(");
+            cw.Indent++;
+            cw.WriteLine($"type: typeof({typeName}),");
+            if (validatableType.Members.IsDefaultOrEmpty)
+            {
+                cw.WriteLine("members: [],");
+            }
+            else
+            {
+                cw.WriteLine("members: [");
+                cw.Indent++;
+                foreach (var member in validatableType.Members)
+                {
+                    EmitValidatableMemberForCreate(member, cw);
+                }
+                cw.Indent--;
+                cw.WriteLine("],");
+            }
+            cw.WriteLine($"displayNameInfo: {FormatTypeDisplayNameInfo(validatableType)}");
+            cw.Indent--;
+            cw.WriteLine(");");
+            cw.WriteLine("return true;");
+            cw.EndBlock();
+        }
+        return sw.ToString();
+    }
+
+    private static void EmitValidatableMemberForCreate(ValidatableProperty member, CodeWriter cw)
+    {
+        cw.WriteLine("new global::Microsoft.Extensions.Validation.Generated.GeneratedValidatablePropertyInfo(");
+        cw.Indent++;
+        cw.WriteLine($"containingType: typeof({member.ContainingTypeFQN}),");
+        cw.WriteLine($"propertyType: typeof({member.TypeFQN}),");
+        cw.WriteLine($"name: \"{member.Name}\",");
+        if (member.IsUnionValue)
+        {
+            cw.WriteLine("isUnionValue: true,");
+        }
+        if (!member.SkippedUnionCaseTypes.IsDefaultOrEmpty)
+        {
+            cw.WriteLine($"skipValidation: static value => value is {string.Join(" or ", member.SkippedUnionCaseTypes)},");
+        }
+        cw.WriteLine($"displayNameInfo: {FormatPropertyDisplayNameInfo(member)}");
+        cw.Indent--;
+        cw.WriteLine("),");
+    }
+
+    private static string FormatPropertyDisplayNameInfo(ValidatableProperty member)
+    {
+        if (member.HasResourceDisplayAttribute)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.PropertyResourceDisplayName(typeof({member.ContainingTypeFQN}), \"{member.Name}\")";
+        }
+        if (member.DisplayName is not null)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.LiteralDisplayName({SymbolDisplay.FormatLiteral(member.DisplayName, quote: true)})";
+        }
+        return "null";
+    }
+
+    private static string FormatTypeDisplayNameInfo(ValidatableType validatableType)
+    {
+        if (validatableType.HasResourceDisplayAttribute)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.TypeResourceDisplayName(typeof({validatableType.TypeFQN}))";
+        }
+        if (validatableType.DisplayName is not null)
+        {
+            return $"new global::Microsoft.Extensions.Validation.Generated.LiteralDisplayName({SymbolDisplay.FormatLiteral(validatableType.DisplayName, quote: true)})";
+        }
+        return "null";
+    }
+}
+

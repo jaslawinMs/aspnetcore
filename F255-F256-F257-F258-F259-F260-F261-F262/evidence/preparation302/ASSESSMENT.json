@@ -1,0 +1,106 @@
+{
+  "phase": 302,
+  "status": "THREE_DISTINCT_BOUNDED_SOURCE_ONLY_NO_MATERIAL_CANDIDATE_RECOMMENDATIONS",
+  "canonicalStatusesChanged": false,
+  "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+  "wholeRepositoryBodiesPerRole": 18,
+  "conservativeRetainedCommonContextLimitPerRole": 8,
+  "inclusiveInputLimitPerRole": 26,
+  "sourceBodyBudgetClosed": true,
+  "independentRawQualification": "RAW-QUALIFICATION.json",
+  "wholeSourceArtifactsSeparatelyRehashedAndFramed": 36,
+  "wholeRolePairsExactlyBlobEqual": 18,
+  "directGitGhRoots": 19,
+  "maximumDirectRootsIncludingFailures": 32,
+  "realProducerBoundary": [
+    "ValidationsGenerator.Initialize registers endpoint and attributed-type syntax/semantic providers. Each endpoint extraction creates fresh local validatable/visited collections, shared across that endpoint's parameters and recursive traversal. Each attributed-symbol transform separately creates fresh collections.",
+    "The captured Concat/Distinct incremental-provider extensions collect/merge then hash-deduplicate downstream validatable results. They do not replace the per-extraction visited list or prove that Roslyn reruns every transform on every request/build/edit.",
+    "AddValidation location collection combines with validatable results and registers source output. The captured emitter returns without generating when no accepted AddValidation location exists. Its string output and generated runtime validation code are distinct from these compiler-symbol parser scans.",
+    "The real test base first emits the input compilation and throws on failure before generator invocation. It constructs a real ValidationsGenerator/CSharpGeneratorDriver and calls RunGeneratorsAndUpdateCompilation for snapshot verification. Subsequent endpoint/type validation emits/loads the generated compilation and uses real host/services. None of those tests or producers was run in302.",
+    "The generator project declares netstandard2.0. Its complete imported MSBuild/reference/runtime graph and shared TryGetRouteHandlerMethod implementation were not captured/evaluated; declared project metadata is not executed build qualification."
+  ],
+  "ordinarySourceExamples": [
+    {
+      "test": "ValidationsGeneratorTests.CanValidateRecordTypes",
+      "file": "src/Validation/test/Microsoft.Extensions.Validation.GeneratorTests/ValidationsGenerator.RecordType.cs",
+      "facts": "One literal endpoint, a12-primary-parameter root record, two-parameter subtype, three-parameter inherited subtype and a non-positional subtype. One Verify call precedes ten runtime validation scenario calls. Those ten calls are not ten generator runs, and declared parameters are not observed symbol/list/comparison counts."
+    },
+    {
+      "test": "ValidationsGeneratorTests.CanValidateRecordStructTypes",
+      "facts": "The captured source declares one endpoint, three root and two subtype primary parameters. Its runtime validation calls do not multiply generation work."
+    },
+    {
+      "test": "ValidationsGeneratorTests.CanValidateRecursiveTypes",
+      "facts": "One recursive model declares Value and Next. Runtime object nesting/MaxDepth8 do not imply eight distinct compiler types or a visited-list size of eight."
+    },
+    {
+      "test": "ValidationsGeneratorTests.CanValidateComplexTypes",
+      "file": "src/Validation/test/Microsoft.Extensions.Validation.GeneratorTests/ValidationsGenerator.ComplexType.cs",
+      "facts": "The selected fixture source has ten declared root properties, repeated references/list wrapping of SubType, and two-parameter primary constructors on ordinary classes. Therefore the constructor/property machinery must not be characterized as positional-record-only. Inherited constructor matching and current-type-only member matching are distinct."
+    },
+    {
+      "test": "ValidationsGeneratorTests.CanValidateClassTypesWithAttribute and CanValidateRecordTypesWithAttribute",
+      "file": "src/Validation/test/Microsoft.Extensions.Validation.GeneratorTests/ValidationsGenerator.ValidatableType.cs",
+      "facts": "Each named declaration has true/false useAsync rows. Their literal attributed roots declare eight properties. The displayed non-positional record declaration does not itself establish a12-parameter positional-record join. Selected portions only were semantically inspected; no complete whole-file scenario census is claimed."
+    },
+    {
+      "file": "src/Validation/perf/Microbenchmarks/ValidatableTypesBenchmark.cs",
+      "facts": "ValidatableTypeInfoBenchmark resolves type metadata during setup and its six benchmark bodies exercise runtime ValidateAsync. Those runtime iterations are not a benchmark of any of these generator parser scans, and do not supply a parser frequency/materiality multiplier."
+    }
+  ],
+  "decisions": [
+    {
+      "finding": "F260",
+      "site": "ValidationsGenerator.TypesParser.cs: visitedTypes.Contains",
+      "decision": "NO_MATERIAL_CANDIDATE_ESTABLISHED_BY_BOUNDED_SOURCE",
+      "positiveEvidence": "A real visited-symbol linear membership check occurs in recursive compiler-model extraction. Its scope is one endpoint extraction or one attributed-symbol transform, not one process-global or runtime request-growing collection.",
+      "contracts": [
+        "Preserve current nullable/enumerable/array UnwrapType behavior and eligibility/exemption/accessibility gates, and the precise placement of Contains and Add. UnwrapType is a sequence of bounded transformations, not an arbitrary recursive collection flattener.",
+        "Already-visited returns true. A type is added before base/union/member/derived traversal even when later work finds no validation. Moving Add into an earlier combined membership test can change branch/return/output behavior.",
+        "This List<ITypeSymbol>.Contains uses its default equality, unlike F262's explicitly supplied SymbolEqualityComparer.Default. Do not silently substitute a different comparer or assume reference identity.",
+        "Downstream validatable-result deduplication and runtime type caches do not prove this traversal is shared or eliminated. Preserve recursion termination, result/member order and failure behavior."
+      ],
+      "materiality": "Natural fixtures demonstrate small, repeated and cyclic model shapes, but do not establish actual semantic-symbol cardinalities, application endpoint/model scale, incremental rerun frequency or material generation cost. A set changes allocation/hash/construction costs and is not justified by asymptotics or fabricated large graphs alone."
+    },
+    {
+      "finding": "F261",
+      "site": "ValidationsGenerator.TypesParser.cs: constructor parameter to current property FirstOrDefault join",
+      "decision": "NO_MATERIAL_CANDIDATE_ESTABLISHED_BY_BOUNDED_SOURCE",
+      "positiveEvidence": "The first nonempty constructor whose parameter names all resolve through FindPropertyIncludingBaseTypes is considered. Its parameters then repeatedly search current-type properties with OrdinalIgnoreCase name comparison. The12-parameter record and ordinary two-parameter class fixture are real source examples, not measured operation counts.",
+      "contracts": [
+        "Constructor eligibility searches the current type and recursively its base types; the later corresponding-property join searches only current GetMembers().OfType<IPropertySymbol>(). Do not combine those different lookup domains.",
+        "Keep first eligible constructor, parameter order, first matching property and case-insensitive name semantics. A dictionary that throws for case-colliding names or changes first-match behavior is not equivalent.",
+        "A matched property is added to resolvedRecordProperty before service, SkipValidation, accessibility and JsonIgnore skips. Preserve that suppression state and the later extraction/display/member insertion order.",
+        "ISymbolExtensions display/resource selection and ITypeSymbolExtensions service/skip/JsonIgnore/accessibility behavior are part of the selected contract; changing them is not membership optimization."
+      ],
+      "materiality": "The checked-in natural fixture sizes establish a bounded real join but no generation bottleneck, large ordinary constructor/member inventory or material full-generator benefit. Pre-indexing adds per-type construction and must preserve duplicate/ordering/exception semantics. No amplified repeated generation or runtime-validation proxy is proposed."
+    },
+    {
+      "finding": "F262",
+      "site": "ValidationsGenerator.TypesParser.cs: resolvedRecordProperty.Contains with SymbolEqualityComparer.Default",
+      "decision": "NO_MATERIAL_CANDIDATE_ESTABLISHED_BY_BOUNDED_SOURCE",
+      "positiveEvidence": "A fresh local matched-property list is populated by the constructor path and checked while extracting properties. It can apply to eligible primary-constructor classes as well as records; its name is not a record-only execution proof.",
+      "contracts": [
+        "Preserve the explicit SymbolEqualityComparer.Default membership contract, distinct from F260's implicit default comparer and F261's name comparison.",
+        "Keep ShouldSkipProperty and public-getter gates before membership, then preserve service/public-accessibility and validation/recursion ordering.",
+        "The seed includes corresponding constructor properties even when the constructor path subsequently skips them. A collection of only successfully emitted constructor members would change duplicate suppression.",
+        "Keep the original ordered member output and the list's per-extraction lifetime. An index must not become an output enumerator or a process-wide symbol cache."
+      ],
+      "materiality": "The actual source establishes a per-type membership seam with finite fixture constructors, not a materially expensive global or request-time lookup. Natural compiler-symbol membership counts and full-generator payoff remain unobserved. Neither a hash-set speedup nor no-gain is established."
+    }
+  ],
+  "boundedHistory": {
+    "evidence": ["commands/010-target-history-Default.stdout", "commands/011-generator-entry-history-Default.stdout"],
+    "scope": "At most eight metadata entries per exact target/path group on the pinned observed Default; no historical source/patch expansion.",
+    "subjectsForNavigationOnly": ["Fix skipped and collection union cases in Minimal API validation (#69870)", "Support validation for C# union cases (#68846)", "Cleanup ValidationsGenerator for better incrementality (#66373)", "Fix ValidationsGenerator CS8785 when AddValidation is called from multiple sites (#66675)"],
+    "noHistoricalIntentOrRuntimeConclusionFromSubjects": true
+  },
+  "explicitLimits": [
+    "GitHub semantic search returned HTTP404; the Azure code-graph scope is unrelated. Neither is source absence or a complete caller graph.",
+    "Exactly18 selected whole repository bodies per role were captured and independently raw-qualified; only named relevant portions of the two larger fixture files and emitter template were semantically inspected. No complete test/body/caller census is claimed.",
+    "Shared route-handler resolution, other model/comparer/emitter bodies, full Roslyn internals, imported build/reference graph and application-scale profiles remain outside this closed source budget.",
+    "No parser/generator/test/runtime execution, emitted output verification, comparison, allocation profile or red/green claim. The named source fixtures and their true/false rows were not run because execution was explicitly outside302, not because a missing prerequisite was observed.",
+    "F345's generated runtime PropertyInfo lookup is a separate finding and its gates are unchanged. These three source-only recommendations are not aliases, measured no-gain, unreachability, false-positive or card-mismatch claims."
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "findingId": "F256",
+  "ownerTaskId": "c4be5bf1-94ec-4920-96aa-1829191ac1e6",
+  "scope": "293 SOURCE ONLY",
+  "decision": "The repeated membership pattern is real, but no material performance candidate is established by the finite, ordinary baseline producer. Do not advance it as a demonstrated performance fix.",
+  "decisionKind": "Independent source-only disposition for the generated-file oracle",
+  "outerLedgerStatus": "pending; parent alone may accept, retire, qualify provenance, or finalize",
+  "notMeasuredNoGain": true,
+  "runtimeOrPerformanceQualified": false,
+  "notDuplicateOfF255": true,
+  "source": {
+    "gitPath": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "lines": [87, 118],
+    "membershipLine": 104,
+    "originalCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "observedDefaultCommit": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "blobInBothRoles": "629a50c9c998e7fee8407f75e0f89d7ccac847d6",
+    "sha256InBothRoles": "09A48BD036D3EDD9FD626C057B900205072362CEB4AE37C46B7865E8A920A6EA",
+    "bytesInEachRole": 5354,
+    "evidence": "capture-index-r006-initial-whole-bodies.json; full r006 cat-file framing and r004/r005 mode/blob metadata streams"
+  },
+  "producerAndConsumer": [
+    {
+      "source": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj:34-35; src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs:21-55",
+      "fact": "Templates.Tests embeds template-baselines.json. TemplateBaselines loads that exact resource through JObject, walks template/scenario objects, and constructs TheoryData<string,string[]> from each scenario's Arguments and Files array. The entire captured JSON was parsed statically, not sampled or replaced by invented data."
+    },
+    {
+      "source": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs:73-87",
+      "fact": "The actual declaration is [Theory] with [MemberData(nameof(TemplateBaselines))] on Template_Produces_The_Right_Set_Of_FilesAsync. Each source row creates one project through ProjectFactory, awaits RunDotNetNewRawAsync(arguments), substitutes that project's name into a new expected array, checks all expected file paths for existence, then snapshots the generated directory recursively."
+    },
+    {
+      "source": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs:27-80; src/ProjectTemplates/Shared/AssemblyInfo.AssemblyFixtures.cs:8-9",
+      "fact": "The assembly fixture disables test parallelization. CreateProject awaits package initialization, creates a randomized letter-prefixed project identity, and chooses a fresh project output directory under the assembly/Helix template base. A collection for one row is not a shared global 3337-element oracle."
+    },
+    {
+      "source": "src/ProjectTemplates/Shared/Project.cs:593-605",
+      "fact": "RunDotNetNewRawAsync passes the actual row arguments to ProcessEx.Run with the template hive and output directory, awaits the process, and asserts a successful exit. The source does not replace the real generator with injected file events. This task did not execute that path."
+    },
+    {
+      "source": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj:58-76; src/ProjectTemplates/README-BASELINES.md",
+      "fact": "The captured package producer lists generated template project content, including the two Blazor projects used by the largest expected-file row. The baseline authoring guide describes generating the real application and inserting the resulting filtered, project-name-normalized file list into template-baselines.json, with manual edits allowed for small changes. The specific template manifest and actual output were not consumed."
+    }
+  ],
+  "ordinaryCheckedInScale": {
+    "source": "src/ProjectTemplates/test/Templates.Tests/template-baselines.json",
+    "sourceSha256InBothRoles": "F623F24E2DE46B2D680A5353DA78660B3239176BE07D5E83A9086C44119C28B7",
+    "templateFamilies": 12,
+    "sourceDeclaredTheoryRows": 75,
+    "expectedEntriesAcrossAllRows": 3337,
+    "perRowExpectedEntriesMinimum": 2,
+    "perRowExpectedEntriesMedian": 17,
+    "perRowExpectedEntriesMaximum": 136,
+    "entriesEligibleForMembershipAcrossAllBaselineRows": 3295,
+    "theseAreNotObservedGeneratedFileOrAssertionCounts": true,
+    "largestRow": {
+      "template": "blazor",
+      "scenario": "UseServerAndWebAssemblyWithIndividualAuth",
+      "arguments": "new blazor --interactivity auto --auth Individual",
+      "expectedEntries": 136,
+      "baselineEntriesNotSkippedByMembershipPredicate": 133
+    },
+    "frequencyBoundary": "One generated-file membership pass per executed row after creation and existence checks. Seventy-five is the number of source-declared rows, not observed test discovery/execution or a count of successful scans. MemberData discovery/enumeration frequency is an external xUnit concern not inferred here.",
+    "doNotUse3337AsOneLookupCollectionSize": true,
+    "actualRecursiveGeneratedDirectorySize": null,
+    "actualUnignoredGeneratedFileCount": null,
+    "evidence": "baseline-rows-015.json; baseline-cardinality-015.json"
+  },
+  "actualDuplicate": {
+    "template": "blazor",
+    "scenario": "WebAssemblyInteractiveAtRootWithIndividualAuth",
+    "arguments": "new blazor --interactivity WebAssembly --all-interactive --auth Individual",
+    "expectedEntries": 133,
+    "distinctOrdinalExpectedEntries": 132,
+    "duplicate": "{ProjectName}/wwwroot/favicon.png",
+    "consequence": "A full replacement of the expected array by a set would discard a real duplicate and change the first ordered existence-check pass. Duplicates do not by themselves change the later membership truth value. This is contract evidence, not an unrelated requested cleanup or a claim that the test fails.",
+    "evidence": "actual-duplicate-baseline-rows-017.json"
+  },
+  "contracts": {
+    "equality": "The source calls Assert.Contains(relativePath, expectedFiles) without an explicit comparer. It does not choose a filesystem or culture-specific comparer. A replacement must preserve existing string membership, including case distinctions, rather than choosing OrdinalIgnoreCase merely because File.Exists is run on Windows. The external assertion library implementation/version-specific fast paths were not captured or executed.",
+    "normalization": "Expected values undergo project-name replacement first. Actual paths remove TemplateOutputDir text, replace backslashes with slashes, and trim slash delimiters. There is no general path canonicalization, casing fold, or order normalization at the membership call.",
+    "orderAndExceptions": "All expected existence assertions run before recursive directory enumeration is materialized. Each non-skipped generated path is checked for membership before its namespace contents are read. The method fails at the first missing expected path, unexpected generated path, or namespace assertion encountered. An index must not move these effects or replace the existing Assert.Contains diagnostic behavior without separate validation.",
+    "duplicates": "The real duplicate is preserved by the current array and ordered existence loop. A secondary membership-only index could retain the primary array, but no such candidate was authored or validated.",
+    "mutationAndEvaluation": "Project-name substitution rebinds the local expectedFiles parameter to a fresh ToArray result; it does not mutate the source TheoryData array. The recursive generated-file sequence is separately materialized once. A global lookup built from unexpanded JSON tokens would have the wrong per-project values and lifetime.",
+    "skips": "The current code skips .csproj, .fsproj, .props, .sln, .slnx, .targets and bin/obj path segments before membership. Actual raw generation can create skipped files not represented by the expected list, so baseline array length is not the generated-directory size. The exact skip predicate must be preserved.",
+    "namespaceWork": "After membership, non-Extensions.cs C# files are read to locate at most one namespace declaration; non-null declarations must start with Project.ProjectName. Removing or bypassing this work would change the actual test rather than optimize its membership check.",
+    "lifetime": "The expected and generated arrays belong to one test invocation. The fixture retains project instances for disposal; Project.Dispose consults the configured cleanup metadata. No source-backed global growing membership table or repeated steady-state application loop was found at this seam."
+  },
+  "history": {
+    "method": "Eight exact-path --follow metadata entries per role, plus an Original..ObservedDefault path-limited query. No historical patches or unselected source snippets were consumed.",
+    "latestReturnedChange": "369c9d8551133ba915fdcc5a734e5e4eebd74de8, 2025-12-01, Add support for .slnx file exclusion in BaselineTest (#62767); its new raw blob is the current captured blob.",
+    "otherRelevantMetadata": "The returned history includes the July 2025 change and subsequent revert concerning unexpected-file extensions (#62752/#62800), and the earlier remove duplicate checks on path subject (#49648). These subjects are not substituted for historical body evidence or treated as authority to alter the current predicate.",
+    "roleRangeQueryBytes": 0,
+    "allFifteenSelectedBodyPairsByteEqual": true,
+    "patternIntroductionCommitNotProven": true,
+    "evidence": "r013/r014 full raw history streams; r015 empty full stream; source-role-equivalence-017.json"
+  },
+  "materialityDecision": {
+    "positiveFinding": "This is a genuine membership call against the per-row expected array inside the generated-file loop, unlike F255's prefix predicate.",
+    "whyNotAdvance": "The actual producer supplies finite arrays with median 17 and maximum 136 entries, and one membership pass for each created row, not an invented huge or repeatedly reused collection. A secondary index would have its own per-row construction/lifetime and must preserve real duplicates, order-dependent existence checks, skip rules, and assertion failure behavior. Current source evidence establishes neither a material bottleneck nor a material end-to-end saving.",
+    "notAColdLocationOnlyRejection": "The source-declared cardinalities, actual generated-project producer entry, assembly fixture, one-pass structure, real duplicate, normalization and assertion ordering support this independent decision. The test-directory location alone is not the reason.",
+    "notClaimed": [
+      "No assertion that array membership is optimal, free, negligible, or slower/faster than an index.",
+      "No elapsed-time dominance inferred from generator/process/file I/O calls.",
+      "No isolated membership benchmark, fabricated larger arrays, repeated test workloads, runtime measurements, or measured no-gain outcome.",
+      "No duplicate-by-card, duplicate-by-location, or alias disposition."
+    ]
+  },
+  "unrunValidation": {
+    "test": "Templates.Test.BaselineTest.Template_Produces_The_Right_Set_Of_FilesAsync",
+    "rowsNotRun": 75,
+    "largestOrdinaryRowNotRun": "UseServerAndWebAssemblyWithIndividualAuth: new blazor --interactivity auto --auth Individual",
+    "realDuplicateRowNotRun": "WebAssemblyInteractiveAtRootWithIndividualAuth: new blazor --interactivity WebAssembly --all-interactive --auth Individual",
+    "reason": "Explicit source-only scope prohibits SDK activation, test discovery/execution, actual template generation, hosting, browsers, and all performance work.",
+    "documentedPrerequisitesNotProbed": "The area README/AGENTS require the matching package graph and delayed Templates.Tests generated imports before faithful generated-application validation. Their current availability is unverified, not reported missing.",
+    "faithfulBoundaryActuallyUsed": "Complete captured baseline JSON and real source declarations, fixture, generator-call owner, template-project producer and build metadata. Static parsing proves checked-in expected cardinalities, not actual generated files or a successful assertion."
+  },
+  "gaps": [
+    "The exact Blazor template.json producer manifest, external template engine, inherited content-generation targets, and full 75-scenario transitive source closure were not read.",
+    "Actual test discovery, generated files, namespace assertions, xUnit comparison/diagnostic implementation, and runtime/performance behavior are unobserved.",
+    "No statement about source-only validation establishes that an ordinary full run passes or that an optimization would pay back."
+  ],
+  "finiteContinuation": "finite-unread-source-proposal-017.json names exactly four existing unread bodies per role, including the exact Blazor manifest for deeper producer closure. It requires separate parent authorization and a new explicit cumulative budget. No additional source body, native validation, performance window, or PR is authorized now."
+}

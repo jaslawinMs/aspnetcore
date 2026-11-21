@@ -1,0 +1,273 @@
+
+===== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/Internal/ConfigSectionClone.cs (1771 bytes; 825e5a3faf88472a84c94eed52940ed6fe7c99851d1a593d60564ed792b285c7) =====
+
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: #nullable enable
+5: 
+6: using System.Linq;
+7: using Microsoft.Extensions.Configuration;
+8: 
+9: namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+10: 
+11: internal sealed class ConfigSectionClone
+12: {
+13:     public ConfigSectionClone(IConfigurationSection configSection)
+14:     {
+15:         Value = configSection.Value;
+16: 
+17:         // GetChildren() should return an empty IEnumerable instead of null, but we guard against it since it's a public interface.
+18:         var children = configSection.GetChildren() ?? Enumerable.Empty<IConfigurationSection>();
+19:         Children = children.ToDictionary(child => child.Key, child => new ConfigSectionClone(child));
+20:     }
+21: 
+22:     public string? Value { get; }
+23: 
+24:     public Dictionary<string, ConfigSectionClone> Children { get; }
+25: 
+26:     public override bool Equals(object? obj)
+27:     {
+28:         if (!(obj is ConfigSectionClone other))
+29:         {
+30:             return false;
+31:         }
+32: 
+33:         if (Value != other.Value || Children.Count != other.Children.Count)
+34:         {
+35:             return false;
+36:         }
+37: 
+38:         foreach (var kvp in Children)
+39:         {
+40:             if (!other.Children.TryGetValue(kvp.Key, out var child))
+41:             {
+42:                 return false;
+43:             }
+44: 
+45:             if (kvp.Value != child)
+46:             {
+47:                 return false;
+48:             }
+49:         }
+50: 
+51:         return true;
+52:     }
+53: 
+54:     public override int GetHashCode() => HashCode.Combine(Value, Children.Count);
+55: 
+56:     public static bool operator ==(ConfigSectionClone lhs, ConfigSectionClone rhs) => lhs is null ? rhs is null : lhs.Equals(rhs);
+57:     public static bool operator !=(ConfigSectionClone lhs, ConfigSectionClone rhs) => !(lhs == rhs);
+58: }
+59: 
+
+===== 37e809ead5824bc753a1c3d56f11615bdb1296c5:src/Servers/Kestrel/Core/src/LocalhostListenOptions.cs (2861 bytes; 77e2fc3e813e163ec1d4d0d0ab543ff4a13514d16f8c7f9a469c96bd65e7de07) =====
+
+1: // Licensed to the .NET Foundation under one or more agreements.
+2: // The .NET Foundation licenses this file to you under the MIT license.
+3: 
+4: using System.Net;
+5: using Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+6: using Microsoft.Extensions.Logging;
+7: 
+8: namespace Microsoft.AspNetCore.Server.Kestrel.Core;
+9: 
+10: internal sealed class LocalhostListenOptions : ListenOptions
+11: {
+12:     private readonly string? _hostPrefix;
+13: 
+14:     internal LocalhostListenOptions(int port, string hostPrefix)
+15:         : this(port)
+16:     {
+17:         _hostPrefix = hostPrefix ?? throw new ArgumentNullException(nameof(hostPrefix));
+18:     }
+19: 
+20:     internal LocalhostListenOptions(int port)
+21:         : base(new IPEndPoint(IPAddress.Loopback, port))
+22:     {
+23:         if (port == 0)
+24:         {
+25:             throw new InvalidOperationException(CoreStrings.DynamicPortOnLocalhostNotSupported);
+26:         }
+27:     }
+28: 
+29:     /// <summary>
+30:     /// Gets the name of this endpoint to display on command-line when the web server starts.
+31:     /// </summary>
+32:     internal override string GetDisplayName()
+33:     {
+34:         var host = _hostPrefix is { } prefix ? $"{prefix}.localhost" : "localhost";
+35:         return $"{Scheme}://{host}:{IPEndPoint!.Port}";
+36:     }
+37: 
+38:     internal override async Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+39:     {
+40:         var exceptions = new List<Exception>();
+41: 
+42:         try
+43:         {
+44:             var v4Options = Clone(IPAddress.Loopback);
+45:             await AddressBinder.BindEndpointAsync(v4Options, context, cancellationToken).ConfigureAwait(false);
+46:         }
+47:         catch (Exception ex) when (!(ex is IOException or OperationCanceledException))
+48:         {
+49:             if (context.Logger.IsEnabled(LogLevel.Information))
+50:             {
+51:                 context.Logger.LogInformation(0, CoreStrings.NetworkInterfaceBindingFailed, GetDisplayName(), "IPv4 loopback", ex.Message);
+52:             }
+53:             exceptions.Add(ex);
+54:         }
+55: 
+56:         try
+57:         {
+58:             var v6Options = Clone(IPAddress.IPv6Loopback);
+59:             await AddressBinder.BindEndpointAsync(v6Options, context, cancellationToken).ConfigureAwait(false);
+60:         }
+61:         catch (Exception ex) when (!(ex is IOException or OperationCanceledException))
+62:         {
+63:             if (context.Logger.IsEnabled(LogLevel.Information))
+64:             {
+65:                 context.Logger.LogInformation(0, CoreStrings.NetworkInterfaceBindingFailed, GetDisplayName(), "IPv6 loopback", ex.Message);
+66:             }
+67:             exceptions.Add(ex);
+68:         }
+69: 
+70:         if (exceptions.Count == 2)
+71:         {
+72:             throw new IOException(CoreStrings.FormatAddressBindingFailed(GetDisplayName()), new AggregateException(exceptions));
+73:         }
+74: 
+75:         // If StartLocalhost doesn't throw, there is at least one listener.
+76:         // The port cannot change for "localhost".
+77:         context.Addresses.Add(GetDisplayName());
+78:     }
+79: }
+80: 
+===== 37e809ead5824bc753a1c3d56f11615bdb1296c5:docs/CrossCuttingGuidance.md; whole body 16870 bytes; 127 lines =====
+1: # Cross-cutting guidance
+2: 
+3: This guidance covers ASP.NET Core source work. Consult the relevant sections alongside the
+4: requested task and applicable repository and area instructions.
+5: 
+6: ## Overarching principles
+7: 
+8: - Preserve compatibility and public API discipline over local convenience. New APIs, constructors, options, packages, templates, analyzer IDs, and shared-framework metadata become long-lived contracts.
+9: - Prefer existing ASP.NET Core, BCL, SDK, and repository infrastructure over custom helpers. Add abstractions only when they keep user code testable, composable, and stable.
+10: - Treat nullability, validation, cancellation, disposal, and thread-safety annotations as executable design contracts, not comments.
+11: - Separate startup, build-time, analyzer-time, and hot-path runtime work. Per-request, per-diagnostic, file-watcher, and template paths need allocation, caching, and determinism scrutiny.
+12: - Treat filesystem paths, tool commands, configuration, generated output, logs, and package attribution as trust boundaries that can regress even when builds and tests pass.
+13: 
+14: ## Topics
+15: 
+16: ### Cross-cutting scope and change shape
+17: 
+18: - Apply the [contribution scope requirements](../CONTRIBUTING.md#before-submitting-the-pull-request) to product, tool, template, analyzer, and test-utility changes, including unrelated file moves, generated-file churn, version churn, and refactors beyond the affected scenario.
+19: - Preserve ownership boundaries between product code, shared source, templates, test infrastructure, and build infrastructure; do not expose shared implementation details through public namespaces or packages.
+20: - Prefer established shared helpers for process handling, retries, cancellation, file enumeration, CLI parsing, package metadata, and test hosting before adding one-off infrastructure.
+21: - Remove vestigial debug hooks, unused files, stale comments, obsolete workarounds, and duplicate conditional logic only once the scenario they protected is understood and still covered.
+22: 
+23: ### Public API surface, compatibility, and lifecycle
+24: 
+25: - Minimize public surface area; keep speculative hooks, options, extension points, and constructor overloads internal until a demonstrated scenario and API review justify them.
+26: - Preserve public member names, constructor signatures, enum values, default option values, extension-method behavior, analyzer IDs, template identifiers, package identities, and shared-framework metadata unless the breaking change is deliberate and reviewed.
+27: - Use `[Obsolete]` with actionable migration guidance for deprecated APIs, and keep parallel or additive overloads when compatibility requires old members to remain.
+28: - Use applicable public API design criteria for changed public/protected APIs and shipped defaults/conventions. The [API review process](APIReviewProcess.md#process) governs that process; verify any concern against source signatures and contracts rather than reporting a design preference as a defect.
+29: - Public XML docs must accurately describe purpose, parameters, return values, exceptions, defaults, consumer-observable lifecycle, and non-obvious examples for IntelliSense and generated docs; follow the repository's [public XML-documentation requirement](../.github/copilot-instructions.md#formatting).
+30: 
+31: ### Nullability, validation, and correctness invariants
+32: 
+33: - Validate public API arguments and externally supplied data at entry points with precise exception types, parameter names, and actionable messages; do not let invalid input surface later as `NullReferenceException` or an ambiguous failure.
+34: - Keep nullable annotations, member initialization, `MemberNotNull`-style attributes, and guard clauses aligned with real control-flow invariants; do not use annotations to hide possible null states.
+35: - Model unknown, unsupported, or partially restored states explicitly instead of silently mapping them into an existing known bucket; keep classification separate from filtering so tests can prove both.
+36: - Preserve producer-consumer invariants for buffers, streams, collections, and generated metadata; never advance, reuse, mutate, or expose data beyond what the owner granted.
+37: - Use explicit comparers, culture rules, and case-sensitivity decisions for strings, keys, file names, template identifiers, and configuration names when default equality is not the contract.
+38: 
+39: ### Async, cancellation, and background work
+40: 
+41: - Use Task-based async through the whole call chain; avoid `.Result`, `.Wait()`, sync-over-async wrappers, and synchronous exception behavior that differs from the async contract.
+42: - Flow `CancellationToken` to cancellation-aware async I/O, process execution, analyzer APIs, and long-running test utility APIs; for `IFileProvider.Watch` and file-change notifications, manage `IChangeToken` registration and disposable lifetimes through a documented shutdown path.
+43: - Use `ConfigureAwait(false)` in library code that should not capture a synchronization context, while preserving app/test patterns that intentionally rely on one.
+44: - Wrap fire-and-forget or callback-started async work in explicit error handling so failures are observed, logged, or propagated instead of crashing later or being silently swallowed.
+45: - Prefer `IAsyncDisposable` and async fixture/helper patterns when cleanup is asynchronous; do not block during teardown or replace cancellation with unsafe object nulling.
+46: 
+47: ### Performance, allocations, caching, and pooling
+48: 
+49: - Determine whether code runs at startup, build time, analyzer time, or on a hot runtime path before raising performance findings; optimize hot paths and repeated analyzer traversals first.
+50: - Minimize avoidable allocations in per-request, per-diagnostic, file-provider, localization, cache, and template-generation paths using spans, pooled buffers, capacity hints, cached symbols, and lazy computation where they materially help.
+51: - Use object pooling, `ArrayPool<T>`, shared immutable singleton results, and cache consolidation only when ownership, reset, invalidation, contention, and lifetime semantics are clear.
+52: - Defer expensive or failure-prone work until a caller needs it; avoid constructor, registration, or startup work that eagerly resolves files, assemblies, projects, reflection, or external tools without benefit.
+53: - Measure durations with elapsed-time APIs and keep benchmark or performance validation focused on the changed path rather than wall-clock or environment-sensitive measurements.
+54: 
+55: ### Resource lifetime, disposal, and I/O
+56: 
+57: - Types owning streams, file watchers, pooled buffers, processes, temporary artifacts, native handles, subscriptions, or listeners must make ownership explicit and release deterministically on success, failure, replacement, and cancellation paths.
+58: - Implement `IDisposable`, `IAsyncDisposable`, `SafeHandle`, or try/finally according to the resource owned; do not hide cleanup in unrelated lifecycle methods.
+59: - APIs that start registrations, watches, listeners, or background work must prevent repeated starts from leaking prior instances and define whether the caller or callee owns disposal.
+60: - Use `IFileProvider` for virtual/read-only file access, plus path APIs and platform helpers instead of hard-coded separators, working-directory assumptions, or string concatenation; use `System.IO` or explicit writable abstractions when code must create, write, move, or delete files.
+61: - Treat files, directories, generated outputs, and tool inputs as race-prone: they can be missing, locked, replaced, case-sensitive, URI-shaped, or deleted between an existence check and use.
+62: 
+63: ### Thread-safety, shared state, and lazy initialization
+64: 
+65: - Protect shared mutable state with locks, immutable snapshots, concurrent collections, or one-time initialization that preserves the invariant, not just individual operations.
+66: - Document thread-safety guarantees for caches, options snapshots, pools, file providers, analyzers, and shared singleton services when callers can access them concurrently.
+67: - Do not dispose or null shared `CancellationTokenSource`, watcher, logger, cache, or pooled state while callbacks or lazy work may still observe it; cancel first and coordinate completion.
+68: - Keep lock scopes readable; avoid callbacks, logging fan-out, async continuations, or service resolution while holding a lock unless the reentrancy and deadlock behavior is intentional.
+69: - Use immutable or readonly fields for configuration and shared dependencies after construction; mutable static state needs a concurrency and test-isolation reason.
+70: 
+71: ### Options, configuration, and dependency injection
+72: 
+73: - Use `IConfiguration`, options, and DI for configurable behavior; avoid hard-coded values, environment-specific branches, hidden mutable/environmental static dependencies, or service locators in product APIs, while allowing established factories and BCL shared pools such as `ObjectPool.Create<T>` and `ArrayPool<T>.Shared` when ownership and lifetime semantics are clear.
+74: - Keep configuration keys, option names, defaults, environment-variable mappings, generated element IDs, and casing stable across providers, and document them when users can depend on them.
+75: - Add configuration knobs only for demonstrated scenarios; choose safe defaults and validate options early enough that failures point to the invalid setting.
+76: - Match DI lifetimes to the dependencies they capture; use idempotent `TryAdd`/`TryAddEnumerable` registration when repeated calls should compose with user services.
+77: - Keep compile-time and runtime configuration distinct: MSBuild properties, runtime host configuration, package metadata, and user options must not drift or leak into the wrong layer.
+78: 
+79: ### Diagnostics, logging, exceptions, and tool output
+80: 
+81: - Throw specific exceptions with contextual messages for invalid input, unsupported states, timeouts, external command failures, and configuration errors; catch only exceptions you can handle or enrich.
+82: - For a new or broadened catch, distinguish the original operation failure from secondary failures in logging, cleanup, callbacks, or recovery. Trace what each catch observes, preserves, propagates, or silently loses. Preserving the original error does not by itself justify suppressing a secondary failure; verify the target contract for expected or best-effort handling. A PR-added test establishes implementation intent, not independent authority for that policy. Do not treat every empty catch as a defect: when a reachable failure is newly suppressed but the required policy is unestablished, return the concrete changed edge, observable effect, and missing contract as unresolved rather than LGTM or a proven defect.
+83: - Keep diagnostics actionable — include the invalid value, path, key, package, tool, timeout, or operation where useful — without leaking sensitive data or stack traces in normal output.
+84: - Use structured `ILogger`, EventSource, analyzer diagnostics, and console output at levels matching success, warning, failure, and verbose detail; do not add noisy hot-path logs.
+85: - For tools and scripts, separate normal output from diagnostics, preserve readable ordering under parallel execution, handle no-op cases gracefully, and suppress presentation features when output is redirected.
+86: - Analyzer diagnostics need stable IDs, clear messages, help links, generated-code suppression where appropriate, and tests that verify locations and examples.
+87: 
+88: ### Trust boundaries, security, and sensitive data
+89: 
+90: - Treat file-provider inputs, physical paths, generated outputs, and tool/configuration values as untrusted at boundaries; normalize and validate roots before opening files so traversal, symlink escape, URI confusion, or provider mismatch cannot bypass the intended scope.
+91: - Construct process, script, MSBuild, and external tool invocations with argument lists, response files, and repository helpers; do not concatenate untrusted values into shell commands, script fragments, or properties where command/process injection or quoting bugs can change behavior.
+92: - Redact secrets, connection strings, tokens, user secrets, credentials, sensitive environment values, and unnecessary local paths from logs, exceptions, diagnostics, generated files, and test artifacts.
+93: - Keep security-sensitive defaults fail-closed and preserve validation at trust boundaries even when the changed path is primarily configuration, templates, tests, or tooling.
+94: 
+95: ### Localization, text, paths, and cross-platform behavior
+96: 
+97: - Externalize user-facing strings through resource/localization infrastructure and keep culture, UI culture, fallback, satellite-assembly, and formatting behavior explicit.
+98: - Use culture-aware or ordinal string APIs per the contract; avoid locale-specific assumptions in identifiers, paths, configuration keys, analyzer comparisons, and persisted values.
+99: - Handle text encoding, line endings, and persisted or protocol output deliberately, using canonical repo/protocol formatting instead of platform defaults when tools consume the output.
+100: - Detect operating system, architecture, target framework, SDK, and host capabilities through supported APIs or MSBuild metadata; avoid hard-coded platform configuration or unsupported path assumptions.
+101: - Keep platform-specific tests explicit with platform skip conditions, queue conditions, and separate scenarios rather than burying incompatible behavior in conditional test bodies.
+102: 
+103: ### Analyzers, reflection, source generation, trimming, and AOT
+104: 
+105: - Analyzer logic may stay syntax-only when syntax fully proves the diagnostic; add semantic models, symbols, and related or multiple locations only when needed for correctness, symbol identity, partial declarations, or actionable fixes, and avoid false positives in generated code.
+106: - Cache repeated Roslyn symbol, type, and syntax lookups; combine tree traversal with diagnostic construction when it avoids redundant reflection or compilation work.
+107: - Keep analyzer and code-fix packaging lean; avoid heavy workspace dependencies in analyzer assemblies unless necessary for the shipped scenario.
+108: - Prefer explicit reflection lookups, generic constraints, source-generated metadata, and annotated APIs over broad reflection scans that are fragile under trimming or AOT.
+109: - For shared-framework or template changes whose behavior depends on metadata availability, use the repository's [publish-time trimming and Native AOT validation procedure](Trimming.md#validate-trimming-behavior), including source-generated metadata paths.
+110: 
+111: ### Build, packaging, shared framework, and templates
+112: 
+113: - Preserve layouts, package metadata, target names, template identifiers, shared-framework inclusions, reference/runtime asset separation, and SDK/tooling compatibility that downstream consumers already load.
+114: - Keep shared build values single-sourced and narrowly scoped; prefer authoritative project metadata over duplicate opt-in properties, and avoid repository-wide imports or suppressions for local issues.
+115: - Update interrelated dependency versions, feed settings, source-commit metadata, and parent relationships as a coherent set; pin versions when reproducibility or host compatibility matters.
+116: - Validate MSBuild conditions, item metadata, glob depth, command-line escaping, response-file usage, and path normalization carefully, since small mistakes can silently disable build or packaging logic.
+117: - Dependency, package, or license changes must maintain third-party attribution artifacts such as `THIRD-PARTY-NOTICES.txt`; passing builds or tests can still hide a notice, license metadata, or attribution regression.
+118: - In templates and widely used assets, avoid speculative churn; reserve unique identifiers, keep generated output stable, and add behavior changes only for demonstrated scenarios with tests.
+119: 
+120: ### Tests, determinism, and test utilities
+121: 
+122: - Apply the [repository test requirements](../CONTRIBUTING.md#tests) and [faithful-validation requirements](../.github/copilot-instructions.md#running-tests). Add focused unit, integration, analyzer, template, or regression tests for changed behavior, covering success, failure, boundary, platform, and previously broken combinations.
+123: - Assert observable semantics — generated files, diagnostics, logs, configuration keys, exception messages, response headers, package metadata, and resource cleanup — rather than mirroring helper implementation details.
+124: - Keep tests deterministic: avoid timing-sensitive sleeps, current-working-directory assumptions, hard-coded ports, external service dependencies, order-sensitive output, and shared mutable state.
+125: - Test infrastructure should use shared helpers for unique paths, ports, retries, process execution, timeouts, output capture, Helix staging, and cleanup instead of duplicating per-test logic.
+126: - Preserve quarantine, skip conditions, pipeline conditions, and artifact staging until the protected scenario is understood; update the reason or implementation rather than removing the guard.
+127: 

@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "phase": 298,
+  "actualOwner": "7ebf00d6-76eb-41b9-8a9b-b6549a772002",
+  "finding": "F257",
+  "cardLabelOnly": "linear-contains-inside-loop",
+  "exactCardTextAcquired": false,
+  "outcome": "source-only-proposal-with-justified-next-gate",
+  "summary": "The retained repeated membership operation is real in configuration-reload endpoint stopping in both pinned roles. Full server shutdown uses a different path and does not execute this Contains loop. A transient value-equality index is a possible local direction, not an implemented or qualified optimization. Natural endpoint/transport/change cardinalities, operational frequency, hash-key lifetime and material end-to-end benefit remain unestablished. Do not reject merely because this is reconfiguration work, assume small production lists, or benchmark repeated shutdown.",
+  "canonicalDisposition": {
+    "observedStatus": "pending",
+    "changedByThisOwner": false,
+    "parentOwnsAcceptanceRawQualificationRetirementAndFinalization": true,
+    "aliasEstablished": false,
+    "aliasReason": "No other finding's exact owner and behavior were investigated. Same file, card or lifecycle would not establish an alias."
+  },
+  "pins": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "observedDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultObservation": "STATE.json.defaultObservation and roots\\01-fresh-upstream-default contain the one fresh upstream repository/default-branch observation and its actual terminal receipt.",
+    "reservedWorktree": "C:\\src\\aspnetcore was an immutable-object access location only, never Default, a runtime tree or an editable checkout.",
+    "selectedWholeFileComparison": "Fourteen of fifteen selected whole bodies are byte-identical across roles, including TransportManager, KestrelServerImpl, the loader, reader, clone, watcher, binding owners and all three selected test bodies. KestrelServerOptions differs only by an unrelated request-target switch/property insertion; selected-source-comparison.json and root 12 retain the complete selected-path diff."
+  },
+  "budgets": {
+    "repositoryWholeBodiesPerRole": { "Original": 15, "Default": 15 },
+    "wholeBodyLimitPerRole": 15,
+    "commonContextsChargedPerRole": 2,
+    "inclusiveLogicalInputsPerRole": 17,
+    "commonContextAccounting": [
+      "The injected task/developer/repository-convention context received by this fresh owner.",
+      "The complete operational Register-Owners-298-299.mjs reference, read to resolve the exact benchmark-exclusive.lease.json guard path, copied unchanged and never executed."
+    ],
+    "directGitGhRootsIncludingFailures": 12,
+    "rootLimit": 32,
+    "directRootFailures": 0,
+    "historyScope": "Four metadata-only roots: up to eight commits for TransportManager per role and up to eight commits for the selected reload/server/reader/clone/watcher path group per role. No historical source body or historical patch was acquired.",
+    "stopRule": "All fifteen repository-body slots per role are consumed. No replacement, missing-member retry, further repository body, project/helper expansion, or historical source expansion was attempted.",
+    "selectionEvidence": "Full immutable ls-tree -r -z metadata preceded body requests. Every requested path resolved to exactly one blob in each role. No root or Kestrel-area AGENTS.md is present in those pinned tree metadata; the applicable cross-cutting instruction body and referenced guidance document are counted repository bodies."
+  },
+  "sourceFacts": [
+    {
+      "id": "real-reload-caller",
+      "claim": "Initial BindAsync obtains the configuration loader's reload token only when reload-on-change is enabled and hosting-address preference does not override configured endpoints, then registers TriggerRebind. That callback invokes RebindAsync. RebindAsync acquires the same _bindSemaphore used for binding/shutdown, checks _stopping, obtains the next token, calls Reload, and only calls StopEndpointsAsync when endpointsToStop.Count is positive. Its finally block rearms the callback and releases the semaphore. A token notification alone need not produce a nonempty stop list.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:290-371", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:403-412"],
+      "boundary": "Selected exact caller bodies establish this static producer chain, not a repository-wide caller census or executed server behavior."
+    },
+    {
+      "id": "stop-list-producer",
+      "claim": "Reload copies the prior ConfigurationBackedListenOptions to a fresh endpointsToStop list. It builds a new ConfigurationReader, processes the new endpoints, removes value-equal reusable old options from that stop list, and records newly configured options separately. It updates ConfigurationBackedListenOptions only after endpoint processing. The server then copies each remaining old ListenOptions.EndpointConfig reference into a new List<EndpointConfig> of the exact old-stop count. The target does not receive arbitrary expanded endpoint lists from this caller.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:335-437", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:348-371"]
+    },
+    {
+      "id": "configuration-and-cardinality-producer",
+      "claim": "ConfigurationReader materializes one EndpointConfig per item returned by IConfiguration.GetSection(\"Endpoints\").GetChildren(), reads its URL, SNI/configuration and other settings, and caches that reader's resulting list. The selected producer has no numeric endpoint cap or list-size clamp. That is not evidence that a particular production application has many endpoints. For an ordinary successful generation, the stop-list size is bounded by the previous configuration-backed logical listen-options count, not by an invented benchmark parameter.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:24-37", "src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:68-118", "src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:342-428"],
+      "unknown": "Actual application endpoint counts, custom IConfiguration provider behavior, natural changed/removed fractions and production reload frequency."
+    },
+    {
+      "id": "real-active-transports",
+      "claim": "A successful transport bind selects the first supporting factory and starts one accepting listener, which adds an ActiveTransport containing the passed EndpointConfig reference. It does not add one ActiveTransport per request or connection, or one for every registered factory. The server can bind stream and multiplexed protocols for the same listen option. AddressBinder can select LocalhostListenOptions, whose IPv4 and IPv6 clones preserve the exact EndpointConfig reference, yielding multiple real active transports for one logical configured endpoint when those binds succeed.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:35-104", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:139-223", "src/Servers/Kestrel/Core/src/Internal/AddressBinder.cs:100-140", "src/Servers/Kestrel/Core/src/LocalhostListenOptions.cs:38-77", "src/Servers/Kestrel/Core/src/ListenOptions.cs:234-249"],
+      "limit": "These are concrete multiplicity mechanisms, not a universal transport-count bound. Failure residue and unread custom/HTTPS/transport implementations prevent that inference."
+    },
+    {
+      "id": "code-backed-options-and-frequency",
+      "claim": "Options maintains separate code-backed and configuration-backed lists and snapshots them together for binding. Its normal Listen(EndPoint, Action) producer constructs ListenOptions without an EndpointConfig, applies defaults/callback and adds it to the code-backed list; null-config active transports are skipped before Contains. Configure(IConfiguration, bool) documents that reload updates only Endpoints-section endpoints, not code-defined endpoints. The one-argument Configure overload passes reloadOnChange:false, but that overload alone does not establish hosting defaults. Loader.GetReloadToken combines the configuration token with an optional certificate-watch token. Unchanged/reused endpoints and no-op notifications can avoid target invocation even while reload handling itself runs.",
+      "Original": ["src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:79-95", "src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:439-479", "src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:531-539"],
+      "Default": ["src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:80-96", "src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:459-499", "src/Servers/Kestrel/Core/src/KestrelServerOptions.cs:551-559"],
+      "bothRoles": ["src/Servers/Kestrel/Core/src/ListenOptions.cs:25-51", "src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:318-330", "src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:392-408"],
+      "unknown": "Hosting setup/default registration, provider event coalescing, actual certificate/configuration change cadence and how often those changes remove or modify endpoints."
+    },
+    {
+      "id": "shutdown-is-different",
+      "claim": "KestrelServerImpl.StopAsync first establishes stopping, cancels _stopCts, waits for the bind semaphore, and calls TransportManager.StopAsync. The latter copies _transports directly into StopTransportsAsync. It does not call StopEndpointsAsync or run endpointsToStop.Contains. Dispose delegates to StopAsync with a canceled token. A repeated full-shutdown workload would therefore characterize the wrong selection path.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:242-287", "src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:106-124"]
+    },
+    {
+      "id": "membership-and-equality",
+      "claim": "The target iterates all _transports, short-circuits null EndpointConfig, and tests list membership using EndpointConfig value equality. EndpointConfig is sealed and overrides Equals/GetHashCode: name, URL, normalized protocol/TLS/client-certificate defaults, certificate, SNI dictionaries and a cloned configuration-section snapshot participate. Equality is not reference identity, name-only identity or URL-only identity. ConfigSectionClone recursively compares children; its hash uses the value and child count, allowing collisions without making unequal snapshots equivalent.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:106-117", "src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:268-332", "src/Servers/Kestrel/Core/src/Internal/ConfigSectionClone.cs:11-57"]
+    },
+    {
+      "id": "ordering-and-duplicates",
+      "claim": "transportsToStop preserves the original active-transport traversal order and includes each matching ActiveTransport entry once. Repeating an equal stop-list item cannot itself add the same transport twice, while several distinct real listeners sharing one configuration must all remain selected. The reader does not explicitly deduplicate GetChildren results; no universal uniqueness promise is inferred for arbitrary configuration providers. A membership index must not become the output enumerator or collapse active listeners by configuration.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:108-116", "src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:68-118", "src/Servers/Kestrel/Core/src/LocalhostListenOptions.cs:38-77"]
+    },
+    {
+      "id": "mutation-and-lifetime",
+      "claim": "The manager's active list lives with the server; the real caller's stop list is fresh and local to one rebind, and selection completes synchronously before StopTransportsAsync's asynchronous work. The bind semaphore serializes the selected bind/rebind/shutdown owners. EndpointConfig nevertheless has mutable protocol/certificate fields and a mutable SNI dictionary. The live IConfigurationSection is snapshotted for equality because configuration changes. CertificateConfig.FileHasChanged participates in equality and hashing, and CertificatePathWatcher really sets it under its separate metadata lock before raising its reload token. Reload updates certificate watches, including removal of stopped endpoint certificates, before it returns.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:282-314", "src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:396-432", "src/Servers/Kestrel/Core/src/Internal/CertificatePathWatcher.cs:73-101", "src/Servers/Kestrel/Core/src/Internal/CertificatePathWatcher.cs:164-204", "src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:439-508", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:51-74", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:330-371"],
+      "notClaimed": "A mutable field alone does not prove a race during target selection. Full stopped-key hash stability across default-certificate/HTTPS aliasing has not been proved within the selected inputs; the watcher-removal ordering must not be ignored."
+    },
+    {
+      "id": "cancellation-exceptions-and-concurrency",
+      "claim": "Selection itself does not observe cancellation. Its caller creates a token linked to shutdown and schedules cancellation after five seconds before invoking the target; this is not a preemptive bound on synchronous list scanning. StopTransportsAsync starts unbinds, awaits them all, closes connections with abort fallback, disposes listeners, then removes selected entries from _transports. Failure before final removal can leave entries present. Rebind catches/logs failure and rearms its token in finally; ordinary shutdown propagates failure through _stoppedTcs. Preserve this sequencing and the synchronous-selection/asynchronous-stop boundary.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:243-277", "src/Servers/Kestrel/Core/src/Internal/KestrelServerImpl.cs:360-412", "src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:106-192"]
+    },
+    {
+      "id": "cost-boundary-not-a-measurement",
+      "claim": "Let T be all active-transport entries, C the entries with nonnull EndpointConfig, and S the real stop-list count. This selection performs T outer checks and up to C*S value-membership comparisons, whose cost is not necessarily a primitive comparison. It is not simply request volume times endpoint count. A transient hash index would add construction, hashing and storage and would retain collision/equality costs; no crossover is established. Other selected code still scans old endpoints for reuse, calls RemoveAll, and removes stopped transports individually from a List. Improving this one membership seam would not prove linear whole-reload complexity or improved end-to-end reload latency.",
+      "bothRoles": ["src/Servers/Kestrel/Core/src/Internal/Infrastructure/TransportManager.cs:106-165", "src/Servers/Kestrel/Core/src/KestrelConfigurationLoader.cs:392-408", "src/Servers/Kestrel/Core/src/Internal/ConfigurationReader.cs:301-332"],
+      "materiality": "Unknown, neither measured beneficial nor measured no-gain. Reconfiguration lifecycle is a workload boundary, not a rejection reason."
+    }
+  ],
+  "boundedHistory": {
+    "rootReferences": [8, 9, 10, 11],
+    "observations": [
+      "Both role histories return the same latest eight TransportManager metadata entries. They include 34a16dcf5043b4f02756e9d0727943c385cd2810, Remove some Linq usages from Kestrel.Core (#47012), and c8d252dc43180b1718caae385bda65fed13e7822, Support side-by-side transports in Kestrel (#44657).",
+      "The selected reload-owner group histories also match across roles; their eight returned subjects include certificate-chain handling, lock usage and cancellation handling changes."
+    ],
+    "limits": "Commit subjects are navigational history evidence only. No patch, issue/PR discussion, introduction rationale, production-size assertion or previously measured result is inferred from those titles. Historical source-body expansion stopped at the body cap."
+  },
+  "testsReadNotExecuted": [
+    {
+      "test": "KestrelConfigurationLoaderTests.Reload_IdentifiesEndpointsToStartAndStop",
+      "source": "src/Servers/Kestrel/Kestrel/test/KestrelConfigurationLoaderTests.cs:1737-1774",
+      "boundary": "Real ConfigurationBuilder inputs and loader logic produce an old two-endpoint/new three-endpoint change, one stop, two starts and reused options. It calls Reload directly and does not prove token-to-server transport cutover."
+    },
+    {
+      "test": "KestrelConfigurationLoaderTests.Reload_IdentifiesEndpointsWithChangedDefaults; Reload_RerunsNamedEndpointConfigurationOnChange",
+      "source": "src/Servers/Kestrel/Kestrel/test/KestrelConfigurationLoaderTests.cs:1776-1843",
+      "boundary": "Source assertions cover default-induced change and callback reuse/refresh. Neither is an executed transport-selection verification."
+    },
+    {
+      "test": "KestrelConfigurationLoaderTests.CertificateChangedOnDisk(bool reloadOnChange)",
+      "source": "src/Servers/Kestrel/Kestrel/test/KestrelConfigurationLoaderTests.cs:1119-1200",
+      "boundary": "The existing test writes actual certificate files, observes a real watcher token for the true row and then calls Reload. Neither true nor false row was run here. This source is not proof of server-side StopEndpointsAsync behavior."
+    },
+    {
+      "test": "ConfigurationReaderTests.ReadEndpointsSection_ReturnsCollection",
+      "source": "src/Servers/Kestrel/Kestrel/test/ConfigurationReaderTests.cs:152-219",
+      "boundary": "Source assertions materialize four configured endpoints and certificate settings. Four is a test example, not a production upper bound."
+    },
+    {
+      "test": "AddressRegistrationTests.DoesNotOverrideDirectConfigurationWithIServerAddressesFeature_IfPreferHostingUrlsFalse",
+      "source": "src/Servers/Kestrel/test/BindTests/AddressRegistrationTests.cs:648-688",
+      "boundary": "Source starts a host, checks bound addresses, sends an HTTP request and stops. It is a hosting/address-selection scenario, not a configuration-reload stop-selection test. TransportSelector/helper/project implementations were not read or executed."
+    }
+  ],
+  "nextGate": {
+    "status": "Parent decision and new explicit authority required; do not broaden or run now.",
+    "firstRequirement": "Obtain an owner-backed application/deployment configuration and legitimate reload transition: natural old/new endpoint counts, naturally removed/modified fraction, stream/multiplexed/localhost multiplicity, code-backed mix, certificate/default usage and actual change cadence or a contract-relevant reload-latency requirement. Source shape alone does not establish those values.",
+    "conditionalDirection": "Only if that profile justifies proceeding, investigate a per-call membership index using the existing EndpointConfig value-equality contract while retaining _transports traversal, null filtering, selected-transport multiplicity/order and unchanged StopTransportsAsync. Do not use reference identity merely because the normal producer shares references. Do not cache mutable keys across reloads, introduce a tuned threshold, change APIs, or claim a guaranteed whole-operation complexity improvement.",
+    "contractPrerequisite": "Before any implementation sign-off, establish stopped-key hash stability through watch removal and HTTPS/default-certificate aliasing, and preserve distinct-but-value-equal configurations, duplicate stop-list values, shared-config multiple listeners, empty/failed-bind states, cancellation and exception/removal behavior. This requires a newly bounded source/test authorization, not more bodies in this closed fifteen-input scope.",
+    "futureFaithfulValidationBoundary": "After separate runtime/test authority, exercise the actual configuration provider/change token through KestrelServerImpl and real bound transports for the owner-backed transition, observing old listeners/connections stop and unchanged/new endpoints behave as required. A direct callback injection or isolated Contains benchmark would not establish producer reachability or material effect. Do not pad endpoint lists, repeatedly shut down servers to target the wrong method, invent repeated configuration churn, or pool unrelated data.",
+    "fallback": "If no owner-backed material workload is available, a source-only no-material-candidate decision is defensible as an evidence limitation, not measured no-gain or proof that production endpoint lists are small. Parent owns that canonical disposition."
+  },
+  "explicitGaps": [
+    "No production application/deployment endpoint cardinality, reload rate or materiality measurement.",
+    "No full repository caller graph. The configured Azure code graph is unrelated to these GitHub pins; no mismatched LSP/worktree output was treated as evidence.",
+    "No extra repository body after reaching fifteen per role, including hosting default setup, HTTPS aliasing implementation, transport implementations, additional reload/stop tests or project/build entry points.",
+    "No executed automated test reached any assertion: source-only authorization forbids SDK activation, builds, tests, hosts and browsers. Named tests above were read only. The validation boundary here is immutable source/custody inspection, not runtime or red/green verification.",
+    "No historical patch/source-body inspection beyond the bounded metadata histories.",
+    "Early operational guard discovery has transcript-only stream boundaries for most probes, not independently byte-captured raw streams. Two oversized early tool outputs and one oversized later source display were copied from tool-managed files. All twelve direct Git/gh roots have independent exact binary stdin/stdout/stderr captures. Do not retroactively label the early guard probes as fully raw-qualified."
+  ],
+  "authorityAndCustody": {
+    "onlyOutput": "autoperf-parallelism\\finding-F257-298",
+    "shippingCodeTestsCandidatesManifestsAndCachesChanged": false,
+    "sdkActivationBuildTestHostBrowserOrProductNativeRun": false,
+    "benchmarkWarmupAllocationProfilerOrCountersRun": false,
+    "remoteWritesFetchOrRepositoryModification": false,
+    "sharedPolicyLeaseLedgerPublicationOrPriorHelperWrites": false,
+    "nestedDelegation": false,
+    "sourceCustody": "STATE.json, per-root root.json, exact stdin.bin/stdout.bin/stderr.bin, complete pinned tree metadata, exact whole-file binary captures, mode/blob/commit:path/byte/SHA256 data and Git batch framing offsets. Git blob identities are independently recomputed from captured bytes.",
+    "processBoundary": "Every direct Git/gh root has an observed direct PID exit and close plus both stream EOFs within its recorded observation deadline. No descendant enumeration, machine-idleness claim, universal process census or arbitrary process stop was attempted.",
+    "finalization": "Sealer self/enclosing-tool exit remains null in prospective on-disk receipts. Actual final enclosing-tool exit may be reported only after its tool response; parent independently records acceptance/raw qualification/retirement/finalization."
+  }
+}

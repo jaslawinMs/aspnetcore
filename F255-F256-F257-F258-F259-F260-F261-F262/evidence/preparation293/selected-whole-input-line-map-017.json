@@ -1,0 +1,548 @@
+[
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 19,
+    "selectedWholeInputOrdinal": 4,
+    "text": "    private static bool _haveReinstalledTemplatePackages;"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 21,
+    "selectedWholeInputOrdinal": 4,
+    "text": "    private static readonly string[] _templatePackages = new[]"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 52,
+    "selectedWholeInputOrdinal": 4,
+    "text": "    public static async Task EnsureTemplatingEngineInitializedAsync(ITestOutputHelper output)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 54,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        if (!_haveReinstalledTemplatePackages)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 61,
+    "selectedWholeInputOrdinal": 4,
+    "text": "            _haveReinstalledTemplatePackages = true;"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 70,
+    "selectedWholeInputOrdinal": 4,
+    "text": "            DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 92,
+    "selectedWholeInputOrdinal": 4,
+    "text": "                .Single(a => a.Key == \"ArtifactsNonShippingPackagesDir\").Value;"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 95,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        var builtPackages = Directory.EnumerateFiles(packagesDir, \"*Templates*.nupkg\")"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 96,
+    "selectedWholeInputOrdinal": 4,
+    "text": "            .Where(p => _templatePackages.Any(t => Path.GetFileName(p).StartsWith(t, StringComparison.OrdinalIgnoreCase)))"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 104,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        Assert.Equal(4, builtPackages.Length);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 106,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCannotFindTemplateAsync(output, \"web\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 107,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCannotFindTemplateAsync(output, \"webapp\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 108,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCannotFindTemplateAsync(output, \"webapi\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 109,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCannotFindTemplateAsync(output, \"mvc\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 111,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        foreach (var packagePath in builtPackages)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 118,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCanFindTemplate(output, \"webapp\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 119,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCanFindTemplate(output, \"web\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/TemplatePackageInstaller.cs",
+    "line": 120,
+    "selectedWholeInputOrdinal": 4,
+    "text": "        await VerifyCanFindTemplate(output, \"webapi\");"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 31,
+    "selectedWholeInputOrdinal": 5,
+    "text": "    public static TheoryData<string, string[]> TemplateBaselines"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 74,
+    "selectedWholeInputOrdinal": 5,
+    "text": "    [MemberData(nameof(TemplateBaselines))]"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 75,
+    "selectedWholeInputOrdinal": 5,
+    "text": "    public async Task Template_Produces_The_Right_Set_Of_FilesAsync(string arguments, string[] expectedFiles)"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 78,
+    "selectedWholeInputOrdinal": 5,
+    "text": "        await Project.RunDotNetNewRawAsync(arguments);"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 80,
+    "selectedWholeInputOrdinal": 5,
+    "text": "        expectedFiles = expectedFiles.Select(f => f.Replace(\"{ProjectName}\", Project.ProjectName)).ToArray();"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 84,
+    "selectedWholeInputOrdinal": 5,
+    "text": "            AssertFileExists(Project.TemplateOutputDir, file, shouldExist: true);"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 87,
+    "selectedWholeInputOrdinal": 5,
+    "text": "        var filesInFolder = Directory.EnumerateFiles(Project.TemplateOutputDir, \"*\", SearchOption.AllDirectories).ToArray();"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/BaselineTest.cs",
+    "line": 104,
+    "selectedWholeInputOrdinal": 5,
+    "text": "            Assert.Contains(relativePath, expectedFiles);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 27,
+    "selectedWholeInputOrdinal": 8,
+    "text": "    public async Task<Project> CreateProject(ITestOutputHelper output)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 29,
+    "selectedWholeInputOrdinal": 8,
+    "text": "        await TemplatePackageInstaller.EnsureTemplatingEngineInitializedAsync(output);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 42,
+    "selectedWholeInputOrdinal": 8,
+    "text": "    public async Task<Project> CreateProject(ITestOutputHelper output, string projectName)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 44,
+    "selectedWholeInputOrdinal": 8,
+    "text": "        await TemplatePackageInstaller.EnsureTemplatingEngineInitializedAsync(output);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 57,
+    "selectedWholeInputOrdinal": 8,
+    "text": "    private Project CreateProjectImpl(ITestOutputHelper output, string projectName = null)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 70,
+    "selectedWholeInputOrdinal": 8,
+    "text": "            project.ProjectName = $\"AspNet.{project.ProjectGuid}\";"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 74,
+    "selectedWholeInputOrdinal": 8,
+    "text": "            project.ProjectName = projectName;"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 78,
+    "selectedWholeInputOrdinal": 8,
+    "text": "        var basePath = GetTemplateFolderBasePath(assemblyPath);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 80,
+    "selectedWholeInputOrdinal": 8,
+    "text": "        project.TemplateOutputDir = Path.Combine(basePath, $\"AspNet.{project.ProjectGuid}\");"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/ProjectFactoryFixture.cs",
+    "line": 87,
+    "selectedWholeInputOrdinal": 8,
+    "text": "    private static string GetTemplateFolderBasePath(Assembly assembly) =>"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 141,
+    "selectedWholeInputOrdinal": 9,
+    "text": "            DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 161,
+    "selectedWholeInputOrdinal": 9,
+    "text": "                DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 194,
+    "selectedWholeInputOrdinal": 9,
+    "text": "            DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 224,
+    "selectedWholeInputOrdinal": 9,
+    "text": "            DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 305,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var serveProcess = ProcessEx.Run(output, TemplatePublishDir, DotNetMuxer.MuxerPathOrDefault(), args);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 372,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var command = DotNetMuxer.MuxerPathOrDefault();"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 392,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var command = DotNetMuxer.MuxerPathOrDefault();"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 412,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var file = Directory.EnumerateFiles(fullPath).Where(f => f.EndsWith($\"{migration}.cs\", StringComparison.Ordinal)).FirstOrDefault();"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 457,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var launchSettingsFiles = Directory.EnumerateFiles(TemplateOutputDir, \"launchSettings.json\", SearchOption.AllDirectories);"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 534,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var projectFile = Directory.EnumerateFiles(TemplateOutputDir, \"*proj\").FirstOrDefault();"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 593,
+    "selectedWholeInputOrdinal": 9,
+    "text": "    internal async Task RunDotNetNewRawAsync(string arguments)"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 598,
+    "selectedWholeInputOrdinal": 9,
+    "text": "            DotNetMuxer.MuxerPathOrDefault(),"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 610,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        var doNotCleanUpTemplates = typeof(ProjectFactoryFixture).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 611,
+    "selectedWholeInputOrdinal": 9,
+    "text": "            .Single(attribute => attribute.Key == \"DoNotCleanUpTemplates\")"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/Project.cs",
+    "line": 613,
+    "selectedWholeInputOrdinal": 9,
+    "text": "        if (string.Equals(doNotCleanUpTemplates, \"false\", StringComparison.OrdinalIgnoreCase))"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 34,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <EmbeddedResource Include=\"template-baselines.json\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 54,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\Framework\\App.Runtime\\src\\Microsoft.AspNetCore.App.Runtime.sfxproj\""
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 58,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\Http\\Routing.Abstractions\\src\\Microsoft.AspNetCore.Routing.Abstractions.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 59,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\Http\\Routing\\src\\Microsoft.AspNetCore.Routing.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 61,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\Hosting\\Server.IntegrationTesting\\src\\Microsoft.AspNetCore.Server.IntegrationTesting.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 62,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\ProjectTemplates\\McpServer.ProjectTemplates\\Microsoft.McpServer.ProjectTemplates.csproj\""
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 66,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\ProjectTemplates\\Web.Client.ItemTemplates\\Microsoft.DotNet.Web.Client.ItemTemplates.csproj\""
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 70,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\ProjectTemplates\\Web.ItemTemplates\\Microsoft.DotNet.Web.ItemTemplates.csproj\""
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 74,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\ProjectTemplates\\Web.ProjectTemplates\\Microsoft.DotNet.Web.ProjectTemplates.csproj\""
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 78,
+    "selectedWholeInputOrdinal": 11,
+    "text": "    <ProjectReference Include=\"$(RepoRoot)src\\Shared\\BrowserTesting\\src\\Microsoft.AspNetCore.BrowserTesting.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/test/Templates.Tests/Templates.Tests.csproj",
+    "line": 87,
+    "selectedWholeInputOrdinal": 11,
+    "text": "  <Import Condition=\"'$(SkipTestBuild)' != 'true'\" Project=\"..\\..\\TestInfrastructure\\PrepareForTest.targets\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 19,
+    "selectedWholeInputOrdinal": 12,
+    "text": "    <AssemblyAttribute Include=\"System.Reflection.AssemblyMetadataAttribute\" Condition=\"'$(DoNotCleanUpTemplates)' == 'true'\">"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 20,
+    "selectedWholeInputOrdinal": 12,
+    "text": "      <_Parameter1>DoNotCleanUpTemplates</_Parameter1>"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 23,
+    "selectedWholeInputOrdinal": 12,
+    "text": "    <AssemblyAttribute Include=\"System.Reflection.AssemblyMetadataAttribute\" Condition=\"'$(DoNotCleanUpTemplates)' != 'true'\">"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 24,
+    "selectedWholeInputOrdinal": 12,
+    "text": "      <_Parameter1>DoNotCleanUpTemplates</_Parameter1>"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 58,
+    "selectedWholeInputOrdinal": 12,
+    "text": "      <CustomTemplateHivePath>$(TestTemplateCreationFolder)\\Hives\\$([System.Guid]::NewGuid())\\.templateengine</CustomTemplateHivePath>"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 83,
+    "selectedWholeInputOrdinal": 12,
+    "text": "        <_Parameter1>ArtifactsNonShippingPackagesDir</_Parameter1>"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 84,
+    "selectedWholeInputOrdinal": 12,
+    "text": "        <_Parameter2>$(ArtifactsNonShippingPackagesDir)</_Parameter2>"
+  },
+  {
+    "path": "src/ProjectTemplates/TestInfrastructure/PrepareForTest.targets",
+    "line": 148,
+    "selectedWholeInputOrdinal": 12,
+    "text": "          RestoreAdditionalProjectSources=$([MSBuild]::Escape('$(RestoreAdditionalProjectSources);$(ArtifactsShippingPackagesDir);$(ArtifactsNonShippingPackagesDir)'));MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion=$(PackageVersion);MicrosoftAspNetCoreComponentsGatewayVersion=$(PackageVersion)\""
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 5,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <PackageId>Microsoft.DotNet.Web.ProjectTemplates</PackageId>"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 6,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <IsShippingPackage>false</IsShippingPackage>"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 59,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"EmptyWeb-CSharp.csproj.in\" OutputPath=\"content/EmptyWeb-CSharp/Company.WebApplication1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 60,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"EmptyWeb-FSharp.fsproj.in\" OutputPath=\"content/EmptyWeb-FSharp/Company.WebApplication1.fsproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 61,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"GrpcService-CSharp.csproj.in\" OutputPath=\"content/GrpcService-CSharp/GrpcService-CSharp.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 62,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"RazorPagesWeb-CSharp.csproj.in\" OutputPath=\"content/RazorPagesWeb-CSharp/Company.WebApplication1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 63,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"RazorClassLibrary-CSharp.csproj.in\" OutputPath=\"content/RazorClassLibrary-CSharp/Company.RazorClassLibrary1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 64,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"StarterWeb-CSharp.csproj.in\" OutputPath=\"content/StarterWeb-CSharp/Company.WebApplication1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 65,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"StarterWeb-FSharp.fsproj.in\" OutputPath=\"content/StarterWeb-FSharp/Company.WebApplication1.fsproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 66,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"WebApi-CSharp.csproj.in\" OutputPath=\"content/WebApi-CSharp/Company.WebApplication1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 67,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"WebApiAot-CSharp.csproj.in\" OutputPath=\"content/WebApiAot-CSharp/Company.WebApplication1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 68,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"WebApi-FSharp.fsproj.in\" OutputPath=\"content/WebApi-FSharp/Company.WebApplication1.fsproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 69,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"Worker-CSharp.csproj.in\" OutputPath=\"content/Worker-CSharp/Company.Application1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 70,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"Worker-FSharp.fsproj.in\" OutputPath=\"content/Worker-FSharp/Company.Application1.fsproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 71,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"BlazorWebCSharp.csproj.in\" OutputPath=\"content/BlazorWeb-CSharp/BlazorWebCSharp.1/BlazorWebCSharp.1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 72,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"BlazorWebCSharp.Client.csproj.in\" OutputPath=\"content/BlazorWeb-CSharp/BlazorWebCSharp.1.Client/BlazorWebCSharp.1.Client.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 73,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"BlazorWasmServiceDefaults-CSharp.csproj.in\" OutputPath=\"content/BlazorWasmServiceDefaults-CSharp/BlazorWasm.ServiceDefaults1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 74,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"ComponentsWebAssembly-CSharp.csproj.in\" OutputPath=\"content/ComponentsWebAssembly-CSharp/ComponentsWebAssembly-CSharp.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/Microsoft.DotNet.Web.ProjectTemplates.csproj",
+    "line": 75,
+    "selectedWholeInputOrdinal": 13,
+    "text": "    <GeneratedContent Include=\"BlazorWebWorker-CSharp.csproj.in\" OutputPath=\"content/BlazorWebWorker-CSharp/Company.WebWorker1.csproj\" />"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/AssemblyInfo.AssemblyFixtures.cs",
+    "line": 8,
+    "selectedWholeInputOrdinal": 14,
+    "text": "[assembly: AssemblyFixture(typeof(ProjectFactoryFixture))]"
+  },
+  {
+    "path": "src/ProjectTemplates/Shared/AssemblyInfo.AssemblyFixtures.cs",
+    "line": 9,
+    "selectedWholeInputOrdinal": 14,
+    "text": "[assembly: CollectionBehavior(DisableTestParallelization = true)]"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "F258",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Servers/Kestrel/shared/KnownHeaders.cs",
+      "line_start": 177,
+      "line_end": 303,
+      "project": "CodeGenerator",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "Header-table construction repeatedly scans retained arrays from outer LINQ pipelines.",
+      "explanation": "The static header-table construction invokes Contains over retained arrays or projected retained arrays from OrderBy, Select, and Where callbacks for each request, response, and trailer header. The PseudoRequestHeadersBits query also rebuilds and scans a projected internal-header sequence for every request header. These are deterministic nested sequential lookups, but they execute in the code generator rather than the steady-state server path, so the finding is informational.",
+      "snippet": "ClassName = FormattedInternalHeaderNames.Select(x => x.Name).Contains(header) ? \"InternalHeaderNames\" : \"HeaderNames\",\n...\n.Where(header => FormattedInternalHeaderNames.Where(x => x.IsPseudoHeader).Select(x => x.Identifier).Contains(header.Identifier))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F259",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Servers/Kestrel/shared/KnownHeaders.cs",
+      "line_start": 937,
+      "line_end": 937,
+      "project": "CodeGenerator",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "API header generation rebuilds and scans a projected loop-header sequence for every candidate header.",
+      "explanation": "The ApiHeaderNames.Where predicate evaluates loop.Headers.Select(...).Contains(header) for each candidate API header. That recreates the projection and linearly scans the retained loop header collection on every predicate invocation. It is a distinct nested sequential-lookup site from static table construction, but it belongs to an offline code generator and is therefore informational.",
+      "snippet": "Each(ApiHeaderNames.Where(header => header != \"ContentLength\" && !loop.Headers.Select(kh => kh.Identifier).Contains(header)), ...)",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

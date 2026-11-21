@@ -1,0 +1,2048 @@
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+1f725a29a51c9bf10287a3521838bfec68849438 blob 2318
+---
+description: Instructions for MSBuild and repository build infrastructure
+applyTo: "eng/**,Directory.Build.*,**/*.props,**/*.targets"
+---
+
+# Build infrastructure changes
+
+- Read `docs/BuildFromSource.md` and `docs/BuildErrors.md`. Prefer the existing area or repository `build` and `restore` scripts. Before invoking `dotnet` directly, activate the repository SDK with `source activate.sh` or `. ./activate.ps1`.
+- When adding, moving, or removing a project, follow the [project relocation checklist](../../docs/AddingNewProjects.md#adding-moving-or-removing-a-project). Regenerate project metadata until a second generation pass produces no further changes, update `AspNetCore.slnx` and every affected solution filter, and check for stale paths.
+- Trace build properties through every applicable entry point. Check both wrapper scripts and bare `dotnet` or IDE evaluation; do not assume they assign the same defaults. In particular, `eng/build.sh` detects and passes the host architecture, while `eng/Common.props` currently defaults an unset `TargetArchitecture` to `x64`. Treat that fallback as behavior to investigate, not a convention to preserve.
+- Before proposing a fix, map the producer, persisted or shared intermediate state, consumer, and resulting diagnostic. Verify that state paths and cache keys distinguish every relevant configuration, OS, architecture, runtime identifier, and target framework.
+- Locate each custom task's `UsingTask` declaration or imported `.tasks` file and inspect its conditions. Ensure the task invocation is skipped in evaluations where registration is unavailable, especially `DesignTimeBuild`.
+- Select validation modes that exercise the changed surface: normal wrapper builds, direct CLI and IDE/design-time evaluation, restore and no-restore transitions, source-build or CI properties, and affected OS/architecture/RID combinations. Record distinct source or observed-output evidence for each applicable mode and include an unchanged control path; one focused target invocation is not broad build-system evidence.
+- Multiple reviewers or models are not independent evidence when they inspect the same entry point and evaluation mode. Treat evidence as independent only when it covers distinct property sources, state transitions, import modes, or platform dimensions.
+
+b7c98376a6f40e239029e0ed8b2506517f64c1e4 blob 62992
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#pragma warning disable CA1810 // Initialize all static fields inline. This is a code generator.
+
+using System.Diagnostics;
+using System.Globalization;
+using System.Net.Http.HPack;
+using System.Net.Http.QPack;
+using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Server;
+using Microsoft.Net.Http.Headers;
+
+namespace CodeGenerator;
+
+public class KnownHeaders
+{
+    public static readonly KnownHeader[] RequestHeaders;
+    public static readonly KnownHeader[] ResponseHeaders;
+    public static readonly KnownHeader[] ResponseTrailers;
+    public static readonly string[] InternalHeaderAccessors = new[]
+    {
+        HeaderNames.Allow,
+        HeaderNames.AltSvc,
+        HeaderNames.TransferEncoding,
+        HeaderNames.ContentLength,
+        HeaderNames.Connection,
+        InternalHeaderNames.Scheme,
+        InternalHeaderNames.Path,
+        InternalHeaderNames.Protocol,
+        InternalHeaderNames.Method,
+        InternalHeaderNames.Authority,
+        HeaderNames.Host,
+    };
+
+    public static readonly string[] DefinedHeaderNames = typeof(HeaderNames)
+        .GetFields(BindingFlags.Static | BindingFlags.Public)
+        .Where(h => h.GetCustomAttribute(typeof(ObsoleteAttribute)) == null)
+        .Select(h => h.Name)
+        .ToArray();
+
+    // These headers are excluded from generated IHeadersDictionary implementation.
+    public static readonly string[] NonPublicHeaderNames = new[]
+    {
+        HeaderNames.DNT,
+        InternalHeaderNames.AltUsed
+    };
+
+    public sealed class InternalHeader
+    {
+        public string Identifier { get; }
+
+        public string Name { get; }
+        
+        public bool IsPseudoHeader { get; }
+
+        public InternalHeader(string identifier, string name, bool isPseudoHeader = false)
+        {
+            Identifier = identifier;
+            Name = name;
+            IsPseudoHeader = isPseudoHeader;
+        }
+    }
+
+    public static readonly InternalHeader[] FormattedInternalHeaderNames = new[]
+    {
+        new InternalHeader("Authority", InternalHeaderNames.Authority, isPseudoHeader: true),
+        new InternalHeader("Method", InternalHeaderNames.Method, isPseudoHeader: true),
+        new InternalHeader("Path", InternalHeaderNames.Path, isPseudoHeader: true),
+        new InternalHeader("Scheme", InternalHeaderNames.Scheme, isPseudoHeader: true),
+        new InternalHeader("Status", InternalHeaderNames.Status, isPseudoHeader: true),
+        new InternalHeader("Protocol", InternalHeaderNames.Protocol, isPseudoHeader: true),
+        new InternalHeader("AltUsed", InternalHeaderNames.AltUsed)
+    };
+
+    public static readonly string[] NonApiHeaders =
+        NonPublicHeaderNames
+        .Concat(FormattedInternalHeaderNames.Select(x => x.Identifier))
+        .ToArray();
+
+    public static readonly string[] ApiHeaderNames =
+        DefinedHeaderNames
+        .Except(NonApiHeaders)
+        .ToArray();
+
+    public static readonly long InvalidH2H3ResponseHeadersBits;
+    public static readonly long PseudoRequestHeadersBits;
+
+    static KnownHeaders()
+    {
+        var requestPrimaryHeaders = new[]
+        {
+            HeaderNames.Accept,
+            HeaderNames.Connection,
+            HeaderNames.Host,
+            HeaderNames.UserAgent
+        };
+        var responsePrimaryHeaders = new[]
+        {
+            HeaderNames.Connection,
+            HeaderNames.Date,
+            HeaderNames.ContentType,
+            HeaderNames.Server,
+            HeaderNames.ContentLength,
+        };
+        var commonHeaders = new[]
+        {
+            HeaderNames.CacheControl,
+            HeaderNames.Connection,
+            HeaderNames.Date,
+            HeaderNames.GrpcEncoding,
+            HeaderNames.KeepAlive,
+            HeaderNames.Pragma,
+            HeaderNames.TransferEncoding,
+            HeaderNames.Upgrade,
+            HeaderNames.Via,
+            HeaderNames.Warning,
+            HeaderNames.ContentType,
+        };
+        // http://www.w3.org/TR/cors/#syntax
+        var corsRequestHeaders = new[]
+        {
+            HeaderNames.Origin,
+            HeaderNames.AccessControlRequestMethod,
+            HeaderNames.AccessControlRequestHeaders,
+        };
+        var requestHeadersExistence = new[]
+        {
+            HeaderNames.Cookie,
+            HeaderNames.Connection,
+            HeaderNames.TransferEncoding,
+        };
+        var requestHeadersCount = new[]
+        {
+            HeaderNames.Host
+        };
+        RequestHeaders = commonHeaders.Concat(new[]
+        {
+            InternalHeaderNames.Authority,
+            InternalHeaderNames.Method,
+            InternalHeaderNames.Path,
+            InternalHeaderNames.Scheme,
+            HeaderNames.Accept,
+            HeaderNames.AcceptCharset,
+            HeaderNames.AcceptEncoding,
+            HeaderNames.AcceptLanguage,
+            InternalHeaderNames.AltUsed,
+            HeaderNames.Authorization,
+            HeaderNames.Cookie,
+            HeaderNames.Expect,
+            HeaderNames.From,
+            HeaderNames.GrpcAcceptEncoding,
+            HeaderNames.GrpcTimeout,
+            HeaderNames.Host,
+            HeaderNames.IfMatch,
+            HeaderNames.IfModifiedSince,
+            HeaderNames.IfNoneMatch,
+            HeaderNames.IfRange,
+            HeaderNames.IfUnmodifiedSince,
+            HeaderNames.MaxForwards,
+            InternalHeaderNames.Protocol,
+            HeaderNames.ProxyAuthorization,
+            HeaderNames.Referer,
+            HeaderNames.Range,
+            HeaderNames.TE,
+            HeaderNames.Translate,
+            HeaderNames.UserAgent,
+            HeaderNames.UpgradeInsecureRequests,
+            HeaderNames.RequestId,
+            HeaderNames.CorrelationContext,
+            HeaderNames.TraceParent,
+            HeaderNames.TraceState,
+            HeaderNames.Baggage,
+        })
+        .Concat(corsRequestHeaders)
+        .OrderBy(header => !requestPrimaryHeaders.Contains(header))
+        .ThenBy(header => header)
+        .Select((header, index) => new KnownHeader
+        {
+            ClassName = FormattedInternalHeaderNames.Select(x => x.Name).Contains(header) ? "InternalHeaderNames" : "HeaderNames",
+            Name = header,
+            Index = index,
+            PrimaryHeader = requestPrimaryHeaders.Contains(header),
+            ExistenceCheck = requestHeadersExistence.Contains(header),
+            FastCount = requestHeadersCount.Contains(header),
+        })
+        .Concat(new[] { new KnownHeader
+            {
+                ClassName = "HeaderNames",
+                Name = HeaderNames.ContentLength,
+                Index = -1,
+                PrimaryHeader = requestPrimaryHeaders.Contains(HeaderNames.ContentLength)
+            }})
+        .ToArray();
+
+        var responseHeadersExistence = new[]
+        {
+            HeaderNames.Connection,
+            HeaderNames.Server,
+            HeaderNames.Date,
+            HeaderNames.TransferEncoding,
+            HeaderNames.AltSvc
+        };
+        var enhancedHeaders = new[]
+        {
+            HeaderNames.Connection,
+            HeaderNames.Server,
+            HeaderNames.Date,
+            HeaderNames.TransferEncoding,
+            HeaderNames.AltSvc
+        };
+        // http://www.w3.org/TR/cors/#syntax
+        var corsResponseHeaders = new[]
+        {
+            HeaderNames.AccessControlAllowCredentials,
+            HeaderNames.AccessControlAllowHeaders,
+            HeaderNames.AccessControlAllowMethods,
+            HeaderNames.AccessControlAllowOrigin,
+            HeaderNames.AccessControlExposeHeaders,
+            HeaderNames.AccessControlMaxAge,
+        };
+        ResponseHeaders = commonHeaders.Concat(new[]
+        {
+            HeaderNames.AcceptRanges,
+            HeaderNames.Age,
+            HeaderNames.Allow,
+            HeaderNames.AltSvc,
+            HeaderNames.ETag,
+            HeaderNames.Location,
+            HeaderNames.ProxyAuthenticate,
+            HeaderNames.ProxyConnection,
+            HeaderNames.RetryAfter,
+            HeaderNames.Server,
+            HeaderNames.SetCookie,
+            HeaderNames.Vary,
+            HeaderNames.Expires,
+            HeaderNames.WWWAuthenticate,
+            HeaderNames.ContentRange,
+            HeaderNames.ContentEncoding,
+            HeaderNames.ContentLanguage,
+            HeaderNames.ContentLocation,
+            HeaderNames.ContentMD5,
+            HeaderNames.LastModified,
+            HeaderNames.Trailer,
+        })
+        .Concat(corsResponseHeaders)
+        .OrderBy(header => !responsePrimaryHeaders.Contains(header))
+        .ThenBy(header => header)
+        .Select((header, index) => new KnownHeader
+        {
+            ClassName = FormattedInternalHeaderNames.Select(x => x.Name).Contains(header) ? "InternalHeaderNames" : "HeaderNames",
+            Name = header,
+            Index = index,
+            EnhancedSetter = enhancedHeaders.Contains(header),
+            ExistenceCheck = responseHeadersExistence.Contains(header),
+            PrimaryHeader = responsePrimaryHeaders.Contains(header)
+        })
+        .Concat(new[] { new KnownHeader
+            {
+                ClassName = "HeaderNames",
+                Name = HeaderNames.ContentLength,
+                Index = 63,
+                EnhancedSetter = enhancedHeaders.Contains(HeaderNames.ContentLength),
+                PrimaryHeader = responsePrimaryHeaders.Contains(HeaderNames.ContentLength)
+            }})
+        .ToArray();
+
+        ResponseTrailers = new[]
+        {
+            HeaderNames.ETag,
+            HeaderNames.GrpcMessage,
+            HeaderNames.GrpcStatus
+        }
+        .OrderBy(header => !responsePrimaryHeaders.Contains(header))
+        .ThenBy(header => header)
+        .Select((header, index) => new KnownHeader
+        {
+            ClassName = FormattedInternalHeaderNames.Select(x => x.Name).Contains(header) ? "InternalHeaderNames" : "HeaderNames",
+            Name = header,
+            Index = index,
+            EnhancedSetter = enhancedHeaders.Contains(header),
+            ExistenceCheck = responseHeadersExistence.Contains(header),
+            PrimaryHeader = responsePrimaryHeaders.Contains(header)
+        })
+        .ToArray();
+
+        var invalidH2H3ResponseHeaders = new[]
+        {
+            HeaderNames.Connection,
+            HeaderNames.TransferEncoding,
+            HeaderNames.KeepAlive,
+            HeaderNames.Upgrade,
+            HeaderNames.ProxyConnection
+        };
+
+        InvalidH2H3ResponseHeadersBits = ResponseHeaders
+            .Where(header => invalidH2H3ResponseHeaders.Contains(header.Name))
+            .Select(header => 1L << header.Index)
+            .Aggregate((a, b) => a | b);
+
+        PseudoRequestHeadersBits = RequestHeaders
+            .Where(header => FormattedInternalHeaderNames.Where(x => x.IsPseudoHeader).Select(x => x.Identifier).Contains(header.Identifier))
+            .Select(header => 1L << header.Index)
+            .Aggregate((a, b) => a | b);
+    }
+
+    static string Each<T>(IEnumerable<T> values, Func<T, string> formatter)
+    {
+        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
+    }
+
+    static string Each<T>(IEnumerable<T> values, Func<T, int, string> formatter)
+    {
+        return values.Any() ? values.Select(formatter).Aggregate((a, b) => a + b) : "";
+    }
+
+    static string AppendSwitch(IEnumerable<IGrouping<int, KnownHeader>> values) =>
+         $@"switch (name.Length)
+            {{{Each(values, byLength => $@"
+                case {byLength.Key}:{AppendSwitchSection(byLength.Key, byLength.OrderBy(h => h, KnownHeaderComparer.Instance).ToList())}
+                    break;")}
+            }}";
+
+    static string AppendHPackSwitch(IEnumerable<HPackGroup> values) =>
+         $@"switch (index)
+            {{{Each(values, header => $@"{Each(header.HPackStaticTableIndexes, index => $@"
+                case {index}:")}
+                    {AppendIndexedSwitchSection(header.Header)}")}
+            }}";
+
+    static string AppendQPackSwitch(IEnumerable<QPackGroup> values) =>
+         $@"switch (index)
+            {{{Each(values, header => $@"{Each(header.QPackStaticTableFields, fields => $@"
+                case {fields.Index}:")}
+                    {AppendIndexedSwitchSection(header.Header)}")}
+            }}";
+
+    static string AppendValue(bool returnTrue = false) =>
+         $@"// Matched a known header
+                if ((_previousBits & flag) != 0)
+                {{
+                    // Had a previous string for this header, mark it as used so we don't clear it OnHeadersComplete or consider it if we get a second header
+                    _previousBits ^= flag;
+
+                    // We will only reuse this header if there was only one previous header
+                    if (values.Count == 1)
+                    {{
+                        var previousValue = values.ToString();
+                        // Check lengths are the same, then if the bytes were converted to an ascii string if they would be the same.
+                        // We do not consider Utf8 headers for reuse.
+                        if (previousValue.Length == value.Length &&
+                            StringUtilities.BytesOrdinalEqualsStringAndAscii(previousValue, value))
+                        {{
+                            // The previous string matches what the bytes would convert to, so we will just use that one.
+                            _bits |= flag;
+                            return{(returnTrue ? " true" : "")};
+                        }}
+                    }}
+                }}
+
+                // We didn't have a previous matching header value, or have already added a header, so get the string for this value.
+                var valueStr = value.GetRequestHeaderString(nameStr, EncodingSelector, checkForNewlineChars);
+                if ((_bits & flag) == 0)
+                {{
+                    // We didn't already have a header set, so add a new one.
+                    _bits |= flag;
+                    values = new StringValues(valueStr);
+                }}
+                else
+                {{
+                    // We already had a header set, so concatenate the new one.
+                    values = AppendValue(values, valueStr);
+                }}";
+
+    static string AppendIndexedSwitchSection(KnownHeader header)
+    {
+        if (header.Name == HeaderNames.ContentLength)
+        {
+            return $@"var customEncoding = ReferenceEquals(EncodingSelector, KestrelServerOptions.DefaultHeaderEncodingSelector)
+                        ? null : EncodingSelector(HeaderNames.ContentLength);
+                    if (customEncoding == null)
+                    {{
+                        AppendContentLength(value);
+                    }}
+                    else
+                    {{
+                        AppendContentLengthCustomEncoding(value, customEncoding);
+                    }}
+                    return true;";
+        }
+        else
+        {
+            return $@"flag = {header.FlagBit()};
+                    values = ref _headers._{header.Identifier};
+                    nameStr = {header.StaticIdentifier};
+                    break;";
+        }
+    }
+
+    static string AppendSwitchSection(int length, IList<KnownHeader> values)
+    {
+        var useVarForFirstTerm = values.Count > 1 && values.Select(h => h.FirstNameIgnoreCaseSegment()).Distinct().Count() == 1;
+        var firstTermVarExpression = values.Select(h => h.FirstNameIgnoreCaseSegment()).FirstOrDefault();
+        var firstTermVar = $"firstTerm{length}";
+
+        var start = "";
+        if (useVarForFirstTerm)
+        {
+            start = $@"
+                    var {firstTermVar} = {firstTermVarExpression};";
+        }
+        else
+        {
+            firstTermVar = "";
+        }
+
+        static string GenerateIfBody(KnownHeader header, string extraIndent = "")
+        {
+            if (header.Name == HeaderNames.ContentLength)
+            {
+                return $@"
+                        {extraIndent}var customEncoding = ReferenceEquals(EncodingSelector, KestrelServerOptions.DefaultHeaderEncodingSelector)
+                        {extraIndent}   ? null : EncodingSelector(HeaderNames.ContentLength);
+                        {extraIndent}if (customEncoding == null)
+                        {extraIndent}{{
+                        {extraIndent}    AppendContentLength(value);
+                        {extraIndent}}}
+                        {extraIndent}else
+                        {extraIndent}{{
+                        {extraIndent}    AppendContentLengthCustomEncoding(value, customEncoding);
+                        {extraIndent}}}
+                        {extraIndent}return;";
+            }
+            else
+            {
+                return $@"
+                        {extraIndent}flag = {header.FlagBit()};
+                        {extraIndent}values = ref _headers._{header.Identifier};
+                        {extraIndent}nameStr = {header.StaticIdentifier};";
+            }
+        }
+
+        // Group headers together that have the same ignore equal case equals check for the first term.
+        // There will probably only be more than one item in a group for Content-Encoding, Content-Language, Content-Location.
+        var groups = values.GroupBy(header => header.EqualIgnoreCaseBytesFirstTerm())
+            .OrderBy(g => g.First(), KnownHeaderComparer.Instance)
+            .ToList();
+
+        return start + $@"{Each(groups, (byFirstTerm, i) => $@"{(byFirstTerm.Count() == 1 ? $@"{Each(byFirstTerm, header => $@"
+                    {(i > 0 ? "else " : "")}if ({header.EqualIgnoreCaseBytes(firstTermVar)})
+                    {{{GenerateIfBody(header)}
+                    }}")}" : $@"
+                    if ({byFirstTerm.Key.Replace(firstTermVarExpression, firstTermVar)})
+                    {{{Each(byFirstTerm, (header, i) => $@"
+                        {(i > 0 ? "else " : "")}if ({header.EqualIgnoreCaseBytesSecondTermOnwards()})
+                        {{{GenerateIfBody(header, extraIndent: "    ")}
+                        }}")}
+                    }}")}")}";
+    }
+
+    [DebuggerDisplay("{Name}")]
+    public class KnownHeader
+    {
+        public string ClassName { get; set; }
+        public string Name { get; set; }
+        public int Index { get; set; }
+        public string Identifier => ResolveIdentifier(Name);
+
+        public string StaticIdentifier => ResolveIdentifier(Name, ClassName);
+
+        public byte[] Bytes => Encoding.ASCII.GetBytes($"\r\n{Name}: ");
+        public int BytesOffset { get; set; }
+        public int BytesCount { get; set; }
+        public bool ExistenceCheck { get; set; }
+        public bool FastCount { get; set; }
+        public bool EnhancedSetter { get; set; }
+        public bool PrimaryHeader { get; set; }
+        public string FlagBit() => $"{"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L";
+        public string TestBitCore(string name) => $"({name} & {"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L) != 0";
+        public string TestBit() => TestBitCore("_bits");
+        public string TestTempBit() => TestBitCore("tempBits");
+        public string TestNotTempBit() => $"(tempBits & ~{"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L) == 0";
+        public string TestNotBit() => $"(_bits & {"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L) == 0";
+        public string SetBit() => $"_bits |= {"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L";
+        public string ClearBit() => $"_bits &= ~{"0x" + (1L << Index).ToString("x", CultureInfo.InvariantCulture)}L";
+
+        private static string ResolveIdentifier(string name, string prefix = "")
+        {
+            var identifier = name switch
+            {
+                "baggage" => "Baggage",
+                "traceparent" => "TraceParent",
+                "tracestate" => "TraceState",
+                _ => name.Replace("-", "")
+            };
+
+            // Pseudo headers start with a colon. A colon isn't valid in C# names so
+            // remove it and pascal case the header name. e.g. :path -> Path, :scheme -> Scheme.
+            // This identifier will match the names in HeadersNames.cs
+            if (identifier.StartsWith(':'))
+            {
+                identifier = char.ToUpperInvariant(identifier[1]) + identifier.Substring(2);
+            }
+
+            return prefix.Length != 0 ? $"{prefix}.{identifier}" : identifier;
+        }
+
+        private static void GetMaskAndComp(string name, int offset, int count, out ulong mask, out ulong comp)
+        {
+            mask = 0;
+            comp = 0;
+            for (var scan = 0; scan < count; scan++)
+            {
+                var ch = (byte)name[offset + count - scan - 1];
+                var isAlpha = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+                comp = (comp << 8) + (ch & (isAlpha ? 0xdfu : 0xffu));
+                mask = (mask << 8) + (isAlpha ? 0xdfu : 0xffu);
+            }
+        }
+
+        private static string NameTerm(string name, int offset, int count, string type, string suffix)
+        {
+            GetMaskAndComp(name, offset, count, out var mask, out _);
+
+            if (offset == 0)
+            {
+                if (type == "byte")
+                {
+                    return $"(nameStart & 0x{mask:x}{suffix})";
+                }
+                else
+                {
+                    return $"(ReadUnalignedLittleEndian_{type}(ref nameStart) & 0x{mask:x}{suffix})";
+                }
+            }
+            else
+            {
+                if (type == "byte")
+                {
+                    return $"(Unsafe.AddByteOffset(ref nameStart, (IntPtr){offset / count}) & 0x{mask:x}{suffix})";
+                }
+                else if ((offset / count) == 1)
+                {
+                    return $"(ReadUnalignedLittleEndian_{type}(ref Unsafe.AddByteOffset(ref nameStart, (IntPtr)sizeof({type}))) & 0x{mask:x}{suffix})";
+                }
+                else
+                {
+                    return $"(ReadUnalignedLittleEndian_{type}(ref Unsafe.AddByteOffset(ref nameStart, (IntPtr)({offset / count} * sizeof({type})))) & 0x{mask:x}{suffix})";
+                }
+            }
+
+        }
+
+        private static string EqualityTerm(string name, int offset, int count, string suffix)
+        {
+            GetMaskAndComp(name, offset, count, out _, out var comp);
+
+            return $"0x{comp:x}{suffix}";
+        }
+
+        private static string Term(string name, int offset, int count, string type, string suffix)
+        {
+            GetMaskAndComp(name, offset, count, out _, out _);
+
+            return $"({NameTerm(name, offset, count, type, suffix)} == {EqualityTerm(name, offset, count, suffix)})";
+        }
+
+        public string FirstNameIgnoreCaseSegment()
+        {
+            string result;
+            if (Name.Length >= 8)
+            {
+                result = NameTerm(Name, 0, 8, "ulong", "uL");
+            }
+            else if (Name.Length >= 4)
+            {
+                result = NameTerm(Name, 0, 4, "uint", "u");
+            }
+            else if (Name.Length >= 2)
+            {
+                result = NameTerm(Name, 0, 2, "ushort", "u");
+            }
+            else
+            {
+                result = NameTerm(Name, 0, 1, "byte", "u");
+            }
+
+            return result;
+        }
+
+        public string EqualIgnoreCaseBytes(string firstTermVar = "")
+        {
+            if (!string.IsNullOrEmpty(firstTermVar))
+            {
+                return EqualIgnoreCaseBytesWithVar(firstTermVar);
+            }
+
+            var result = "";
+            var delim = "";
+            var index = 0;
+            while (index != Name.Length)
+            {
+                if (Name.Length - index >= 8)
+                {
+                    result += delim + Term(Name, index, 8, "ulong", "uL");
+                    index += 8;
+                }
+                else if (Name.Length - index >= 4)
+                {
+                    result += delim + Term(Name, index, 4, "uint", "u");
+                    index += 4;
+                }
+                else if (Name.Length - index >= 2)
+                {
+                    result += delim + Term(Name, index, 2, "ushort", "u");
+                    index += 2;
+                }
+                else
+                {
+                    result += delim + Term(Name, index, 1, "byte", "u");
+                    index += 1;
+                }
+                delim = " && ";
+            }
+            return result;
+
+            string EqualIgnoreCaseBytesWithVar(string firstTermVar)
+            {
+                var result = "";
+                var delim = " && ";
+                var index = 0;
+                var isFirst = true;
+                while (index != Name.Length)
+                {
+                    if (Name.Length - index >= 8)
+                    {
+                        if (isFirst)
+                        {
+                            result = $"({firstTermVar} == {EqualityTerm(Name, index, 8, "uL")})";
+                        }
+                        else
+                        {
+                            result += delim + Term(Name, index, 8, "ulong", "uL");
+                        }
+
+                        index += 8;
+                    }
+                    else if (Name.Length - index >= 4)
+                    {
+                        if (isFirst)
+                        {
+                            result = $"({firstTermVar} == {EqualityTerm(Name, index, 4, "u")})";
+                        }
+                        else
+                        {
+                            result += delim + Term(Name, index, 4, "uint", "u");
+                        }
+                        index += 4;
+                    }
+                    else if (Name.Length - index >= 2)
+                    {
+                        if (isFirst)
+                        {
+                            result = $"({firstTermVar} == {EqualityTerm(Name, index, 2, "u")})";
+                        }
+                        else
+                        {
+                            result += delim + Term(Name, index, 2, "ushort", "u");
+                        }
+                        index += 2;
+                    }
+                    else
+                    {
+                        if (isFirst)
+                        {
+                            result = $"({firstTermVar} == {EqualityTerm(Name, index, 1, "u")})";
+                        }
+                        else
+                        {
+                            result += delim + Term(Name, index, 1, "byte", "u");
+                        }
+                        index += 1;
+                    }
+
+                    isFirst = false;
+                }
+                return result;
+            }
+        }
+
+        public string EqualIgnoreCaseBytesFirstTerm()
+        {
+            string result;
+            if (Name.Length >= 8)
+            {
+                result = Term(Name, 0, 8, "ulong", "uL");
+            }
+            else if (Name.Length >= 4)
+            {
+                result = Term(Name, 0, 4, "uint", "u");
+            }
+            else if (Name.Length >= 2)
+            {
+                result = Term(Name, 0, 2, "ushort", "u");
+            }
+            else
+            {
+                result = Term(Name, 0, 1, "byte", "u");
+            }
+
+            return result;
+        }
+
+        public string EqualIgnoreCaseBytesSecondTermOnwards()
+        {
+            var result = "";
+            var delim = "";
+            var index = 0;
+            var isFirst = true;
+            while (index != Name.Length)
+            {
+                if (Name.Length - index >= 8)
+                {
+                    if (!isFirst)
+                    {
+                        result += delim + Term(Name, index, 8, "ulong", "uL");
+                    }
+
+                    index += 8;
+                }
+                else if (Name.Length - index >= 4)
+                {
+                    if (!isFirst)
+                    {
+                        result += delim + Term(Name, index, 4, "uint", "u");
+                    }
+                    index += 4;
+                }
+                else if (Name.Length - index >= 2)
+                {
+                    if (!isFirst)
+                    {
+                        result += delim + Term(Name, index, 2, "ushort", "u");
+                    }
+                    index += 2;
+                }
+                else
+                {
+                    if (!isFirst)
+                    {
+                        result += delim + Term(Name, index, 1, "byte", "u");
+                    }
+                    index += 1;
+                }
+
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    delim = " && ";
+                }
+            }
+            return result;
+        }
+    }
+
+    public static string GeneratedFile()
+    {
+        var requestHeaders = RequestHeaders;
+        Debug.Assert(requestHeaders.Length <= 64);
+        Debug.Assert(requestHeaders.Max(x => x.Index) <= 62);
+
+        // 63 for responseHeaders as it steals one bit for Content-Length in CopyTo(ref MemoryPoolIterator output)
+        var responseHeaders = ResponseHeaders;
+        Debug.Assert(responseHeaders.Length <= 63);
+        Debug.Assert(responseHeaders.Count(x => x.Index == 63) == 1);
+
+        var responseTrailers = ResponseTrailers;
+
+        var allHeaderNames = RequestHeaders.Concat(ResponseHeaders).Concat(ResponseTrailers)
+            .Select(h => h.Identifier).Distinct().OrderBy(n => n, StringComparer.InvariantCulture).ToArray();
+
+        var loops = new[]
+        {
+                new
+                {
+                    Headers = requestHeaders,
+                    HeadersByLength = requestHeaders.OrderBy(x => x.Name.Length).GroupBy(x => x.Name.Length),
+                    ClassName = "HttpRequestHeaders",
+                    Bytes = default(byte[])
+                },
+                new
+                {
+                    Headers = responseHeaders,
+                    HeadersByLength = responseHeaders.OrderBy(x => x.Name.Length).GroupBy(x => x.Name.Length),
+                    ClassName = "HttpResponseHeaders",
+                    Bytes = responseHeaders.SelectMany(header => header.Bytes).ToArray()
+                },
+                new
+                {
+                    Headers = responseTrailers,
+                    HeadersByLength = responseTrailers.OrderBy(x => x.Name.Length).GroupBy(x => x.Name.Length),
+                    ClassName = "HttpResponseTrailers",
+                    Bytes = responseTrailers.SelectMany(header => header.Bytes).ToArray()
+                }
+            };
+        foreach (var loop in loops.Where(l => l.Bytes != null))
+        {
+            var offset = 0;
+            foreach (var header in loop.Headers)
+            {
+                header.BytesOffset = offset;
+                header.BytesCount += header.Bytes.Length;
+                offset += header.BytesCount;
+            }
+        }
+        var s = $@"// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Buffers;
+using System.Buffers.Binary;
+using System.IO.Pipelines;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
+
+#nullable enable
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
+{{
+    internal enum KnownHeaderType
+    {{
+        Unknown,{Each(allHeaderNames, n => @"
+        " + n + ",")}
+    }}
+
+    internal static class HttpHeadersCompression
+    {{
+        {GetQPackStaticTableMatch()}
+    }}
+
+    internal partial class HttpHeaders
+    {{
+        {GetHeaderLookup()}
+    }}
+{Each(loops, loop => $@"
+    internal partial class {loop.ClassName} : IHeaderDictionary
+    {{{(loop.Bytes != null ?
+        $@"
+        private static ReadOnlySpan<byte> HeaderBytes => [{Each(loop.Bytes, b => $"{b},")}];"
+        : "")}
+        private HeaderReferences _headers;
+{Each(loop.Headers.Where(header => header.ExistenceCheck), header => $@"
+        public bool Has{header.Identifier} => {header.TestBit()};")}
+{Each(loop.Headers.Where(header => header.FastCount), header => $@"
+        public int {header.Identifier}Count => _headers._{header.Identifier}.Count;")}
+{Each(loop.Headers.Where(header => Array.IndexOf(InternalHeaderAccessors, header.Name) >= 0), header => $@"
+        public {(header.Name == HeaderNames.Connection ? "override " : "")}StringValues Header{header.Identifier}
+        {{{(header.Name == HeaderNames.ContentLength ? $@"
+            get
+            {{
+                if (_contentLength.HasValue)
+                {{
+                    return new StringValues(HeaderUtilities.FormatNonNegativeInt64(_contentLength.Value));
+                }}
+                return StringValues.Empty;
+            }}
+            set
+            {{
+                _contentLength = ParseContentLength(value.ToString());
+            }}" : $@"
+            get
+            {{
+                if ({header.TestBit()})
+                {{
+                    return _headers._{header.Identifier};
+                }}
+                return StringValues.Empty;
+            }}
+            set
+            {{
+                if (!StringValues.IsNullOrEmpty(value))
+                {{
+                    {header.SetBit()};
+                    _headers._{header.Identifier} = value; 
+                }}
+                else
+                {{
+                    {header.ClearBit()};
+                    _headers._{header.Identifier} = default; 
+                }}{(header.EnhancedSetter == false ? "" : $@"
+                _headers._raw{header.Identifier} = null;")}
+            }}")}
+        }}")}
+        {Each(loop.Headers.Where(header => header.Name != HeaderNames.ContentLength && !NonApiHeaders.Contains(header.Identifier)), header => $@"
+        StringValues IHeaderDictionary.{header.Identifier}
+        {{
+            get
+            {{
+                var value = _headers._{header.Identifier};
+                if ({header.TestBit()})
+                {{
+                    return value;
+                }}
+                return StringValues.Empty;
+            }}
+            set
+            {{
+                if (_isReadOnly) {{ ThrowHeadersReadOnlyException(); }}
+
+                var flag = {header.FlagBit()};
+                if (value.Count > 0)
+                {{{(loop.ClassName != "HttpRequestHeaders" ? $@"
+                    ValidateHeaderValueCharacters({header.StaticIdentifier}, value, EncodingSelector);" : "")}
+                    _bits |= flag;
+                    _headers._{header.Identifier} = value;
+                }}
+                else
+                {{
+                    _bits &= ~flag;
+                    _headers._{header.Identifier} = default;
+                }}{(header.EnhancedSetter == false ? "" : $@"
+                    _headers._raw{header.Identifier} = null;")}
+            }}
+        }}")}
+        {Each(ApiHeaderNames.Where(header => header != "ContentLength" && !loop.Headers.Select(kh => kh.Identifier).Contains(header)), header => $@"
+        StringValues IHeaderDictionary.{header}
+        {{
+            get
+            {{
+                StringValues value = default;
+                if (!TryGetUnknown(HeaderNames.{header}, ref value))
+                {{
+                    value = StringValues.Empty;
+                }}
+                return value;
+            }}
+            set
+            {{
+                if (_isReadOnly) {{ ThrowHeadersReadOnlyException(); }}{(loop.ClassName != "HttpRequestHeaders" ? $@"
+                ValidateHeaderValueCharacters(HeaderNames.{header}, value, EncodingSelector);" : "")}
+                SetValueUnknown(HeaderNames.{header}, value);
+            }}
+        }}")}
+{Each(loop.Headers.Where(header => header.EnhancedSetter), header => $@"
+        public void SetRaw{header.Identifier}(StringValues value, byte[] raw)
+        {{
+            {header.SetBit()};
+            _headers._{header.Identifier} = value;
+            _headers._raw{header.Identifier} = raw;
+        }}")}
+        protected override int GetCountFast()
+        {{
+            return (_contentLength.HasValue ? 1 : 0 ) + BitOperations.PopCount((ulong)_bits) + (MaybeUnknown?.Count ?? 0);
+        }}
+
+        protected override bool TryGetValueFast(string key, out StringValues value)
+        {{
+            value = default;
+            switch (key.Length)
+            {{{Each(loop.HeadersByLength, byLength => $@"
+                case {byLength.Key}:
+                {{{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if (ReferenceEquals({header.StaticIdentifier}, key))
+                    {{{(header.Name == HeaderNames.ContentLength ? @"
+                        if (_contentLength.HasValue)
+                        {
+                            value = HeaderUtilities.FormatNonNegativeInt64(_contentLength.Value);
+                            return true;
+                        }
+                        return false;" : $@"
+                        if ({header.TestBit()})
+                        {{
+                            value = _headers._{header.Identifier};
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if ({header.StaticIdentifier}.Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {{{(header.Name == HeaderNames.ContentLength ? @"
+                        if (_contentLength.HasValue)
+                        {
+                            value = HeaderUtilities.FormatNonNegativeInt64(_contentLength.Value);
+                            return true;
+                        }
+                        return false;" : $@"
+                        if ({header.TestBit()})
+                        {{
+                            value = _headers._{header.Identifier};
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+                    break;
+                }}")}
+            }}
+
+            return TryGetUnknown(key, ref value);
+        }}
+
+        protected override void SetValueFast(string key, StringValues value)
+        {{{(loop.ClassName != "HttpRequestHeaders" ? @"
+            ValidateHeaderValueCharacters(key, value, EncodingSelector);" : "")}
+            switch (key.Length)
+            {{{Each(loop.HeadersByLength, byLength => $@"
+                case {byLength.Key}:
+                {{{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if (ReferenceEquals({header.StaticIdentifier}, key))
+                    {{{(header.Name == HeaderNames.ContentLength ? $@"
+                        _contentLength = ParseContentLength(value.ToString());" : $@"
+                        {header.SetBit()};
+                        _headers._{header.Identifier} = value;{(header.EnhancedSetter == false ? "" : $@"
+                        _headers._raw{header.Identifier} = null;")}")}
+                        return;
+                    }}")}
+{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if ({header.StaticIdentifier}.Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {{{(header.Name == HeaderNames.ContentLength ? $@"
+                        _contentLength = ParseContentLength(value.ToString());" : $@"
+                        {header.SetBit()};
+                        _headers._{header.Identifier} = value;{(header.EnhancedSetter == false ? "" : $@"
+                        _headers._raw{header.Identifier} = null;")}")}
+                        return;
+                    }}")}
+                    break;
+                }}")}
+            }}
+
+            SetValueUnknown(key, value);
+        }}
+
+        protected override bool AddValueFast(string key, StringValues value)
+        {{{(loop.ClassName != "HttpRequestHeaders" ? @"
+            ValidateHeaderValueCharacters(key, value, EncodingSelector);" : "")}
+            switch (key.Length)
+            {{{Each(loop.HeadersByLength, byLength => $@"
+                case {byLength.Key}:
+                {{{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if (ReferenceEquals({header.StaticIdentifier}, key))
+                    {{{(header.Name == HeaderNames.ContentLength ? $@"
+                        if (!_contentLength.HasValue)
+                        {{
+                            _contentLength = ParseContentLength(value.ToString());
+                            return true;
+                        }}
+                        return false;" : $@"
+                        if ({header.TestNotBit()})
+                        {{
+                            {header.SetBit()};
+                            _headers._{header.Identifier} = value;{(header.EnhancedSetter == false ? "" : $@"
+                            _headers._raw{header.Identifier} = null;")}
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+    {Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if ({header.StaticIdentifier}.Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {{{(header.Name == HeaderNames.ContentLength ? $@"
+                        if (!_contentLength.HasValue)
+                        {{
+                            _contentLength = ParseContentLength(value.ToString());
+                            return true;
+                        }}
+                        return false;" : $@"
+                        if ({header.TestNotBit()})
+                        {{
+                            {header.SetBit()};
+                            _headers._{header.Identifier} = value;{(header.EnhancedSetter == false ? "" : $@"
+                            _headers._raw{header.Identifier} = null;")}
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+                    break;
+                }}")}
+            }}
+
+            return AddValueUnknown(key, value);
+        }}
+
+        protected override bool RemoveFast(string key)
+        {{
+            switch (key.Length)
+            {{{Each(loop.HeadersByLength, byLength => $@"
+                case {byLength.Key}:
+                {{{Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if (ReferenceEquals({header.StaticIdentifier}, key))
+                    {{{(header.Name == HeaderNames.ContentLength ? @"
+                        if (_contentLength.HasValue)
+                        {
+                            _contentLength = null;
+                            return true;
+                        }
+                        return false;" : $@"
+                        if ({header.TestBit()})
+                        {{
+                            {header.ClearBit()};
+                            _headers._{header.Identifier} = default(StringValues);{(header.EnhancedSetter == false ? "" : $@"
+                            _headers._raw{header.Identifier} = null;")}
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+    {Each(byLength.OrderBy(h => !h.PrimaryHeader), header => $@"
+                    if ({header.StaticIdentifier}.Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {{{(header.Name == HeaderNames.ContentLength ? @"
+                        if (_contentLength.HasValue)
+                        {
+                            _contentLength = null;
+                            return true;
+                        }
+                        return false;" : $@"
+                        if ({header.TestBit()})
+                        {{
+                            {header.ClearBit()};
+                            _headers._{header.Identifier} = default(StringValues);{(header.EnhancedSetter == false ? "" : $@"
+                            _headers._raw{header.Identifier} = null;")}
+                            return true;
+                        }}
+                        return false;")}
+                    }}")}
+                    break;
+                }}")}
+            }}
+
+            return RemoveUnknown(key);
+        }}
+{(loop.ClassName != "HttpRequestHeaders" ?
+ $@"        protected override void ClearFast()
+        {{
+            MaybeUnknown?.Clear();
+            _contentLength = null;
+            var tempBits = _bits;
+            _bits = 0;
+            if(BitOperations.PopCount((ulong)tempBits) > 12)
+            {{
+                _headers = default(HeaderReferences);
+                return;
+            }}
+            {Each(loop.Headers.Where(header => header.Identifier != "ContentLength").OrderBy(h => !h.PrimaryHeader), header => $@"
+            if ({header.TestTempBit()})
+            {{
+                _headers._{header.Identifier} = default;
+                if({header.TestNotTempBit()})
+                {{
+                    return;
+                }}
+                tempBits &= ~{"0x" + (1L << header.Index).ToString("x", CultureInfo.InvariantCulture)}L;
+            }}
+            ")}
+        }}
+" :
+$@"        private void Clear(long bitsToClear)
+        {{
+            var tempBits = bitsToClear;
+            {Each(loop.Headers.Where(header => header.Identifier != "ContentLength").OrderBy(h => !h.PrimaryHeader), header => $@"
+            if ({header.TestTempBit()})
+            {{
+                _headers._{header.Identifier} = default;
+                if({header.TestNotTempBit()})
+                {{
+                    return;
+                }}
+                tempBits &= ~{"0x" + (1L << header.Index).ToString("x", CultureInfo.InvariantCulture)}L;
+            }}
+            ")}
+        }}
+")}
+        protected override bool CopyToFast(KeyValuePair<string, StringValues>[] array, int arrayIndex)
+        {{
+            if (arrayIndex < 0)
+            {{
+                return false;
+            }}
+            {Each(loop.Headers.Where(header => header.Identifier != "ContentLength"), header => $@"
+                if ({header.TestBit()})
+                {{
+                    if (arrayIndex == array.Length)
+                    {{
+                        return false;
+                    }}
+                    array[arrayIndex] = new KeyValuePair<string, StringValues>({header.StaticIdentifier}, _headers._{header.Identifier});
+                    ++arrayIndex;
+                }}")}
+                if (_contentLength.HasValue)
+                {{
+                    if (arrayIndex == array.Length)
+                    {{
+                        return false;
+                    }}
+                    array[arrayIndex] = new KeyValuePair<string, StringValues>(HeaderNames.ContentLength, HeaderUtilities.FormatNonNegativeInt64(_contentLength.Value));
+                    ++arrayIndex;
+                }}
+            ((ICollection<KeyValuePair<string, StringValues>>?)MaybeUnknown)?.CopyTo(array, arrayIndex);
+
+            return true;
+        }}
+        {(loop.ClassName == "HttpResponseHeaders" ? $@"
+        internal bool HasInvalidH2H3Headers => (_bits & {InvalidH2H3ResponseHeadersBits}) != 0;
+        internal void ClearInvalidH2H3Headers()
+        {{
+            _bits &= ~{InvalidH2H3ResponseHeadersBits};
+        }}
+        internal void CopyToFast(ref BufferWriter<PipeWriter> output)
+        {{
+            var tempBits = (ulong)_bits;
+            // Set exact next
+            var next = BitOperations.TrailingZeroCount(tempBits);
+
+            // Output Content-Length now as it isn't contained in the bit flags.
+            if (_contentLength.HasValue)
+            {{
+                output.Write(HeaderBytes.Slice(640, 18));
+                output.WriteNumeric((ulong)ContentLength.GetValueOrDefault());
+            }}
+            if (tempBits == 0)
+            {{
+                return;
+            }}
+
+            ref readonly StringValues values = ref Unsafe.NullRef<StringValues>();
+            do
+            {{
+                int keyStart;
+                int keyLength;
+                var headerName = string.Empty;
+                switch (next)
+                {{{Each(loop.Headers.OrderBy(h => h.Index).Where(h => h.Identifier != "ContentLength"), header => $@"
+                    case {header.Index}: // Header: ""{header.Name}""
+                        Debug.Assert({header.TestTempBit()});{(header.EnhancedSetter == false ? $@"
+                        values = ref _headers._{header.Identifier};
+                        keyStart = {header.BytesOffset};
+                        keyLength = {header.BytesCount};" : $@"
+                        if (_headers._raw{header.Identifier} != null)
+                        {{
+                            // Clear and set next as not using common output.
+                            tempBits ^= {"0x" + (1L << header.Index).ToString("x", CultureInfo.InvariantCulture)}L;
+                            next = BitOperations.TrailingZeroCount(tempBits);
+                            output.Write(_headers._raw{header.Identifier});
+                            continue; // Jump to next, already output header
+                        }}
+                        else
+                        {{
+                            values = ref _headers._{header.Identifier};
+                            keyStart = {header.BytesOffset};
+                            keyLength = {header.BytesCount};
+                            headerName = {header.StaticIdentifier};
+                        }}")}
+                        break; // OutputHeader
+")}
+                    default:
+                        ThrowInvalidHeaderBits();
+                        return;
+                }}
+
+                // OutputHeader
+                {{
+                    // Clear bit
+                    tempBits ^= (1UL << next);
+                    var encoding = ReferenceEquals(EncodingSelector, KestrelServerOptions.DefaultHeaderEncodingSelector)
+                        ? null : EncodingSelector(headerName);
+                    var valueCount = values.Count;
+                    Debug.Assert(valueCount > 0);
+
+                    var headerKey = HeaderBytes.Slice(keyStart, keyLength);
+                    for (var i = 0; i < valueCount; i++)
+                    {{
+                        var value = values[i];
+                        if (value != null)
+                        {{
+                            output.Write(headerKey);
+                            if (encoding is null)
+                            {{
+                                output.WriteAscii(value);
+                            }}
+                            else
+                            {{
+                                output.WriteEncoded(value, encoding);
+                            }}
+                        }}
+                    }}
+                    // Set exact next
+                    next = BitOperations.TrailingZeroCount(tempBits);
+                }}
+            }} while (tempBits != 0);
+        }}" : "")}{(loop.ClassName == "HttpRequestHeaders" ? $@"
+        internal void ClearPseudoRequestHeaders()
+        {{
+            _pseudoBits = _bits & {PseudoRequestHeadersBits};
+            _bits &= ~{PseudoRequestHeadersBits};
+        }}
+        {Each(new string[] { "ushort", "uint", "ulong" }, type => $@"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static {type} ReadUnalignedLittleEndian_{type}(ref byte source)
+        {{
+            {type} result = Unsafe.ReadUnaligned<{type}>(ref source);
+            if (!BitConverter.IsLittleEndian)
+            {{
+                result = BinaryPrimitives.ReverseEndianness(result);
+            }}
+            return result;
+        }}")}
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public void Append(ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, bool checkForNewlineChars)
+        {{
+            ref byte nameStart = ref MemoryMarshal.GetReference(name);
+            var nameStr = string.Empty;
+            ref StringValues values = ref Unsafe.NullRef<StringValues>();
+            var flag = 0L;
+
+            // Does the name match any ""known"" headers
+            {AppendSwitch(loop.Headers.GroupBy(x => x.Name.Length).OrderBy(x => x.Key))}
+
+            if (flag != 0)
+            {{
+                {AppendValue()}
+            }}
+            else
+            {{
+                // The header was not one of the ""known"" headers.
+                // Convert value to string first, because passing two spans causes 8 bytes stack zeroing in
+                // this method with rep stosd, which is slower than necessary.
+                nameStr = name.GetHeaderName();
+                var valueStr = value.GetRequestHeaderString(nameStr, EncodingSelector, checkForNewlineChars);
+                AppendUnknownHeaders(nameStr, valueStr);
+            }}
+        }}
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public bool TryHPackAppend(int index, ReadOnlySpan<byte> value, bool checkForNewlineChars)
+        {{
+            ref StringValues values = ref Unsafe.NullRef<StringValues>();
+            var nameStr = string.Empty;
+            var flag = 0L;
+
+            // Does the HPack static index match any ""known"" headers
+            {AppendHPackSwitch(GroupHPack(loop.Headers))}
+
+            if (flag != 0)
+            {{
+                {AppendValue(returnTrue: true)}
+                return true;
+            }}
+            else
+            {{
+                return false;
+            }}
+        }}
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public bool TryQPackAppend(int index, ReadOnlySpan<byte> value, bool checkForNewlineChars)
+        {{
+            ref StringValues values = ref Unsafe.NullRef<StringValues>();
+            var nameStr = string.Empty;
+            var flag = 0L;
+
+            // Does the QPack static index match any ""known"" headers
+            {AppendQPackSwitch(GroupQPack(loop.Headers))}
+
+            if (flag != 0)
+            {{
+                {AppendValue(returnTrue: true)}
+                return true;
+            }}
+            else
+            {{
+                return false;
+            }}
+        }}" : "")}
+
+        private struct HeaderReferences
+        {{{Each(loop.Headers.Where(header => header.Identifier != "ContentLength"), header => @"
+            public StringValues _" + header.Identifier + ";")}
+            {Each(loop.Headers.Where(header => header.EnhancedSetter), header => @"
+            public byte[]? _raw" + header.Identifier + ";")}
+        }}
+
+        public partial struct Enumerator
+        {{
+            // Compiled to Jump table
+            public bool MoveNext()
+            {{
+                switch (_next)
+                {{{Each(loop.Headers.Where(header => header.Identifier != "ContentLength"), header => $@"
+                    case {header.Index}: // Header: ""{header.Name}""
+                        Debug.Assert({header.TestBitCore("_currentBits")});
+                        _current = new KeyValuePair<string, StringValues>({header.StaticIdentifier}, _collection._headers._{header.Identifier});
+                        {(loop.ClassName.Contains("Request") ? "" : @$"_currentKnownType = KnownHeaderType.{header.Identifier};
+                        ")}_currentBits ^= {"0x" + (1L << header.Index).ToString("x", CultureInfo.InvariantCulture)}L;
+                        break;")}
+                    {(!loop.ClassName.Contains("Trailers") ? $@"case {loop.Headers.Length - 1}: // Header: ""Content-Length""
+                        Debug.Assert(_currentBits == 0);
+                        _current = new KeyValuePair<string, StringValues>(HeaderNames.ContentLength, HeaderUtilities.FormatNonNegativeInt64(_collection._contentLength.GetValueOrDefault()));
+                        {(loop.ClassName.Contains("Request") ? "" : @"_currentKnownType = KnownHeaderType.ContentLength;
+                        ")}_next = -1;
+                        return true;" : "")}
+                    default:
+                        if (!_hasUnknown || !_unknownEnumerator.MoveNext())
+                        {{
+                            _current = default(KeyValuePair<string, StringValues>);
+                            {(loop.ClassName.Contains("Request") ? "" : @"_currentKnownType = default;
+                            ")}return false;
+                        }}
+                        _current = _unknownEnumerator.Current;
+                        {(loop.ClassName.Contains("Request") ? "" : @"_currentKnownType = KnownHeaderType.Unknown;
+                        ")}return true;
+                }}
+
+                if (_currentBits != 0)
+                {{
+                    _next = BitOperations.TrailingZeroCount(_currentBits);
+                    return true;
+                }}
+                else
+                {{
+                    {(!loop.ClassName.Contains("Trailers") ? $@"_next = _collection._contentLength.HasValue ? {loop.Headers.Length - 1} : -1;" : "_next = -1;")}
+                    return true;
+                }}
+            }}{(loop.ClassName.Contains("Trailers") ? "" : $@"
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static int GetNext(long bits, bool hasContentLength)
+            {{
+                return bits != 0
+                    ? BitOperations.TrailingZeroCount(bits)
+                    : hasContentLength
+                        ? {loop.Headers.Length - 1}
+                        : -1;
+            }}")}
+        }}
+    }}
+")}}}";
+
+        return s;
+    }
+
+    private static string GetHeaderLookup()
+    {
+        return @$"private readonly static HashSet<string> _internedHeaderNames = new HashSet<string>({DefinedHeaderNames.Length}, StringComparer.OrdinalIgnoreCase)
+        {{{Each(DefinedHeaderNames, (h) => @"
+            HeaderNames." + h + ",")}
+        }};";
+    }
+
+    private static string GetQPackStaticTableMatch()
+    {
+        var group = GroupQPack(ResponseHeaders);
+
+        return @$"internal static (int index, bool matchedValue) MatchKnownHeaderQPack(KnownHeaderType knownHeader, string value)
+        {{
+            switch (knownHeader)
+            {{
+                {Each(group, (h) => @$"case KnownHeaderType.{h.Header.Identifier}:
+                    {AppendQPackSwitch(h.QPackStaticTableFields.OrderBy(t => t.Index).ToList())}
+                ")}
+                default:
+                    return (-1, false);
+            }}
+        }}";
+    }
+
+    private static string AppendQPackSwitch(IList<(int Index, System.Net.Http.QPack.HeaderField Field)> values)
+    {
+        if (values.Count == 1 && values[0].Field.Value.Length == 0)
+        {
+            // Skip check if the only value is empty string. Empty string wasn't chosen because it is common.
+            // Instead it is the default value when there isn't a common value for the header.
+            return $"return ({values[0].Index}, false);";
+        }
+        else
+        {
+            // Use smallest index if there is no match. Smaller number is more likely to fit into a single byte.
+            return $@"switch (value)
+                    {{{Each(values, value => $@"
+                        case ""{Encoding.ASCII.GetString(value.Field.Value)}"":
+                            return ({value.Index}, true);")}
+                        default:
+                            return ({values.Min(v => v.Index)}, false);
+                    }}";
+        }
+    }
+
+    private static IEnumerable<QPackGroup> GroupQPack(KnownHeader[] headers)
+    {
+        var staticHeaders = new (int Index, System.Net.Http.QPack.HeaderField HeaderField)[H3StaticTable.Count];
+        for (var i = 0; i < H3StaticTable.Count; i++)
+        {
+            staticHeaders[i] = (i, H3StaticTable.Get(i));
+        }
+
+        var groupedHeaders = staticHeaders.GroupBy(h => Encoding.ASCII.GetString(h.HeaderField.Name)).Select(g =>
+        {
+            return new QPackGroup
+            {
+                Name = g.Key,
+                Header = headers.SingleOrDefault(knownHeader => string.Equals(knownHeader.Name, g.Key, StringComparison.OrdinalIgnoreCase)),
+                QPackStaticTableFields = g.ToArray()
+            };
+        }).Where(g => g.Header != null).ToList();
+
+        return groupedHeaders;
+    }
+
+    private static IEnumerable<HPackGroup> GroupHPack(KnownHeader[] headers)
+    {
+        var staticHeaders = new (int Index, System.Net.Http.HPack.HeaderField HeaderField)[H2StaticTable.Count];
+        for (var i = 0; i < H2StaticTable.Count; i++)
+        {
+            staticHeaders[i] = (i + 1, H2StaticTable.Get(i));
+        }
+
+        var groupedHeaders = staticHeaders.GroupBy(h => Encoding.ASCII.GetString(h.HeaderField.Name)).Select(g =>
+        {
+            return new HPackGroup
+            {
+                Name = g.Key,
+                Header = headers.SingleOrDefault(knownHeader => string.Equals(knownHeader.Name, g.Key, StringComparison.OrdinalIgnoreCase)),
+                HPackStaticTableIndexes = g.Select(h => h.Index).ToArray()
+            };
+        }).Where(g => g.Header != null).ToList();
+
+        return groupedHeaders;
+    }
+
+    private sealed class QPackGroup
+    {
+        public (int Index, System.Net.Http.QPack.HeaderField Field)[] QPackStaticTableFields { get; set; }
+        public KnownHeader Header { get; set; }
+        public string Name { get; set; }
+    }
+
+    private sealed class HPackGroup
+    {
+        public int[] HPackStaticTableIndexes { get; set; }
+        public KnownHeader Header { get; set; }
+        public string Name { get; set; }
+    }
+
+    private sealed class KnownHeaderComparer : IComparer<KnownHeader>
+    {
+        public static readonly KnownHeaderComparer Instance = new KnownHeaderComparer();
+
+        public int Compare(KnownHeader x, KnownHeader y)
+        {
+            // Primary headers appear first
+            if (x.PrimaryHeader && !y.PrimaryHeader)
+            {
+                return -1;
+            }
+            if (y.PrimaryHeader && !x.PrimaryHeader)
+            {
+                return 1;
+            }
+
+            // Then alphabetical
+            return StringComparer.InvariantCulture.Compare(x.Name, y.Name);
+        }
+    }
+}
+
+d709a98cb586a03213b1294ed40f6554a910e1cb blob 2207
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsTestAssetProject>true</IsTestAssetProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(KestrelSharedSourceRoot)KnownHeaders.cs" />
+    <Compile Include="$(SharedSourceRoot)InternalHeaderNames.cs" Link="Shared\InternalHeaderNames.cs"/>
+    <Compile Include="$(SharedSourceRoot)runtime\Http2\Hpack\H2StaticTable.Http2.cs" Link="Shared\runtime\Http2\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http2\Hpack\H2StaticTable.cs" Link="Shared\runtime\Http2\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http2\Hpack\HeaderField.cs" Link="Shared\runtime\Http2\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http3\QPack\H3StaticTable.Http3.cs" Link="Shared\runtime\Http3\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http3\QPack\H3StaticTable.cs" Link="Shared\runtime\Http3\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http3\QPack\HeaderField.cs" Link="Shared\runtime\Http3\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <StartWorkingDirectory>$(MSBuildThisFileDirectory)..\..\</StartWorkingDirectory>
+    <StartArguments>Core/src/Internal/Http/HttpHeaders.Generated.cs Core/src/Internal/Http/HttpProtocol.Generated.cs Core/src/Internal/Infrastructure/HttpUtilities.Generated.cs shared/TransportMultiplexedConnection.Generated.cs shared/TransportConnection.Generated.cs</StartArguments>
+  </PropertyGroup>
+
+</Project>
+
+c620064a3e6451ce00d3ba91db98e5a38ad2bb7a blob 2770
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace CodeGenerator;
+
+public class Program
+{
+    public static int Main(string[] args)
+    {
+        if (args.Length < 1)
+        {
+            Console.Error.WriteLine("Missing path to HttpHeaders.Generated.cs");
+            return 1;
+        }
+        else if (args.Length < 2)
+        {
+            Console.Error.WriteLine("Missing path to HttpProtocol.Generated.cs");
+            return 1;
+        }
+        else if (args.Length < 3)
+        {
+            Console.Error.WriteLine("Missing path to HttpUtilities.Generated.cs");
+            return 1;
+        }
+        else if (args.Length < 4)
+        {
+            Console.Error.WriteLine("Missing path to TransportMultiplexedConnection.Generated.cs");
+            return 1;
+        }
+        else if (args.Length < 5)
+        {
+            Console.Error.WriteLine("Missing path to TransportConnection.Generated.cs");
+            return 1;
+        }
+
+        Run(args[0], args[1], args[2], args[3], args[4]);
+
+        return 0;
+    }
+
+    public static void Run(
+        string knownHeadersPath,
+        string httpProtocolFeatureCollectionPath,
+        string httpUtilitiesPath,
+        string transportMultiplexedConnectionFeatureCollectionPath,
+        string transportConnectionFeatureCollectionPath)
+    {
+        var knownHeadersContent = KnownHeaders.GeneratedFile();
+        var httpProtocolFeatureCollectionContent = HttpProtocolFeatureCollection.GenerateFile();
+        var httpUtilitiesContent = HttpUtilities.HttpUtilities.GeneratedFile();
+        var transportMultiplexedConnectionFeatureCollectionContent = TransportMultiplexedConnectionFeatureCollection.GenerateFile();
+        var transportConnectionFeatureCollectionContent = TransportConnectionFeatureCollection.GenerateFile();
+
+        UpdateFile(knownHeadersPath, knownHeadersContent);
+        UpdateFile(httpProtocolFeatureCollectionPath, httpProtocolFeatureCollectionContent);
+        UpdateFile(httpUtilitiesPath, httpUtilitiesContent);
+        UpdateFile(transportMultiplexedConnectionFeatureCollectionPath, transportMultiplexedConnectionFeatureCollectionContent);
+        UpdateFile(transportConnectionFeatureCollectionPath, transportConnectionFeatureCollectionContent);
+    }
+
+    public static void UpdateFile(string path, string content)
+    {
+        var existingContent = File.Exists(path) ? File.ReadAllText(path) : "";
+        if (!string.Equals(content, existingContent))
+        {
+            File.WriteAllText(path, content);
+            Console.WriteLine($"{path} updated.");
+        }
+        else
+        {
+            Console.WriteLine($"{path} already up to date.");
+        }
+    }
+}
+
+9b01daf8880a00180a183c251f00a5e79029c534 blob 5523
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Core components of ASP.NET Core Kestrel cross-platform web server.</Description>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+    <IsAspNetCoreApp>true</IsAspNetCoreApp>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>aspnetcore;kestrel</PackageTags>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);KESTREL</DefineConstants>
+    <NoWarn>$(NoWarn);IDE0060</NoWarn><!-- APIs in HTTP3 are work in progress and produce these warnings frequently-->
+    <IsTrimmable>true</IsTrimmable>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <GenerateRequiresPreviewFeaturesAttribute>false</GenerateRequiresPreviewFeaturesAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(KestrelSharedSourceRoot)\PooledStreamStack.cs" Link="Internal\PooledStreamStack.cs" />
+    <Compile Include="$(KestrelSharedSourceRoot)\HPackHeaderWriter.cs" Link="Internal\Http2\HPackHeaderWriter.cs" />
+    <Compile Include="$(KestrelSharedSourceRoot)\Http2HeadersEnumerator.cs" Link="Internal\Http2\Http2HeadersEnumerator.cs" />
+    <Compile Include="$(SharedSourceRoot)CertificateGeneration\**\*.cs" />
+    <Compile Include="$(SharedSourceRoot)ValueTaskExtensions\**\*.cs" />
+    <Compile Include="$(SharedSourceRoot)UrlDecoder\**\*.cs" />
+    <Compile Include="$(SharedSourceRoot)PathNormalizer\**\*.cs" LinkBase="Shared\" />
+    <Compile Include="$(SharedSourceRoot)InternalHeaderNames.cs" Link="Shared\InternalHeaderNames.cs"/>
+    <Compile Include="$(SharedSourceRoot)Buffers\**\*.cs" LinkBase="Internal\Infrastructure\PipeWriterHelpers" />
+    <Compile Include="$(SharedSourceRoot)runtime\*.cs" Link="Shared\runtime\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http2\**\*.cs" Link="Shared\runtime\Http2\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)runtime\Http3\**\*.cs" Link="Shared\runtime\Http3\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)Hpack\**\*.cs" Link="Shared\Hpack\%(Filename)%(Extension)" />
+    <Compile Include="$(SharedSourceRoot)ServerInfrastructure\**\*.cs" />
+    <Compile Include="$(SharedSourceRoot)CancellationTokenSourcePool.cs" />
+    <Compile Include="$(SharedSourceRoot)Debugger\DictionaryItemDebugView.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceRoot)Debugger\StringValuesDictionaryDebugView.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceRoot)Metrics\MetricsConstants.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceRoot)Obsoletions.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceRoot)Metrics\MetricsExtensions.cs" />
+    <Compile Include="$(SharedSourceRoot)ConnectionEndpointTags.cs" />
+    <Compile Include="$(RepoRoot)src\Shared\Buffers.MemoryPool\*.cs" LinkBase="MemoryPool" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics" />
+
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Headers\src\Microsoft.Net.Http.Headers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\WebUtilities\src\Microsoft.AspNetCore.WebUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Servers\Connections.Abstractions\src\Microsoft.AspNetCore.Connections.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="CoreStrings.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SharedSourceRoot)ServerInfrastructure\SharedStrings.resx" Link="Shared\SharedStrings.resx">
+      <ManifestResourceName>Microsoft.AspNetCore.Server.SharedStrings</ManifestResourceName>
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SharedSourceRoot)runtime\SR.resx" Link="Shared\runtime\SR.resx">
+      <ManifestResourceName>System.Net.Http.SR</ManifestResourceName>
+      <Generator></Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel.Tests" />
+    <InternalsVisibleTo Include="Sockets.FunctionalTests" />
+    <InternalsVisibleTo Include="Quic.FunctionalTests" />
+    <InternalsVisibleTo Include="InMemory.FunctionalTests" />
+    <InternalsVisibleTo Include="Sockets.BindTests" />
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel" />
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel.Core.Tests" />
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel.Microbenchmarks" />
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel.Transport.NamedPipes.Tests" />
+    <InternalsVisibleTo Include="Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" Key="$(MoqPublicKey)" />
+  </ItemGroup>
+</Project>
+
+d10038c359fea7b2822b7637dac8d2b993b826be blob 18928
+# Build the ASP.NET Core repo
+
+If you're reading these instructions, you're probably a contributor looking to understand how to build this repo locally on your machine so that you can build, debug, and test changes.
+
+To get started, fork this repo and then clone it locally. This workflow assumes that you have [git installed on your development machine](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+
+1. To create your own fork of the repo, sign in to GitHub and click the repo's **Fork** button. For more information on managing forks, you can review the [GitHub docs on working with forks](https://docs.github.com/en/github/collaborating-with-pull-requests/working-with-forks).
+
+1. Clone the repo locally using the `git clone` command. Since this repo contains submodules, include the `--recursive` argument to pull the sources for the submodules locally.
+
+    ```bash
+    git clone --recursive https://github.com/YOUR_USERNAME/aspnetcore
+    ```
+
+    If you've already cloned the repo without passing the `--recursive` flag, fetch the submodule sources at any time with:
+
+    ```bash
+    git submodule update --init --recursive
+    ```
+
+    > :bulb: All other steps below will be against your fork of the aspnetcore repo (e.g. `YOUR_USERNAME/aspnetcore`), not the official `dotnet/aspnetcore` repo.
+
+1. If you're on Windows, update the PowerShell execution policy on your machine. For more information on execution policies, review [the execution policy docs](https://learn.microsoft.com/powershell/module/microsoft.powershell.security/set-executionpolicy). To do this, open a PowerShell prompt and issue the following command:
+
+    > :warning: All Windows commands below assume a PowerShell prompt.
+
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    ```
+
+1. If you're on Windows, install Visual Studio (even if you aren't using it to build) to get the required C++ components and native tools. To install Visual Studio on your machine, use the official installer script in the repo.
+
+    > :warning: Even if you have Visual Studio installed on your machine, we recommend running this installation script to make sure that the correct Visual Studio components are installed.
+    >
+    > To modify an existing Visual Studio installation, [follow the instructions for installing from a configuration file](https://learn.microsoft.com/visualstudio/install/import-export-installation-configurations#import-a-configuration) and use the `.vsconfig` file located in the root of the repository:
+
+    ```powershell
+    ./eng/scripts/InstallVisualStudio.ps1 -Edition Enterprise -Channel Preview
+    ```
+
+    Replace `Enterprise` with `Professional` or `Community` if that is your preferred Visual Studio edition.
+    The preview channel is currently required as it supports the preview version of the SDK that is used.
+
+    If you are seeing errors similar to `the imported project "....\aspnetcore.tools\msbuild\17.1.0\tools\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Default.props" was not found`, try installing/updating Visual Studio as above.
+
+The steps you follow next depend on your preferred development environment:
+
+- [Visual Studio on Windows](#visual-studio-on-windows)
+- [Visual Studio Code (VS Code) or other editors on Windows, Linux, Mac](#visual-studio-code-or-other-editor-on-windows-linux-mac)
+- [Codespaces on GitHub](#codespaces-on-github)
+
+## Visual Studio on Windows
+
+1. This repo has JavaScript dependencies, so you need [Node.js](https://nodejs.org/en/).
+
+1. Before you open project in Visual Studio, install the required dependencies and set up the repo by running the `restore.cmd` script in the root of the repo:
+
+    ```powershell
+    ./restore.cmd
+    ```
+
+1. You'll typically focus on one project in the repo. You can use the `startvs.cmd` command to launch Visual Studio in a particular project area. For example, to launch Visual Studio in the `src/Http` project, after you have built it with `./build.cmd`:
+
+    > :bulb: The `build.cmd` script will be local to the directory of the project you opened. For example, the script located in the `src/Http` directory. If you want to build the whole tree, use the `build.cmd` that is located in the `eng` directory.
+
+    ```powershell
+    cd src/Http
+    ./build.cmd
+    ./startvs.cmd
+    ```
+
+    <details>
+     <summary>A brief interlude on Solution Files</summary>
+
+    We have a single _.sln_ file for all of ASP.NET Core, but most people don't work with it directly because Visual Studio doesn't currently handle projects of this scale very well.
+
+    Instead, we have many Solution Filter (.slnf) files which include a sub-set of projects. For more information on solution files, you can review the [official Visual Studio doc](https://learn.microsoft.com/visualstudio/ide/filtered-solutions).
+
+    These principles guide how we create and manage .slnf files:
+
+    - Solution files are not used by CI or command line build scripts. They are meant for use by developers only.
+    - Solution files group together projects which are frequently edited at the same time.
+    - Can't find a solution that has the projects you care about? Feel free to make a PR to add a new .slnf file.
+
+    </details>
+
+1. You can now build, debug, and test using Visual Studio. For more information on using Visual Studio to build and run projects, you can review the [official Visual Studio docs](https://learn.microsoft.com/visualstudio/get-started/csharp/run-program).
+
+## Visual Studio Code or other editor on Windows, Linux, Mac
+
+> :bulb: These steps also apply to editors other than Visual Studio Code. If you use a different editor, replace `code` in the steps below with your editor's equivalent command.
+
+1. To use Visual Studio Code for developing in this repo, you need [Visual Studio Code installed](https://code.visualstudio.com/) and the ability to [launch `code` from the command line](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line).
+
+1. This repo has JavaScript dependencies, so you need [Node.js](https://nodejs.org/en/).
+
+1. Before you open anything in Visual Studio Code, run the `restore` script in the root of the repo to install the required .NET dependencies.
+
+    ```bash
+    # Linux or Mac
+    ./restore.sh
+    ```
+
+    ```powershell
+    # Windows
+    ./restore.cmd
+    ```
+
+1. After the `restore` script finishes, activate the locally installed .NET by running the following command.
+
+    ```bash
+    # Linux or Mac
+    source activate.sh
+    ```
+
+    ```powershell
+    # Windows - note the leading period followed by a space
+    . ./activate.ps1
+    ```
+
+    If you tried to activate before restoring and the repository SDK was missing, run the platform's `restore` script from the repo root, wait for it to complete, and activate again.
+
+1. After you've activated the locally installed .NET, open the project you want to modify by running the `code` command in the project's directory. For example, if you want to modify the`src/Http` project:
+
+    ```bash
+    cd src/Http
+    code .
+    ```
+
+    > :bulb: If you're using a different editor, replace `code` with your editor's equivalent launch command (for example, `vim`).
+
+1. Once you've opened the project in VS Code, you can build and test changes by running the `./build.sh` command in the terminal.
+
+    > :bulb: The `build.sh` or `build.cmd` script will be local to the directory of the project you opened. For example, the script located in the `src/Http` directory. If you want to build the whole tree, use the `build.sh` or `build.cmd` that is located in the `eng` directory.
+
+    ```bash
+    # Linux or Mac
+    ./build.sh
+    ./build.sh -test
+    ```
+
+    ```powershell
+    # Windows
+    ./build.cmd
+    ./build.cmd -test
+    ```
+
+1. Alternatively, you can use the `dotnet test` and `dotnet build` commands, **alongside specific project files**, once you've activated the locally installed .NET SDK.
+
+    ```bash
+    # Linux or Mac
+    source activate.sh
+    dotnet build
+    dotnet test --filter "MySpecificUnitTest"
+    ```
+
+    ```powershell
+    # Windows
+    . ./activate.ps1
+    dotnet build
+    dotnet test --filter "MySpecificUnitTest"
+    ```
+
+## Codespaces on GitHub
+
+If you have [Codespaces enabled on your GitHub user account](https://github.com/codespaces), you can use Codespaces to make code changes in the repo by using a cloud-based editor environment.
+
+1. Navigate to your fork of the repo and select the branch in which you'd like to make your code changes.
+
+    If you haven't yet created a working branch, do so by using the GitHub UI or locally by first checking out and then pushing the new branch.
+
+1. Open a Codespace for your branch by selecting the **Code** button > **Codespaces** tab > **Create codespace**.
+
+    ![How to open a project in Codespaces](https://user-images.githubusercontent.com/1857993/136060792-6b4c6158-0a2c-4dd6-8639-08d83da6d2d1.png)
+
+    The Codespace will spend a few minutes building and initializing. Once it's done, you'll be able to navigate the Codespace in a web-based VS Code environment.
+
+1. You can use the `dotnet build` and `dotnet test` commands to build and test specific projects within the repo.
+
+    You don't need to activate the locally installed .NET SDK or run the `restore` script because it's done during the Codespace initialization process.
+
+---
+
+### Troubleshooting
+
+See [BuildErrors](https://github.com/dotnet/aspnetcore/blob/main/docs/BuildErrors.md) for a description of common issues you might run into while building the repo.
+
+## Guide to the build script
+
+This ASP.NET Core repo contains a top-level build script located at `eng/build.cmd` and `eng/build.sh` and local build scripts within each directory. The scripts can be used to restore, build, and test the repo with support for a variety of flags. This section documents the common flags and some recommended invocation patterns.
+
+> :warning: We do _not_ recommend running the top-level build script for the repo. You'll rarely need to build the entire repo; building a sub-project is usually sufficient for your workflow.
+
+### Choosing a validation scope
+
+Check the build script in the area you changed (`build.cmd` on Windows, `build.sh` on Linux/macOS) and the area's `AGENTS.md` for prerequisites such as submodules, generated assets, or native tools. For a focused change, select a specific project using the repo-level script's `-projects` argument (see below), or use `dotnet build` or `dotnet test` with a project file after activation and any required generated files are in place. Use the area build when the change needs its broader integration coverage. If a broader build stops on an unrelated prerequisite before reaching your target, report both the prerequisite and what the focused build actually covered; don't treat the broader build as passing.
+
+For projects with multiple target frameworks, check the project file and build each target supported by your environment. Confirm that the intended tests actually ran and that required packages or other build outputs were produced; a zero exit code by itself does not establish this.
+
+Projects share the repository `artifacts` directory for build outputs. Avoid concurrent build/test invocations whose project graphs overlap in that directory; run them sequentially unless their outputs are isolated or the tests use an already-built graph. If `CS2012` or a file-in-use error occurs during overlapping builds, retry the affected command serially before treating it as a source failure.
+
+### Common arguments
+
+Common arguments that can be invoked on the `build.cmd` or `build.sh` scripts include:
+
+| Property           | Description                                                             |
+| ------------------ | ----------------------------------------------------------------------- |
+| Configuration      | `Debug` or `Release`. Default = `Debug`.                                |
+| TargetArchitecture | The CPU architecture to build for (x64, x86, arm, arm64).               |
+| TargetOsName       | The base runtime identifier to build for (win, linux, osx, linux-musl). |
+
+### Common invocations
+
+| Command                              | What does it do?                                                                                          |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `.\build.cmd -Configuration Release` | Build projects in a subdirectory using a `Release` configuration. Can be run in any project subdirectory. |
+| `.\build.cmd -test`                  | Run all unit tests in the current project. Can be run in any project subdirectory.                        |
+
+### Repo-level invocations
+
+While it's typically better to use the project-specific build scripts, the repo-level build scripts located in the `eng` directory can also be used for project-specific invocations.
+
+| Command                                                                                          | What does it do?                                                                                                                        |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `.\eng\build.cmd -all -pack -arch x64`                                                           | Build development packages for all the shipping projects in the repo. Must be run from the root of the repo.                            |
+| `.\eng\build.cmd -test -projects .\src\Framework\test\Microsoft.AspNetCore.App.UnitTests.csproj` | Run all the unit tests in the `Microsoft.AspNetCore.App.UnitTests` project.                                                             |
+| `.\eng\build.cmd -noBuildNative -noBuildManaged`                                                 | Builds the repo and skips native and managed projects, a quicker alternative to `./restore.cmd`. Must be run from the root of the repo. |
+
+## Complete list of repo dependencies
+
+To support building and testing the projects in the repo, several dependencies must be installed. Some dependencies are required regardless of the project area you want to work in. Other dependencies are optional depending on the project. Most required dependencies are installed automatically by the `restore` scripts, included by default in most modern operating systems, or installed automatically by the Visual Studio installer.
+
+### Required dependencies
+
+| Dependency                                                              | Use                                                                                                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| [Git source control](https://git-scm.org/)                              | Used for cloning, branching, and other source control-related activities in the repo.                                             |
+| [.NET](https://dotnet.microsoft.com/)                                   | A preview version of the .NET SDK is used for building projects within the repo. Installed automatically by the `restore` script. |
+| [curl](https://curl.haxx.se/)/[wget](https://www.gnu.org/software/wget) | Used for downloading installation files and assets from the web.                                                                  |
+| [tar](https://man7.org/linux/man-pages/man1/tar.1.html)                 | Used for unzipping installation assets. Included by default on macOS, Linux, and Windows 10 and above.                            |
+
+### Optional dependencies
+
+| Dependency                                                   | Use                                                                                                                                                           | Notes                                                                                                                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Selenium](https://www.selenium.dev/)                        | Used to run integration tests in the `Components` (aka Blazor) project.                                                                                       |                                                                                                                                                     |
+| [Playwright](https://playwright.dev/)                        | Used to run template tests defined in the `ProjectTemplates` work.                                                                                            |                                                                                                                                                     |
+| [Chrome](https://www.google.com/chrome/)                     | Required when running tests with Selenium or Playwright in the projects above. When using Playwright, the dependency is automatically installed.              |                                                                                                                                                     |
+| [Java Development Kit (v11 or newer)](https://jdk.java.net/) | Required when building the Java SignalR client. Can be installed using the `./eng/scripts/InstallJdk.ps1` script on Windows.                                  | Ensure that the `JAVA_HOME` directory points to the installation and that the `PATH` has been updated to include the `$(jdkInstallDir)/bin` folder. |
+| [Wix](https://wixtoolset.org/releases/)                      | Required when working with the Windows installers in the [Windows installers project](https://github.com/dotnet/aspnetcore/tree/main/src/Installers/Windows). |                                                                                                                                                     |
+| [Node.js](https://nodejs.org/en/)                            | Used for building JavaScript assets in the repo, such as those in Blazor and SignalR.                                                                         | Required a minimum version of the current NodeJS LTS.                                                                                               |
+

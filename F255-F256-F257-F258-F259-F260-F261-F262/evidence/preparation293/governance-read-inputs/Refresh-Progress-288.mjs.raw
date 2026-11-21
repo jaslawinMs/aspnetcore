@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { gitId, sha256 } from '../autoperf-published-results/F150-F206-F215-F220/source-objects.mjs';
+
+const parallel = import.meta.dirname, session = path.dirname(parallel);
+const receipt = JSON.parse(fs.readFileSync(path.join(session, 'autoperf-runs', 'F231-F232-F233-F239',
+    'publication-287', 'verified-final-publication.json'), 'utf8'));
+assert.equal(receipt.actualFinalIndexCommit, 'd66fa862edeab82645baec65f0390473cb0b1298');
+assert.equal(receipt.campaignFinalizedAfterVerifiedReceipt, 272);
+assert.equal(receipt.campaignUnfinishedAfterVerifiedReceipt, 86);
+assert.equal(receipt.actualCoreBlobsVerified, 974);
+assert.equal(receipt.actualReportBlobUnchanged, '73abf142464b1f81676e03a1eebc766c279cb47b');
+const raw = fs.readFileSync(path.join(session, 'autoperf-campaign.json'));
+assert.ok(raw.equals(fs.readFileSync(path.join(session, 'autoperf-published-results', 'campaign.json'))));
+assert.equal(gitId('blob', raw), 'ae16aefbb87bc8ea832098054ded10f2aadaf7f5');
+const policyBytes = fs.readFileSync(path.join(parallel, 'policy.json')), policy = JSON.parse(policyBytes);
+const result = {
+    observedUtc: new Date().toISOString(), verifiedFinalizationUtc: receipt.actualFinalizationVerifiedAt,
+    finalized: 272, pending: 86, total: 358, counts: receipt.campaignDispositionCounts,
+    trackingIssue: receipt.actualTrackingIssueUrl, evidenceCommit: receipt.evidenceCommit,
+    finalIndexCommit: receipt.actualFinalIndexCommit, remotelyByteVerifiedCoreBlobs: 974,
+    privateCampaignSha256: sha256(raw), campaignGitBlob: gitId('blob', raw),
+    synchronizedPrivatePublicLedgers: true, reportBlobUnchanged: receipt.actualReportBlobUnchanged,
+    lastFourOutcomesAreSourceRejectionsNotMeasuredPerformance: true,
+    actualOwners: policy.independentFindingPreparationWorkers, actualScopes: policy.activeWorkerPreparationScopes,
+    policySha256: sha256(policyBytes), pointOnlyNotFutureAuthority: true,
+    conditionalOnlyAt72PerDayHours: 86 / 3, conditionalOnlyDuration: '28h40m',
+    conditionalRateNotCurrentMeasuredETA: true, sustainedCurrentRateNotCalculatedByThisRefresh: true,
+    newPromisedMachinesStillUnspecified: true, actualEnclosingToolCompletionNotSelfAttested: true
+};
+fs.writeFileSync(path.join(parallel, 'campaign-progress-288.json'), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ finalized: 272, pending: 86, counts: result.counts,
+    issue: result.trackingIssue, privateCampaignSha256: result.privateCampaignSha256,
+    conditional72PerDayOnly: '28h40m', currentSustainedETAClaimed: false }));

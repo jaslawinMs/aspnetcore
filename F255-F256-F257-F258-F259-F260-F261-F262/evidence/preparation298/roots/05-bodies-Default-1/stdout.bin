@@ -1,0 +1,2181 @@
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+8e2585e75d7474d7d8cf10d2e917bcf99fefdb66 blob 10338
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable enable
+
+using System.Net;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Http.Features;
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
+
+internal sealed class TransportManager
+{
+    private readonly List<ActiveTransport> _transports = [];
+
+    private readonly List<IConnectionListenerFactory> _transportFactories;
+    private readonly List<IMultiplexedConnectionListenerFactory> _multiplexedTransportFactories;
+    private readonly IHttpsConfigurationService _httpsConfigurationService;
+    private readonly ServiceContext _serviceContext;
+
+    public TransportManager(
+        List<IConnectionListenerFactory> transportFactories,
+        List<IMultiplexedConnectionListenerFactory> multiplexedTransportFactories,
+        IHttpsConfigurationService httpsConfigurationService,
+        ServiceContext serviceContext)
+    {
+        _transportFactories = transportFactories;
+        _multiplexedTransportFactories = multiplexedTransportFactories;
+        _httpsConfigurationService = httpsConfigurationService;
+        _serviceContext = serviceContext;
+    }
+
+    private KestrelTrace Trace => _serviceContext.Log;
+
+    public async Task<EndPoint> BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig? endpointConfig, CancellationToken cancellationToken)
+    {
+        if (_transportFactories.Count == 0)
+        {
+            throw new InvalidOperationException($"Cannot bind with {nameof(ConnectionDelegate)} no {nameof(IConnectionListenerFactory)} is registered.");
+        }
+
+        foreach (var transportFactory in _transportFactories)
+        {
+            var selector = transportFactory as IConnectionListenerFactorySelector;
+            if (CanBindFactory(endPoint, selector))
+            {
+                var transport = await transportFactory.BindAsync(endPoint, cancellationToken).ConfigureAwait(false);
+                StartAcceptLoop(new GenericConnectionListener(transport), c => connectionDelegate(c), endpointConfig);
+                return transport.EndPoint;
+            }
+        }
+
+        // Special case situation where a named pipe endpoint is specified and there is no matching transport.
+        // The named pipe transport is only registered on Windows. The test is done at this point so there is
+        // the opportunity for the app to register their own transport to handle named pipe endpoints.
+        if (endPoint is NamedPipeEndPoint && !OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException("Named pipes transport requires a Windows operating system.");
+        }
+
+        throw new InvalidOperationException($"No registered {nameof(IConnectionListenerFactory)} supports endpoint {endPoint.GetType().Name}: {endPoint}");
+    }
+
+    public async Task<EndPoint> BindAsync(EndPoint endPoint, MultiplexedConnectionDelegate multiplexedConnectionDelegate, ListenOptions listenOptions, CancellationToken cancellationToken)
+    {
+        if (_multiplexedTransportFactories.Count == 0)
+        {
+            throw new InvalidOperationException($"Cannot bind with {nameof(MultiplexedConnectionDelegate)} no {nameof(IMultiplexedConnectionListenerFactory)} is registered.");
+        }
+
+        var features = new FeatureCollection();
+
+        // Will throw an appropriate error if it's not enabled
+        _httpsConfigurationService.PopulateMultiplexedTransportFeatures(features, listenOptions);
+
+        foreach (var multiplexedTransportFactory in _multiplexedTransportFactories)
+        {
+            var selector = multiplexedTransportFactory as IConnectionListenerFactorySelector;
+            if (CanBindFactory(endPoint, selector))
+            {
+                var transport = await multiplexedTransportFactory.BindAsync(endPoint, features, cancellationToken).ConfigureAwait(false);
+                StartAcceptLoop(new GenericMultiplexedConnectionListener(transport), c => multiplexedConnectionDelegate(c), listenOptions.EndpointConfig);
+                return transport.EndPoint;
+            }
+        }
+
+        throw new InvalidOperationException($"No registered {nameof(IMultiplexedConnectionListenerFactory)} supports endpoint {endPoint.GetType().Name}: {endPoint}");
+    }
+
+    private static bool CanBindFactory(EndPoint endPoint, IConnectionListenerFactorySelector? selector)
+    {
+        // By default, the last registered factory binds to the endpoint.
+        // A factory can implement IConnectionListenerFactorySelector to decide whether it can bind to the endpoint.
+        return selector?.CanBind(endPoint) ?? true;
+    }
+
+    private void StartAcceptLoop<T>(IConnectionListener<T> connectionListener, Func<T, Task> connectionDelegate, EndpointConfig? endpointConfig) where T : BaseConnectionContext
+    {
+        var transportConnectionManager = new TransportConnectionManager(_serviceContext.ConnectionManager);
+        var connectionDispatcher = new ConnectionDispatcher<T>(_serviceContext, connectionDelegate, transportConnectionManager);
+        var acceptLoopTask = connectionDispatcher.StartAcceptingConnections(connectionListener);
+
+        _transports.Add(new ActiveTransport(connectionListener, acceptLoopTask, transportConnectionManager, endpointConfig));
+    }
+
+    public Task StopEndpointsAsync(List<EndpointConfig> endpointsToStop, CancellationToken cancellationToken)
+    {
+        var transportsToStop = new List<ActiveTransport>();
+        foreach (var t in _transports)
+        {
+            if (t.EndpointConfig is not null && endpointsToStop.Contains(t.EndpointConfig))
+            {
+                transportsToStop.Add(t);
+            }
+        }
+        return StopTransportsAsync(transportsToStop, cancellationToken);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return StopTransportsAsync(new List<ActiveTransport>(_transports), cancellationToken);
+    }
+
+    private async Task StopTransportsAsync(List<ActiveTransport> transportsToStop, CancellationToken cancellationToken)
+    {
+        var tasks = new Task[transportsToStop.Count];
+
+        for (int i = 0; i < transportsToStop.Count; i++)
+        {
+            tasks[i] = transportsToStop[i].UnbindAsync(cancellationToken);
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        async Task StopTransportConnection(ActiveTransport transport)
+        {
+            if (!await transport.TransportConnectionManager.CloseAllConnectionsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                Trace.NotAllConnectionsClosedGracefully();
+
+                if (!await transport.TransportConnectionManager.AbortAllConnectionsAsync().ConfigureAwait(false))
+                {
+                    Trace.NotAllConnectionsAborted();
+                }
+            }
+        }
+
+        for (int i = 0; i < transportsToStop.Count; i++)
+        {
+            tasks[i] = StopTransportConnection(transportsToStop[i]);
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        for (int i = 0; i < transportsToStop.Count; i++)
+        {
+            tasks[i] = transportsToStop[i].DisposeAsync().AsTask();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        foreach (var transport in transportsToStop)
+        {
+            _transports.Remove(transport);
+        }
+    }
+
+    private sealed class ActiveTransport : IAsyncDisposable
+    {
+        public ActiveTransport(IConnectionListenerBase transport, Task acceptLoopTask, TransportConnectionManager transportConnectionManager, EndpointConfig? endpointConfig = null)
+        {
+            ConnectionListener = transport;
+            AcceptLoopTask = acceptLoopTask;
+            TransportConnectionManager = transportConnectionManager;
+            EndpointConfig = endpointConfig;
+        }
+
+        public IConnectionListenerBase ConnectionListener { get; }
+        public Task AcceptLoopTask { get; }
+        public TransportConnectionManager TransportConnectionManager { get; }
+
+        public EndpointConfig? EndpointConfig { get; }
+
+        public async Task UnbindAsync(CancellationToken cancellationToken)
+        {
+            await ConnectionListener.UnbindAsync(cancellationToken).ConfigureAwait(false);
+            await AcceptLoopTask.ConfigureAwait(false);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            return ConnectionListener.DisposeAsync();
+        }
+    }
+
+    private sealed class GenericConnectionListener : IConnectionListener<ConnectionContext>
+    {
+        private readonly IConnectionListener _connectionListener;
+
+        public GenericConnectionListener(IConnectionListener connectionListener)
+        {
+            _connectionListener = connectionListener;
+        }
+
+        public EndPoint EndPoint => _connectionListener.EndPoint;
+
+        public ValueTask<ConnectionContext?> AcceptAsync(CancellationToken cancellationToken = default)
+             => _connectionListener.AcceptAsync(cancellationToken);
+
+        public ValueTask UnbindAsync(CancellationToken cancellationToken = default)
+            => _connectionListener.UnbindAsync(cancellationToken);
+
+        public ValueTask DisposeAsync()
+            => _connectionListener.DisposeAsync();
+    }
+
+    private sealed class GenericMultiplexedConnectionListener : IConnectionListener<MultiplexedConnectionContext>
+    {
+        private readonly IMultiplexedConnectionListener _multiplexedConnectionListener;
+
+        public GenericMultiplexedConnectionListener(IMultiplexedConnectionListener multiplexedConnectionListener)
+        {
+            _multiplexedConnectionListener = multiplexedConnectionListener;
+        }
+
+        public EndPoint EndPoint => _multiplexedConnectionListener.EndPoint;
+
+        public ValueTask<MultiplexedConnectionContext?> AcceptAsync(CancellationToken cancellationToken = default)
+             => _multiplexedConnectionListener.AcceptAsync(features: null, cancellationToken);
+
+        public ValueTask UnbindAsync(CancellationToken cancellationToken = default)
+            => _multiplexedConnectionListener.UnbindAsync(cancellationToken);
+
+        public ValueTask DisposeAsync()
+            => _multiplexedConnectionListener.DisposeAsync();
+    }
+}
+
+ab03c06fcaaf6c7fd68b0e41f297a74f92cf7292 blob 19356
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+using System.IO.Pipelines;
+using System.Linq;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core;
+
+internal sealed class KestrelServerImpl : IServer
+{
+    private readonly ServerAddressesFeature _serverAddresses;
+    private readonly TransportManager _transportManager;
+    private readonly List<IConnectionListenerFactory> _transportFactories;
+    private readonly List<IMultiplexedConnectionListenerFactory> _multiplexedTransportFactories;
+    private readonly IHttpsConfigurationService _httpsConfigurationService;
+
+    private readonly SemaphoreSlim _bindSemaphore = new SemaphoreSlim(initialCount: 1);
+    private bool _hasStarted;
+    private int _stopping;
+    private readonly CancellationTokenSource _stopCts = new CancellationTokenSource();
+    private readonly TaskCompletionSource _stoppedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    private IDisposable? _configChangedRegistration;
+
+    public KestrelServerImpl(
+        IOptions<KestrelServerOptions> options,
+        IEnumerable<IConnectionListenerFactory> transportFactories,
+        IEnumerable<IMultiplexedConnectionListenerFactory> multiplexedFactories,
+        IHttpsConfigurationService httpsConfigurationService,
+        ILoggerFactory loggerFactory,
+        DiagnosticSource? diagnosticSource,
+        KestrelMetrics metrics,
+        IEnumerable<IHeartbeatHandler> heartbeatHandlers)
+        : this(transportFactories, multiplexedFactories, httpsConfigurationService, CreateServiceContext(options, loggerFactory, diagnosticSource, metrics, heartbeatHandlers))
+    {
+    }
+
+    // For testing
+
+    internal KestrelServerImpl(
+        IEnumerable<IConnectionListenerFactory> transportFactories,
+        IEnumerable<IMultiplexedConnectionListenerFactory> multiplexedFactories,
+        IHttpsConfigurationService httpsConfigurationService,
+        ServiceContext serviceContext)
+    {
+        ArgumentNullException.ThrowIfNull(transportFactories);
+
+        _transportFactories = Enumerable.Reverse(transportFactories).ToList();
+        _multiplexedTransportFactories = Enumerable.Reverse(multiplexedFactories).ToList();
+        _httpsConfigurationService = httpsConfigurationService;
+
+        if (_transportFactories.Count == 0 && _multiplexedTransportFactories.Count == 0)
+        {
+            throw new InvalidOperationException(CoreStrings.TransportNotFound);
+        }
+
+        ServiceContext = serviceContext;
+
+        Features = new FeatureCollection();
+        _serverAddresses = new ServerAddressesFeature();
+        Features.Set<IServerAddressesFeature>(_serverAddresses);
+
+        _transportManager = new TransportManager(_transportFactories, _multiplexedTransportFactories, _httpsConfigurationService, ServiceContext);
+    }
+
+    private static ServiceContext CreateServiceContext(IOptions<KestrelServerOptions> options, ILoggerFactory loggerFactory, DiagnosticSource? diagnosticSource, KestrelMetrics metrics,
+        IEnumerable<IHeartbeatHandler> heartbeatHandlers)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+
+        var serverOptions = options.Value ?? new KestrelServerOptions();
+        var trace = new KestrelTrace(loggerFactory);
+        var connectionManager = new ConnectionManager(
+            trace,
+            serverOptions.Limits.MaxConcurrentUpgradedConnections);
+
+        var dateHeaderValueManager = new DateHeaderValueManager(TimeProvider.System);
+
+        var heartbeat = new Heartbeat(
+            [ dateHeaderValueManager, connectionManager, ..heartbeatHandlers ],
+            TimeProvider.System,
+            DebuggerWrapper.Singleton,
+            trace,
+            Heartbeat.Interval);
+
+        return new ServiceContext
+        {
+            Log = trace,
+            Scheduler = PipeScheduler.ThreadPool,
+            HttpParser = new HttpParser<Http1ParsingHandler>(trace.IsEnabled(LogLevel.Information), serverOptions.DisableHttp1LineFeedTerminators),
+            TimeProvider = TimeProvider.System,
+            DateHeaderValueManager = dateHeaderValueManager,
+            ConnectionManager = connectionManager,
+            Heartbeat = heartbeat,
+            ServerOptions = serverOptions,
+            DiagnosticSource = diagnosticSource,
+            Metrics = metrics
+        };
+    }
+
+    public IFeatureCollection Features { get; }
+
+    public KestrelServerOptions Options => ServiceContext.ServerOptions;
+
+    // Internal for testing
+    internal ServiceContext ServiceContext { get; }
+
+    private KestrelTrace Trace => ServiceContext.Log;
+
+    private AddressBindContext? AddressBindContext { get; set; }
+
+    public async Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken) where TContext : notnull
+    {
+        try
+        {
+            ValidateOptions();
+
+            if (_hasStarted)
+            {
+                // The server has already started and/or has not been cleaned up yet
+                throw new InvalidOperationException(CoreStrings.ServerAlreadyStarted);
+            }
+            _hasStarted = true;
+
+            ServiceContext.Heartbeat?.Start();
+
+            async Task OnBind(ListenOptions options, CancellationToken onBindCancellationToken)
+            {
+                var hasHttp1 = options.Protocols.HasFlag(HttpProtocols.Http1);
+                var hasHttp2 = options.Protocols.HasFlag(HttpProtocols.Http2);
+                var hasHttp3 = options.Protocols.HasFlag(HttpProtocols.Http3);
+                var hasTls = options.IsTls;
+
+                // Filter out invalid combinations.
+
+                if (!hasTls)
+                {
+                    // Http/1 without TLS, no-op HTTP/2 and 3.
+                    if (hasHttp1)
+                    {
+                        if (options.ProtocolsSetExplicitly)
+                        {
+                            if (hasHttp2)
+                            {
+                                Trace.Http2DisabledWithHttp1AndNoTls(options.EndPoint);
+                            }
+                            if (hasHttp3)
+                            {
+                                Trace.Http3DisabledWithHttp1AndNoTls(options.EndPoint);
+                            }
+                        }
+
+                        hasHttp2 = false;
+                        hasHttp3 = false;
+                    }
+                    // Http/3 requires TLS. Note we only let it fall back to HTTP/1, not HTTP/2
+                    else if (hasHttp3)
+                    {
+                        throw new InvalidOperationException("HTTP/3 requires HTTPS.");
+                    }
+                }
+
+                // Quic isn't registered if it's not supported, throw if we can't fall back to 1 or 2
+                if (hasHttp3 && _multiplexedTransportFactories.Count == 0 && !(hasHttp1 || hasHttp2))
+                {
+                    throw new InvalidOperationException("Unable to bind an HTTP/3 endpoint. This could be because QUIC has not been configured using UseQuic, or the platform doesn't support QUIC or HTTP/3.");
+                }
+
+                // Disable adding alt-svc header if endpoint has configured not to or there is no
+                // multiplexed transport factory, which happens if QUIC isn't supported.
+                var addAltSvcHeader = !options.DisableAltSvcHeader && _multiplexedTransportFactories.Count > 0;
+
+                var configuredEndpoint = options.EndPoint;
+
+                // Add the HTTP middleware as the terminal connection middleware
+                if (hasHttp1 || hasHttp2
+                    || options.Protocols == HttpProtocols.None) // TODO a test fails because it doesn't throw an exception in the right place
+                                                                // when there is no HttpProtocols in KestrelServer, can we remove/change the test?
+                {
+                    if (_transportFactories.Count == 0)
+                    {
+                        throw new InvalidOperationException($"Cannot start HTTP/1.x or HTTP/2 server if no {nameof(IConnectionListenerFactory)} is registered.");
+                    }
+
+                    options.UseHttpServer(ServiceContext, application, options.Protocols, addAltSvcHeader);
+                    var connectionDelegate = options.Build();
+
+                    // Add the connection limit middleware
+                    connectionDelegate = EnforceConnectionLimit(connectionDelegate, Options.Limits.MaxConcurrentConnections, Trace, ServiceContext.Metrics);
+
+                    options.EndPoint = await _transportManager.BindAsync(configuredEndpoint, connectionDelegate, options.EndpointConfig, onBindCancellationToken).ConfigureAwait(false);
+                }
+
+                if (hasHttp3 && _multiplexedTransportFactories.Count > 0)
+                {
+                    // Check if a previous transport has changed the endpoint. If it has then the endpoint is dynamic and we can't guarantee it will work for other transports.
+                    // For more details, see https://github.com/dotnet/aspnetcore/issues/42982
+                    if (!configuredEndpoint.Equals(options.EndPoint))
+                    {
+                        Trace.LogError(CoreStrings.DynamicPortOnMultipleTransportsNotSupported);
+                    }
+                    else
+                    {
+                        options.UseHttp3Server(ServiceContext, application, options.Protocols, addAltSvcHeader);
+                        var multiplexedConnectionDelegate = ((IMultiplexedConnectionBuilder)options).Build();
+
+                        // Add the connection limit middleware
+                        multiplexedConnectionDelegate = EnforceConnectionLimit(multiplexedConnectionDelegate, Options.Limits.MaxConcurrentConnections, Trace, ServiceContext.Metrics);
+
+                        options.EndPoint = await _transportManager.BindAsync(configuredEndpoint, multiplexedConnectionDelegate, options, onBindCancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            AddressBindContext = new AddressBindContext(_serverAddresses, Options, Trace, OnBind);
+
+            await BindAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Don't log the error https://github.com/dotnet/aspnetcore/issues/29801
+            Dispose();
+            throw;
+        }
+
+        // Register the options with the event source so it can be logged (if necessary)
+        KestrelEventSource.Log.AddServerOptions(Options);
+    }
+
+    // Graceful shutdown if possible
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref _stopping, 1) == 1)
+        {
+            await _stoppedTcs.Task.ConfigureAwait(false);
+            return;
+        }
+
+        // Stop background heartbeat first.
+        // The heartbeat running as the server is shutting down could produce unexpected behavior.
+        ServiceContext.Heartbeat?.Dispose();
+
+        _stopCts.Cancel();
+
+#pragma warning disable CA2016 // Don't use cancellationToken when acquiring the semaphore. Dispose calls this with a pre-canceled token.
+        await _bindSemaphore.WaitAsync().ConfigureAwait(false);
+#pragma warning restore CA2016
+
+        try
+        {
+            await _transportManager.StopAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _stoppedTcs.TrySetException(ex);
+            throw;
+        }
+        finally
+        {
+            _configChangedRegistration?.Dispose();
+            _stopCts.Dispose();
+            _bindSemaphore.Release();
+        }
+
+        _stoppedTcs.TrySetResult();
+
+        // Remove the options from the event source so we don't have a leak if
+        // the server is stopped and started again in the same process.
+        KestrelEventSource.Log.RemoveServerOptions(Options);
+    }
+
+    // Ungraceful shutdown
+    public void Dispose()
+    {
+        StopAsync(new CancellationToken(canceled: true)).GetAwaiter().GetResult();
+    }
+
+    private async Task BindAsync(CancellationToken cancellationToken)
+    {
+        await _bindSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (_stopping == 1)
+            {
+                throw new InvalidOperationException("Kestrel has already been stopped.");
+            }
+
+            IChangeToken? reloadToken = null;
+
+            _serverAddresses.InternalCollection.PreventPublicMutation();
+
+            if (Options.ConfigurationLoader?.ReloadOnChange == true && (!_serverAddresses.PreferHostingUrls || _serverAddresses.InternalCollection.Count == 0))
+            {
+                reloadToken = Options.ConfigurationLoader.GetReloadToken();
+            }
+
+            Options.ConfigurationLoader?.LoadInternal();
+            Options.ConfigurationLoader?.ProcessEndpointsToAdd();
+
+            await AddressBinder.BindAsync(Options.GetListenOptions(), AddressBindContext!, _httpsConfigurationService.UseHttpsWithDefaults, cancellationToken).ConfigureAwait(false);
+            _configChangedRegistration = reloadToken?.RegisterChangeCallback(TriggerRebind, this);
+        }
+        finally
+        {
+            _bindSemaphore.Release();
+        }
+    }
+
+    private static void TriggerRebind(object? state)
+    {
+        if (state is KestrelServerImpl server)
+        {
+            _ = server.RebindAsync();
+        }
+    }
+
+    private async Task RebindAsync()
+    {
+        // Prevents from interfering with shutdown or other rebinds.
+        // All exceptions are caught and logged at the critical level.
+        await _bindSemaphore.WaitAsync();
+
+        IChangeToken? reloadToken = null;
+
+        try
+        {
+            if (_stopping == 1)
+            {
+                return;
+            }
+
+            Debug.Assert(Options.ConfigurationLoader != null, "Rebind can only happen when there is a ConfigurationLoader.");
+
+            reloadToken = Options.ConfigurationLoader.GetReloadToken();
+            var (endpointsToStop, endpointsToStart) = Options.ConfigurationLoader.Reload();
+
+            Trace.LogDebug("Config reload token fired. Checking for changes...");
+
+            if (endpointsToStop.Count > 0)
+            {
+                var urlsToStop = endpointsToStop.Select(lo => lo.EndpointConfig!.Url);
+                if (Trace.IsEnabled(LogLevel.Information))
+                {
+                    Trace.LogInformation("Config changed. Stopping the following endpoints: '{endpoints}'", string.Join("', '", urlsToStop));
+                }
+
+                // 5 is the default value for WebHost's "shutdownTimeoutSeconds", so use that.
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(_stopCts.Token);
+                cts.CancelAfter(TimeSpan.FromSeconds(5));
+
+                // TODO: It would be nice to start binding to new endpoints immediately and reconfigured endpoints as soon
+                // as the unbinding finished for the given endpoint rather than wait for all transports to unbind first.
+                var configsToStop = new List<EndpointConfig>(endpointsToStop.Count);
+                foreach (var lo in endpointsToStop)
+                {
+                    configsToStop.Add(lo.EndpointConfig!);
+                }
+                await _transportManager.StopEndpointsAsync(configsToStop, cts.Token).ConfigureAwait(false);
+
+                foreach (var listenOption in endpointsToStop)
+                {
+                    Options.OptionsInUse.Remove(listenOption);
+                    _serverAddresses.InternalCollection.Remove(listenOption.GetDisplayName());
+                }
+            }
+
+            if (endpointsToStart.Count > 0)
+            {
+                var urlsToStart = endpointsToStart.Select(lo => lo.EndpointConfig!.Url);
+                if (Trace.IsEnabled(LogLevel.Information))
+                {
+                    Trace.LogInformation("Config changed. Starting the following endpoints: '{endpoints}'", string.Join("', '", urlsToStart));
+                }
+
+                foreach (var listenOption in endpointsToStart)
+                {
+                    try
+                    {
+                        await listenOption.BindAsync(AddressBindContext!, _stopCts.Token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (Trace.IsEnabled(LogLevel.Critical))
+                        {
+                            Trace.LogCritical(0, ex, "Unable to bind to '{url}' on config reload.", listenOption.EndpointConfig!.Url);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.LogCritical(0, ex, "Unable to reload configuration.");
+        }
+        finally
+        {
+            _configChangedRegistration = reloadToken?.RegisterChangeCallback(TriggerRebind, this);
+            _bindSemaphore.Release();
+        }
+    }
+
+    private void ValidateOptions()
+    {
+        if (Options.Limits.MaxRequestBufferSize.HasValue &&
+            Options.Limits.MaxRequestBufferSize < Options.Limits.MaxRequestLineSize)
+        {
+            throw new InvalidOperationException(
+                CoreStrings.FormatMaxRequestBufferSmallerThanRequestLineBuffer(Options.Limits.MaxRequestBufferSize.Value, Options.Limits.MaxRequestLineSize));
+        }
+
+        if (Options.Limits.MaxRequestBufferSize.HasValue &&
+            Options.Limits.MaxRequestBufferSize < Options.Limits.MaxRequestHeadersTotalSize)
+        {
+            throw new InvalidOperationException(
+                CoreStrings.FormatMaxRequestBufferSmallerThanRequestHeaderBuffer(Options.Limits.MaxRequestBufferSize.Value, Options.Limits.MaxRequestHeadersTotalSize));
+        }
+    }
+
+    private static ConnectionDelegate EnforceConnectionLimit(ConnectionDelegate innerDelegate, long? connectionLimit, KestrelTrace trace, KestrelMetrics metrics)
+    {
+        if (!connectionLimit.HasValue)
+        {
+            return innerDelegate;
+        }
+
+        return new ConnectionLimitMiddleware<ConnectionContext>(c => innerDelegate(c), connectionLimit.Value, trace, metrics).OnConnectionAsync;
+    }
+
+    private static MultiplexedConnectionDelegate EnforceConnectionLimit(MultiplexedConnectionDelegate innerDelegate, long? connectionLimit, KestrelTrace trace, KestrelMetrics metrics)
+    {
+        if (!connectionLimit.HasValue)
+        {
+            return innerDelegate;
+        }
+
+        return new ConnectionLimitMiddleware<MultiplexedConnectionContext>(c => innerDelegate(c), connectionLimit.Value, trace, metrics).OnConnectionAsync;
+    }
+}
+
+e7e67c67c6d4ebdce05a2c9bb41305d28cd2b525 blob 18585
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
+
+namespace Microsoft.AspNetCore.Server.Kestrel;
+
+/// <summary>
+/// Configuration loader for Kestrel.
+/// </summary>
+public class KestrelConfigurationLoader
+{
+    private readonly IHttpsConfigurationService _httpsConfigurationService;
+
+    /// <remarks>
+    /// Non-null only makes sense if <see cref="ReloadOnChange"/> is true.
+    /// </remarks>
+    private readonly CertificatePathWatcher? _certificatePathWatcher;
+
+    private bool _loaded;
+    private bool _endpointsToAddProcessed;
+
+    // This is not used to trigger reloads but to suppress redundant reloads triggered in other ways
+    private IChangeToken? _reloadToken;
+
+    internal KestrelConfigurationLoader(
+        KestrelServerOptions options,
+        IConfiguration configuration,
+        IHttpsConfigurationService httpsConfigurationService,
+        CertificatePathWatcher? certificatePathWatcher,
+        bool reloadOnChange)
+    {
+        Options = options;
+        Configuration = configuration;
+
+        ReloadOnChange = reloadOnChange;
+
+        ConfigurationReader = new ConfigurationReader(configuration);
+
+        _httpsConfigurationService = httpsConfigurationService;
+        _certificatePathWatcher = certificatePathWatcher;
+        Debug.Assert(reloadOnChange || (certificatePathWatcher is null), "If reloadOnChange is false, then certificatePathWatcher should be null");
+    }
+
+    /// <summary>
+    /// Gets the <see cref="KestrelServerOptions"/>.
+    /// </summary>
+    public KestrelServerOptions Options { get; }
+
+    /// <summary>
+    /// Gets the application <see cref="IConfiguration"/>.
+    /// </summary>
+    public IConfiguration Configuration { get; internal set; } // Setter internal for testing
+
+    /// <summary>
+    /// If <see langword="true" />, Kestrel will dynamically update endpoint bindings when configuration changes.
+    /// This will only reload endpoints defined in the "Endpoints" section of your Kestrel configuration. Endpoints defined in code will not be reloaded.
+    /// </summary>
+    internal bool ReloadOnChange { get; }
+
+    private ConfigurationReader ConfigurationReader { get; set; }
+
+    private IDictionary<string, Action<EndpointConfiguration>> EndpointConfigurations { get; }
+        = new Dictionary<string, Action<EndpointConfiguration>>(0, StringComparer.OrdinalIgnoreCase);
+
+    // Actions that will be delayed until Load so that they aren't applied if the configuration loader is replaced.
+    private IList<Action> EndpointsToAdd { get; } = new List<Action>();
+
+    private CertificateConfig? DefaultCertificateConfig { get; set; }
+    internal X509Certificate2? DefaultCertificate { get; set; }
+
+    internal X509Certificate2Collection? DefaultCertificateChain { get; set; }
+
+    /// <summary>
+    /// Specifies a configuration Action to run when an endpoint with the given name is loaded from configuration.
+    /// </summary>
+    public KestrelConfigurationLoader Endpoint(string name, Action<EndpointConfiguration> configureOptions)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+
+        EndpointConfigurations[name] = configureOptions ?? throw new ArgumentNullException(nameof(configureOptions));
+        return this;
+    }
+
+    /// <summary>
+    /// Bind to given IP address and port.
+    /// </summary>
+    public KestrelConfigurationLoader Endpoint(IPAddress address, int port) => Endpoint(address, port, _ => { });
+
+    /// <summary>
+    /// Bind to given IP address and port.
+    /// </summary>
+    public KestrelConfigurationLoader Endpoint(IPAddress address, int port, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+
+        return Endpoint(new IPEndPoint(address, port), configure);
+    }
+
+    /// <summary>
+    /// Bind to given IP endpoint.
+    /// </summary>
+    public KestrelConfigurationLoader Endpoint(IPEndPoint endPoint) => Endpoint(endPoint, _ => { });
+
+    /// <summary>
+    /// Bind to given IP address and port.
+    /// </summary>
+    public KestrelConfigurationLoader Endpoint(IPEndPoint endPoint, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(endPoint);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.Listen(endPoint, configure);
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Listens on ::1 and 127.0.0.1 with the given port. Requesting a dynamic port by specifying 0 is not supported
+    /// for this type of endpoint.
+    /// </summary>
+    public KestrelConfigurationLoader LocalhostEndpoint(int port) => LocalhostEndpoint(port, options => { });
+
+    /// <summary>
+    /// Listens on ::1 and 127.0.0.1 with the given port. Requesting a dynamic port by specifying 0 is not supported
+    /// for this type of endpoint.
+    /// </summary>
+    public KestrelConfigurationLoader LocalhostEndpoint(int port, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.ListenLocalhost(port, configure);
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
+    /// </summary>
+    public KestrelConfigurationLoader AnyIPEndpoint(int port) => AnyIPEndpoint(port, options => { });
+
+    /// <summary>
+    /// Listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
+    /// </summary>
+    public KestrelConfigurationLoader AnyIPEndpoint(int port, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.ListenAnyIP(port, configure);
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Bind to given Unix domain socket path.
+    /// </summary>
+    public KestrelConfigurationLoader UnixSocketEndpoint(string socketPath) => UnixSocketEndpoint(socketPath, _ => { });
+
+    /// <summary>
+    /// Bind to given Unix domain socket path.
+    /// </summary>
+    public KestrelConfigurationLoader UnixSocketEndpoint(string socketPath, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(socketPath);
+        if (socketPath.Length == 0 || socketPath[0] != '/')
+        {
+            throw new ArgumentException(CoreStrings.UnixSocketPathMustBeAbsolute, nameof(socketPath));
+        }
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.ListenUnixSocket(socketPath, configure);
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Bind to given named pipe.
+    /// </summary>
+    public KestrelConfigurationLoader NamedPipeEndpoint(string pipeName) => NamedPipeEndpoint(pipeName, _ => { });
+
+    /// <summary>
+    /// Bind to given named pipe.
+    /// </summary>
+    public KestrelConfigurationLoader NamedPipeEndpoint(string pipeName, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(pipeName);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.ListenNamedPipe(pipeName, configure);
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Open a socket file descriptor.
+    /// </summary>
+    public KestrelConfigurationLoader HandleEndpoint(ulong handle) => HandleEndpoint(handle, _ => { });
+
+    /// <summary>
+    /// Open a socket file descriptor.
+    /// </summary>
+    public KestrelConfigurationLoader HandleEndpoint(ulong handle, Action<ListenOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        EndpointsToAdd.Add(() =>
+        {
+            Options.ListenHandle(handle, configure);
+        });
+
+        return this;
+    }
+
+    // Called from KestrelServerOptions.ApplyEndpointDefaults so it applies to even explicit Listen endpoints.
+    // Does not require a call to Load.
+    internal void ApplyEndpointDefaults(ListenOptions listenOptions)
+    {
+        var defaults = ConfigurationReader.EndpointDefaults;
+
+        if (defaults.Protocols.HasValue)
+        {
+            listenOptions.Protocols = defaults.Protocols.Value;
+        }
+    }
+
+    // Called from KestrelServerOptions.ApplyHttpsDefaults so it applies to even explicit Listen endpoints.
+    // Does not require a call to Load.
+    internal void ApplyHttpsDefaults(HttpsConnectionAdapterOptions httpsOptions)
+    {
+        var defaults = ConfigurationReader.EndpointDefaults;
+
+        if (defaults.SslProtocols.HasValue)
+        {
+            httpsOptions.SslProtocols = defaults.SslProtocols.Value;
+        }
+
+        if (defaults.ClientCertificateMode.HasValue)
+        {
+            httpsOptions.ClientCertificateMode = defaults.ClientCertificateMode.Value;
+        }
+    }
+
+    // Note: This method is obsolete, but we have to keep it around to avoid breaking the public API.
+    // Internally, we should always use <see cref="LoadInternal"/>.
+    /// <summary>
+    /// Loads the configuration.  Does nothing if it has previously been invoked (including implicitly).
+    /// </summary>
+    public void Load()
+    {
+        if (!_loaded)
+        {
+            LoadInternal();
+        }
+
+        // Has its own logic for skipping subsequent invocations
+        ProcessEndpointsToAdd();
+    }
+
+    /// <remarks>
+    /// Always prefer this to <see cref="Load"/> since it can be called repeatedly and no-ops if
+    /// there's a change token indicating nothing has changed.
+    /// </remarks>
+    internal void LoadInternal()
+    {
+        if (!_loaded || ReloadOnChange)
+        {
+            Debug.Assert(!!_loaded || _reloadToken is null, "Shouldn't have a reload token before first load");
+            Debug.Assert(!!ReloadOnChange || _reloadToken is null, "Shouldn't have a reload token unless reload-on-change is set");
+
+            _loaded = true;
+
+            if (_reloadToken is null || _reloadToken.HasChanged)
+            {
+                // Will update _reloadToken
+                _ = Reload();
+            }
+        }
+    }
+
+    internal void ProcessEndpointsToAdd()
+    {
+        if (_endpointsToAddProcessed)
+        {
+            return;
+        }
+        // Set this *before* invoking delegates, in case one throws
+        _endpointsToAddProcessed = true;
+
+        foreach (var action in EndpointsToAdd)
+        {
+            action();
+        }
+    }
+
+    internal IChangeToken? GetReloadToken()
+    {
+        Debug.Assert(ReloadOnChange);
+
+        var configToken = Configuration.GetReloadToken();
+
+        if (_certificatePathWatcher is null)
+        {
+            return configToken;
+        }
+
+        var watcherToken = _certificatePathWatcher.GetChangeToken();
+        return new CompositeChangeToken(new[] { configToken, watcherToken });
+    }
+
+    // Adds endpoints from config to KestrelServerOptions.ConfigurationBackedListenOptions and configures some other options.
+    // Any endpoints that were removed from the last time endpoints were loaded are returned.
+    internal (List<ListenOptions>, List<ListenOptions>) Reload()
+    {
+        if (ReloadOnChange)
+        {
+            _reloadToken = GetReloadToken();
+        }
+
+        var endpointsToStop = Options.ConfigurationBackedListenOptions.ToList();
+        var endpointsToStart = new List<ListenOptions>();
+        var endpointsToReuse = new List<ListenOptions>();
+
+        var oldDefaultCertificateConfig = DefaultCertificateConfig;
+
+        DefaultCertificateConfig = null;
+        DefaultCertificate = null;
+        DefaultCertificateChain = null;
+
+        ConfigurationReader = new ConfigurationReader(Configuration);
+
+        if (_httpsConfigurationService.IsInitialized && _httpsConfigurationService.LoadDefaultCertificate(ConfigurationReader) is CertificateAndConfig certPair)
+        {
+            DefaultCertificate = certPair.Certificate;
+            DefaultCertificateChain = certPair.CertificateChain;
+            DefaultCertificateConfig = certPair.CertificateConfig;
+        }
+
+        foreach (var endpoint in ConfigurationReader.Endpoints)
+        {
+            var listenOptions = AddressBinder.ParseAddress(endpoint.Url, out var https);
+
+            if (!https)
+            {
+                ConfigurationReader.ThrowIfContainsHttpsOnlyConfiguration(endpoint);
+            }
+
+            Options.ApplyEndpointDefaults(listenOptions);
+
+            if (endpoint.Protocols.HasValue)
+            {
+                listenOptions.Protocols = endpoint.Protocols.Value;
+            }
+            else
+            {
+                // Ensure endpoint is reloaded if it used the default protocol and the protocol changed.
+                // listenOptions.Protocols should already be set to this by ApplyEndpointDefaults.
+                endpoint.Protocols = ConfigurationReader.EndpointDefaults.Protocols;
+            }
+
+            // Compare to UseHttps(httpsOptions => { })
+            var httpsOptions = new HttpsConnectionAdapterOptions();
+
+            if (https)
+            {
+                // Throws an appropriate exception if https configuration isn't enabled
+                _httpsConfigurationService.ApplyHttpsConfiguration(httpsOptions, endpoint, Options, DefaultCertificateConfig, ConfigurationReader);
+            }
+
+            // Now that defaults have been loaded, we can compare to the currently bound endpoints to see if the config changed.
+            // There's no reason to rerun an EndpointConfigurations callback if nothing changed.
+            var matchingBoundEndpoints = new List<ListenOptions>();
+            foreach (var o in endpointsToStop)
+            {
+                if (o.EndpointConfig == endpoint)
+                {
+                    Debug.Assert(o.EndpointConfig?.Certificate?.FileHasChanged != true, "Preserving an endpoint with file changes");
+                    matchingBoundEndpoints.Add(o);
+                }
+            }
+
+            if (matchingBoundEndpoints.Count > 0)
+            {
+                endpointsToStop.RemoveAll(o => o.EndpointConfig == endpoint);
+                endpointsToReuse.AddRange(matchingBoundEndpoints);
+                continue;
+            }
+
+            if (EndpointConfigurations.TryGetValue(endpoint.Name, out var configureEndpoint))
+            {
+                var endpointConfig = new EndpointConfiguration(https, listenOptions, httpsOptions, endpoint.ConfigSection);
+                configureEndpoint(endpointConfig);
+            }
+
+            // EndpointDefaults or configureEndpoint may have added an https adapter.
+            if (https)
+            {
+                // This would throw if it were invoked without https configuration having been enabled,
+                // but that won't happen because ApplyHttpsConfiguration would throw above under those
+                // circumstances.
+                _httpsConfigurationService.UseHttpsWithSni(listenOptions, httpsOptions, endpoint);
+            }
+
+            listenOptions.EndpointConfig = endpoint;
+
+            endpointsToStart.Add(listenOptions);
+        }
+
+        // Update ConfigurationBackedListenOptions after everything else has been processed so that
+        // it's left in a good state (i.e. its former state) if something above throws an exception.
+        // Note that this isn't foolproof - we could run out of memory or something - but it covers
+        // exceptions resulting from user misconfiguration (e.g. bad endpoint cert password).
+        Options.ConfigurationBackedListenOptions.Clear();
+        Options.ConfigurationBackedListenOptions.AddRange(endpointsToReuse);
+        Options.ConfigurationBackedListenOptions.AddRange(endpointsToStart);
+
+        if (ReloadOnChange && _certificatePathWatcher is not null)
+        {
+            var certificateConfigsToRemove = new List<CertificateConfig>();
+            var certificateConfigsToAdd = new List<CertificateConfig>();
+
+            if (DefaultCertificateConfig != oldDefaultCertificateConfig)
+            {
+                if (DefaultCertificateConfig?.IsFileCert == true)
+                {
+                    certificateConfigsToAdd.Add(DefaultCertificateConfig);
+                }
+
+                if (oldDefaultCertificateConfig is not null)
+                {
+                    certificateConfigsToRemove.Add(oldDefaultCertificateConfig);
+                }
+            }
+
+            foreach (var endpointToStart in endpointsToStart)
+            {
+                var endpointConfig = endpointToStart.EndpointConfig;
+                if (endpointConfig is null)
+                {
+                    continue;
+                }
+
+                var certConfig = endpointConfig.Certificate;
+                if (certConfig?.IsFileCert == true)
+                {
+                    certificateConfigsToAdd.Add(certConfig);
+                }
+
+                foreach (var sniConfig in endpointConfig.Sni.Values)
+                {
+                    var sniCertConfig = sniConfig.Certificate;
+                    if (sniCertConfig?.IsFileCert == true)
+                    {
+                        certificateConfigsToAdd.Add(sniCertConfig);
+                    }
+                }
+            }
+
+            foreach (var endpointToStop in endpointsToStop)
+            {
+                var endpointConfig = endpointToStop.EndpointConfig;
+                if (endpointConfig is null)
+                {
+                    continue;
+                }
+
+                var certConfig = endpointConfig.Certificate;
+                if (certConfig?.IsFileCert == true)
+                {
+                    certificateConfigsToRemove.Add(certConfig);
+                }
+
+                foreach (var sniConfig in endpointConfig.Sni.Values)
+                {
+                    var sniCertConfig = sniConfig.Certificate;
+                    if (sniCertConfig?.IsFileCert == true)
+                    {
+                        certificateConfigsToRemove.Add(sniCertConfig);
+                    }
+                }
+            }
+
+            _certificatePathWatcher.UpdateWatches(certificateConfigsToRemove, certificateConfigsToAdd);
+        }
+
+        return (endpointsToStop, endpointsToStart);
+    }
+}
+
+7b8b1e699f548c42cfd0f03a031a6db6cca6135f blob 16778
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Security.Authentication;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Configuration;
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+
+internal sealed class ConfigurationReader
+{
+    private const string ProtocolsKey = "Protocols";
+    private const string CertificatesKey = "Certificates";
+    private const string CertificateKey = "Certificate";
+    private const string SslProtocolsKey = "SslProtocols";
+    private const string EndpointDefaultsKey = "EndpointDefaults";
+    private const string EndpointsKey = "Endpoints";
+    private const string UrlKey = "Url";
+    private const string ClientCertificateModeKey = "ClientCertificateMode";
+    private const string SniKey = "Sni";
+
+    private readonly IConfiguration _configuration;
+
+    private IDictionary<string, CertificateConfig>? _certificates;
+    private EndpointDefaults? _endpointDefaults;
+    private IEnumerable<EndpointConfig>? _endpoints;
+
+    public ConfigurationReader(IConfiguration configuration)
+    {
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
+
+    public IDictionary<string, CertificateConfig> Certificates => _certificates ??= ReadCertificates();
+    public EndpointDefaults EndpointDefaults => _endpointDefaults ??= ReadEndpointDefaults();
+    public IEnumerable<EndpointConfig> Endpoints => _endpoints ??= ReadEndpoints();
+
+    private IDictionary<string, CertificateConfig> ReadCertificates()
+    {
+        var certificates = new Dictionary<string, CertificateConfig>(0, StringComparer.OrdinalIgnoreCase);
+
+        var certificatesConfig = _configuration.GetSection(CertificatesKey).GetChildren();
+        foreach (var certificateConfig in certificatesConfig)
+        {
+            certificates.Add(certificateConfig.Key, new CertificateConfig(certificateConfig));
+        }
+
+        return certificates;
+    }
+
+    // "EndpointDefaults": {
+    //     "Protocols": "Http1AndHttp2",
+    //     "SslProtocols": [ "Tls11", "Tls12", "Tls13"],
+    //     "ClientCertificateMode" : "NoCertificate"
+    // }
+    private EndpointDefaults ReadEndpointDefaults()
+    {
+        var configSection = _configuration.GetSection(EndpointDefaultsKey);
+        return new EndpointDefaults
+        {
+            Protocols = ParseProtocols(configSection[ProtocolsKey]),
+            SslProtocols = ParseSslProcotols(configSection.GetSection(SslProtocolsKey)),
+            ClientCertificateMode = ParseClientCertificateMode(configSection[ClientCertificateModeKey]),
+        };
+    }
+
+    private IEnumerable<EndpointConfig> ReadEndpoints()
+    {
+        var endpoints = new List<EndpointConfig>();
+
+        var endpointsConfig = _configuration.GetSection(EndpointsKey).GetChildren();
+        foreach (var endpointConfig in endpointsConfig)
+        {
+            // "EndpointName": {
+            //     "Url": "https://*:5463",
+            //     "Protocols": "Http1AndHttp2",
+            //     "SslProtocols": [ "Tls11", "Tls12", "Tls13"],
+            //     "Certificate": {
+            //         "Path": "testCert.pfx",
+            //         "Password": "testPassword"
+            //     },
+            //     "ClientCertificateMode" : "NoCertificate",
+            //     "Sni": {
+            //         "a.example.org": {
+            //             "Certificate": {
+            //                 "Path": "testCertA.pfx",
+            //                 "Password": "testPassword"
+            //             }
+            //         },
+            //         "*.example.org": {
+            //             "Protocols": "Http1",
+            //         }
+            //     }
+            // }
+
+            var url = endpointConfig[UrlKey];
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new InvalidOperationException(CoreStrings.FormatEndpointMissingUrl(endpointConfig.Key));
+            }
+
+            var endpoint = new EndpointConfig(
+                endpointConfig.Key,
+                url,
+                ReadSni(endpointConfig.GetSection(SniKey), endpointConfig.Key),
+                endpointConfig)
+            {
+                Protocols = ParseProtocols(endpointConfig[ProtocolsKey]),
+                SslProtocols = ParseSslProcotols(endpointConfig.GetSection(SslProtocolsKey)),
+                ClientCertificateMode = ParseClientCertificateMode(endpointConfig[ClientCertificateModeKey]),
+                Certificate = new CertificateConfig(endpointConfig.GetSection(CertificateKey))
+            };
+
+            endpoints.Add(endpoint);
+        }
+
+        return endpoints;
+    }
+
+    private static Dictionary<string, SniConfig> ReadSni(IConfigurationSection sniConfig, string endpointName)
+    {
+        var sniDictionary = new Dictionary<string, SniConfig>(0, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var sniChild in sniConfig.GetChildren())
+        {
+            // "Sni": {
+            //     "a.example.org": {
+            //         "Protocols": "Http1",
+            //         "SslProtocols": [ "Tls11", "Tls12", "Tls13"],
+            //         "Certificate": {
+            //             "Path": "testCertA.pfx",
+            //             "Password": "testPassword"
+            //         },
+            //         "ClientCertificateMode" : "NoCertificate"
+            //     },
+            //     "*.example.org": {
+            //         "Certificate": {
+            //             "Path": "testCertWildcard.pfx",
+            //             "Password": "testPassword"
+            //         }
+            //     }
+            //     // The following should work once https://github.com/dotnet/runtime/issues/40218 is resolved
+            //     "*": {}
+            // }
+
+            if (string.IsNullOrEmpty(sniChild.Key))
+            {
+                throw new InvalidOperationException(CoreStrings.FormatSniNameCannotBeEmpty(endpointName));
+            }
+
+            var sni = new SniConfig
+            {
+                Certificate = new CertificateConfig(sniChild.GetSection(CertificateKey)),
+                Protocols = ParseProtocols(sniChild[ProtocolsKey]),
+                SslProtocols = ParseSslProcotols(sniChild.GetSection(SslProtocolsKey)),
+                ClientCertificateMode = ParseClientCertificateMode(sniChild[ClientCertificateModeKey])
+            };
+
+            sniDictionary.Add(sniChild.Key, sni);
+        }
+
+        return sniDictionary;
+    }
+
+    private static ClientCertificateMode? ParseClientCertificateMode(string? clientCertificateMode)
+    {
+        if (Enum.TryParse<ClientCertificateMode>(clientCertificateMode, ignoreCase: true, out var result))
+        {
+            return result;
+        }
+
+        return null;
+    }
+
+    private static HttpProtocols? ParseProtocols(string? protocols)
+    {
+        if (Enum.TryParse<HttpProtocols>(protocols, ignoreCase: true, out var result))
+        {
+            return result;
+        }
+
+        return null;
+    }
+
+    private static SslProtocols? ParseSslProcotols(IConfigurationSection sslProtocols)
+    {
+        // Avoid trimming warning from IConfigurationSection.Get<string[]>()
+        string[]? stringProtocols = null;
+        var childrenSections = sslProtocols.GetChildren().ToArray();
+        if (childrenSections.Length > 0)
+        {
+            stringProtocols = new string[childrenSections.Length];
+            for (var i = 0; i < childrenSections.Length; i++)
+            {
+                stringProtocols[i] = childrenSections[i].Value!;
+            }
+        }
+
+        return stringProtocols?.Aggregate(SslProtocols.None, (acc, current) =>
+        {
+            if (Enum.TryParse(current, ignoreCase: true, out SslProtocols parsed))
+            {
+                return acc | parsed;
+            }
+
+            return acc;
+        });
+    }
+
+    internal static void ThrowIfContainsHttpsOnlyConfiguration(EndpointConfig endpoint)
+    {
+        if (endpoint.Certificate != null && (endpoint.Certificate.IsFileCert || endpoint.Certificate.IsStoreCert))
+        {
+            throw new InvalidOperationException(CoreStrings.FormatEndpointHasUnusedHttpsConfig(endpoint.Name, CertificateKey));
+        }
+
+        if (endpoint.ClientCertificateMode.HasValue)
+        {
+            throw new InvalidOperationException(CoreStrings.FormatEndpointHasUnusedHttpsConfig(endpoint.Name, ClientCertificateModeKey));
+        }
+
+        if (endpoint.SslProtocols.HasValue)
+        {
+            throw new InvalidOperationException(CoreStrings.FormatEndpointHasUnusedHttpsConfig(endpoint.Name, SslProtocolsKey));
+        }
+
+        if (endpoint.Sni.Count > 0)
+        {
+            throw new InvalidOperationException(CoreStrings.FormatEndpointHasUnusedHttpsConfig(endpoint.Name, SniKey));
+        }
+    }
+}
+
+// "EndpointDefaults": {
+//     "Protocols": "Http1AndHttp2",
+//     "SslProtocols": [ "Tls11", "Tls12", "Tls13"],
+//     "ClientCertificateMode" : "NoCertificate"
+// }
+internal sealed class EndpointDefaults
+{
+    public HttpProtocols? Protocols { get; set; }
+    public SslProtocols? SslProtocols { get; set; }
+    public ClientCertificateMode? ClientCertificateMode { get; set; }
+}
+
+// "EndpointName": {
+//     "Url": "https://*:5463",
+//     "Protocols": "Http1AndHttp2",
+//     "SslProtocols": [ "Tls11", "Tls12", "Tls13"],
+//     "Certificate": {
+//         "Path": "testCert.pfx",
+//         "Password": "testPassword"
+//     },
+//     "ClientCertificateMode" : "NoCertificate",
+//     "Sni": {
+//         "a.example.org": {
+//             "Certificate": {
+//                 "Path": "testCertA.pfx",
+//                 "Password": "testPasswordA"
+//             }
+//         },
+//         "*.example.org": {
+//             "Protocols": "Http1",
+//         }
+//     }
+// }
+internal sealed class EndpointConfig
+{
+    private readonly ConfigSectionClone _configSectionClone;
+
+    public EndpointConfig(
+        string name,
+        string url,
+        Dictionary<string, SniConfig> sni,
+        IConfigurationSection configSection)
+    {
+        Name = name;
+        Url = url;
+        Sni = sni;
+
+        // Compare config sections because it's accessible to app developers via an Action<EndpointConfiguration> callback.
+        // We cannot rely entirely on comparing config sections for equality, because KestrelConfigurationLoader.Reload() sets
+        // EndpointConfig properties to their default values. If a default value changes, the properties would no longer be equal,
+        // but the config sections could still be equal.
+        ConfigSection = configSection;
+        // The IConfigrationSection will mutate, so we need to take a snapshot to compare against later and check for changes.
+        _configSectionClone = new ConfigSectionClone(configSection);
+    }
+
+    public string Name { get; }
+    public string Url { get; }
+    public Dictionary<string, SniConfig> Sni { get; }
+    public IConfigurationSection ConfigSection { get; }
+
+    public HttpProtocols? Protocols { get; set; }
+    public SslProtocols? SslProtocols { get; set; }
+    public CertificateConfig? Certificate { get; set; }
+    public ClientCertificateMode? ClientCertificateMode { get; set; }
+
+    public override bool Equals(object? obj) =>
+        obj is EndpointConfig other &&
+        Name == other.Name &&
+        Url == other.Url &&
+        (Protocols ?? ListenOptions.DefaultHttpProtocols) == (other.Protocols ?? ListenOptions.DefaultHttpProtocols) &&
+        (SslProtocols ?? System.Security.Authentication.SslProtocols.None) == (other.SslProtocols ?? System.Security.Authentication.SslProtocols.None) &&
+        Certificate == other.Certificate &&
+        (ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate) == (other.ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate) &&
+        CompareSniDictionaries(Sni, other.Sni) &&
+        _configSectionClone == other._configSectionClone;
+
+    public override int GetHashCode() => HashCode.Combine(Name, Url,
+        Protocols ?? ListenOptions.DefaultHttpProtocols, SslProtocols ?? System.Security.Authentication.SslProtocols.None,
+        Certificate, ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate, Sni.Count, _configSectionClone);
+
+    public static bool operator ==(EndpointConfig? lhs, EndpointConfig? rhs) => lhs is null ? rhs is null : lhs.Equals(rhs);
+    public static bool operator !=(EndpointConfig? lhs, EndpointConfig? rhs) => !(lhs == rhs);
+
+    private static bool CompareSniDictionaries(Dictionary<string, SniConfig> lhs, Dictionary<string, SniConfig> rhs)
+    {
+        if (lhs.Count != rhs.Count)
+        {
+            return false;
+        }
+
+        foreach (var (lhsName, lhsSniConfig) in lhs)
+        {
+            if (!rhs.TryGetValue(lhsName, out var rhsSniConfig) || lhsSniConfig != rhsSniConfig)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+internal sealed class SniConfig
+{
+    public HttpProtocols? Protocols { get; set; }
+    public SslProtocols? SslProtocols { get; set; }
+    public CertificateConfig? Certificate { get; set; }
+    public ClientCertificateMode? ClientCertificateMode { get; set; }
+
+    public override bool Equals(object? obj) =>
+        obj is SniConfig other &&
+        (Protocols ?? ListenOptions.DefaultHttpProtocols) == (other.Protocols ?? ListenOptions.DefaultHttpProtocols) &&
+        (SslProtocols ?? System.Security.Authentication.SslProtocols.None) == (other.SslProtocols ?? System.Security.Authentication.SslProtocols.None) &&
+        Certificate == other.Certificate &&
+        (ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate) == (other.ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate);
+
+    public override int GetHashCode() => HashCode.Combine(
+        Protocols ?? ListenOptions.DefaultHttpProtocols, SslProtocols ?? System.Security.Authentication.SslProtocols.None,
+        Certificate, ClientCertificateMode ?? Https.ClientCertificateMode.NoCertificate);
+
+    public static bool operator ==(SniConfig lhs, SniConfig rhs) => lhs is null ? rhs is null : lhs.Equals(rhs);
+    public static bool operator !=(SniConfig lhs, SniConfig rhs) => !(lhs == rhs);
+}
+
+// "CertificateName": {
+//     "Path": "testCert.pfx",
+//     "Password": "testPassword"
+// }
+internal sealed class CertificateConfig
+{
+    public CertificateConfig(IConfigurationSection configSection)
+    {
+        ConfigSection = configSection;
+
+        // Bind explicitly to preserve linkability
+        Path = configSection[nameof(Path)];
+        KeyPath = configSection[nameof(KeyPath)];
+        Password = configSection[nameof(Password)];
+        Subject = configSection[nameof(Subject)];
+        Store = configSection[nameof(Store)];
+        Location = configSection[nameof(Location)];
+
+        if (bool.TryParse(configSection[nameof(AllowInvalid)], out var value))
+        {
+            AllowInvalid = value;
+        }
+    }
+
+    // For testing
+    internal CertificateConfig()
+    {
+    }
+
+    public IConfigurationSection? ConfigSection { get; }
+
+    // File
+
+    [MemberNotNullWhen(true, nameof(Path))]
+    public bool IsFileCert => !string.IsNullOrEmpty(Path);
+
+    public string? Path { get; init; }
+
+    public string? KeyPath { get; init; }
+
+    public string? Password { get; init; }
+
+    /// <remarks>
+    /// Vacuously false if this isn't a file cert.
+    /// Used for change tracking - not actually part of configuring the certificate.
+    /// </remarks>
+    public bool FileHasChanged { get; internal set; }
+
+    // Cert store
+
+    [MemberNotNullWhen(true, nameof(Subject))]
+    public bool IsStoreCert => !string.IsNullOrEmpty(Subject);
+
+    public string? Subject { get; init; }
+
+    public string? Store { get; init; }
+
+    public string? Location { get; init; }
+
+    public bool? AllowInvalid { get; init; }
+
+    public override bool Equals(object? obj) =>
+        obj is CertificateConfig other &&
+        Path == other.Path &&
+        KeyPath == other.KeyPath &&
+        Password == other.Password &&
+        FileHasChanged == other.FileHasChanged &&
+        Subject == other.Subject &&
+        Store == other.Store &&
+        Location == other.Location &&
+        (AllowInvalid ?? false) == (other.AllowInvalid ?? false);
+
+    public override int GetHashCode() => HashCode.Combine(Path, KeyPath, Password, FileHasChanged, Subject, Store, Location, AllowInvalid ?? false);
+
+    public static bool operator ==(CertificateConfig? lhs, CertificateConfig? rhs) => lhs is null ? rhs is null : lhs.Equals(rhs);
+    public static bool operator !=(CertificateConfig? lhs, CertificateConfig? rhs) => !(lhs == rhs);
+}
+
+7d673ed241d0c0b1930044eda3c313c4ac28c19e blob 9242
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Net;
+using System.Net.Sockets;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core;
+
+/// <summary>
+/// Describes either an <see cref="System.Net.IPEndPoint"/>, Unix domain socket path, named pipe name, or a file descriptor for an already open
+/// socket that Kestrel should bind to or open.
+/// </summary>
+public class ListenOptions : IConnectionBuilder, IMultiplexedConnectionBuilder
+{
+    internal const HttpProtocols DefaultHttpProtocols = HttpProtocols.Http1AndHttp2;
+
+    private readonly List<Func<ConnectionDelegate, ConnectionDelegate>> _middleware = new List<Func<ConnectionDelegate, ConnectionDelegate>>();
+    private readonly List<Func<MultiplexedConnectionDelegate, MultiplexedConnectionDelegate>> _multiplexedMiddleware = new List<Func<MultiplexedConnectionDelegate, MultiplexedConnectionDelegate>>();
+    private HttpProtocols _protocols = DefaultHttpProtocols;
+
+    internal ListenOptions(EndPoint endPoint)
+    {
+        EndPoint = endPoint;
+    }
+
+    internal ListenOptions(string socketPath)
+    {
+        EndPoint = new UnixDomainSocketEndPoint(socketPath);
+    }
+
+    internal ListenOptions(ulong fileHandle)
+        : this(fileHandle, Microsoft.AspNetCore.Connections.FileHandleType.Auto)
+    {
+    }
+
+    internal ListenOptions(ulong fileHandle, Microsoft.AspNetCore.Connections.FileHandleType handleType)
+    {
+        EndPoint = new FileHandleEndPoint(fileHandle, handleType);
+    }
+
+    /// <summary>
+    /// Gets the <see cref="System.Net.EndPoint"/>.
+    /// </summary>
+    public EndPoint EndPoint { get; internal set; }
+
+    // For comparing bound endpoints to changed config during endpoint config reload.
+    internal EndpointConfig? EndpointConfig { get; set; }
+
+    // IPEndPoint is mutable so port 0 can be updated to the bound port.
+    /// <summary>
+    /// Gets the bound <see cref="System.Net.IPEndPoint"/>.
+    /// </summary>
+    /// <remarks>
+    /// Only set if the <see cref="ListenOptions"/> is bound to a <see cref="System.Net.IPEndPoint"/>.
+    /// </remarks>
+    public IPEndPoint? IPEndPoint => EndPoint as IPEndPoint;
+
+    /// <summary>
+    /// Gets the bound absolute path to a Unix domain socket.
+    /// </summary>
+    /// <remarks>
+    /// Only set if the <see cref="ListenOptions"/> is bound to a <see cref="UnixDomainSocketEndPoint"/>.
+    /// </remarks>
+    public string? SocketPath => (EndPoint as UnixDomainSocketEndPoint)?.ToString();
+
+    /// <summary>
+    /// Gets the bound pipe name to a name pipe server.
+    /// </summary>
+    /// <remarks>
+    /// Only set if the <see cref="ListenOptions"/> is bound to a <see cref="NamedPipeEndPoint"/>.
+    /// </remarks>
+    public string? PipeName => (EndPoint as NamedPipeEndPoint)?.PipeName.ToString();
+
+    /// <summary>
+    /// Gets the bound file descriptor to a socket.
+    /// </summary>
+    /// <remarks>
+    /// Only set if the <see cref="ListenOptions"/> is bound to a <see cref="FileHandleEndPoint"/>.
+    /// </remarks>
+    public ulong FileHandle => (EndPoint as FileHandleEndPoint)?.FileHandle ?? 0;
+
+    /// <summary>
+    /// Gets the <see cref="Core.KestrelServerOptions"/> for the listener options.
+    /// Enables connection middleware to resolve and use services registered by the application during startup.
+    /// </summary>
+    /// <remarks>
+    /// Only set if accessed from the callback of a <see cref="Core.KestrelServerOptions"/> Listen* method.
+    /// </remarks>
+    public KestrelServerOptions KestrelServerOptions { get; internal set; } = default!; // Set via ConfigureKestrel callback
+
+    /// <summary>
+    /// The protocols enabled on this endpoint.
+    /// </summary>
+    /// <remarks>Defaults to HTTP/1.x and HTTP/2</remarks>
+    public HttpProtocols Protocols
+    {
+        get => _protocols;
+        set
+        {
+            _protocols = value;
+            ProtocolsSetExplicitly = true;
+        }
+    }
+
+    /// <summary>
+    /// Tracks whether <see cref="Protocols"/> has been set explicitly so that we can determine whether
+    /// or not the value reflects the user's intention.
+    /// </summary>
+    internal bool ProtocolsSetExplicitly { get; private set; }
+
+    /// <summary>
+    /// Gets or sets a value that controls whether the "Alt-Svc" header is included with response headers.
+    /// The "Alt-Svc" header is used by clients to upgrade HTTP/1.1 and HTTP/2 connections to HTTP/3.
+    /// <para>
+    /// The "Alt-Svc" header is automatically included with a response if <see cref="Protocols"/> has either
+    /// HTTP/1.1 or HTTP/2 enabled, and HTTP/3 is enabled. If an "Alt-Svc" header value has already been set
+    /// by the app then it isn't changed.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// Defaults to false.
+    /// </remarks>
+    public bool DisableAltSvcHeader { get; set; }
+
+    /// <summary>
+    /// Gets the application <see cref="IServiceProvider"/>.
+    /// </summary>
+    public IServiceProvider ApplicationServices => KestrelServerOptions?.ApplicationServices!; // TODO - Always available?
+
+    internal string Scheme
+    {
+        get
+        {
+            return IsTls ? HttpProtocol.SchemeHttps : HttpProtocol.SchemeHttp;
+        }
+    }
+
+    internal bool IsTls { get; set; }
+    internal HttpsConnectionAdapterOptions? HttpsOptions { get; set; }
+    internal TlsHandshakeCallbackOptions? HttpsCallbackOptions { get; set; }
+
+    /// <summary>
+    /// Gets the name of this endpoint to display on command-line when the web server starts.
+    /// </summary>
+    internal virtual string GetDisplayName()
+    {
+        switch (EndPoint)
+        {
+            case UnixDomainSocketEndPoint _:
+                return $"{Scheme}://unix:{EndPoint}";
+            case NamedPipeEndPoint namedPipeEndPoint:
+                return $"{Scheme}://pipe:/{namedPipeEndPoint.PipeName}";
+            case FileHandleEndPoint _:
+                return $"{Scheme}://<file handle>";
+            default:
+                return $"{Scheme}://{EndPoint}";
+        }
+    }
+
+    /// <inheritdoc />
+    public override string? ToString() => GetDisplayName();
+
+    /// <summary>
+    /// Adds a middleware delegate to the connection pipeline.
+    /// Configured by the <c>UseHttps()</c> and <see cref="Hosting.ListenOptionsConnectionLoggingExtensions.UseConnectionLogging(ListenOptions)"/>
+    /// extension methods.
+    /// </summary>
+    /// <param name="middleware">The middleware delegate.</param>
+    /// <returns>The <see cref="IConnectionBuilder"/>.</returns>
+    public IConnectionBuilder Use(Func<ConnectionDelegate, ConnectionDelegate> middleware)
+    {
+        _middleware.Add(middleware);
+        return this;
+    }
+
+    IMultiplexedConnectionBuilder IMultiplexedConnectionBuilder.Use(Func<MultiplexedConnectionDelegate, MultiplexedConnectionDelegate> middleware)
+    {
+        _multiplexedMiddleware.Add(middleware);
+        return this;
+    }
+
+    /// <summary>
+    /// Builds the <see cref="ConnectionDelegate"/>.
+    /// </summary>
+    /// <returns>The <see cref="ConnectionDelegate"/>.</returns>
+    public ConnectionDelegate Build()
+    {
+        ConnectionDelegate app = context =>
+        {
+            return Task.CompletedTask;
+        };
+
+        for (var i = _middleware.Count - 1; i >= 0; i--)
+        {
+            var component = _middleware[i];
+            app = component(app);
+        }
+
+        return app;
+    }
+
+    MultiplexedConnectionDelegate IMultiplexedConnectionBuilder.Build()
+    {
+        MultiplexedConnectionDelegate app = context =>
+        {
+            return Task.CompletedTask;
+        };
+
+        for (int i = _multiplexedMiddleware.Count - 1; i >= 0; i--)
+        {
+            var component = _multiplexedMiddleware[i];
+            app = component(app);
+        }
+
+        return app;
+    }
+
+    internal virtual async Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+    {
+        await AddressBinder.BindEndpointAsync(this, context, cancellationToken).ConfigureAwait(false);
+        context.Addresses.Add(GetDisplayName());
+    }
+
+    /// <summary>
+    /// used for cloning to two IPEndpoints
+    /// </summary>
+    /// <remarks>
+    /// Internal for testing
+    /// </remarks>
+    protected internal ListenOptions Clone(IPAddress address)
+    {
+        var options = new ListenOptions(new IPEndPoint(address, IPEndPoint!.Port))
+        {
+            KestrelServerOptions = KestrelServerOptions,
+            _protocols = _protocols, // Avoid side-effects from setting Protocols
+            ProtocolsSetExplicitly = ProtocolsSetExplicitly,
+            DisableAltSvcHeader = DisableAltSvcHeader,
+            IsTls = IsTls,
+            HttpsOptions = HttpsOptions,
+            HttpsCallbackOptions = HttpsCallbackOptions,
+            EndpointConfig = EndpointConfig
+        };
+
+        options._middleware.AddRange(_middleware);
+        options._multiplexedMiddleware.AddRange(_multiplexedMiddleware);
+        return options;
+    }
+}
+
+f892c9796c15b8e8727d7f2dfe9732f0bdadd352 blob 9940
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
+using Microsoft.Extensions.Logging;
+
+namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal;
+
+internal sealed class AddressBinder
+{
+    // note this doesn't copy the ListenOptions[], only call this with an array that isn't mutated elsewhere
+    public static Task BindAsync(ListenOptions[] listenOptions, AddressBindContext context, Func<ListenOptions, ListenOptions> useHttps, CancellationToken cancellationToken)
+    {
+        var strategy = CreateStrategy(
+            listenOptions,
+            context.Addresses.ToArray(),
+            context.ServerAddressesFeature.PreferHostingUrls,
+            useHttps);
+
+        // reset options. The actual used options and addresses will be populated
+        // by the address binding feature
+        context.ServerOptions.OptionsInUse.Clear();
+        context.Addresses.Clear();
+
+        return strategy.BindAsync(context, cancellationToken);
+    }
+
+    private static IStrategy CreateStrategy(ListenOptions[] listenOptions, string[] addresses, bool preferAddresses, Func<ListenOptions, ListenOptions> useHttps)
+    {
+        var hasListenOptions = listenOptions.Length > 0;
+        var hasAddresses = addresses.Length > 0;
+
+        if (preferAddresses && hasAddresses)
+        {
+            if (hasListenOptions)
+            {
+                return new OverrideWithAddressesStrategy(addresses, useHttps);
+            }
+
+            return new AddressesStrategy(addresses, useHttps);
+        }
+        else if (hasListenOptions)
+        {
+            if (hasAddresses)
+            {
+                return new OverrideWithEndpointsStrategy(listenOptions, addresses);
+            }
+
+            return new EndpointsStrategy(listenOptions);
+        }
+        else if (hasAddresses)
+        {
+            // If no endpoints are configured directly using KestrelServerOptions, use those configured via the IServerAddressesFeature.
+            return new AddressesStrategy(addresses, useHttps);
+        }
+        else
+        {
+            // "localhost" for both IPv4 and IPv6 can't be represented as an IPEndPoint.
+            return new DefaultAddressStrategy();
+        }
+    }
+
+    /// <summary>
+    /// Returns an <see cref="IPEndPoint"/> for the given host an port.
+    /// If the host parameter isn't "localhost" or an IP address, use IPAddress.Any.
+    /// </summary>
+    internal static bool TryCreateIPEndPoint(BindingAddress address, [NotNullWhen(true)] out IPEndPoint? endpoint)
+    {
+        if (!IPAddress.TryParse(address.Host, out var ip))
+        {
+            endpoint = null;
+            return false;
+        }
+
+        endpoint = new IPEndPoint(ip, address.Port);
+        return true;
+    }
+
+    internal static async Task BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await context.CreateBinding(endpoint, cancellationToken).ConfigureAwait(false);
+        }
+        catch (AddressInUseException ex)
+        {
+            throw new IOException(CoreStrings.FormatEndpointAlreadyInUse(endpoint), ex);
+        }
+
+        context.ServerOptions.OptionsInUse.Add(endpoint);
+    }
+
+    internal static ListenOptions ParseAddress(string address, out bool https)
+    {
+        var parsedAddress = BindingAddress.Parse(address);
+        https = false;
+
+        if (parsedAddress.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
+        {
+            https = true;
+        }
+        else if (!parsedAddress.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(CoreStrings.FormatUnsupportedAddressScheme(address));
+        }
+
+        if (!string.IsNullOrEmpty(parsedAddress.PathBase))
+        {
+            throw new InvalidOperationException(CoreStrings.FormatConfigurePathBaseFromMethodCall($"{nameof(IApplicationBuilder)}.UsePathBase()"));
+        }
+
+        ListenOptions? options = null;
+        if (parsedAddress.IsUnixPipe)
+        {
+            options = new ListenOptions(parsedAddress.UnixPipePath);
+        }
+        else if (parsedAddress.IsNamedPipe)
+        {
+            options = new ListenOptions(new NamedPipeEndPoint(parsedAddress.NamedPipeName));
+        }
+        else if (IsLocalhost(parsedAddress.Host, out var prefix))
+        {
+            // "localhost" for both IPv4 and IPv6 can't be represented as an IPEndPoint.
+            options = prefix is null ? new LocalhostListenOptions(parsedAddress.Port) : new LocalhostListenOptions(parsedAddress.Port, prefix);
+        }
+        else if (TryCreateIPEndPoint(parsedAddress, out var endpoint))
+        {
+            options = new ListenOptions(endpoint);
+        }
+        else
+        {
+            // when address is 'http://hostname:port', 'http://*:port', or 'http://+:port'
+            options = new AnyIPListenOptions(parsedAddress.Port);
+        }
+
+        return options;
+
+        static bool IsLocalhost(string host, out string? prefix)
+        {
+            // Check for "localhost"
+            if (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                prefix = null;
+                return true;
+            }
+
+            // Check for use of .localhost TLD (Top Level Domain)
+            const string localhostTld = ".localhost";
+            if (host.Length > localhostTld.Length && host.EndsWith(localhostTld, StringComparison.OrdinalIgnoreCase))
+            {
+                // Take all but the .localhost TLD as the prefix
+                prefix = host[..^localhostTld.Length];
+                return true;
+            }
+
+            prefix = null;
+            return false;
+        }
+    }
+
+    private interface IStrategy
+    {
+        Task BindAsync(AddressBindContext context, CancellationToken cancellationToken);
+    }
+
+    private sealed class DefaultAddressStrategy : IStrategy
+    {
+        public async Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+        {
+            var httpDefault = ParseAddress(Constants.DefaultServerAddress, out _);
+            context.ServerOptions.ApplyEndpointDefaults(httpDefault);
+            await httpDefault.BindAsync(context, cancellationToken).ConfigureAwait(false);
+
+            if (context.Logger.IsEnabled(LogLevel.Debug))
+            {
+                context.Logger.LogDebug(CoreStrings.BindingToDefaultAddress, Constants.DefaultServerAddress);
+            }
+        }
+    }
+
+    private sealed class OverrideWithAddressesStrategy : AddressesStrategy
+    {
+        public OverrideWithAddressesStrategy(IReadOnlyCollection<string> addresses, Func<ListenOptions, ListenOptions> useHttps)
+            : base(addresses, useHttps)
+        {
+        }
+
+        public override Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+        {
+            var joined = string.Join(", ", _addresses);
+            if (context.Logger.IsEnabled(LogLevel.Information))
+            {
+                context.Logger.LogInformation(CoreStrings.OverridingWithPreferHostingUrls, nameof(IServerAddressesFeature.PreferHostingUrls), joined);
+            }
+
+            return base.BindAsync(context, cancellationToken);
+        }
+    }
+
+    private sealed class OverrideWithEndpointsStrategy : EndpointsStrategy
+    {
+        private readonly string[] _originalAddresses;
+
+        public OverrideWithEndpointsStrategy(IReadOnlyCollection<ListenOptions> endpoints, string[] originalAddresses)
+            : base(endpoints)
+        {
+            _originalAddresses = originalAddresses;
+        }
+
+        public override Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+        {
+            if (context.Logger.IsEnabled(LogLevel.Warning))
+            {
+                context.Logger.LogWarning(CoreStrings.OverridingWithKestrelOptions, string.Join(", ", _originalAddresses));
+            }
+
+            return base.BindAsync(context, cancellationToken);
+        }
+    }
+
+    private class EndpointsStrategy : IStrategy
+    {
+        private readonly IReadOnlyCollection<ListenOptions> _endpoints;
+
+        public EndpointsStrategy(IReadOnlyCollection<ListenOptions> endpoints)
+        {
+            _endpoints = endpoints;
+        }
+
+        public virtual async Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+        {
+            foreach (var endpoint in _endpoints)
+            {
+                await endpoint.BindAsync(context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private class AddressesStrategy : IStrategy
+    {
+        protected readonly IReadOnlyCollection<string> _addresses;
+        private readonly Func<ListenOptions, ListenOptions> _useHttps;
+
+        public AddressesStrategy(IReadOnlyCollection<string> addresses, Func<ListenOptions, ListenOptions> useHttps)
+        {
+            _addresses = addresses;
+            _useHttps = useHttps;
+        }
+
+        public virtual async Task BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+        {
+            foreach (var address in _addresses)
+            {
+                var options = ParseAddress(address, out var https);
+                context.ServerOptions.ApplyEndpointDefaults(options);
+
+                if (https && !options.IsTls)
+                {
+                    _useHttps(options);
+                }
+
+                await options.BindAsync(context, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+}
+
