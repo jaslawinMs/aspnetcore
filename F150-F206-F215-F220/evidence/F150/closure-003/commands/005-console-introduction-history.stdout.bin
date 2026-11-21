@@ -1,0 +1,433 @@
+commit 1885af963432ee7d66a80448cc2c24fa95c25d24
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Mon Aug 3 21:42:44 2020 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 3 21:42:44 2020 +0100
+
+    Add console runner for measuring Blazor perf on desktop interpreter (#24469)
+---
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/ConsoleHostRenderer.cs                      | 41 +++++++++++++++++++++++++++++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/NullDispatcher.cs                           | 30 ++++++++++++++++++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Program.cs                                  | 27 +++++++++++++++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/GridScenario.cs                   | 39 +++++++++++++++++++++++++++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Wasm.Performance.ConsoleHost.csproj         | 15 +++++++++++++++
+ src/Components/benchmarkapps/Wasm.Performance/TestApp/BenchmarkEvent.cs                               |  4 +++-
+ src/Components/benchmarkapps/Wasm.Performance/TestApp/Pages/GridRendering.razor                       | 20 ++++++++++----------
+ src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/ComplexTable/TableComponent.razor        | 19 +++----------------
+ src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/PlainTable/TableComponent.razor          | 19 +++----------------
+ 10 files changed, 221 insertions(+), 43 deletions(-)
+
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/ConsoleHostRenderer.cs b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/ConsoleHostRenderer.cs
+new file mode 100644
+index 0000000000..f29a516b1a
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/ConsoleHostRenderer.cs
+@@ -0,0 +1,41 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Runtime.ExceptionServices;
++using System.Threading.Tasks;
++using Microsoft.AspNetCore.Components;
++using Microsoft.AspNetCore.Components.RenderTree;
++using Microsoft.Extensions.Logging;
++
++namespace Wasm.Performance.ConsoleHost
++{
++    internal class ConsoleHostRenderer : Renderer
++    {
++        public ConsoleHostRenderer(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
++            : base(serviceProvider, loggerFactory)
++        {
++        }
++
++        public override Dispatcher Dispatcher { get; } = new NullDispatcher();
++
++        protected override void HandleException(Exception exception)
++        {
++            ExceptionDispatchInfo.Capture(exception).Throw();
++        }
++
++        protected override Task UpdateDisplayAsync(in RenderBatch renderBatch)
++        {
++            // ConsoleHost is only for profiling the .NET side of execution.
++            // There isn't a real display to update.
++            return Task.CompletedTask;
++        }
++
++        // Expose some protected APIs publicly
++        public new int AssignRootComponentId(IComponent component)
++            => base.AssignRootComponentId(component);
++
++        public new Task RenderRootComponentAsync(int componentId)
++            => base.RenderRootComponentAsync(componentId);
++    }
++}
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/NullDispatcher.cs b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/NullDispatcher.cs
+new file mode 100644
+index 0000000000..bf600ab8f0
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/NullDispatcher.cs
+@@ -0,0 +1,30 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Threading.Tasks;
++using Microsoft.AspNetCore.Components;
++
++namespace Wasm.Performance.ConsoleHost
++{
++    internal class NullDispatcher : Dispatcher
++    {
++        public override bool CheckAccess()
++            => true;
++
++        public override Task InvokeAsync(Action workItem)
++        {
++            workItem();
++            return Task.CompletedTask;
++        }
++
++        public override Task InvokeAsync(Func<Task> workItem)
++            => workItem();
++
++        public override Task<TResult> InvokeAsync<TResult>(Func<TResult> workItem)
++            => Task.FromResult(workItem());
++
++        public override Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> workItem)
++            => workItem();
++    }
++}
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Program.cs b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Program.cs
+new file mode 100644
+index 0000000000..c32f16eb3a
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Program.cs
+@@ -0,0 +1,27 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using Microsoft.Extensions.CommandLineUtils;
++using Wasm.Performance.ConsoleHost.Scenarios;
++
++namespace Wasm.Performance.ConsoleHost
++{
++    internal class Program : CommandLineApplication
++    {
++        static void Main(string[] args)
++        {
++            new Program().Execute(args);
++        }
++
++        public Program()
++        {
++            OnExecute(() =>
++            {
++                ShowHelp();
++                return 1;
++            });
++
++            Commands.Add(new GridScenario());
++        }
++    }
++}
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs
+new file mode 100644
+index 0000000000..bf5cbc5d83
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs
+@@ -0,0 +1,50 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Threading.Tasks;
++using Microsoft.Extensions.CommandLineUtils;
++using Microsoft.Extensions.DependencyInjection;
++using Microsoft.Extensions.Logging;
++
++namespace Wasm.Performance.ConsoleHost.Scenarios
++{
++    internal abstract class ComponentRenderingScenarioBase : CommandLineApplication
++    {
++        protected ComponentRenderingScenarioBase(string name)
++        {
++            Name = name;
++
++            var cyclesOption = new CommandOption("--cycles", CommandOptionType.SingleValue);
++            Options.Add(cyclesOption);
++
++            OnExecute(() =>
++            {
++                var numCycles = cyclesOption.HasValue() ? int.Parse(cyclesOption.Value()) : 1;
++
++                var serviceCollection = new ServiceCollection();
++                PopulateServiceCollection(serviceCollection);
++                var serviceProvider = serviceCollection.BuildServiceProvider();
++
++                var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
++                var renderer = new ConsoleHostRenderer(serviceProvider, loggerFactory);
++
++                var startTime = DateTime.Now;
++                ExecuteAsync(renderer, numCycles).Wait();
++
++                var duration = DateTime.Now - startTime;
++                var durationPerCycle = (duration / numCycles).TotalMilliseconds;
++                Console.WriteLine($"{Name}: {durationPerCycle:F1}ms per cycle (cycles tested: {numCycles})");
++
++                return 0;
++            });
++        }
++
++        protected virtual void PopulateServiceCollection(IServiceCollection serviceCollection)
++        {
++            serviceCollection.AddLogging();
++        }
++
++        protected abstract Task ExecuteAsync(ConsoleHostRenderer renderer, int numCycles);
++    }
++}
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/GridScenario.cs b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/GridScenario.cs
+new file mode 100644
+index 0000000000..b40f09b96a
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/GridScenario.cs
+@@ -0,0 +1,39 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Threading.Tasks;
++using Microsoft.Extensions.CommandLineUtils;
++using Wasm.Performance.TestApp.Pages;
++
++namespace Wasm.Performance.ConsoleHost.Scenarios
++{
++    internal class GridScenario : ComponentRenderingScenarioBase
++    {
++        readonly CommandOption _gridTypeOption = new CommandOption("--gridtype", CommandOptionType.SingleValue);
++
++        public GridScenario() : base("grid")
++        {
++            Options.Add(_gridTypeOption);
++        }
++
++        protected override async Task ExecuteAsync(ConsoleHostRenderer renderer, int numCycles)
++        {
++            var gridType = _gridTypeOption.HasValue()
++                ? (GridRendering.RenderMode)Enum.Parse(typeof(GridRendering.RenderMode), _gridTypeOption.Value(), true)
++                : GridRendering.RenderMode.FastGrid;
++
++            for (var i = 0; i < numCycles; i++)
++            {
++                var hostPage = new GridRendering { SelectedRenderMode = gridType };
++                hostPage.Show();
++
++                var componentId = renderer.AssignRootComponentId(hostPage);
++                await renderer.RenderRootComponentAsync(componentId);
++
++                hostPage.ChangePage();
++                await renderer.RenderRootComponentAsync(componentId);
++            }
++        }
++    }
++}
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Wasm.Performance.ConsoleHost.csproj b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Wasm.Performance.ConsoleHost.csproj
+new file mode 100644
+index 0000000000..e92ce06f16
+--- /dev/null
++++ b/src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Wasm.Performance.ConsoleHost.csproj
+@@ -0,0 +1,15 @@
++﻿<Project Sdk="Microsoft.NET.Sdk">
++
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
++    <IsPackable>false</IsPackable>
++    <IsShipping>false</IsShipping>
++  </PropertyGroup>
++
++  <ItemGroup>
++    <ProjectReference Include="..\TestApp\Wasm.Performance.TestApp.csproj" />
++    <Compile Include="$(SharedSourceRoot)CommandLineUtils\**\*.cs" />
++  </ItemGroup>
++
++</Project>
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/TestApp/BenchmarkEvent.cs b/src/Components/benchmarkapps/Wasm.Performance/TestApp/BenchmarkEvent.cs
+index 81cd361dce..769f99eda4 100644
+--- a/src/Components/benchmarkapps/Wasm.Performance/TestApp/BenchmarkEvent.cs
++++ b/src/Components/benchmarkapps/Wasm.Performance/TestApp/BenchmarkEvent.cs
+@@ -9,7 +9,9 @@ namespace Wasm.Performance.TestApp
+     {
+         public static void Send(IJSRuntime jsRuntime, string name)
+         {
+-            ((IJSInProcessRuntime)jsRuntime).Invoke<object>(
++            // jsRuntime will be null if we're in an environment without any
++            // JS runtime, e.g., the console runner
++            ((IJSInProcessRuntime)jsRuntime)?.Invoke<object>(
+                 "receiveBenchmarkEvent",
+                 name);
+         }
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Pages/GridRendering.razor b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Pages/GridRendering.razor
+index 4fa366f44c..c7dc813708 100644
+--- a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Pages/GridRendering.razor
++++ b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Pages/GridRendering.razor
+@@ -1,11 +1,11 @@
+-@page "/gridrendering"
++﻿@page "/gridrendering"
+ @inject IJSRuntime JSRuntime
+ @using Wasm.Performance.TestApp.Shared.FastGrid
+ 
+ <h1>20 x 200 Grid</h1>
+ 
+ <fieldset>
+-    <select id="render-mode" @bind="selectedRenderMode">
++    <select id="render-mode" @bind="SelectedRenderMode">
+         <option>@RenderMode.FastGrid</option>
+         <option>@RenderMode.PlainTable</option>
+         <option>@RenderMode.ComplexTable</option>
+@@ -23,7 +23,7 @@
+ {
+     <p><em>(No data assigned)</em></p>
+ }
+-else if (selectedRenderMode == RenderMode.FastGrid)
++else if (SelectedRenderMode == RenderMode.FastGrid)
+ {
+     <p>FastGrid represents a minimal, optimized implementation of a grid.</p>
+ 
+@@ -50,13 +50,13 @@ else if (selectedRenderMode == RenderMode.FastGrid)
+         <GridColumn TRowData="WeatherForecast" Title="Summary">@context.Summary</GridColumn>
+     </Grid>
+ }
+-else if (selectedRenderMode == RenderMode.PlainTable)
++else if (SelectedRenderMode == RenderMode.PlainTable)
+ {
+     <p>PlainTable represents a minimal but not optimized implementation of a grid.</p>
+ 
+     <Wasm.Performance.TestApp.Shared.PlainTable.TableComponent Data="@forecasts" Columns="@Columns" />
+ }
+-else if (selectedRenderMode == RenderMode.ComplexTable)
++else if (SelectedRenderMode == RenderMode.ComplexTable)
+ {
+     <p>ComplexTable represents a maximal, not optimized implementation of a grid, using a wide range of Blazor features at once.</p>
+ 
+@@ -64,9 +64,9 @@ else if (selectedRenderMode == RenderMode.ComplexTable)
+ }
+ 
+ @code {
+-    enum RenderMode { PlainTable, ComplexTable, FastGrid }
++    public enum RenderMode { PlainTable, ComplexTable, FastGrid }
+ 
+-    private RenderMode selectedRenderMode = RenderMode.FastGrid;
++    public RenderMode SelectedRenderMode { get; set; } = RenderMode.FastGrid;
+ 
+     private WeatherForecast[] forecasts;
+     public List<string> Columns { get; set; } = new List<string>
+@@ -89,17 +89,17 @@ else if (selectedRenderMode == RenderMode.ComplexTable)
+         TemperatureC = index,
+     };
+ 
+-    void Show()
++    public void Show()
+     {
+         forecasts = staticSampleDataPage1;
+     }
+ 
+-    void Hide()
++    public void Hide()
+     {
+         forecasts = null;
+     }
+ 
+-    void ChangePage()
++    public void ChangePage()
+     {
+         forecasts = (forecasts == staticSampleDataPage1) ? staticSampleDataPage2 : staticSampleDataPage1;
+     }
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/ComplexTable/TableComponent.razor b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/ComplexTable/TableComponent.razor
+index 70c95ec905..eccb07f4dc 100644
+--- a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/ComplexTable/TableComponent.razor
++++ b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/ComplexTable/TableComponent.razor
+@@ -1,4 +1,4 @@
+-@using WeatherForecast = Pages.GridRendering.WeatherForecast
++﻿@using WeatherForecast = Pages.GridRendering.WeatherForecast
+ 
+ <table class="table">
+     <thead>
+@@ -13,7 +13,7 @@
+         <CascadingValue Value="@this">
+             <RowCollection Data="@Data"
+                            Columns="@Columns"
+-                           OnClick="@RefreshComponent"></RowCollection>
++                           OnClick="@HandleClickEvent"></RowCollection>
+         </CascadingValue>
+     </tbody>
+ </table>
+@@ -26,21 +26,8 @@
+     [Parameter]
+     public List<string> Columns { get; set; }
+ 
+-    DateTime t1;
+-    DateTime t2;
+-    Task RefreshComponent(int index)
++    Task HandleClickEvent(int index)
+     {
+-        t1 = DateTime.Now;
+-        StateHasChanged();
+         return Task.CompletedTask;
+     }
+-    protected override Task OnAfterRenderAsync(bool firstRender)
+-    {
+-        if (!firstRender)
+-        {
+-            t2 = DateTime.Now;
+-            Console.WriteLine("Refresh Time " + (t2 - t1).TotalMilliseconds);
+-        }
+-        return base.OnAfterRenderAsync(firstRender);
+-    }
+ }
+diff --git a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/PlainTable/TableComponent.razor b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/PlainTable/TableComponent.razor
+index ea75beebc7..e22bab77b9 100644
+--- a/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/PlainTable/TableComponent.razor
++++ b/src/Components/benchmarkapps/Wasm.Performance/TestApp/Shared/PlainTable/TableComponent.razor
+@@ -1,4 +1,4 @@
+-@using WeatherForecast = Pages.GridRendering.WeatherForecast
++﻿@using WeatherForecast = Pages.GridRendering.WeatherForecast
+ 
+ <table class="table">
+     <thead>
+@@ -12,7 +12,7 @@
+     <tbody>
+         <RowCollection Data="@Data"
+                        Columns="@Columns"
+-                       OnClick="@RefreshComponent"></RowCollection>
++                       OnClick="@HandleClickEvent"></RowCollection>
+     </tbody>
+ </table>
+ 
+@@ -24,21 +24,8 @@
+     [Parameter]
+     public List<string> Columns { get; set; }
+ 
+-    DateTime t1;
+-    DateTime t2;
+-    Task RefreshComponent(int index)
++    Task HandleClickEvent(int index)
+     {
+-        t1 = DateTime.Now;
+-        StateHasChanged();
+         return Task.CompletedTask;
+     }
+-    protected override Task OnAfterRenderAsync(bool firstRender)
+-    {
+-        if (!firstRender)
+-        {
+-            t2 = DateTime.Now;
+-            Console.WriteLine("Refresh Time " + (t2 - t1).TotalMilliseconds);
+-        }
+-        return base.OnAfterRenderAsync(firstRender);
+-    }
+ }

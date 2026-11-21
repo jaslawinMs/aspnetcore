@@ -1,0 +1,40 @@
+commit fc4e6e0915a59f2e1a9bf18955df2eca1de8f96c
+Author:     Youssef Fahmy <youssefvictor00@gmail.com>
+AuthorDate: Mon Jul 20 14:48:26 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Jul 20 12:48:26 2026 +0000
+
+    Update AngleSharp to latest (#67898)
+    
+    * Update AngleSharp to latest
+    
+    * Fix build errors for Mvc and Identity
+    
+    * Fix under project templates
+    
+    * Fix for AuthSample
+
+diff --git a/src/ProjectTemplates/Shared/AspNetProcess.cs b/src/ProjectTemplates/Shared/AspNetProcess.cs
+index 0d9e02a7d3..c92ea51512 100644
+--- a/src/ProjectTemplates/Shared/AspNetProcess.cs
++++ b/src/ProjectTemplates/Shared/AspNetProcess.cs
+@@ -5,8 +5,8 @@ using System.Diagnostics;
+ using System.Net;
+ using System.Net.Http;
+ using System.Net.Security;
+-using AngleSharp.Dom.Html;
+-using AngleSharp.Parser.Html;
++using AngleSharp.Html.Dom;
++using AngleSharp.Html.Parser;
+ using Microsoft.AspNetCore.Internal;
+ using Microsoft.AspNetCore.Server.IntegrationTesting;
+ using Microsoft.Extensions.CommandLineUtils;
+@@ -141,7 +141,7 @@ public class AspNetProcess : IDisposable
+ 
+         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+         var parser = new HtmlParser();
+-        var html = await parser.ParseAsync(await response.Content.ReadAsStreamAsync());
++        var html = await parser.ParseDocumentAsync(await response.Content.ReadAsStreamAsync());
+ 
+         foreach (IHtmlLinkElement styleSheet in html.GetElementsByTagName("link"))
+         {

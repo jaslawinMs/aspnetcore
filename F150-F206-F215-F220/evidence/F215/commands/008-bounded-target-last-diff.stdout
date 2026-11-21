@@ -1,0 +1,237 @@
+commit 33557cf9698da9b1970e2bf78f39b6603db0a39b
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Wed Apr 15 17:32:58 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Apr 15 17:32:58 2026 +0200
+
+    [Blazor] Add Components.Testing E2E test infrastructure (#65958)
+    
+    * Add Components.Testing E2E test infrastructure
+    
+    Migrate blazor-e2e testing infrastructure into aspnetcore under
+    src/Components/Testing. This provides a reusable framework for
+    Blazor end-to-end testing using Playwright and xUnit v3.
+    
+    - Core library (src): ServerFixture, ServerInstance, E2EManifest,
+      BrowserContextExtensions for YARP-proxied test orchestration
+    - Source generator (gen): auto-generates hosting startup assemblies
+    - MSBuild tasks (tasks): GenerateE2EManifest for build integration
+    - MSBuild props/targets (eng): build-time E2E app discovery and
+      optional publish support
+    - Unit tests (test): 76 tests covering all infrastructure components
+    - 6 E2E test apps covering minimal, render modes, service overrides,
+      published apps, observability, and async state scenarios
+      (29 E2E tests total, all passing)
+    
+    * Fix pack paths to use ArtifactsBinDir for source generator and tasks DLLs
+    
+    * Update npm packages
+    
+    * Create combined TestApp replacing separate testassets apps
+    
+    Replace MinimalApp, ObservabilityApp, PublishedApp, RenderModesApp,
+    ServiceOverridesApp, and AsyncStateApp (plus their E2E test projects)
+    with a single combined TestApp + TestApp.Client + TestApp.E2E.Tests.
+    
+    The combined app covers all render modes (Static SSR, InteractiveServer,
+    InteractiveWebAssembly, InteractiveAuto), service overrides, async state
+    control via TestLockClient, enhanced navigation, prerendering, and tracing.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    Co-authored-by: javiercn <6995051+javiercn@users.noreply.github.com>
+    
+    * Address PR review comments: rename AsyncLock, fix targets/props/gen, combine testassets, remove NSubstitute, nuget.org
+    
+    Agent-Logs-Url: https://github.com/dotnet/aspnetcore/sessions/220550bd-51df-4f48-8c73-ab14b0277ffd
+    
+    Co-authored-by: javiercn <6995051+javiercn@users.noreply.github.com>
+    
+    * Fix version conflicts: remove NSubstitute and unnecessary entries from Dependencies.props
+    
+    Agent-Logs-Url: https://github.com/dotnet/aspnetcore/sessions/79753880-6337-4f37-9b2f-82b58e1a35f5
+    
+    Co-authored-by: javiercn <6995051+javiercn@users.noreply.github.com>
+    
+    * Fix CI: update Components.slnf, add RunTests target, exclude E2E from Arcade
+    
+    - Components.slnf: replace 16 stale testasset entries with 3 combined
+      TestApp projects (CodeCheck was failing on missing slnf references)
+    - Testing.Tests.csproj: add custom RunTests target for xUnit v3
+      (UsingToolXUnit=false prevented Arcade's RunTests from being defined)
+    - testassets/Directory.Build.props: set IsTestProject=false at the end
+      so Arcade skips E2E projects during regular CI, while keeping the
+      conditional blocks above that set up references and the generator
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Fix CI: regenerate lockfile, ProjectReferences.props and ShippingAssemblies.props
+    
+    - package-lock.json: reset to main and regenerate to fix encoding/iconv-lite
+      mismatch from stale rebase resolution
+    - ProjectReferences.props/ShippingAssemblies.props: add
+      Microsoft.AspNetCore.Components.Testing (CodeCheck validation)
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Fix CI: use Reference for shipping assembly, fix package-lock.json
+    
+    - Testing.Tests.csproj and TestApp.E2E.Tests.csproj: change
+      ProjectReference to Reference for Microsoft.AspNetCore.Components.Testing
+      (ResolveReferences.targets enforces Reference for shipping assemblies)
+    - package-lock.json: use main's lockfile (PR has no npm changes; the
+      previous regeneration dropped optional 'encoding' package that npm ci
+      requires)
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Address PR review feedback
+    
+    - Fix WaitForEnhancedNavigationAsync to properly dispose IJSHandle
+    - WithServerRouting: merge into existing ExtraHTTPHeaders instead of replacing
+    - ResourceLock: only hold first match, ContinueAsync subsequent matches
+    - RemoteLock: URL-encode lock key with Uri.EscapeDataString
+    - GenerateE2EManifest: null-guard Path.GetDirectoryName result
+    - Remove unused id parameter from CreateMockServerInstance test helper
+    - TracingSession: clarify conservative save docs when TestState is null
+    - Unify E2EAppEntry model: replace ProjectPath+Published with Executable/Arguments/WorkingDirectory
+    - Remove E2EPublishedApp (no longer needed with unified model)
+    - Update tests for new model and header preservation
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Fix path handling: remove --project flag, include e2e-apps in manifest workingDirectory
+    
+    - Dev mode: use 'dotnet run --no-launch-profile' with workingDirectory set to project directory (no --project flag that breaks content root)
+    - Published mode: workingDirectory now includes 'e2e-apps/<name>' prefix from manifest
+    - ServerInstance: simply uses Path.Combine(AppContext.BaseDirectory, entry.WorkingDirectory) - no hardcoded e2e-apps
+    - Updated tests for new manifest format
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Make PrepareE2EApps Helix-friendly: hook into Publish, use PublishDir
+    
+    Follow the FunctionalTestWithAssets.targets pattern so that e2e-apps and
+    the manifest flow into the Helix payload:
+    - Hook AfterTargets='Build;Publish' instead of just Build
+    - Use PublishDir when publishing, fall back to OutputPath for build
+    - Updated header docs to describe Helix mode
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Add E2EAppMode property: build, publish, or all
+    
+    Replace UsePublishedApp with E2EAppMode that supports three modes:
+    - build (default): copies project source to e2e-apps/<name>/ for dotnet run
+    - publish: publishes app to e2e-apps/<name>/ for native exe
+    - all: both — source in e2e-apps/<name>/, published in e2e-apps/publish/<name>/
+    
+    During Publish (Helix), source is copied and paths are relative.
+    During Build (local dev), manifest uses absolute paths (no copies).
+    
+    Inner target _CopyE2EAppSource handles per-project source copy with
+    bin/obj exclusion. In 'all' mode, manifest emits two entries per app:
+    <name> (source) and <name>.Published (published exe).
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Remove Helix-specific references from comments
+    
+    Reframe all comments to describe Build vs Publish behavior rather than
+    mentioning Helix by name. The package has no Helix-specific logic.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Use publish/<name> key instead of <name>.Published for all mode
+    
+    The published app entry in the manifest now uses 'publish/<name>' as
+    the key, matching the directory structure (e2e-apps/publish/<name>/).
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Inline source copy instead of using inner MSBuild target
+    
+    Replace _CopyE2EAppSource inner target with inline ItemGroup + Copy
+    task. The E2EAppName metadata on the collected files handles per-project
+    destination routing without needing MSBuild batching via a separate target.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Make e2e-apps dir configurable, remove hardcoded paths from task
+    
+    - Add E2EAppsRelativeDir MSBuild property (default: 'e2e-apps') in props
+    - Pass it to GenerateE2EManifest task alongside E2EAppsOutputDir
+    - Task uses E2EAppsRelativeDir for manifest paths instead of hardcoding
+    - Collapse publishRelativeDir/publishAbsoluteDir into single subPath
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    * Add GenerateE2EManifest task tests for all mode × scenario combos
+    
+    Cover all 3 modes (build/publish/all) in both Build and Publish
+    scenarios. Also test custom E2EAppsRelativeDir, multiple apps, and
+    PublicUrl metadata flow-through. 10 new tests, 88 total.
+    
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+diff --git a/src/Components/Testing/gen/ServiceOverrideCallsite.cs b/src/Components/Testing/gen/ServiceOverrideCallsite.cs
+new file mode 100644
+index 0000000000..1e63c679a3
+--- /dev/null
++++ b/src/Components/Testing/gen/ServiceOverrideCallsite.cs
+@@ -0,0 +1,50 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System;
++
++namespace Microsoft.AspNetCore.Components.Testing.Generators;
++
++internal sealed class ServiceOverrideCallsite : IEquatable<ServiceOverrideCallsite>
++{
++    public string TypeFullyQualifiedName { get; }
++
++    public string TypeFullName { get; }
++
++    public string AssemblyName { get; }
++
++    public string MethodName { get; }
++
++    public ServiceOverrideCallsite(
++        string typeFullyQualifiedName,
++        string typeFullName,
++        string assemblyName,
++        string methodName)
++    {
++        TypeFullyQualifiedName = typeFullyQualifiedName;
++        TypeFullName = typeFullName;
++        AssemblyName = assemblyName;
++        MethodName = methodName;
++    }
++
++    public bool Equals(ServiceOverrideCallsite? other)
++    {
++        if (other is null)
++        {
++            return false;
++        }
++
++        return TypeFullyQualifiedName == other.TypeFullyQualifiedName &&
++               MethodName == other.MethodName;
++    }
++
++    public override bool Equals(object? obj) => Equals(obj as ServiceOverrideCallsite);
++
++    public override int GetHashCode()
++    {
++        unchecked
++        {
++            return (TypeFullyQualifiedName.GetHashCode() * 397) ^ MethodName.GetHashCode();
++        }
++    }
++}

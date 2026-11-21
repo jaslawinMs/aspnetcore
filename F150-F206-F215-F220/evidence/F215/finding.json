@@ -1,0 +1,29 @@
+[
+  {
+    "id": "F215",
+    "finding": {
+      "card_id": "hashcode-xor-field-combiner",
+      "file": "src/Components/Testing/gen/ServiceOverrideCallsite.cs",
+      "line_start": 43,
+      "line_end": 48,
+      "project": "Microsoft.AspNetCore.Components.Testing.Generators",
+      "target_frameworks": [
+        "netstandard2.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": true,
+      "summary": "The source-generator model combines field hashes with multiplication and XOR.",
+      "explanation": "GetHashCode combines two string hash codes using a hand-written multiply-and-XOR formula. HashCode.Combine provides a maintained combiner on newer targets, but this generator targets netstandard2.0, so adopting it requires compatibility consideration. The type is used by build-time generator infrastructure, making the finding informational.",
+      "snippet": "return (TypeFullyQualifiedName.GetHashCode() * 397) ^ MethodName.GetHashCode();",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

@@ -1,0 +1,36 @@
+commit 02e5cfb094800bb6592487dbe0ab116aa2c76831
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Wed Nov 27 17:33:46 2024 +0000
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Nov 27 17:33:46 2024 +0000
+
+    Avoid flakiness in template tests around URL validity checking (#59195)
+
+diff --git a/src/ProjectTemplates/Shared/AspNetProcess.cs b/src/ProjectTemplates/Shared/AspNetProcess.cs
+index cf2205bbd5..0d9e02a7d3 100644
+--- a/src/ProjectTemplates/Shared/AspNetProcess.cs
++++ b/src/ProjectTemplates/Shared/AspNetProcess.cs
+@@ -171,12 +171,19 @@ public class AspNetProcess : IDisposable
+             else
+             {
+                 Assert.True(string.Equals(anchor.Href, expectedLink), $"Expected next link to be {expectedLink} but it was {anchor.Href}.");
+-                var result = await RetryHelper.RetryRequest(async () =>
++
++                if (!string.Equals(anchor.Protocol, "https:") || string.Equals(anchor.HostName, "localhost", StringComparison.OrdinalIgnoreCase))
+                 {
+-                    return await _httpClient.GetAsync(anchor.Href);
+-                }, logger: NullLogger.Instance);
++                    // This is a relative or same-site URI, so verify it goes to a real destination within the app.
++                    // We don't do this for external (absolute) URIs as it would introduce flakiness, and the code
++                    // above already checks that the URI is what we expect.
++                    var result = await RetryHelper.RetryRequest(async () =>
++                    {
++                        return await _httpClient.GetAsync(anchor.Href);
++                    }, logger: NullLogger.Instance);
+ 
+-                Assert.True(IsSuccessStatusCode(result), $"{anchor.Href} is a broken link!");
++                    Assert.True(IsSuccessStatusCode(result), $"{anchor.Href} is a broken link!");
++                }
+             }
+         }
+     }

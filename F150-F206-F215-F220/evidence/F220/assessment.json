@@ -1,0 +1,114 @@
+{
+  "finding": "F220",
+  "scope": 243,
+  "owner": "640fc34c-7345-4501-b6b9-52b0379fb55a",
+  "card": "ienumerable-count-before-reenumeration",
+  "target": "src\\ProjectTemplates\\Shared\\AspNetProcess.cs",
+  "targetLines": [162, 163],
+  "disposition": "bounded-source-only-no-material-candidate",
+  "candidateRetained": false,
+  "classification": "informational test-infrastructure opportunity; not a verified performance defect",
+  "summary": "The real expected-link sources do not replay deferred element production in Count. They are twelve small string arrays and four fixed-depth Concat/Append pipelines with cheap metadata counts in both dependency-pinned LINQ implementations. Zip performs the necessary ordered expected-link traversal. A nearby repeated DOM query and eager diagnostic are real source-level work, but no material normal owning-workload opportunity was established. No candidate or performance experiment is justified from this evidence.",
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "freshActualDefaultBranch": "main",
+    "freshActualDefault": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "projectTemplatesTreeBothRoles": "b29d825ba287dc360512f8da8e3e6a06e235c96a",
+    "reservedNavigationHeadNotDefault": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "roleSourceMethod": "Independent full raw Git-object reads for both pins, validated against their complete repository trees. Public dependency source was separately read at exact declared-version source pins.",
+    "bindings": ["source-bindings-003.json", "source-bindings-004.json", "source-bindings-005.json", "source-bindings-006.json", "dependency-source-bindings-005.json", "dependency-source-bindings-006.json", "dependency-source-bindings-007.json"]
+  },
+  "F190Overlap": {
+    "inspectedFirst": true,
+    "priorScope": "finding-F190-207",
+    "priorCard": "enumerable-count-vs-any",
+    "priorTargetLine": 117,
+    "priorTarget": "if (page.Links?.Count() > 0)",
+    "priorDisposition": "bounded-no-candidate",
+    "priorCandidateDiffBytes": 0,
+    "currentTarget": "Count/assertion/ordered Zip at lines 162-163",
+    "conclusion": "Related source evidence, not an exact duplicate disposition. Different card and target seam; F190 retained no implementation footprint. Its discussion of line 162 is acknowledged rather than counted as a second independently discovered opportunity.",
+    "boundPriorEvidence": "prior-F190-bindings.json"
+  },
+  "producerAndWorkload": {
+    "PageDeclaration": "Page is a mutable reference type with a primary URL constructor, a parameterless constructor delegating with null URL, and an uninitialized IEnumerable<string> Links auto-property.",
+    "nonNullExpectedLinkInitializers": 16,
+    "stringArrayInitializers": 12,
+    "arrayCountDistribution": {"4": 1, "5": 1, "6": 4, "7": 4, "10": 2},
+    "pipelineInitializers": 4,
+    "pipelineCounts": [5, 4, 5, 4],
+    "pipelineOwners": [
+      "MvcTemplateCore: a three-element List<string> menu and a one-element string[] footer; home appends one documentation URL before concatenation.",
+      "MvcTemplate_SingleFileExe: a three-element string[] menu and a one-element string[] footer; the same Append/Concat shapes."
+    ],
+    "otherOwners": [
+      "MvcTemplate_IndividualAuth_Core and RazorPagesTemplate_IndividualAuth_Core each construct five expected-link arrays.",
+      "RazorPagesTemplate_NoAuth constructs two expected-link arrays.",
+      "BlazorTemplateTest.GetExpectedPages has seven source-declared target-typed Page construction sites, all leaving Links null; its deferred outer page iterator is not a deferred Links producer."
+    ],
+    "frequency": "Existing generated-template test validation after project creation/publish/build prerequisites, not an application request handler. The real scenarios validate two or five pages against built and published apps; the single-file scenario validates its two pages once.",
+    "lifetime": "Expected pages and underlying arrays/lists are local fixtures retained across awaits and, where present, two sequential process validations. No in-tree post-construction mutation was found in the inspected producer/consumer sources. Mutable types are not an immutability or concurrency guarantee.",
+    "normalHtmlProducer": "The generated MVC C#/F# and Razor layouts emit brand/Home/Privacy navigation and a Privacy footer, with a documentation anchor in the home view. Individual-auth template configuration selects and renames _LoginPartial.Identity; its anonymous branch adds Register and Login. The template's Identity _ViewStart selects the application layout. Identity UI V5 Login adds ForgotPassword/Register/ResendEmailConfirmation and a conditional external-auth documentation anchor; Register has the same conditional article, and ForgotPassword has no body anchor.",
+    "htmlBoundary": "The actual template, layout, controller/Program, and Identity view source was inspected. No generated app, HTTP response, authentication provider state, DOM node count, parser execution or rendered HTML was observed.",
+    "inventedLargeDeferredOrRepeatedWorkloads": false
+  },
+  "CountAssertAndZip": {
+    "sourcePredictedCountOverload": "System.Linq.Enumerable.Count<TSource>(IEnumerable<TSource>), TSource=string; not a predicate overload.",
+    "arrays": "Count first matches ICollection<string> and reads Count. There is no expected-string enumeration to eliminate.",
+    "concat": "Count recognizes Iterator<string> and calls GetCount(false). The actual Concat2Iterator asks both sources for TryGetNonEnumeratedCount. Their concrete List<string>/string[] sources answer through collection metadata.",
+    "append": "For the two five-link home-page pipelines, the nested AppendPrepend1Iterator obtains the actual collection Count plus one; Concat adds the one-element footer. Checked sums are 4 or 5, not a traversal or a large-count case.",
+    "runtimeSourcePins": {
+      "Original": {"declaredReferenceVersion": "12.0.0-alpha.1.26562.105", "repository": "dotnet/dotnet", "commit": "dfd6ac738610ea05f42e704be82b386e71052e12"},
+      "Default": {"declaredReferenceVersion": "12.0.0-alpha.1.26569.107", "repository": "dotnet/dotnet", "commit": "4f30608f5e5220a5671e61f4bd5dece130657f47"},
+      "limit": "Declared Microsoft.NETCore.App.Ref dependency-source pins, not observations of the executing test-host runtime. No JIT or runtime-switch state was observed."
+    },
+    "assertionPackage": "The area's source graph uses the ordinary xUnit assertion package centrally versioned at 2.9.2. The separate xUnit v3 properties are not evidence that this source consumes the v3 assertion assembly.",
+    "assertionSource": {"packageRepositoryCommit": "82543a6df6f5f13b5b70f8a9f9ccb41cd676084f", "assertionSubmoduleCommit": "cac8b688c193c0f244a0bedf3bb60feeb32d377a"},
+    "sourcePredictedAssertOverload": "Assert.True(bool condition, string userMessage), forwarding to the nullable-bool implementation. The equality produces bool; the message is a string argument, not a lazy delegate or interpolated-string-handler argument.",
+    "eagerness": "Both page.Links.Count() calls and both html.Links.Length reads in the assertion statement occur before Assert.True, on success as well as mismatch. The message preserves URL, expected count and actual count. The xUnit source uses the supplied message for TrueException on failure.",
+    "separateRealDomWork": "AngleSharp 1.5.2 Document.Links caches an HtmlCollection wrapper, not its results. HtmlCollection.Length calls _elements.Count(), and its document constructor obtains GetNodes(deep=true, IsLink). The pinned GetAllNodes source returns NodeEnumerable.OfType<IElement>().Where(IsLink). This is a genuine separate deferred DOM-query producer; it must not be conflated with the cheap expected Page.Links counts or described as absent. Its native traversal cost and materiality were not measured or qualified.",
+    "zip": "The exact three-argument Zip overload acquires both enumerators, advances in lockstep, invokes Tuple.Create, and disposes both enumerators. It preserves order and duplicate URLs and ends at the shorter input; the preceding equality assertion prevents silent successful truncation on a normal stable mismatch.",
+    "snapshotAssessment": "Materializing expected Page.Links cannot remove expected-element Count traversals that do not occur. It would introduce a snapshot/population step. Caching one scalar count removes a small metadata operation, not established material producer work. No such candidate was retained.",
+    "nearbyAlternativeAssessment": "Deferring the failure message or snapshotting actual DOM links could reduce source-visible DOM query/diagnostic work, but no material case was established for these normal cold template validations. No expanded card, fabricated page, repeat loop, benchmark or behavior-changing cleanup was used to promote that possibility."
+  },
+  "observableSemanticsPreservedByNoChange": [
+    "AssertPagesOk awaits each page status before the null/positive-count guard; null or empty expected Links skips ContainsLinks.",
+    "ContainsLinks performs its own retried GET/status check and parses response HTML before validating stylesheet and external script destinations.",
+    "Count equality and the existing diagnostic occur after stylesheet/script checks and before any positional anchor checks.",
+    "A mismatch throws before Zip; success retains positional comparisons and eligible destination requests in order.",
+    "The helper does not promise snapshot semantics for mutable Page.Links or its underlying collections across awaits.",
+    "Generic one-shot, throwing or side-effecting enumerables can have different count/enumeration/error behavior. None was established as a real in-tree Links producer, and none was manufactured.",
+    "Existing process using scopes and AspNetProcess.Dispose retain ownership of HttpClient and ProcessEx."
+  ],
+  "history": {
+    "countAndDiagnosticAtCurrentPath": "d6409371aeeca6df7e126b1e0c51410544fc2869 (#21493) moved the helper into ProjectTemplates with the same two counts, exact count check and ordered Zip. This is a path relocation, not proof it first originated there.",
+    "nullableGuard": "426b8b46f9c7cad8b2f0ab502902109ff09be9e6 (#48285) added the outer null/positive-count guard.",
+    "requestOrderingIntent": "02e5cfb094800bb6592487dbe0ab116aa2c76831 (#59195) restricted external URL requests while retaining expected URL comparisons.",
+    "latestTargetChange": "fc4e6e0915a59f2e1a9bf18955df2eca1de8f96c (#67898) updated AngleSharp use.",
+    "wholeSubtreeBetweenRoles": "ProjectTemplates Git tree is identical in Original and the independently re-observed default pin."
+  },
+  "qualificationLimits": [
+    "Source-only qualification and a no-material-candidate decision, not a measured no-gain result or universal immateriality claim.",
+    "No native compiler, SDK, build, restore, test host, generated application, browser, profiler, warmup, allocation or performance counter was run.",
+    "No actual loaded assertion package, running framework binary, generated response or end-to-end template behavior was verified.",
+    "LSP resolved local declarations and one ContainsLinks caller, but omitted real external AssertPagesOk callers and provided no external Count/Assert hover/definition. Pinned whole-repository inventories and full source supplemented those incomplete results.",
+    "The historical card-package extraction path no longer exists. No card package was restored and no fresh all-card scan or card-text-completeness claim is made; this is the parent's explicitly assigned existing F220 source qualification.",
+    "Source-tool root/stream waits do not constitute a universal descendant or unrelated-process census. Product-native roots and children are empty.",
+    "Early bootstrap/helper outer console output was exposed by the tool rather than separately captured as raw OS bytes; decisive Git/GitHub child streams and all later captured helper streams are retained byte-for-byte. The limitation is explicit in tool-boundaries.json."
+  ],
+  "implementationAndValidation": {
+    "shippingFilesEdited": [],
+    "testFilesEdited": [],
+    "privateGraphsCreated": [],
+    "candidateDiffBytes": 0,
+    "sdkActivations": 0,
+    "dependencyRestoresOrInstalls": 0,
+    "nativeBuildTestAppStarts": 0,
+    "comparisonCount": 0,
+    "budgetConsumption": 0,
+    "redGreen": "Not applicable: no candidate or changed behavior; the conditional material-candidate gate did not pass. No automated test was attempted and then reported as reaching its assertion.",
+    "policyLeaseRegistryLedgerCampaignOrRemoteWrites": false,
+    "subagentsLaunched": 0,
+    "nextActor": "Parent only: accept or reject this bounded source-only handoff and perform any campaign disposition. This owner does not finalize the ledger or authorize further work."
+  }
+}

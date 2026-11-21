@@ -1,0 +1,146 @@
+{
+  "findingId": "F206",
+  "version": "245",
+  "actualOwnerId": "2acd453e-18ab-4dd5-b36b-753c5e5a0a21",
+  "disposition": "SOURCE_ONLY_MATERIALITY_UNESTABLISHED_NO_CANDIDATE",
+  "canonicalOuterCandidate": { "id": "F206", "state": "pending", "sharedLedgerChanged": false },
+  "summary": "The eager join is real and still present upstream. It is an unused diagnostic construction on a passing assertion, but only once per reached execution of one existing Fact. Real browser-log cardinality, message lengths, execution frequency across CI, and material cost have not been observed. No private candidate is justified by this source-only evidence.",
+  "notConclusions": [
+    "Not a false-positive classification of the eager expression.",
+    "Not a measured no-gain result, no-allocation result, universal costlessness claim, or closure of a performance budget.",
+    "Not a verified browser reproduction, completed test, diagnostic-preservation regression check, or end-to-end pass.",
+    "Not permission for another execution, source edit, shared ledger update, publication, or reopening of any historical authorization."
+  ],
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBinding": "Independent read-only GitHub repository default_branch query and fresh refs/heads/main query; whole Default files subsequently read by that immutable SHA.",
+    "navigationCheckout": "C:\\src\\aspnetcore is reserved navigation/object storage only; its full actual HEAD is in commands-initial-v1\\01-navigation-head.stdout.bin.",
+    "wholeRoleSourceFiles": 60,
+    "rolePairs": 30,
+    "exactByteIdenticalPairs": 27,
+    "differentPairs": [
+      "Directory.Packages.props",
+      "eng\\Versions.props",
+      "src\\Components\\WebAssembly\\WebAssembly\\src\\Hosting\\WebAssemblyHost.cs"
+    ],
+    "differenceBoundary": "Both roles retain xUnit 2.9.2 and Selenium.WebDriver 4.48.0. WebAssemblyHost differs later in initial root rendering, after the unchanged culture check; the relevant error-producing seam was read in both roles. No claim of whole-repository equivalence."
+  },
+  "testShapeAndFrequency": {
+    "file": "src\\Components\\test\\E2ETest\\Tests\\WebAssemblyICUShardingTest.cs",
+    "target": "Microsoft.AspNetCore.Components.E2ETest.Tests.WebAssemblyICUShardingTest.LoadingApp_DynamicallySetLanguageThrows",
+    "targetLines": [103, 118],
+    "attribute": "Fact, not Theory",
+    "sourceRowsInClass": "Four Facts plus the separate KoreanLanguage_Works Theory's four InlineData rows: eight source-declared cases, not observed test discovery or execution.",
+    "separateTheoryRows": ["ko", "ko-KR", "ko-KO", "ja-JP"],
+    "targetJoinInvocations": "One per body execution that reaches and finishes evaluation of this Assert.True argument list; zero if earlier navigation, UI waits, log retrieval or predicate evaluation prevents reaching it.",
+    "polling": "Browser.Exists and Browser.Equal use WaitAssert/WebDriverWait before the log variable and final static Assert.True. Their polling callbacks do not contain this join. A UI timeout throws before this assertion; separate WaitAssert failure diagnostics are not repetitions of this join.",
+    "startupRetry": "BrowserFixture.CreateBrowser retries ChromeDriver construction up to three times before returning a browser. That loop neither contains nor replays this Fact's final assertion. It does not establish a threefold join multiplier.",
+    "unobservedFrequency": "No claim about whole-test reruns, CI jobs, shards, browser sessions, order or campaign-wide invocation frequency."
+  },
+  "actualSourceProducer": [
+    {
+      "step": "Fixture and asset ownership",
+      "evidence": [
+        "ServerTestBase<ToggleExecutionModeServerFixture<GlobalizationWasmApp.Program>> in the target.",
+        "ServerTestBase.Navigate forwards to Browser.Navigate using the fixture's lazy RootUri and /subdir.",
+        "ToggleExecutionModeServerFixture creates BlazorWasmTestAppFixture<TClientProgram> unless a custom host method is configured; this target does not configure one.",
+        "BlazorWasmTestAppFixture serves the actual referenced app, using trimmed published outputs when configured or its assembly/static-web-assets manifests otherwise."
+      ],
+      "boundary": "Configured source path, not an observed running server or validated artifact graph."
+    },
+    {
+      "step": "Boot culture producer",
+      "evidence": [
+        "Target navigates to /subdir/?culture=fr&dotNetCulture=es.",
+        "GlobalizationWasmApp/wwwroot/index.html reads culture and calls Blazor.start({ applicationCulture: culture }) with autostart=false.",
+        "Boot.WebAssembly.ts passes options to startWebAssembly; Boot.WebAssembly.Common.ts loads MonoPlatform and calls platform.callEntryPoint once for that start.",
+        "MonoPlatform passes applicationCulture to dotnet.withApplicationCulture. Its loaded-config callback sets __BLAZOR_SHARDED_ICU=1 exactly when globalizationMode is Sharded and exposes loadedConfig.applicationCulture.",
+        "WebAssemblyHostBuilder.CreateDefault initializes WebAssemblyCultureProvider, which captures the application culture.",
+        "GlobalizationWasmApp.Program.ConfigureCulture reads dotNetCulture and assigns DefaultThreadCurrentCulture and DefaultThreadCurrentUICulture before host.RunAsync."
+      ],
+      "boundary": "Actual source producer and condition mapped. No executed boot config or runtime globalization mode was inspected, so the sharded branch is not claimed to have run."
+    },
+    {
+      "step": "Error and browser observable",
+      "evidence": [
+        "WebAssemblyHost.RunAsyncCore invokes ThrowIfCultureChangeIsUnsupported before current-culture resource loading and root rendering.",
+        "WebAssemblyCultureProvider throws the exact expected InvalidOperationException prefix when __BLAZOR_SHARDED_ICU is 1 and CurrentCulture.Name differs from InitialCulture.Name.",
+        "MonoPlatform.callEntryPoint awaits runtime.runMain, catches its error, calls console.error(error), then showErrorNotification.",
+        "MonoPlatform's configured printErr is another console.error plus showErrorNotification route; no browser-entry count is inferred from either call site.",
+        "BootErrors.showErrorNotification sets #blazor-error-ui.style.display to block.",
+        "The existing target waits for that UI state, then retrieves Severe browser logs and asserts the expected text."
+      ],
+      "boundary": "No managed exception, console event, LogEntry, callback, browser DOM or log batch was synthesized or executed."
+    }
+  ],
+  "concreteCollectionAndLifetime": {
+    "seleniumReturnType": "LSP resolves ILogs.GetLog(string) as ReadOnlyCollection<LogEntry>; this is navigation metadata, not an executed browser result.",
+    "owningExtension": "src\\Shared\\E2ETesting\\WebDriverExtensions.cs:12-28, whole-file identical in Original and Default.",
+    "retrieval": "Exactly one driver.Manage().Logs.GetLog(LogType.Browser) invocation per GetBrowserLogs call.",
+    "materialization": "The extension filters Level >= requested level and ShouldIgnore, then calls ToList. It returns that nonempty List<LogEntry> via IReadOnlyList<LogEntry>, or Array.Empty<LogEntry> for null/empty results.",
+    "targetProjection": "The target's .Select(l => l.Message) is a deferred projection over the already materialized snapshot. Any can stop early; the eager Join enumerates that same snapshot afterward. Neither enumeration calls Selenium GetLog again or incorporates subsequently arriving browser entries.",
+    "lifetime": "The list/projection are method locals for this synchronous assertion. BrowserFixture may reuse a browser via its isolation-context dictionary, but this log list is freshly materialized by each extension call and is not placed into that fixture cache.",
+    "surroundingLogs": "ServerTestBase issues console.clear at initialization; CaptureSeleniumLogsAttribute reads log kinds after a test. Neither proves a fixed target snapshot size, nor is console.clear assumed to reset the WebDriver buffer.",
+    "unknown": "No observed number/length/order of actual entries, browser buffering or truncation effects, background/network entries, remote-log reset behavior, or full log-drain lifecycle."
+  },
+  "assertionAndMessage": {
+    "selectedContract": "Xunit.Assert.True(System.Boolean, System.String), not WaitAssert.True(IWebDriver, Func<bool>, ...).",
+    "typeBasis": "Enumerable.Any returns bool; the interpolated second argument is string. The pinned xUnit 2.9.2 XML contains this bool/string overload and the less-specific nullable-bool/string overload.",
+    "xmlEvidence": "source\\ExternalContract\\xunit.assert-2.9.2.xml:454-460; full original XML retained, SHA256 B54F3EBB1456B497ADAA27E7FD4AA879109A32430D9D46F63503FC1AA5DEC829.",
+    "xmlBoundary": "Read-only existing local package documentation, not role-binary execution or a compilation proof.",
+    "lspBoundary": "The original Assert.True hover returned an overload group; it is not misrepresented as proof of the selected two-argument overload.",
+    "eagerness": "Both C# arguments are evaluated before the direct Assert.True call. The string.Join(Environment.NewLine, logs) and interpolation run when argument evaluation reaches them even if Any is true and the assertion passes.",
+    "diagnosticText": "Expected to see globalization error message in the browser logs: {all snapshot messages joined with Environment.NewLine}.",
+    "preservation": "No candidate was authored, so message text, punctuation, separator, entry order, retrieval timing and exception behavior are unchanged. No diagnostic-equivalence test was run."
+  },
+  "cardinalityAndMateriality": {
+    "normalRealBrowserCardinality": "UNOBSERVED",
+    "normalRealBrowserMessageLengths": "UNOBSERVED",
+    "normalCIInvocationFrequency": "UNOBSERVED",
+    "sourceBound": "The target contains no repeated Join loop or lazy re-query to the browser. Snapshot size and total characters are not bounded by the extension; they depend on real browser/runtime/network output.",
+    "materiality": "UNESTABLISHED",
+    "decision": "No materially justified private performance candidate. Stop at source-only handoff rather than amplify one diagnostic with fabricated logs, a culture matrix, repetition, isolated Join benchmarks, timing, allocation counters or profiling.",
+    "lowerBoundaryFalsePassRisk": "Supplying hand-built LogEntry collections or manually invoking console/error callbacks could prove downstream formatting only, while bypassing boot sharding, real managed startup failure, browser console production and Selenium collection."
+  },
+  "history": {
+    "originalTarget": "Eight-entry --follow metadata/name-status history retained; latest touch 199ea738a5a0ca0d12f2ff473b51fa9e6d8f5514 (2024-04-22) removes the noReload argument.",
+    "freshDefaultTarget": "Six-entry GitHub history at exact Default SHA agrees on the latest target touch; the full target source is byte-identical across roles.",
+    "boundedTargetDiffs": "commands-closure-v1\\30-join-introduction-history.stdout.bin contains two regex-selected historical diffs: 2024 navigation simplification and 2021 file-scoped-namespace conversion. Despite that command label, it does not establish the diagnostic's original introduction commit.",
+    "cultureProvider": "Original three-entry full diffs and fresh Default three-entry metadata include 73ee485ee118d57655de427b67b574fef6f442f9 (2025-09-22), which captures initial culture through the application-culture interop; this exact provider file is unchanged between source roles.",
+    "completeness": "Bounded relevant history only; not a complete history or compatibility/configuration matrix."
+  },
+  "validation": {
+    "boundary": "Source and existing package XML contract inspection only.",
+    "sourceReadNativeCommands": 70,
+    "sourceReadNativeKinds": { "git": 36, "ghApiGet": 34 },
+    "allSourceReadNativeExits": 0,
+    "allSourceReadRootWaitsAndBothRawStreamDrainsCompleted": true,
+    "sourceChildRoots": [
+      { "collectorPid": 53464, "launcherPid": 36044, "observedChildExit": 0, "shellId": "f206-245-initial-source-v1", "actualToolCompleted": true, "actualToolExit": 0 },
+      { "collectorPid": 52128, "launcherPid": 53068, "observedChildExit": 0, "shellId": "f206-245-closure-source-v1", "actualToolCompleted": true, "actualToolExit": 0 }
+    ],
+    "frozenInspection": { "pid": 37688, "shellId": "f206-245-frozen-inspection-v1", "actualToolCompleted": true, "actualToolExit": 0 },
+    "processBoundary": "Native root PIDs, recorded argv, bounded CIM identities and direct-child observations are in the receipts. Short-lived children sometimes exited before CIM identity capture. All process-handle waits and both stream drains completed; no universal descendant or unrelated-process absence claim.",
+    "unrunTargetTest": "Microsoft.AspNetCore.Components.E2ETest.Tests.WebAssemblyICUShardingTest.LoadingApp_DynamicallySetLanguageThrows",
+    "unrunPrerequisite": "Separate parent approval for the real browser boundary and a ready, isolated, pinned E2E/app/runtime/browser graph. No such graph was activated, built, restored, assessed as ready, or executed.",
+    "unrunRows": "All four Korean theory rows (ko, ko-KR, ko-KO, ja-JP) and French/Russian/Kannada Facts were also unrun; none verifies this target join.",
+    "notRun": ["SDK activation", "dotnet", "build", "restore/install", "unit tests", "Selenium", "Playwright", "server/app/browser startup", "red/green candidate checks", "timing/warmup/allocation/profiling"],
+    "toolReadMisses": "Earlier no-definition LSP coordinates, unrelated symbol candidates, overly narrow TS glob and XML-cache glob no-matches are retained in tool-observations-v1.json; no absence or success claim relies on them.",
+    "rawBoundary": "Exact git/gh stdout/stderr bytes, full argv, root waits/exits and executed helper bytes are retained. Earlier preflight/tool-service outputs are rendered tool observations, not independently captured transport bytes."
+  },
+  "scopePreservation": {
+    "candidateSourceEdits": 0,
+    "publicApiOrDefaultConventionChanges": 0,
+    "manifestCacheOrPackageChanges": 0,
+    "sharedRootOrReservedCheckoutEdits": 0,
+    "sharedPolicyLeaseWindowOrCampaignEdits": 0,
+    "publicationIssuesPrCommitsPush": 0,
+    "remoteHostOrAzureWork": 0,
+    "subagents": 0,
+    "historicalReportAndWindow": "Fixed historical REPORT73abf142... and its window were not opened for modification, refreshed, reclassified or used to infer current source.",
+    "reports": "The four pre-existing untracked reports have preserved path/length/SHA256 observations in collection-closure-v1.json; final sealing must recheck them."
+  },
+  "nextActor": "Parent: independently accept or reject this sealed source-only handoff; only parent may publish or change the shared disposition.",
+  "optionalContinuation": "See approval-boundary-v1.json. This source-only outcome is complete without consuming that optional approval."
+}

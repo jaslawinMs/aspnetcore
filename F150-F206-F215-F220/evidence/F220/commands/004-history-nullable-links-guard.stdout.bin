@@ -1,0 +1,28 @@
+commit 426b8b46f9c7cad8b2f0ab502902109ff09be9e6
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Tue May 23 10:34:56 2023 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue May 23 10:34:56 2023 +0200
+
+    [Blazor] Add new Blazor Web Template (#48285)
+    
+    * Adds the new template `blazor` with options to use webassembly components and server components via `--use-wasm` and `--use-server`.
+    * The template changes `fetchdata` found in other templates for `showdata` as the data is rendered from the server.
+    * It includes the `counter` component only when server or webassembly modes have been selected.
+
+diff --git a/src/ProjectTemplates/Shared/AspNetProcess.cs b/src/ProjectTemplates/Shared/AspNetProcess.cs
+index 85f592f470..cc1b9400f4 100644
+--- a/src/ProjectTemplates/Shared/AspNetProcess.cs
++++ b/src/ProjectTemplates/Shared/AspNetProcess.cs
+@@ -117,7 +117,10 @@ public class AspNetProcess : IDisposable
+         foreach (var page in pages)
+         {
+             await AssertOk(page.Url);
+-            await ContainsLinks(page);
++            if (page.Links?.Count() > 0)
++            {
++                await ContainsLinks(page);
++            }
+         }
+     }
+ 

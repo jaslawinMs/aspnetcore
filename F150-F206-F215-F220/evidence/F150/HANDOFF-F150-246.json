@@ -1,0 +1,223 @@
+{
+  "findingId": "F150",
+  "scope": "246 SOURCE ONLY",
+  "actualRegisteredOwner": "0e68af4c-282e-499c-824b-253a9e5d389b",
+  "disposition": "SOURCE_ONLY_BOUNDED_NO_MATERIAL_CANDIDATE_ESTABLISHED",
+  "canonicalOuterCandidateStatus": "Parent confirmed candidate.id F150 pending. No canonical record, ledger, campaign, report window or publication was edited.",
+  "summary": "The recorded owner is a standalone, nonshipping console renderer profiling command, not an ASP.NET request or circuit. Its supplied normal grid producers introduce no identified incomplete asynchronous operation. The shared CLI async-handler overload itself blocks on Task<int>.Result. A local async-lambda substitution is therefore not an established starvation or performance fix and can change prelude exception behavior. No candidate or product-native correctness experiment is justified by this bounded source evidence.",
+  "qualificationLimits": {
+    "sourceLevelOnly": true,
+    "runtimeBehaviorVerified": false,
+    "faithfulReproductionExecuted": false,
+    "performanceMeasured": false,
+    "measuredNoGain": false,
+    "falsePositiveVerdict": false,
+    "universalImpossibilityVerdict": false,
+    "claimBoundary": "No material candidate established for these pinned sources and the supplied standalone command's normal producers. This does not disprove problems under another host, future scenario, runtime, instrumentation, asynchronous component or load condition."
+  },
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultBranch": "main",
+    "defaultObservationUtc": "2026-11-21T02:45:51.3172147Z",
+    "authority": "Read-only gh api repository metadata resolved default_branch=main; a separately preserved branches/main response returned the pinned SHA. HTTP Date, headers, body, raw streams, argv and actual reader exits are retained.",
+    "navigationHeadNotDefault": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "navigationUse": "C:\\src\\aspnetcore supplied LSP navigation and an existing git object store only. Source was read from exact commit objects without checking out or fetching into the shared working tree.",
+    "fixedReportWindow": "The parent's fixed REPORT73abf142... window was not edited, reclassified or replaced by this fresh Default observation.",
+    "candidatePath": "src/Components/benchmarkapps/Wasm.Performance/ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs",
+    "candidateWholeFileSha256BothRoles": "8B0509E02351AFBB01E1C9B7FE5DF4DC387581738C8437736F3EB5315F5BC133",
+    "initialEightFilePairsIdentical": true,
+    "wholeClosure": "closure-003 contains 55 whole files per role, including CLI implementation, all supplied grid modes, core rendering/lifecycle contracts, host/driver wiring, instructions and documentation.",
+    "hashAudit": "audit-004/source-audit.json verifies 131 whole-source entries: 110 closure files, 16 initial source copies and five separately labelled navigation-guidance files.",
+    "roleDifferences": [
+      "docs/BlazorComponentsGuidance.md",
+      "src/Components/AGENTS.md",
+      "src/Components/ARCHITECTURE.md",
+      "src/Components/benchmarkapps/Wasm.Performance/dockerfile",
+      "src/Components/Components/src/RenderTree/Renderer.cs"
+    ],
+    "roleComparisonAuthority": "Use audit-004/source-audit.json correctedRolePairs, not the preserved unusable closure-003 roleComparisons summary."
+  },
+  "trace": [
+    {
+      "owner": "Entrypoint and actual parser contract",
+      "sources": [
+        "ConsoleHost/Program.cs:11-26",
+        "src/Shared/CommandLineUtils/CommandLine/CommandLineApplication.cs:34-65,133-145,315-379",
+        "ConsoleHost/Wasm.Performance.ConsoleHost.csproj:3-14"
+      ],
+      "finding": "The executable's void Main calls new Program().Execute(args) synchronously. Program registers exactly one supplied subcommand, new GridScenario(). Execute selects the matching command during parsing, then returns command.Invoke(). Invoke is Func<int>. OnExecute(Func<int>) stores that delegate. OnExecute(Func<Task<int>>) does not make the parser asynchronous: it stores () => invoke().Result. The project compiles the in-tree shared CommandLineUtils source rather than depending on a different external CLI handler contract.",
+      "exitBoundary": "Main ignores Execute's returned int and has no explicit catch, Environment.Exit or exit-code assignment. No exact native process exit status for a scenario/error was observed or is claimed."
+    },
+    {
+      "owner": "Invocation setup and terminal barrier",
+      "sources": [
+        "ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs:15-49"
+      ],
+      "finding": "The synchronous handler parses --cycles with InvariantCulture, defaulting to one; builds its service provider; obtains ILoggerFactory; and constructs ConsoleHostRenderer. PopulateServiceCollection adds logging and has no supplied override. The handler then calls ExecuteAsync(renderer,numCycles).Wait(), computes and prints the duration only after that terminal barrier returns, and returns zero. Wait is once per selected CLI invocation, outside the per-cycle loop."
+    },
+    {
+      "owner": "Supplied normal scenario",
+      "sources": [
+        "ConsoleHost/Scenarios/GridScenario.cs:11-39",
+        "TestApp/Pages/GridRendering.razor:1-120",
+        "TestApp/Shared/FastGrid/Grid.razor",
+        "TestApp/Shared/FastGrid/GridColumn.razor",
+        "TestApp/Shared/PlainTable/*.razor",
+        "TestApp/Shared/ComplexTable/*.razor"
+      ],
+      "finding": "GridScenario defaults to FastGrid and also accepts PlainTable and ComplexTable. Each normal cycle creates a GridRendering root, calls Show, assigns it to the renderer, awaits its first RenderRootComponentAsync, calls ChangePage, and awaits the second root render. GridRendering uses two statically produced arrays of 200 forecasts and 20 listed columns. FastGrid registers columns synchronously in OnInitialized and queues a synchronous extra render from its first OnAfterRender. The table modes only render supplied data and wire event delegates; the console scenario does not dispatch their click events. No supplied asynchronous lifecycle override, timer, Task.Delay, Task.Yield, I/O or deliberately delayed renderer was identified or introduced."
+    },
+    {
+      "owner": "Renderer and thread ownership",
+      "sources": [
+        "ConsoleHost/ConsoleHostRenderer.cs:13-38",
+        "ConsoleHost/NullDispatcher.cs:11-29",
+        "src/Components/Components/src/Dispatcher.cs:9-80",
+        "src/Components/Components/src/RenderTree/Renderer.cs:83-147,263-280,321-345"
+      ],
+      "finding": "ConsoleHostRenderer is sealed, uses new NullDispatcher(), and returns Task.CompletedTask from UpdateDisplayAsync because there is no display. NullDispatcher.CheckAccess always returns true and its InvokeAsync overloads call work inline or return its task; it does not install a renderer synchronization context or schedule a new worker. The recorded entrypoint does not establish an HTTP/request/circuit owner or a request-thread-pool concurrency producer. Calling an async method does not itself queue that method to the pool. Actual thread IDs, scheduler state and Task completion states were not observed."
+    },
+    {
+      "owner": "Actual task producer and completion limits",
+      "sources": [
+        "src/Components/Components/src/RenderTree/Renderer.cs:291-345,385-423",
+        "src/Components/Components/src/RenderTree/Renderer.cs:Original673-715/Default677-719",
+        "src/Components/Components/src/ComponentBase.cs:100-117,197-198,259-334,371-378",
+        "src/Components/Components/src/Rendering/ComponentState.cs:147-166,168-205,270-296",
+        "src/Components/Components/src/CascadingValue.cs:51-127"
+      ],
+      "finding": "RenderRootComponentAsync starts pending-task tracking, supplies real component parameters, and awaits WaitForQuiescence. ComponentState obtains the component's real SetParametersAsync task and passes it to AddToPendingTasksWithErrorHandling. Already successful/cancelled tasks are not added; incomplete tasks are error-handled and tracked. WaitForQuiescence repeatedly awaits the pending Task.WhenAll set until parameter/lifecycle work is quiescent. ComponentBase's default initialization/parameter/after-render tasks and CascadingValue's parameter supply return completed tasks for the supplied synchronous component bodies. This supports a source-level expectation of inline completion on the ordinary success path, not a measured runtime assertion.",
+      "importantBoundary": "Do not interpret root-render quiescence as waiting for arbitrary asynchronous OnAfterRenderAsync work. ProcessRenderQueue deliberately discards InvokeRenderCompletedCalls' task. OnAfterRender may enqueue further synchronous work, which ProcessRenderQueue drains. The supplied FastGrid after-render action is synchronous; no invented delayed callback is used to turn this distinction into a finding."
+    },
+    {
+      "owner": "JS and display completion producer",
+      "sources": [
+        "TestApp/BenchmarkEvent.cs:7-18",
+        "TestApp/Pages/GridRendering.razor:104-107",
+        "ConsoleHost/ConsoleHostRenderer.cs:27-32"
+      ],
+      "finding": "GridRendering's after-render notification calls BenchmarkEvent.Send synchronously. BenchmarkEvent explicitly documents the null JS-runtime console environment and null-conditionally invokes an in-process runtime. The console host has no JS-runtime registration or browser/display transport. Its display task is completed rather than a browser acknowledgment. No browser process, JS producer, DOM observable or browser validation was exercised."
+    },
+    {
+      "owner": "Lifetimes",
+      "sources": [
+        "ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs:26-41",
+        "ConsoleHost/Scenarios/GridScenario.cs:27-38",
+        "src/Components/Components/src/RenderTree/Renderer.cs:35-36,425-439"
+      ],
+      "finding": "One service provider and renderer are created per CLI handler invocation. The scenario assigns a fresh root per cycle and does not remove it. The handler does not explicitly dispose the provider or renderer. The existing terminal barrier precedes output and handler return; replacing it with fire-and-forget would lose that ordering for genuinely incomplete tasks. No lifetime, disposal, cache, root-retention or harness change is proposed or implemented."
+    },
+    {
+      "owner": "Exception behavior",
+      "sources": [
+        "ConsoleHost/ConsoleHostRenderer.cs:22-25",
+        "ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs:22-41",
+        "src/Shared/CommandLineUtils/CommandLine/CommandLineApplication.cs:133-145,375-379",
+        "src/Components/Components/src/RenderTree/Renderer.cs:Original1154-1236/Default1158-1247"
+      ],
+      "finding": "ConsoleHostRenderer.HandleException rethrows with ExceptionDispatchInfo. Renderer normalizes synchronous component parameter exceptions into faulted tasks, routes component errors through any applicable error boundary and otherwise invokes this handler. Scenario-task failures reach the outer Wait, whose Task contract aggregates task failures. Prelude failures such as int.Parse occur before that Wait in the current synchronous delegate. Simply changing the delegate to async would capture such prelude failures into Task<int>, and the existing CLI .Result adapter would wrap them instead of preserving the current direct-throw boundary. Task-failure/cancellation wrapper details and native error exits were not executed or verified; no universal equivalence claim is made."
+    },
+    {
+      "owner": "Existing measurement semantics",
+      "sources": [
+        "ConsoleHost/Scenarios/ComponentRenderingScenarioBase.cs:24-39",
+        "ConsoleHost/Scenarios/GridScenario.cs:20-38",
+        "ConsoleHost/ConsoleHostRenderer.cs:27-31"
+      ],
+      "finding": "DateTime.Now is sampled after service-provider/logger/renderer construction and immediately before the scenario call; the second sample is after Wait. The interval therefore encloses the scenario's own selection/setup and both root-render calls per cycle, including any synchronous scenario initialization. The handler divides by numCycles and prints one decimal-place milliseconds per cycle. It has no separate warmup in the inspected source. Removing the terminal wait or moving its continuation can change what work/order the interval includes. Measurement code was read, not executed or redesigned."
+    },
+    {
+      "owner": "Documented browser benchmark is a different owner",
+      "sources": [
+        "README.md",
+        "benchmarks.compose.json",
+        "dockerfile",
+        "exec.sh",
+        "Driver/Program.cs:20-129"
+      ],
+      "finding": "The README describes TestApp plus a Playwright Driver and Crank. The composition selects the dockerfile, which publishes Wasm.Performance.Driver; exec.sh launches that Driver. Driver.Main is a separate async entrypoint that starts the test application and browser/result flow. These sources do not make ConsoleHost's Wait a request/browser concurrency producer. The console comment and introduction history instead identify .NET-side/desktop-interpreter profiling."
+    }
+  ],
+  "history": {
+    "introduction": "1885af963432ee7d66a80448cc2c24fa95c25d24 (2020-08-03), Add console runner for measuring Blazor perf on desktop interpreter (#24469). The preserved full patch introduced the synchronous Main, CLI handler Wait, NullDispatcher, completed display task and explicit null-JS notification behavior together.",
+    "candidateFollowHistory": "Original git log --follow --name-status and fresh pinned-Default GitHub path history both reach the same four entries: introduction, invariant-culture update 8a81194f..., license update 9da42b9f..., and latest path change a450cb69... (2021-11-06 file-scoped namespaces). No candidate behavior change was found between the two recorded roles.",
+    "cliHistory": "A bounded eight-entry Default --follow history is retained. The currently selected source contract, not the presence of an async-looking overload, is authoritative.",
+    "consoleRendererHistory": "The bounded Default --follow history reaches introduction and later license/namespace/sealing changes. The renderer file is byte-identical across the two roles.",
+    "wholeEvidence": [
+      "source-002/commands/022-original-candidate-history.stdout.bin",
+      "source-002/commands/023-default-candidate-history.stdout.bin",
+      "closure-003/commands/005-console-introduction-history.stdout.bin",
+      "closure-003/commands/006-default-cli-history.stdout.bin",
+      "closure-003/commands/007-default-console-renderer-history.stdout.bin"
+    ]
+  },
+  "guidance": [
+    "Components AGENTS and Components/cross-cutting instruction files were read; pinned Original/Default whole copies and separately labelled navigation-guidance bytes are retained.",
+    "Cross-cutting guidance says to assess hot-path ownership before raising performance findings and preserve async/exception contracts. Its general anti-blocking guidance does not establish a pool-starvation producer in this standalone command.",
+    "Renderer XML documentation defines root-render task completion; renderer implementation explicitly defines the after-render asynchronous exclusion.",
+    "Default Components ARCHITECTURE.md:262-268 assigns startup/service/lifetime policy to the host and rendering/lifecycle to the renderer; its dispatcher guidance does not turn this explicitly custom NullDispatcher into the default synchronization-context dispatcher."
+  ],
+  "materialityDecision": {
+    "normalOwnerEstablishedAtSourceBoundary": true,
+    "actualBlockedThreadOrIncompleteWaitObserved": false,
+    "requestThreadPoolStarvationEstablished": false,
+    "materialPerformanceOpportunityEstablished": false,
+    "oneLineAsyncReplacementJustified": false,
+    "candidateCreated": false,
+    "correctnessProposalRequiredNow": false,
+    "reasonNoCorrectnessProposal": "No materially justified candidate was established. No finite experiment is requested implicitly. Any future product-native/candidate work requires a separately reviewed finite faithful proposal and new explicit parent authorization.",
+    "canonicalStatusHandling": "Return this bounded source-only result to the parent; do not mark the canonical candidate fixed, measured no-gain, universally impossible, false positive or qualified."
+  },
+  "scopeCompliance": {
+    "sdkActivations": 0,
+    "builds": 0,
+    "tests": 0,
+    "productNativeStarts": 0,
+    "benchmarkConsoleOrScenarioExecutions": 0,
+    "warmups": 0,
+    "countersProfilersAllocationsOrTimings": 0,
+    "browserExecutions": 0,
+    "sourceOrCandidateEdits": 0,
+    "subagents": 0,
+    "remoteHostExecution": 0,
+    "installsRestoresOrDownloadsOfRuntimeTools": 0,
+    "sharedPolicyLeaseReportRootOrWindowEdits": 0,
+    "publicationIssuePullRequestCommitOrPushWrites": 0,
+    "writesConfinedTo": "New finding-F150-246 evidence directory and isolated session todo state only.",
+    "originalUntrackedReports": "All four original untracked root reports retain their initially hashed bytes; source audit records each path, size and SHA-256."
+  },
+  "evidenceFailuresPreserved": [
+    {
+      "helper": "Collect-Source-001.ps1",
+      "actualOuterTool": "f150-246-source001 completed with exit code 1",
+      "boundary": "Only two successful read-only git roots (navigation HEAD/status) ran. A VoidTaskResult pipeline-recording error prevented source metadata/default/source collection.",
+      "handling": "Helper, invocation, raw streams, child records and root exit remain unchanged. It was neither edited after execution nor replayed. A separately named 002 helper corrected recording-only await-output suppression."
+    },
+    {
+      "artifact": "closure-003/source-manifest.json roleComparisons",
+      "boundary": "The source collector completed with exit zero and full 110-file extraction, but Group-Object on raw OrderedDictionary entries produced an unusable empty-name derived comparison group.",
+      "handling": "Artifact and helper remain unchanged. Audit-004 reloaded entries as PSCustomObject, verified every source hash, and separately produced 55 valid role pairs (50 equal, five different). Only that corrected summary is authoritative."
+    },
+    {
+      "tool": "LSP navigation limits",
+      "boundary": "LSP found the candidate symbols/references and resolved OnExecute to the in-tree Func<int> overload at line 133. A base renderer definition lookup returned no definition, and Razor GridRendering/BenchmarkEvent symbol lookups did not resolve usefully.",
+      "handling": "Those gaps are not completeness evidence. Known exact in-tree source/project paths and whole commit-pinned sources supplied the bounded contract trace. No unrelated Azure graph or unavailable GitHub semantic index was substituted."
+    }
+  ],
+  "terminalEvidence": {
+    "sourceReaderRootsBeforeFinalSeal": 32,
+    "sourceReaderExitCodesBeforeFinalSeal": "All 32 source readers exited zero; exact executable/argv/working directory, raw stdout/stderr, stream-copy awaits, root identity/wait/exit and observed immediate child instances are retained.",
+    "sourceHelperRoots": [
+      {"helper": "001", "pid": 48068, "actualExitCode": 1, "outerPid": 51444, "outerTool": "f150-246-source001 completed with exit code 1"},
+      {"helper": "002", "pid": 50088, "actualExitCode": 0, "outerPid": 17236, "outerTool": "f150-246-source002 completed with exit code 0"},
+      {"helper": "003", "pid": 36516, "actualExitCode": 0, "outerPid": 43480, "outerTool": "f150-246-closure003 completed with exit code 0"},
+      {"helper": "004", "pid": 52300, "actualExitCode": 0, "outerPid": 53768, "outerTool": "f150-246-audit004 completed with exit code 0"}
+    ],
+    "processLimit": "Only actual owned roots and observed child instances are covered. No universal descendant-closure, unrelated-user inactivity or dedicated-host assertion is made.",
+    "finalSeal": "seal-005.json",
+    "finalSealerNativeRootAndStreamsAfterWait": "seal-005-launch.result.json",
+    "finalOuterToolExit": "Must be reported by the parent-facing response only after the actual final tool returns. This file does not pre-assert that future exit."
+  },
+  "parentAction": "Review and package the source-only handoff. Preserve canonical pending state and all failures. Parent alone owns finalization. This owner stops after reporting the actual final sealer tool completion."
+}
