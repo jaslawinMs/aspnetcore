@@ -1,0 +1,117 @@
+{
+  "scope": "GO286 SOURCE ONLY; finite inherited manager-factory continuation",
+  "actualOwner": "cb6dfbf4-dd69-4c3e-b55f-d49f1820df2b",
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "observed268Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "freshDefaultObservationIn286": false,
+    "reservedNavigationCheckoutUsedAsDefaultOrModified": false
+  },
+  "boundedOutcome": {
+    "metadataOnlyDiscoveryRoots": 1,
+    "twoMemberRawBatchRoots": 1,
+    "newDirectGitGhRoots": 2,
+    "aggregateDirectGitGhRoots": 12,
+    "newWholeBodiesPerRole": 1,
+    "newCompleteWholeBodies": 2,
+    "newMissingResponses": 0,
+    "cumulativeRequestedPathsPerRole": 19,
+    "cumulativeCompleteBodiesPerRole": 18,
+    "cumulativeCompleteBodyBindings": 36,
+    "prior279MissingResponsesPreserved": 2,
+    "prior279SourceHelperActualOuterExitPreserved": 1,
+    "prior279GitActualExitPreserved": 0,
+    "prior268And279CompleteArtifactsUnchanged": 180,
+    "sourceRootAndBodyBudgetsClosed": true
+  },
+  "discovery": {
+    "scope": "Pinned observed268Default src/Identity only",
+    "operation": "git grep -l -z --fixed-strings -e \"class UserManagerSpecificationTestBase\"",
+    "retainedOutput": "One exact NUL-terminated commit:path filename; no source lines or snippets.",
+    "actualPath": "src/Identity/Specification.Tests/src/UserManagerSpecificationTests.cs",
+    "oldLiteralPath": "src/Identity/Specification.Tests/src/UserManagerSpecificationTestBase.cs",
+    "boundary": "The old request and its two missing responses remain immutable. The new separately authorized discovery located the actual class; it did not replay, repair or replace either old response. The whole new body, not the filename alone, establishes the class and factory behavior."
+  },
+  "sourceFactoryConclusion": {
+    "detail": "FACTORY-DISPATCH-286.json",
+    "namedInheritedDispatchAndExplicitStoreInstanceLifetimeEstablishedAtSource": true,
+    "ordinaryPath": "CanGetUsersInRole -> inherited CreateManager(context) -> virtual IdentitySpecificationTestBase.SetupIdentityServices -> target AddUserStore/AddRoleStore instance registrations -> BuildServiceProvider/GetService<UserManager>. CreateRoleManager builds a separate provider with the same explicit store context.",
+    "setupBuilderCorrection": "The inherited base default SetupIdentityServices would forward to SetupBuilder, but this target's IdentitySpecificationTestBase override bypasses it. Both SetupBuilder bodies are alternative source paths, not additional ordinary factory executions.",
+    "actualNativeDiResolutionOrSelectedConcreteRuntimeEstablished": false,
+    "noNativeOrMaterialityUpgrade": true
+  },
+  "findings": [
+    {
+      "id": "F234",
+      "canonicalOuterStatus": "pending",
+      "sourceDecision": "source-only-no-material-candidate",
+      "target": "InMemoryStore<TUser,TRole>.GetUsersInRoleAsync",
+      "distinctFromF235": true,
+      "positiveNewEvidence": "The formerly missing inherited factory body now connects the named ordinary role fixture to its explicit shared InMemoryStore instance at source. One shown fixture creates one fresh context, two separate service collections/providers, one user manager and one role manager; both register the same supplied store object.",
+      "ordinaryProducer": {
+        "test": "CanGetUsersInRole",
+        "users": 6,
+        "roles": 4,
+        "memberUsers": 3,
+        "membershipsPerMemberUser": 4,
+        "presentRoleQueries": 4,
+        "absentRoleQueries": 1,
+        "expectedResultsPerPresentRole": 3,
+        "executionBoundary": "Existing source producer and assertions only, not executed results."
+      },
+      "materiality": "The nested per-user membership search is real. The factory evidence strengthens the normal source-owned fixture/lifetime link, but supplies no larger population, increased normal query frequency or material cost. Each inner collection belongs to its own user rather than one invariant lookup set. No justified material candidate follows from the bounded source evidence.",
+      "semanticsPreserved": [
+        "Existing role-name validation, normalization and SingleOrDefault duplicate/null exception behavior.",
+        "Existing case-sensitive RoleId string value equality, per-user short-circuiting, membership duplicates not multiplying that outer user result.",
+        "Existing outer order, user reference identity and eager ToList without added sorting or Distinct.",
+        "Existing ignored store CancellationToken, completed Task behavior and synchronous exception timing."
+      ],
+      "remainingBoundaries": [
+        "No DI extension-body expansion, native test discovery/run, selected SDK/CLR/testhost/concrete manager-store execution, or behavior-pass claim.",
+        "No naturally larger/frequent material workload or performance/allocation observation established.",
+        "No repository-wide absence proof or measured no-gain/false-positive/duplicate disposition."
+      ]
+    },
+    {
+      "id": "F235",
+      "canonicalOuterStatus": "pending",
+      "sourceDecision": "source-only-no-material-candidate",
+      "target": "InMemoryStore<TUser,TRole>.FindByPasskeyIdAsync",
+      "distinctFromF234": true,
+      "positiveNewEvidence": "The shared specification factory is now source-qualified for the target's inherited test composition. That supplies explicit store construction/registration lifetime, not a new invocation of the global credential lookup.",
+      "prior279CallerBoundaryUnchanged": "PasskeyHandler has two conditional global-lookup source edges: MakeUnknownCredentialSignalOptionsAsync and PerformAttestationCoreAsync. The shown assertion path instead uses per-user lookup. GO286 did not broaden request/parser/handler/global-scenario qualification.",
+      "materiality": "A complete ordinary global-lookup scenario selecting this InMemory store, its natural global population/frequency and a material cost remain unqualified. The older one-user/one-or-two16-byte-credential fixtures must not be relabeled as global-lookup workloads. No artificial users/passkeys, repetition or isolated membership loop was introduced.",
+      "semanticsPreserved": [
+        "Ordered credential byte-content equality, not byte-array reference equality.",
+        "First matching user in existing outer order; inner short-circuiting and duplicate handling within/across users.",
+        "Mutable public credential arrays/collections and retained CredentialId aliasing; no immutable-key/index-invalidation invariant added.",
+        "Existing miss/null, cancellation, completed Task and synchronous direct-store exception boundaries."
+      ],
+      "remainingBoundaries": [
+        "Normal complete global-handler caller/request/parser scenario and actual selected InMemory implementation remain unqualified.",
+        "Global user/passkey cardinality, invocation frequency, native execution and material effect remain unqualified.",
+        "No measured no-gain, false-positive, duplicate or unreachability disposition."
+      ]
+    }
+  ],
+  "evidenceAndAuthority": {
+    "wholeNewBodyBytesPerRole": 83120,
+    "wholeNewBodySha256BothRoles": "10BC2D9F9ABA89EE9A15D74555C8113E4BC6EBEFB5653A473D5AF31B2CC25185",
+    "membership": "Exact binary git cat-file --batch request/member framing, blob type/size/object ID/recomputed Git SHA1/body SHA256/raw streams; no archive or text normalization.",
+    "rawCommitTreeChainOrNewFileModeExpansion": false,
+    "oldAcceptance": "180 unchanged prior artifacts preserve bytes/exact inventory acceptance only, not newly inferred raw-tree/runtime/materiality qualification.",
+    "historyAndDefault": "Reuse previously captured268 immutable-role/history evidence unchanged. No new history root or upstream resolution.",
+    "codeIntelligenceBoundary": "No unrelated Bluebird scope or navigation-checkout LSP result was substituted for immutable-role source; no empty-result absence proof.",
+    "parentAloneAcceptsQualifiesRetiresFinalizes": true,
+    "canonicalStatesChanged": false,
+    "furtherSourceScopeAuthorized": false
+  },
+  "notPerformed": [
+    "SDK activation, dotnet, restore/install/build/tests or product-native/class/host/server/browser execution.",
+    "Candidate/source/test/API/default/cache/assertion/message/package/global.json/NuGet.config/IVT/UnsafeAccessor/configuration edits.",
+    "Measurements, warmup, counters, allocation/profiling or performance validation.",
+    "New source checkout/worktree, recursive source/request/parser/global-scenario broadening or fresh default-branch resolution.",
+    "Old helper/output/failure/seal replacement, replay or normalization; shared/policy/lease/campaign/ledger writes.",
+    "Remote action, subagent, cleanup, telemetry publication, commit, pull request or other publication."
+  ]
+}

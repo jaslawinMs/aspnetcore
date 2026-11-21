@@ -1,0 +1,146 @@
+{
+  "actualAgentId": "7edc5806-0226-40d8-81f6-5c50d73959bc",
+  "pins": {
+    "observedUtc": "2026-11-21T04:41:21.422Z",
+    "upstreamRepository": "dotnet/aspnetcore",
+    "defaultBranch": "main",
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "reservedCheckoutHead": "24875ef5dabb55567870b39f6eb0002170435e2f",
+    "reservedCheckoutNotUsedAsDefault": true,
+    "upstreamCommitMetadataRoot": "root-003"
+  },
+  "decisions": [
+    {
+      "id": "F243",
+      "retained": {
+        "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+        "line": 335,
+        "literal": "var operationParameter = GetOperationParameter(operation, modelName);",
+        "wholeSourceSha256": "771DDDE756FCACD1F5D71ED4BB612891D4842643C3AE066FCE7ABE98AE7F3854"
+      },
+      "owner": {
+        "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+        "line": 352,
+        "literal": "var operationParameter = GetOperationParameter(operation, modelName);",
+        "wholeSourceSha256": "26A1A2047BC92E1C5BF7512B1EA32BD6AF3823E33AED7F559A13305F85EDBFCC"
+      },
+      "behavior": "Method XML parameter-comment loop resolves effective model name and first matching current operation parameter by Ordinal name.",
+      "producerShape": "Collision fixture declares two XML param comments and two named query parameters; actual runtime counts unobserved.",
+      "symbolicWork": "C * P, conditional on method documentation/cache hit; reflection parameter scan is a separate cost.",
+      "distinctFrom": [
+        "F244 fallback binding-source search",
+        "F245 response-code join",
+        "F246 property metadata/documentation phase"
+      ],
+      "decision": "source-only-informational-no-material-candidate-established",
+      "generatorEmitsBehavior": true,
+      "sourceApplicationDocumentPathAdmitted": true,
+      "sourceClosure": "bounded-selected-inputs-with-explicit-transitive-boundaries",
+      "runtimeReachabilityObserved": false,
+      "productionCardinalityOrFrequencyObserved": false,
+      "measuredNoGainOrRuntimeClaim": false,
+      "candidateAuthored": false,
+      "aliasesProposed": []
+    },
+    {
+      "id": "F244",
+      "retained": {
+        "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+        "line": 349,
+        "literal": "else if (IsRequestBodyParameter(context, modelName))",
+        "wholeSourceSha256": "771DDDE756FCACD1F5D71ED4BB612891D4842643C3AE066FCE7ABE98AE7F3854"
+      },
+      "owner": {
+        "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+        "line": 366,
+        "literal": "else if (IsRequestBodyParameter(context, modelName))",
+        "wholeSourceSha256": "26A1A2047BC92E1C5BF7512B1EA32BD6AF3823E33AED7F559A13305F85EDBFCC"
+      },
+      "behavior": "Only after operation-parameter miss, scan description source/name for Body, Form, or FormFile.",
+      "producerShape": "Separate controller tests declare documented service/cancellation-token misses and one documented form/body parameter; collision fixture is not positive fallback proof.",
+      "symbolicWork": "U * D, U limited to unmatched nonempty effective XML-comment names, early exit on qualifying match.",
+      "distinctFrom": [
+        "F243 successful operation-parameter path",
+        "F245 response-code join",
+        "F246 property path uses direct Source gate"
+      ],
+      "decision": "source-only-informational-no-material-candidate-established",
+      "generatorEmitsBehavior": true,
+      "sourceApplicationDocumentPathAdmitted": true,
+      "sourceClosure": "bounded-selected-inputs-with-explicit-transitive-boundaries",
+      "runtimeReachabilityObserved": false,
+      "productionCardinalityOrFrequencyObserved": false,
+      "measuredNoGainOrRuntimeClaim": false,
+      "candidateAuthored": false,
+      "aliasesProposed": []
+    },
+    {
+      "id": "F245",
+      "retained": {
+        "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+        "line": 382,
+        "literal": "var responseComment = global::System.Linq.Enumerable.SingleOrDefault(methodComment.Responses, xmlResponse => xmlResponse.Code == response.Key);",
+        "wholeSourceSha256": "771DDDE756FCACD1F5D71ED4BB612891D4842643C3AE066FCE7ABE98AE7F3854"
+      },
+      "owner": {
+        "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+        "line": 399,
+        "literal": "var responseComment = global::System.Linq.Enumerable.SingleOrDefault(methodComment.Responses, xmlResponse => xmlResponse.Code == response.Key);",
+        "wholeSourceSha256": "26A1A2047BC92E1C5BF7512B1EA32BD6AF3823E33AED7F559A13305F85EDBFCC"
+      },
+      "behavior": "Each existing operation response queries XML response comments by exact code with SingleOrDefault uniqueness behavior.",
+      "producerShape": "Minimal fixture declares three response-code XML comments and a three-outcome typed-results return; callbacks expect three descriptions, but actual typed-result metadata production/count was not executed or transitively closed.",
+      "symbolicWork": "R * X; XML response list and produced operation responses are independently sourced.",
+      "distinctFrom": [
+        "F243/F246 parameter-name joins",
+        "F244 body-source membership gate"
+      ],
+      "decision": "source-only-informational-no-material-candidate-established",
+      "generatorEmitsBehavior": true,
+      "sourceApplicationDocumentPathAdmitted": true,
+      "sourceClosure": "bounded-selected-inputs-with-explicit-transitive-boundaries",
+      "runtimeReachabilityObserved": false,
+      "productionCardinalityOrFrequencyObserved": false,
+      "measuredNoGainOrRuntimeClaim": false,
+      "candidateAuthored": false,
+      "aliasesProposed": []
+    },
+    {
+      "id": "F246",
+      "retained": {
+        "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.DoesNotMisattributeDocumentationWhenMemberNameCollidesWithAnotherBindingName#OpenApiXmlCommentSupport.generated.verified.cs",
+        "line": 406,
+        "literal": "var parameter = GetOperationParameter(operation, modelName);",
+        "wholeSourceSha256": "771DDDE756FCACD1F5D71ED4BB612891D4842643C3AE066FCE7ABE98AE7F3854"
+      },
+      "owner": {
+        "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+        "line": 423,
+        "literal": "var parameter = GetOperationParameter(operation, modelName);",
+        "wholeSourceSha256": "26A1A2047BC92E1C5BF7512B1EA32BD6AF3823E33AED7F559A13305F85EDBFCC"
+      },
+      "behavior": "Only documented, resolved property-kind API descriptions perform a first-match operation-parameter lookup; property phase follows method documentation.",
+      "producerShape": "Controller source declares two inherited query properties; minimal source declares five documented AsParameters properties. MVC property expansion is captured; low-level minimal binding-metadata production remains a boundary.",
+      "symbolicWork": "Q * P with Q <= D gated eligible/cache-hit properties, not all D descriptions.",
+      "distinctFrom": [
+        "F243 XML method-parameter comments",
+        "F244 unmatched-method body-source scan",
+        "F245 response-code uniqueness join"
+      ],
+      "decision": "source-only-informational-no-material-candidate-established",
+      "generatorEmitsBehavior": true,
+      "sourceApplicationDocumentPathAdmitted": true,
+      "sourceClosure": "bounded-selected-inputs-with-explicit-transitive-boundaries",
+      "runtimeReachabilityObserved": false,
+      "productionCardinalityOrFrequencyObserved": false,
+      "measuredNoGainOrRuntimeClaim": false,
+      "candidateAuthored": false,
+      "aliasesProposed": []
+    }
+  ],
+  "F201F202F203": "Not qualified or aliased by this task; XML-example JSON parsing remains independent.",
+  "classificationBasis": "Real generated/app source path and admitted small producer fixtures; not snapshot location. Material workload and benefit are unestablished, not disproved.",
+  "runtimeExecution": "None",
+  "finalGuardPolicySha256": "87BFBAC8FCDF9A9323C6B22DD6388ADA203E4C9FC0CB60B52A7B686BE6D905D6"
+}

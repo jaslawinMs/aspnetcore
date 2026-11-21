@@ -1,0 +1,175 @@
+{
+  "scope": "GO268 SOURCE ONLY",
+  "actualOwner": "cb6dfbf4-dd69-4c3e-b55f-d49f1820df2b",
+  "originalCommit": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+  "observedDefaultBranch": "main",
+  "observedDefaultCommit": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+  "defaultObservation": "Fresh read-only upstream gh GraphQL query, roots\\root-001; a point observation pinned thereafter to its immutable SHA.",
+  "reservedNavigationCommit": "24875ef5dabb55567870b39f6eb0002170435e2f",
+  "reservedCheckoutUsedAsDefault": false,
+  "canonicalOuterStatuses": {
+    "F234": "pending",
+    "F235": "pending"
+  },
+  "acceptanceAuthority": "Parent only; these are source recommendations, not campaign acceptance, retirement, finalization or ledger changes.",
+  "boundedSourceAcceptance": {
+    "targetAndContainingProjectCapturedWhole": true,
+    "roleCount": 2,
+    "wholeLogicalFilesPerRole": 15,
+    "wholeRawBlobBindings": 30,
+    "directGitGhRoots": 9,
+    "directGitGhRootLimit": 32,
+    "sourceBodyBudgetClosed": true,
+    "fileCountIncludesCommonGuidance": true,
+    "wholeFilesIdenticalBetweenRoles": 14,
+    "onlyDifferentWholeFile": ".github/copilot-instructions.md",
+    "fileBodiesNotNormalized": true,
+    "allFileMembershipFromRawCatFileBatch": true,
+    "nativeProductBehaviorAccepted": false,
+    "performanceAccepted": false,
+    "completeFactoryAndPasskeyProducerReachabilityAccepted": false
+  },
+  "findings": [
+    {
+      "id": "F234",
+      "sourceDecision": "source-only-no-material-candidate",
+      "decisionBoundary": "Bounded source review, not measured no-gain and not a false-positive or duplicate disposition.",
+      "distinctTarget": "InMemoryStore<TUser,TRole>.GetUsersInRoleAsync",
+      "source": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "lines": [58, 69],
+      "targetSha256BothRoles": "F052BBBB26E5F4A8ABD0C3DD89A5C48D9E18317D46E4367521B4DAD5121A242A",
+      "pattern": "The outer Users query evaluates a sequential per-user role-list membership search. The nested search is real, but each user's Roles is a different collection, not one invariant lookup set repeatedly searched inside this single call.",
+      "positiveSourceOwner": {
+        "project": "src/Identity/test/InMemory.Test/Microsoft.AspNetCore.Identity.InMemory.Test.csproj",
+        "testClass": "InMemoryStoreTest : IdentitySpecificationTestBase<PocoUser,PocoRole>",
+        "contextFactory": "InMemoryStoreTest.CreateTestContext constructs a fresh InMemoryStore; AddUserStore/AddRoleStore register the passed same context as singleton user/role stores.",
+        "declaredCaller": "IdentitySpecificationTestBase.CanGetUsersInRole, lines566-597, calls UserManager.GetUsersInRoleAsync; UserManager lines2310-2316 casts its actual Store to IUserRoleStore and forwards once.",
+        "factoryBoundary": "Inherited UserManagerSpecificationTestBase.CreateManager implementation was not opened within15 files. Source owner, registration and caller are identified, but complete factory dispatch and native execution were not verified."
+      },
+      "sourceDeclaredOrdinaryFixture": {
+        "test": "CanGetUsersInRole",
+        "usersCreated": 6,
+        "rolesCreated": 4,
+        "usersReceivingRoles": 3,
+        "rolesPerMemberUser": 4,
+        "rolesPerOtherUser": 0,
+        "presentRoleQueries": 4,
+        "absentRoleQueries": 1,
+        "expectedUsersPerPresentRole": 3,
+        "materialEffectObserved": false,
+        "qualification": "Counts come from the existing producer and call loop, not an invented workload or executed observation."
+      },
+      "producerAndLifetime": [
+        "PocoUser.Roles is initially a mutable List through ICollection; PocoRole has mutable virtual string Id/Name/NormalizedName.",
+        "UserManager.AddToRolesCoreAsync iterates roles.Distinct(), normalizes each name, checks current membership and calls the same store's AddToRoleAsync. The store appends a PocoUserRole referencing actual user/role IDs.",
+        "InMemoryUserStore.CreateAsync/UpdateAsync assign user objects to an instance dictionary; Users is that dictionary's Values.AsQueryable(). Store and user collections are not static.",
+        "The inherited test explicitly requests one fresh context. FunctionalTest independently demonstrates one store per created host registered as singleton, not a process-global user population. Neither lifetime was executed."
+      ],
+      "semanticsToPreserve": [
+        "Store roleName null/empty validation occurs before scanning roles. Role selection invokes NormalizedName.Equals and SingleOrDefault: multiple matching names throw, and an evaluated null NormalizedName can throw. Unknown role returns a new empty user list without scanning users.",
+        "Membership compares string RoleId to role.Id by existing string value equality, case-sensitively; do not substitute the role-name comparer. Manager NormalizeName delegates to its configured KeyNormalizer, or returns the name unchanged.",
+        "Any short-circuits each user's role sequence. Duplicate membership entries do not duplicate that outer user result. Do not add a Distinct on the outer dictionary values or change user-reference identity.",
+        "ToList preserves existing outer enumeration order and eagerly materializes the matching user references before returning a completed Task. Do not sort, defer the query, or change synchronous exception timing.",
+        "The store currently ignores its CancellationToken; the ordinary UserManager property defaults to CancellationToken.None and is virtual. Do not introduce cancellation behavior or alter exception/async semantics."
+      ],
+      "materialityAssessment": "The concrete reviewed lookup fixture is six users, four roles and four populated-role lookups plus one miss. No material cost or larger naturally reached lookup fixture was established. Building a new set for each user's one predicate evaluation still traverses that collection and adds construction; a persistent index would require separately justified mutation/lifetime handling and is outside this scope. No candidate is justified by these bounded inputs.",
+      "remainingGaps": [
+        "Inherited CreateManager plumbing and evaluated native test/project/runtime selection.",
+        "Other discovered owners such as ControllerTest, and any larger or more frequent naturally reached workload.",
+        "No timings, allocations, test pass, benchmark ownership closure or repository-wide absence proof."
+      ]
+    },
+    {
+      "id": "F235",
+      "sourceDecision": "source-only-no-material-candidate",
+      "decisionBoundary": "Gap-limited bounded source review, not measured no-gain, not an unreachable-code proof, and not a false-positive or duplicate disposition.",
+      "distinctTarget": "InMemoryStore<TUser,TRole>.FindByPasskeyIdAsync",
+      "source": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "lines": [184, 187],
+      "targetSha256BothRoles": "F052BBBB26E5F4A8ABD0C3DD89A5C48D9E18317D46E4367521B4DAD5121A242A",
+      "canonicalMetadataCorrectionToTaskShorthand": "F235 is passkey credential byte-sequence membership, not another role membership query. The canonical nested finding metadata and whole target agree.",
+      "pattern": "Users.FirstOrDefault evaluates user.Passkeys.Any with structural CredentialId.SequenceEqual for candidate users. This is a separate early-exit nested search over users, their passkeys and credential bytes.",
+      "positiveSourceOwnerAndCaller": {
+        "projectAndStore": "Same positive InMemory.Test project and InMemoryStoreTest context/registration evidence as F234, not a duplicate decision.",
+        "actualForwardingMethod": "UserManager.FindByPasskeyIdAsync lines2692-2698 checks disposed/store support/null ID and forwards to the configured IUserPasskeyStore using the manager token.",
+        "producer": "InMemoryStore.AddOrUpdatePasskeyAsync converts a new passkey into PocoUserPasskey, appends it to the real user's Passkeys list, or updates selected mutable fields of the first matching credential. UserManager.AddOrUpdatePasskeyCoreAsync calls that store then UpdateUserAsync.",
+        "lookupReachabilityBoundary": "The reviewed specification passkey tests use GetPasskeyAsync/GetPasskeysAsync/RemovePasskeyAsync, not the global FindByPasskeyIdAsync. The reviewed hosted passkey-count scenario also does not exercise that target. The filename-only discovery identifies Core/src/PasskeyHandler.cs, but its body and a normal complete caller path were not opened within15 files. No claim that normal global lookup is absent."
+      },
+      "sourceDeclaredOrdinaryProducers": [
+        {
+          "tests": ["CanAddAndRetrievePasskey", "CanRemovePasskey", "UpdatingPasskeyChangesOnlyMutableFields"],
+          "usersCreatedPerTest": 1,
+          "distinctCredentialsCreatedPerTest": 1,
+          "credentialProducer": "Guid.NewGuid().ToByteArray()",
+          "credentialBytes": 16,
+          "targetGlobalLookupHitEstablished": false
+        },
+        {
+          "test": "CanAddMultiplePasskeys",
+          "usersCreated": 1,
+          "distinctCredentialsCreated": 2,
+          "credentialProducer": "Guid.NewGuid().ToByteArray() for each",
+          "credentialBytesEach": 16,
+          "targetGlobalLookupHitEstablished": false
+        },
+        {
+          "test": "FunctionalTest.ChangingPasswordDoesNotRemoveExistingPasskeys",
+          "declaredTheoryRows": [true, false],
+          "usersCreatedByCreateMe": 1,
+          "passkeysAddedByAddPasskeyRequest": 1,
+          "credentialProducer": "Guid.NewGuid().ToByteArray()",
+          "credentialBytes": 16,
+          "observedBoundary": "Source only: add and per-user count before/after password change; no global credential lookup evidence and neither theory row ran."
+        }
+      ],
+      "semanticsToPreserve": [
+        "Credential equality is ordered byte content via SequenceEqual, not byte[] reference equality or an unverified string encoding. Distinct arrays with equal bytes match, and zero-length arrays are content-equal.",
+        "FirstOrDefault selects the first matching user in existing Users enumeration order; Any short-circuits within each user. No captured store code enforces cross-user credential uniqueness; do not change which user wins when equal credentials exist across users.",
+        "Duplicate passkeys within one user do not duplicate the returned user. AddOrUpdate searches that user's first matching entry; direct public mutable collection/credential properties permit states beyond manager-mediated writes.",
+        "ToPocoUserPasskey retains the input CredentialId array reference. PocoUser.Passkeys is a mutable ICollection and PocoUserPasskey.CredentialId is a public mutable virtual byte[] property. No immutability or index invalidation invariant was established.",
+        "A miss returns null inside an already completed Task after eager synchronous traversal; preserve existing order, reference identity, short-circuiting and synchronous exception timing. The direct store has no credential null guard, while UserManager guards before delegation.",
+        "The store ignores its CancellationToken. Do not add cancellation or change async, null/error or disposal behavior during any future optimization."
+      ],
+      "materialityAssessment": "The nested pattern is real, but the captured ordinary producers create only one user with one or two16-byte credentials and do not themselves reach this global lookup. Their sizes must not be relabeled as a verified global-lookup workload. Normal global-lookup frequency/cardinality and any material cost remain unqualified. Therefore no material candidate can responsibly be selected from this bounded evidence.",
+      "remainingGaps": [
+        "The actual complete ordinary global-lookup caller and its credential/user producer, including Core/src/PasskeyHandler.cs.",
+        "Inherited CreateManager plumbing, other native/test owners, actual native execution and selected runtime identities.",
+        "Global lookup miss/late-hit/duplicate content behavior has not been tested or measured; no artificial larger users/passkeys, repetition or isolated membership loop was created."
+      ]
+    }
+  ],
+  "commonHistory": {
+    "method": "Each immutable role: git log --follow -n5 --format=fuller --stat -- target path, retained roots006/008.",
+    "mostRecentTargetCommit": "07ad803981a7cf5af03aa96d58f4509da309fb2d",
+    "mostRecentTargetCommitDate": "2026-02-11",
+    "mostRecentTargetCommitTitle": "Infer passkey display name from AAGUID (#65343)",
+    "precedingPasskeyNamedCommit": "9b3858c8ceed11739203c1216d65bddf51bee22a",
+    "precedingPasskeyNamedCommitDate": "2025-10-13",
+    "precedingPasskeyNamedCommitTitle": "Allow `UserStore` to update passkey name (#63981)",
+    "limits": "History metadata, not historical whole-blob or patch semantics. No assertion about which exact method a commit introduced. Current two-role target identity is established independently from exact raw blobs."
+  },
+  "guidanceAndDiscovery": {
+    "wholeGuidance": [
+      ".github/copilot-instructions.md",
+      ".github/instructions/cross-cutting-guidance.instructions.md",
+      "docs/CrossCuttingGuidance.md"
+    ],
+    "instructionInventory": "Per-role immutable ls-tree inventory includes root/.github/src ancestor AGENTS selectors, all .github/instructions and the Identity subtree. No AGENTS files appeared in that selected inventory and no Identity-specific instruction file appeared. This is tree evidence, not LSP-empty evidence.",
+    "filenameDiscovery": "git grep -l performed filename-only discovery within src/Identity. It mechanically searches that wider subtree, but no unselected file body or snippet was retained or used as behavioral evidence. Named paths alone do not prove call relationships or benchmark absence.",
+    "unrelatedCodeIntelligenceNotUsed": "Configured Bluebird scope is unrelated; no local LSP result from the reserved navigation checkout was substituted for either immutable source role.",
+    "noFullSdkOrRuntimeClaim": "Containing project declares $(DefaultNetCoreTargetFramework); property evaluation, selected SDK/CLR/testhost/reference/runtime closure and native project ownership were not executed or established. Canonical net12.0 metadata is not selection evidence."
+  },
+  "prohibitedWorkNotPerformed": [
+    "SDK activation, dotnet, restore, build, tests, product-native code or compiler execution",
+    "runtime/host/server/browser/scenario execution or candidate authoring",
+    "timings, warmup, allocation/performance counters or profiling",
+    "source checkout/worktree or source/test/product edits",
+    "policy/lease/campaign/ledger/shared-runtime writes, cleanup, remote actions, subagents or publication",
+    "public API/default/cache/assertion/message/package/global.json/NuGet.config/IVT/UnsafeAccessor changes"
+  ],
+  "failurePreservation": [
+    "Initial default-size policy view rejected32KB; full permitted view then used. No Git/gh source root.",
+    "source-phase-001.py launch failed with actual outer exit9009 because python resolves to Windows Store alias. Interpreter did not start, no Git/gh root launched. Helper and receipt retained unchanged; fresh PowerShell phases used, no installation or replay."
+  ],
+  "nextAuthority": "Source input budget is exhausted. BOUNDED-NEXT-SOURCE-PROPOSAL.json is finite and unexecuted; only a separate parent-approved scope could open its additional files. Parent alone decides acceptance/retirement/finalization; both canonical statuses remain pending."
+}

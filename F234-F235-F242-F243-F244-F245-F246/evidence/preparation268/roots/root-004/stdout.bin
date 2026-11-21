@@ -1,0 +1,2431 @@
+915797144c4bb28a0556b9755991746eb9fd4838 blob 9863
+If at any time, the user directs you explicitly to override any of these instructions, the user's directive overrides said instructions.
+
+## General
+
+* Make only high confidence suggestions when reviewing code changes.
+* Always use the latest version C#, currently C# 13 features.
+* Never change global.json unless explicitly asked to.
+* Never change package.json or package-lock.json files unless explicitly asked to.
+* Never change NuGet.config files unless explicitly asked to.
+
+## Task Scope and Completion
+
+* Before implementing a reported issue, verify the behavior on the current default branch, inspect relevant history and documentation, and establish the smallest faithful reproduction. If the user asks only to investigate or characterize, do not change shipping code or create or update a pull request until implementation is explicitly requested.
+* Define the acceptance criteria before implementation. Do not claim completion or create or update a pull request until the requested acceptance criteria are green; identify any intentionally excluded cases or unverified boundaries.
+
+## Minimal diffs
+
+* Preserve untouched code exactly as written. Do not make behavior-neutral formatting, reflow, renaming, inlining, extraction, expression, or control-flow changes while implementing a functional change.
+* When an existing statement must change, preserve its explanatory locals and surrounding branch structure unless the requested behavior requires a different shape.
+* Behavior-neutral clarification is acceptable only at the exact changed seam. For example, when adding a Boolean argument to an invocation, prefer a named argument. Do not update otherwise-untouched invocations merely to add argument names.
+* Keep optional cleanup in a separate change rather than mixing it into the functional diff.
+* Before finalizing, inspect changed existing lines specifically for edits that neither alter behavior nor directly support the requested change.
+
+## Public API Changes
+
+* Treat any new or changed `public` or `protected` type, member, signature, default, or convention as a potential public API change.
+* When opening an implementation pull request that adds or changes public API, use the [`api-review` skill](./skills/api-review/SKILL.md) to create a separate API proposal issue. Link the proposal to the originating issue and implementation pull request.
+* Implementation, pull request readiness, and merge may proceed before the linked issue is `api-approved`. Before the API can be included in an RTM release, verify that the API proposal issue has the `api-approved` label and that the approval covers the final implemented API shape.
+* If the `api-approved` label is missing when preparing an RTM release, explain the required [API review process](../docs/APIReviewProcess.md): an issue owner or champion drives an `api-suggestion` with the proposal in ref-assembly form, then applies `api-ready-for-review` and notifies `@dotnet/aspnet-api-review` when it is mature.
+* `PublicAPI.Unshipped.txt` tracks compatibility but does not grant API approval. Any implementation change to the proposed or previously approved API shape must return to API review before the API is included in an RTM release.
+
+## Framework assembly boundaries
+
+* In shipping framework code, do not add `InternalsVisibleTo` or use `[UnsafeAccessor]` to access non-public members in another framework assembly. Existing uses of these mechanisms are not precedent for new uses.
+* Redesign the assembly boundary instead. If that requires a public API, follow the repository API-review and baseline process.
+
+## Formatting
+
+* Apply code-formatting style defined in `.editorconfig`.
+* Prefer file-scoped namespace declarations and single-line using directives.
+* Insert a newline before the opening curly brace of any code block (e.g., after `if`, `for`, `while`, `foreach`, `using`, `try`, etc.).
+* Ensure that the final return statement of a method is on its own line.
+* Use pattern matching and switch expressions wherever possible.
+* Use `nameof` instead of string literals when referring to member names.
+* Ensure that XML doc comments are created for any public APIs. When applicable, include `<example>` and `<code>` documentation in the comments.
+
+### Nullable Reference Types
+
+* Declare variables non-nullable, and check for `null` at entry points.
+* Always use `is null` or `is not null` instead of `== null` or `!= null`.
+* Trust the C# null annotations and don't add null checks when the type system says a value cannot be null.
+
+### Testing
+
+* Check for an `AGENTS.md` file in the relevant product area and follow its more specific guidance in addition to these repository-wide conventions.
+* Place unit tests under the product's `test/` directory. Name unit-test projects `<ProductAssembly>.Tests`; preserve an area's established `.Test` suffix.
+* Keep established test categories separate. In areas with a `.FunctionalTests` project, use it for hosted application or server boundaries. For complete browser or external workflows, preserve the area's established `.E2ETests` or `.E2E.Tests` suffix.
+* Treat test project names as build-significant. They control test-project detection and often match exact `InternalsVisibleTo` entries; do not invent alternative names or override test-project detection.
+* Put supporting applications and libraries under the area's `testassets/` directory unless the area has an established alternative. Do not give a support project a test-project suffix unless it contains discovered tests.
+* Name each test file after its primary test class. For type-focused tests, map `Foo` to `FooTest` or `FooTests`, following nearby convention. Name scenario tests after the behavior exercised, and extend an existing matching test class when one exists.
+* Use public test classes and descriptive PascalCase test methods. Follow the containing project's test framework, method-name style, namespace, fixtures, and parallelization configuration.
+* Keep helpers used by one test class private or nested. Put reused helpers in the project's established `Helpers`, `Infrastructure`, or `TestObjects` structure.
+* We use xUnit SDK v3 for tests.
+* Do not emit "Act", "Arrange" or "Assert" comments.
+* Use Moq for mocking in tests.
+* Copy existing style in nearby files for test method names and capitalization.
+
+## Running tests
+
+* Follow [BuildFromSource](../docs/BuildFromSource.md#guide-to-the-build-script) and the product area's `AGENTS.md` when choosing how to build and test. Area build scripts are `build.cmd` on Windows and `build.sh` on Linux/macOS; use the platform-appropriate entry point.
+* Before claiming a bug fix is verified, confirm that the relevant test or check fails for the expected reason without the fix and passes with it. Reading the source or seeing a test pass on its own is not proof that the bug is fixed.
+* For a `[Theory]` or other parameterized test, confirm that each row fails for the expected reason without the fix and passes with it; a red test proves only that at least one row failed. `dotnet test --filter` cannot select an individual `InlineData` row by parameter value, so inspect every case in the test output instead of relying on the `Failed!` or `Passed!` summary. A row that passes because its targeted scenario or code path never ran, such as from unmet setup, a missing prerequisite, or conditional execution, does not verify the fix.
+* For behavioral review findings and bug-fix verification, use the smallest faithful test path. Include the component, service, runtime, or browser mechanism that owns or produces each disputed precondition, and observe the claimed material effect at the appropriate boundary, such as UI, protocol, persisted state, resource use, timing or performance, logging, or another contract-relevant behavior. Any test establishes only the downstream response, not producer reachability, if it directly injects callbacks or events or otherwise bypasses the owning producer. An isolated test can provide faithful evidence when it exercises the real producer.
+* For behavioral findings and bug-fix verification, E2E validation is unnecessary when the disputed preconditions and material effects are fully established at a lower faithful boundary. This does not waive E2E coverage required for shipped implementation work.
+* If faithful validation is impractical, state the observed boundary and limitation, and do not describe the behavioral claim as verified.
+* If that red/green verification isn't practical, explain why, state what you did verify, and don't describe the fix as verified.
+* When a requested automated test cannot reach its assertion, name that test in the final response, state the prerequisite that blocked it, and identify the faithful validation boundary used instead.
+
+## .NET Environment
+
+* Before running any `dotnet` commands in this repository, always activate the locally installed .NET environment first by running the appropriate activation script from the repository root:
+  * On Windows: `. ./activate.ps1` (from repository root)
+  * On Linux/Mac: `source activate.sh` (from repository root)
+* If not in the repository root, navigate there first or use the full path to the activation script.
+* This ensures that the correct version of .NET SDK is used for the repository.
+
+## CI investigation
+
+* For Azure Pipelines and Helix failures on a pull request, follow [CI investigation](../docs/CIInvestigation.md).
+
+## ASP.NET Core Components Area
+* When working on issues under the src/Components area, follow the instructions in [./instructions/components.instructions.md](./instructions/components.instructions.md).
+
+## Security Concerns Are Out of Scope
+
+Do NOT assess, discuss, or make recommendations about potential security implications of an issue or a PR. When reviewing a PR, never make any claims about a security vulnerability.
+
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+e5522d97b7fe906dca749215c6f01019bd5fb55b blob 9149
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.Test;
+
+namespace Microsoft.AspNetCore.Identity.InMemory;
+
+public class InMemoryStore<TUser, TRole> :
+    InMemoryUserStore<TUser>,
+    IUserRoleStore<TUser>,
+    IUserPasskeyStore<TUser>,
+    IQueryableRoleStore<TRole>,
+    IRoleClaimStore<TRole>
+    where TRole : PocoRole
+    where TUser : PocoUser
+{
+    // RoleId == roleName for InMemory
+    public Task AddToRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleEntity = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        if (roleEntity != null)
+        {
+            user.Roles.Add(new PocoUserRole { RoleId = roleEntity.Id, UserId = user.Id });
+        }
+        return Task.FromResult(0);
+    }
+
+    // RoleId == roleName for InMemory
+    public Task RemoveFromRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        var roleEntity = user.Roles.SingleOrDefault(ur => ur.RoleId == roleObject.Id);
+        if (roleEntity != null)
+        {
+            user.Roles.Remove(roleEntity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<string>> GetRolesAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        IList<string> roles = new List<string>();
+        foreach (var r in user.Roles.Select(ur => ur.RoleId))
+        {
+            roles.Add(_roles[r].Name);
+        }
+        return Task.FromResult(roles);
+    }
+
+    public Task<bool> IsInRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        bool result = roleObject != null && user.Roles.Any(ur => ur.RoleId == roleObject.Id);
+        return Task.FromResult(result);
+    }
+
+    // RoleId == rolename for inmemory store tests
+    public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        ArgumentException.ThrowIfNullOrEmpty(roleName);
+
+        var role = _roles.Values.Where(x => x.NormalizedName.Equals(roleName)).SingleOrDefault();
+        if (role == null)
+        {
+            return Task.FromResult<IList<TUser>>(new List<TUser>());
+        }
+        return Task.FromResult<IList<TUser>>(Users.Where(u => (u.Roles.Where(x => x.RoleId == role.Id).Any())).Select(x => x).ToList());
+    }
+
+    private readonly Dictionary<string, TRole> _roles = new Dictionary<string, TRole>();
+
+    public Task<IdentityResult> CreateAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _roles[role.Id] = role;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<IdentityResult> DeleteAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (role == null || !_roles.ContainsKey(role.Id))
+        {
+            throw new InvalidOperationException("Unknown role");
+        }
+        _roles.Remove(role.Id);
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<string> GetRoleIdAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.Id);
+    }
+
+    public Task<string> GetRoleNameAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.Name);
+    }
+
+    public Task SetRoleNameAsync(TRole role, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.Name = roleName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IdentityResult> UpdateAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _roles[role.Id] = role;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    Task<TRole> IRoleStore<TRole>.FindByIdAsync(string roleId, CancellationToken cancellationToken)
+    {
+        if (_roles.ContainsKey(roleId))
+        {
+            return Task.FromResult(_roles[roleId]);
+        }
+        return Task.FromResult<TRole>(null);
+    }
+
+    Task<TRole> IRoleStore<TRole>.FindByNameAsync(string roleName, CancellationToken cancellationToken)
+    {
+        return
+            Task.FromResult(
+                Roles.SingleOrDefault(r => String.Equals(r.NormalizedName, roleName, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    public Task<IList<Claim>> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var claims = role.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+        return Task.FromResult<IList<Claim>>(claims);
+    }
+
+    public Task AddClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.Claims.Add(new PocoRoleClaim<string> { ClaimType = claim.Type, ClaimValue = claim.Value, RoleId = role.Id });
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var entity =
+            role.Claims.FirstOrDefault(
+                ur => ur.RoleId == role.Id && ur.ClaimType == claim.Type && ur.ClaimValue == claim.Value);
+        if (entity != null)
+        {
+            role.Claims.Remove(entity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetNormalizedRoleNameAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.NormalizedName);
+    }
+
+    public Task SetNormalizedRoleNameAsync(TRole role, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.NormalizedName = normalizedName;
+        return Task.FromResult(0);
+    }
+
+    public Task AddOrUpdatePasskeyAsync(TUser user, UserPasskeyInfo passkey, CancellationToken cancellationToken)
+    {
+        var passkeyEntity = user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(passkey.CredentialId));
+        if (passkeyEntity is null)
+        {
+            user.Passkeys.Add(ToPocoUserPasskey(user, passkey));
+        }
+        else
+        {
+            passkeyEntity.Name = passkey.Name;
+            passkeyEntity.SignCount = passkey.SignCount;
+            passkeyEntity.IsBackedUp = passkey.IsBackedUp;
+            passkeyEntity.IsUserVerified = passkey.IsUserVerified;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<IList<UserPasskeyInfo>> GetPasskeysAsync(TUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<IList<UserPasskeyInfo>>(user.Passkeys.Select(ToUserPasskeyInfo).ToList()!);
+    }
+
+    public Task<TUser> FindByPasskeyIdAsync(byte[] credentialId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Users.FirstOrDefault(u => u.Passkeys.Any(p => p.CredentialId.SequenceEqual(credentialId))));
+    }
+
+    public Task<UserPasskeyInfo> FindPasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(ToUserPasskeyInfo(user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(credentialId))));
+    }
+
+    public Task RemovePasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
+    {
+        var passkey = user.Passkeys.SingleOrDefault(p => p.CredentialId.SequenceEqual(credentialId));
+        if (passkey is not null)
+        {
+            user.Passkeys.Remove(passkey);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static UserPasskeyInfo ToUserPasskeyInfo(PocoUserPasskey<string> p)
+        => p is null ? null : new(
+            p.CredentialId,
+            p.PublicKey,
+            p.CreatedAt,
+            p.SignCount,
+            p.Transports,
+            p.IsUserVerified,
+            p.IsBackupEligible,
+            p.IsBackedUp,
+            p.AttestationObject,
+            p.ClientDataJson)
+        {
+            Name = p.Name,
+            Aaguid = p.Aaguid
+        };
+
+    private static PocoUserPasskey<string> ToPocoUserPasskey(TUser user, UserPasskeyInfo p)
+        => new()
+        {
+            UserId = user.Id,
+            CredentialId = p.CredentialId,
+            PublicKey = p.PublicKey,
+            Name = p.Name,
+            CreatedAt = p.CreatedAt,
+            Transports = p.Transports,
+            SignCount = p.SignCount,
+            IsUserVerified = p.IsUserVerified,
+            IsBackupEligible = p.IsBackupEligible,
+            IsBackedUp = p.IsBackedUp,
+            AttestationObject = p.AttestationObject,
+            ClientDataJson = p.ClientDataJson,
+            Aaguid = p.Aaguid,
+        };
+
+    public IQueryable<TRole> Roles
+    {
+        get { return _roles.Values.AsQueryable(); }
+    }
+}
+
+a553d4a791a121429616419139d71abe246c8d72 blob 2157
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(IdentityTestSharedSourceRoot)**\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\TestHost\src\Microsoft.AspNetCore.TestHost.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Abstractions\src\Microsoft.AspNetCore.Authentication.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Core\src\Microsoft.AspNetCore.Authentication.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Core\src\Microsoft.AspNetCore.Identity.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Specification.Tests\src\Microsoft.AspNetCore.Identity.Specification.Tests.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Cookies\src\Microsoft.AspNetCore.Authentication.Cookies.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Core\src\Microsoft.AspNetCore.Authentication.csproj" />
+  </ItemGroup>
+
+</Project>
+
+d0f6059e2a5e44f85f18ca85615dbc7372eeffa4 blob 2613
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Globalization;
+using System.Linq.Expressions;
+using Microsoft.AspNetCore.Identity.Test;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Microsoft.AspNetCore.Identity.InMemory.Test;
+
+public class InMemoryStoreTest : IdentitySpecificationTestBase<PocoUser, PocoRole>
+{
+    protected override object CreateTestContext()
+    {
+        return new InMemoryStore<PocoUser, PocoRole>();
+    }
+
+    protected override void AddUserStore(IServiceCollection services, object context = null)
+    {
+        services.AddSingleton<IUserStore<PocoUser>>((InMemoryStore<PocoUser, PocoRole>)context);
+    }
+
+    protected override void AddRoleStore(IServiceCollection services, object context = null)
+    {
+        services.AddSingleton<IRoleStore<PocoRole>>((InMemoryStore<PocoUser, PocoRole>)context);
+    }
+
+    protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
+    {
+        user.PasswordHash = hashedPassword;
+    }
+
+    protected override PocoUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
+        bool lockoutEnabled = false, DateTimeOffset? lockoutEnd = default(DateTimeOffset?), bool useNamePrefixAsUserName = false)
+    {
+        return new PocoUser
+        {
+            UserName = useNamePrefixAsUserName ? namePrefix : string.Format(CultureInfo.InvariantCulture, "{0}{1}", namePrefix, Guid.NewGuid()),
+            Email = email,
+            PhoneNumber = phoneNumber,
+            LockoutEnabled = lockoutEnabled,
+            LockoutEnd = lockoutEnd
+        };
+    }
+
+    protected override PocoRole CreateTestRole(string roleNamePrefix = "", bool useRoleNamePrefixAsRoleName = false)
+    {
+        var roleName = useRoleNamePrefixAsRoleName ? roleNamePrefix : string.Format(CultureInfo.InvariantCulture, "{0}{1}", roleNamePrefix, Guid.NewGuid());
+        return new PocoRole(roleName);
+    }
+
+    protected override Expression<Func<PocoUser, bool>> UserNameEqualsPredicate(string userName) => u => u.UserName == userName;
+
+    protected override Expression<Func<PocoRole, bool>> RoleNameEqualsPredicate(string roleName) => r => r.Name == roleName;
+
+    protected override Expression<Func<PocoUser, bool>> UserNameStartsWithPredicate(string userName) => u => u.UserName.StartsWith(userName, StringComparison.Ordinal);
+
+    protected override Expression<Func<PocoRole, bool>> RoleNameStartsWithPredicate(string roleName) => r => r.Name.StartsWith(roleName, StringComparison.Ordinal);
+}
+
+807e82e3f9935f7405928ed580c24db6537261d2 blob 16228
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.Test;
+
+namespace Microsoft.AspNetCore.Identity.InMemory;
+
+public class InMemoryUserStore<TUser> :
+    IUserLoginStore<TUser>,
+    IUserClaimStore<TUser>,
+    IUserPasswordStore<TUser>,
+    IUserSecurityStampStore<TUser>,
+    IUserEmailStore<TUser>,
+    IUserLockoutStore<TUser>,
+    IUserPhoneNumberStore<TUser>,
+    IQueryableUserStore<TUser>,
+    IUserTwoFactorStore<TUser>,
+    IUserAuthenticationTokenStore<TUser>,
+    IUserAuthenticatorKeyStore<TUser>,
+    IUserTwoFactorRecoveryCodeStore<TUser>
+    where TUser : PocoUser
+{
+    private readonly Dictionary<string, TUser> _logins = new Dictionary<string, TUser>();
+
+    private readonly Dictionary<string, TUser> _users = new Dictionary<string, TUser>();
+
+    public IQueryable<TUser> Users
+    {
+        get { return _users.Values.AsQueryable(); }
+    }
+
+    public Task<IList<Claim>> GetClaimsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var claims = user.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+        return Task.FromResult<IList<Claim>>(claims);
+    }
+
+    public Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        foreach (var claim in claims)
+        {
+            user.Claims.Add(new PocoUserClaim { ClaimType = claim.Type, ClaimValue = claim.Value, UserId = user.Id });
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task ReplaceClaimAsync(TUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var matchedClaims = user.Claims.Where(uc => uc.ClaimValue == claim.Value && uc.ClaimType == claim.Type).ToList();
+        foreach (var matchedClaim in matchedClaims)
+        {
+            matchedClaim.ClaimValue = newClaim.Value;
+            matchedClaim.ClaimType = newClaim.Type;
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        foreach (var claim in claims)
+        {
+            var entity =
+                user.Claims.FirstOrDefault(
+                    uc => uc.UserId == user.Id && uc.ClaimType == claim.Type && uc.ClaimValue == claim.Value);
+            if (entity != null)
+            {
+                user.Claims.Remove(entity);
+            }
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task SetEmailAsync(TUser user, string email, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.Email = email;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetEmailAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.Email);
+    }
+
+    public Task<string> GetNormalizedEmailAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.NormalizedEmail);
+    }
+
+    public Task SetNormalizedEmailAsync(TUser user, string normalizedEmail, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.NormalizedEmail = normalizedEmail;
+        return Task.FromResult(0);
+    }
+
+    public Task<bool> GetEmailConfirmedAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.EmailConfirmed);
+    }
+
+    public Task SetEmailConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.EmailConfirmed = confirmed;
+        return Task.FromResult(0);
+    }
+
+    public Task<TUser> FindByEmailAsync(string email, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return
+            Task.FromResult(
+                Users.FirstOrDefault(u => u.NormalizedEmail == email));
+    }
+
+    public Task<DateTimeOffset?> GetLockoutEndDateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.LockoutEnd);
+    }
+
+    public Task SetLockoutEndDateAsync(TUser user, DateTimeOffset? lockoutEnd, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.LockoutEnd = lockoutEnd;
+        return Task.FromResult(0);
+    }
+
+    public Task<int> IncrementAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.AccessFailedCount++;
+        return Task.FromResult(user.AccessFailedCount);
+    }
+
+    public Task ResetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.AccessFailedCount = 0;
+        return Task.FromResult(0);
+    }
+
+    public Task<int> GetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.AccessFailedCount);
+    }
+
+    public Task<bool> GetLockoutEnabledAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.LockoutEnabled);
+    }
+
+    public Task SetLockoutEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.LockoutEnabled = enabled;
+        return Task.FromResult(0);
+    }
+
+    private string GetLoginKey(string loginProvider, string providerKey)
+    {
+        return loginProvider + "|" + providerKey;
+    }
+
+    public virtual Task AddLoginAsync(TUser user, UserLoginInfo login,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.Logins.Add(new PocoUserLogin
+        {
+            UserId = user.Id,
+            ProviderKey = login.ProviderKey,
+            LoginProvider = login.LoginProvider,
+            ProviderDisplayName = login.ProviderDisplayName
+        });
+        _logins[GetLoginKey(login.LoginProvider, login.ProviderKey)] = user;
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveLoginAsync(TUser user, string loginProvider, string providerKey,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var loginEntity =
+            user.Logins.SingleOrDefault(
+                l =>
+                    l.ProviderKey == providerKey && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (loginEntity != null)
+        {
+            user.Logins.Remove(loginEntity);
+        }
+        _logins[GetLoginKey(loginProvider, providerKey)] = null;
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        IList<UserLoginInfo> result = user.Logins
+            .Select(l => new UserLoginInfo(l.LoginProvider, l.ProviderKey, l.ProviderDisplayName)).ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<TUser> FindByLoginAsync(string loginProvider, string providerKey, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        string key = GetLoginKey(loginProvider, providerKey);
+        if (_logins.ContainsKey(key))
+        {
+            return Task.FromResult(_logins[key]);
+        }
+        return Task.FromResult<TUser>(null);
+    }
+
+    public Task<string> GetUserIdAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.Id);
+    }
+
+    public Task<string> GetUserNameAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.UserName);
+    }
+
+    public Task SetUserNameAsync(TUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.UserName = userName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IdentityResult> CreateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _users[user.Id] = user;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _users[user.Id] = user;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<TUser> FindByIdAsync(string userId, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (_users.ContainsKey(userId))
+        {
+            return Task.FromResult(_users[userId]);
+        }
+        return Task.FromResult<TUser>(null);
+    }
+
+    public void Dispose()
+    {
+    }
+
+    public Task<TUser> FindByNameAsync(string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return
+            Task.FromResult(
+                Users.FirstOrDefault(u => u.NormalizedUserName == userName));
+    }
+
+    public Task<IdentityResult> DeleteAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (user == null || !_users.ContainsKey(user.Id))
+        {
+            throw new InvalidOperationException("Unknown user");
+        }
+        _users.Remove(user.Id);
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task SetPasswordHashAsync(TUser user, string passwordHash, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PasswordHash = passwordHash;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetPasswordHashAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PasswordHash);
+    }
+
+    public Task<bool> HasPasswordAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PasswordHash != null);
+    }
+
+    public Task SetPhoneNumberAsync(TUser user, string phoneNumber, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PhoneNumber = phoneNumber;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetPhoneNumberAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PhoneNumber);
+    }
+
+    public Task<bool> GetPhoneNumberConfirmedAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PhoneNumberConfirmed);
+    }
+
+    public Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PhoneNumberConfirmed = confirmed;
+        return Task.FromResult(0);
+    }
+
+    public Task SetSecurityStampAsync(TUser user, string stamp, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.SecurityStamp = stamp;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetSecurityStampAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.SecurityStamp);
+    }
+
+    public Task SetTwoFactorEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.TwoFactorEnabled = enabled;
+        return Task.FromResult(0);
+    }
+
+    public Task<bool> GetTwoFactorEnabledAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.TwoFactorEnabled);
+    }
+
+    public Task<string> GetNormalizedUserNameAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.NormalizedUserName);
+    }
+
+    public Task SetNormalizedUserNameAsync(TUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.NormalizedUserName = userName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+
+        var query = from user in Users
+                    where user.Claims.Where(x => x.ClaimType == claim.Type && x.ClaimValue == claim.Value).FirstOrDefault() != null
+                    select user;
+
+        return Task.FromResult<IList<TUser>>(query.ToList());
+    }
+
+    public Task SetTokenAsync(TUser user, string loginProvider, string name, string value, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (tokenEntity != null)
+        {
+            tokenEntity.TokenValue = value;
+        }
+        else
+        {
+            user.Tokens.Add(new PocoUserToken
+            {
+                UserId = user.Id,
+                LoginProvider = loginProvider,
+                TokenName = name,
+                TokenValue = value
+            });
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (tokenEntity != null)
+        {
+            user.Tokens.Remove(tokenEntity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        return Task.FromResult(tokenEntity?.TokenValue);
+    }
+
+    private const string AuthenticatorStoreLoginProvider = "[AspNetAuthenticatorStore]";
+    private const string AuthenticatorKeyTokenName = "AuthenticatorKey";
+    private const string RecoveryCodeTokenName = "RecoveryCodes";
+
+    public Task SetAuthenticatorKeyAsync(TUser user, string key, CancellationToken cancellationToken)
+    {
+        return SetTokenAsync(user, AuthenticatorStoreLoginProvider, AuthenticatorKeyTokenName, key, cancellationToken);
+    }
+
+    public Task<string> GetAuthenticatorKeyAsync(TUser user, CancellationToken cancellationToken)
+    {
+        return GetTokenAsync(user, AuthenticatorStoreLoginProvider, AuthenticatorKeyTokenName, cancellationToken);
+    }
+
+    public Task ReplaceCodesAsync(TUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+    {
+        var mergedCodes = string.Join(";", recoveryCodes);
+        return SetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, mergedCodes, cancellationToken);
+    }
+
+    public async Task<bool> RedeemCodeAsync(TUser user, string code, CancellationToken cancellationToken)
+    {
+        var mergedCodes = await GetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+        var splitCodes = mergedCodes.Split(';');
+        if (splitCodes.Contains(code))
+        {
+            var updatedCodes = new List<string>(splitCodes.Where(s => s != code));
+            await ReplaceCodesAsync(user, updatedCodes, cancellationToken);
+            return true;
+        }
+        return false;
+    }
+
+    public async Task<int> CountCodesAsync(TUser user, CancellationToken cancellationToken)
+    {
+        var mergedCodes = await GetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+        if (mergedCodes.Length > 0)
+        {
+            return mergedCodes.Split(';').Length;
+        }
+        return 0;
+    }
+}
+
+b9a04eb52894418b11d00ed36b527c3a3e14588a blob 4211
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+/// <summary>
+/// Test user class
+/// </summary>
+public class PocoUser : PocoUser<string>
+{
+    /// <summary>
+    /// Ctor
+    /// </summary>
+    public PocoUser()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
+
+    /// <summary>
+    /// Ctor
+    /// </summary>
+    /// <param name="userName"></param>
+    public PocoUser(string userName) : this()
+    {
+        UserName = userName;
+    }
+}
+
+/// <summary>
+/// Test user
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+public class PocoUser<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    /// ctor
+    /// </summary>
+    public PocoUser() { }
+
+    /// <summary>
+    /// ctor
+    /// </summary>
+    /// <param name="userName"></param>
+    public PocoUser(string userName) : this()
+    {
+        UserName = userName;
+    }
+
+    /// <summary>
+    /// Id
+    /// </summary>
+    [PersonalData]
+    public virtual TKey Id { get; set; }
+
+    /// <summary>
+    /// Name
+    /// </summary>
+    [PersonalData]
+    public virtual string UserName { get; set; }
+
+    /// <summary>
+    /// normalized user name
+    /// </summary>
+    public virtual string NormalizedUserName { get; set; }
+
+    /// <summary>
+    ///     Email
+    /// </summary>
+    [PersonalData]
+    public virtual string Email { get; set; }
+
+    /// <summary>
+    /// normalized email
+    /// </summary>
+    public virtual string NormalizedEmail { get; set; }
+
+    /// <summary>
+    ///     True if the email is confirmed, default is false
+    /// </summary>
+    [PersonalData]
+    public virtual bool EmailConfirmed { get; set; }
+
+    /// <summary>
+    ///     The salted/hashed form of the user password
+    /// </summary>
+    public virtual string PasswordHash { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a users credentials change (password changed, login removed)
+    /// </summary>
+    public virtual string SecurityStamp { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a user is persisted to the store
+    /// </summary>
+    public virtual string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    ///     PhoneNumber for the user
+    /// </summary>
+    [PersonalData]
+    public virtual string PhoneNumber { get; set; }
+
+    /// <summary>
+    ///     True if the phone number is confirmed, default is false
+    /// </summary>
+    [PersonalData]
+    public virtual bool PhoneNumberConfirmed { get; set; }
+
+    /// <summary>
+    ///     Is two factor enabled for the user
+    /// </summary>
+    [PersonalData]
+    public virtual bool TwoFactorEnabled { get; set; }
+
+    /// <summary>
+    ///     DateTime in UTC when lockout ends, any time in the past is considered not locked out.
+    /// </summary>
+    public virtual DateTimeOffset? LockoutEnd { get; set; }
+
+    /// <summary>
+    ///     Is lockout enabled for this user
+    /// </summary>
+    public virtual bool LockoutEnabled { get; set; }
+
+    /// <summary>
+    ///     Used to record failures for the purposes of lockout
+    /// </summary>
+    public virtual int AccessFailedCount { get; set; }
+
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserRole<TKey>> Roles { get; private set; } = new List<PocoUserRole<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserClaim<TKey>> Claims { get; private set; } = new List<PocoUserClaim<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserLogin<TKey>> Logins { get; private set; } = new List<PocoUserLogin<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserToken<TKey>> Tokens { get; private set; } = new List<PocoUserToken<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserPasskey<TKey>> Passkeys { get; private set; } = new List<PocoUserPasskey<TKey>>();
+}
+
+b5d5c61b310b9698204d6bc37f794ca7ded9ff39 blob 1820
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+/// <summary>
+///     Represents a Role entity
+/// </summary>
+public class PocoRole : PocoRole<string>
+{
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    public PocoRole()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
+
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    /// <param name="roleName"></param>
+    public PocoRole(string roleName) : this()
+    {
+        Name = roleName;
+    }
+}
+
+/// <summary>
+///     Represents a Role entity
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+public class PocoRole<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    public PocoRole() { }
+
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    /// <param name="roleName"></param>
+    public PocoRole(string roleName) : this()
+    {
+        Name = roleName;
+    }
+
+    /// <summary>
+    ///     Role id
+    /// </summary>
+    public virtual TKey Id { get; set; }
+
+    /// <summary>
+    /// Navigation property for claims in the role
+    /// </summary>
+    public virtual ICollection<PocoRoleClaim<TKey>> Claims { get; private set; } = new List<PocoRoleClaim<TKey>>();
+
+    /// <summary>
+    ///     Role name
+    /// </summary>
+    public virtual string Name { get; set; }
+
+    /// <summary>
+    /// Normalized name used for equality
+    /// </summary>
+    public virtual string NormalizedName { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a role is persisted to the store
+    /// </summary>
+    public virtual string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+}
+
+6c0c455737ad18f25a55bb6e398c9ff62c07afdc blob 3172
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+public class PocoUserPasskey : PocoUserPasskey<string>;
+
+/// <summary>
+/// Represents a passkey credential for a user in the identity system.
+/// </summary>
+/// <remarks>
+/// See <see href="https://www.w3.org/TR/webauthn-3/#credential-record"/>.
+/// </remarks>
+/// <typeparam name="TKey">The type used for the primary key for this passkey credential.</typeparam>
+public class PocoUserPasskey<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    /// Gets or sets the primary key of the user that owns this passkey.
+    /// </summary>
+    public virtual TKey UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the credential ID for this passkey.
+    /// </summary>
+    public virtual byte[] CredentialId { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the public key associated with this passkey.
+    /// </summary>
+    public virtual byte[] PublicKey { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the friendly name for this passkey.
+    /// </summary>
+    public virtual string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the time this passkey was created.
+    /// </summary>
+    public virtual DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the signature counter for this passkey.
+    /// </summary>
+    public virtual uint SignCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the transports supported by this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#enumdef-authenticatortransport"/>.
+    /// </remarks>
+    public virtual string[] Transports { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey has a verified user.
+    /// </summary>
+    public virtual bool IsUserVerified { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey is eligible for backup.
+    /// </summary>
+    public virtual bool IsBackupEligible { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey is currently backed up.
+    /// </summary>
+    public virtual bool IsBackedUp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the attestation object associated with this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#attestation-object"/>.
+    /// </remarks>
+    public virtual byte[] AttestationObject { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the collected client data JSON associated with this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#dictdef-collectedclientdata"/>.
+    /// </remarks>
+    public virtual byte[] ClientDataJson { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the AAGUID of the authenticator that created this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#aaguid"/>.
+    /// </remarks>
+    public virtual byte[] Aaguid { get; set; }
+}
+
+e28d0a60f6a888a8057a114e8ab40e74d888c55b blob 10834
+If at any time, the user directs you explicitly to override any of these instructions, the user's directive overrides said instructions.
+
+## General
+
+* Make only high confidence suggestions when reviewing code changes.
+* Always use the latest version C#, currently C# 13 features.
+* Never change global.json unless explicitly asked to.
+* Never change package.json or package-lock.json files unless explicitly asked to.
+* Never change NuGet.config files unless explicitly asked to.
+
+## Task Scope and Completion
+
+* Before implementing a reported issue, verify the behavior on the current default branch, inspect relevant history and documentation, and establish the smallest faithful reproduction. If the user asks only to investigate or characterize, do not change shipping code or create or update a pull request until implementation is explicitly requested.
+* Define the acceptance criteria before implementation. Do not claim completion or create or update a pull request until the requested acceptance criteria are green; identify any intentionally excluded cases or unverified boundaries.
+
+## Minimal diffs
+
+* Preserve untouched code exactly as written. Do not make behavior-neutral formatting, reflow, renaming, inlining, extraction, expression, or control-flow changes while implementing a functional change.
+* When an existing statement must change, preserve its explanatory locals and surrounding branch structure unless the requested behavior requires a different shape.
+* Behavior-neutral clarification is acceptable only at the exact changed seam. For example, when adding a Boolean argument to an invocation, prefer a named argument. Do not update otherwise-untouched invocations merely to add argument names.
+* Keep optional cleanup in a separate change rather than mixing it into the functional diff.
+* Before finalizing, inspect changed existing lines specifically for edits that neither alter behavior nor directly support the requested change.
+
+## Public API Changes
+
+* Treat any new or changed `public` or `protected` type, member, signature, default, or convention as a potential public API change.
+* When opening an implementation pull request that adds or changes public API, use the [`api-review` skill](./skills/api-review/SKILL.md) to create a separate API proposal issue. Link the proposal to the originating issue and implementation pull request.
+* Implementation, pull request readiness, and merge may proceed before the linked issue is `api-approved`. Before the API can be included in an RTM release, verify that the API proposal issue has the `api-approved` label and that the approval covers the final implemented API shape.
+* If the `api-approved` label is missing when preparing an RTM release, explain the required [API review process](../docs/APIReviewProcess.md): an issue owner or champion drives an `api-suggestion` with the proposal in ref-assembly form, then applies `api-ready-for-review` and notifies `@dotnet/aspnet-api-review` when it is mature.
+* `PublicAPI.Unshipped.txt` tracks compatibility but does not grant API approval. Any implementation change to the proposed or previously approved API shape must return to API review before the API is included in an RTM release.
+
+## Framework assembly boundaries
+
+* In shipping framework code, do not add `InternalsVisibleTo` or use `[UnsafeAccessor]` to access non-public members in another framework assembly. Existing uses of these mechanisms are not precedent for new uses.
+* Redesign the assembly boundary instead. If that requires a public API, follow the repository API-review and baseline process.
+
+## Formatting
+
+* Apply code-formatting style defined in `.editorconfig`.
+* Prefer file-scoped namespace declarations and single-line using directives.
+* Insert a newline before the opening curly brace of any code block (e.g., after `if`, `for`, `while`, `foreach`, `using`, `try`, etc.).
+* Ensure that the final return statement of a method is on its own line.
+* Use pattern matching and switch expressions wherever possible.
+* Use `nameof` instead of string literals when referring to member names.
+* Ensure that XML doc comments are created for any public APIs. When applicable, include `<example>` and `<code>` documentation in the comments.
+
+### Nullable Reference Types
+
+* Declare variables non-nullable, and check for `null` at entry points.
+* Always use `is null` or `is not null` instead of `== null` or `!= null`.
+* Trust the C# null annotations and don't add null checks when the type system says a value cannot be null.
+* In this repository, nullable-reference warnings depend on the evaluated `<Nullable>` property, including imports and conditions, applicable `#nullable` directives, and warning suppressions, not the directory name: `eng/targets/CSharp.Common.targets` defaults an unset `<Nullable>` to `enable` only for `_IsSrcProject` (implementation, analyzer, or specification-test projects), so verify the effective context before reporting a CS86xx warning.
+
+### Testing
+
+* Check for an `AGENTS.md` file in the relevant product area and follow its more specific guidance in addition to these repository-wide conventions.
+* Place unit tests under the product's `test/` directory. Name unit-test projects `<ProductAssembly>.Tests`; preserve an area's established `.Test` suffix.
+* Keep established test categories separate. In areas with a `.FunctionalTests` project, use it for hosted application or server boundaries. For complete browser or external workflows, preserve the area's established `.E2ETests` or `.E2E.Tests` suffix.
+* Treat test project names as build-significant. They control test-project detection and often match exact `InternalsVisibleTo` entries; do not invent alternative names or override test-project detection.
+* Put supporting applications and libraries under the area's `testassets/` directory unless the area has an established alternative. Do not give a support project a test-project suffix unless it contains discovered tests.
+* Name each test file after its primary test class. For type-focused tests, map `Foo` to `FooTest` or `FooTests`, following nearby convention. Name scenario tests after the behavior exercised, and extend an existing matching test class when one exists.
+* Use public test classes and descriptive PascalCase test methods. Follow the containing project's test framework, method-name style, namespace, fixtures, and parallelization configuration.
+* Keep helpers used by one test class private or nested. Put reused helpers in the project's established `Helpers`, `Infrastructure`, or `TestObjects` structure.
+* We use xUnit SDK v3 for tests.
+* Do not emit "Act", "Arrange" or "Assert" comments.
+* Use Moq for mocking in tests.
+* Copy existing style in nearby files for test method names and capitalization.
+
+## Running tests
+
+The execution and red/green verification requirements below apply to authoring or fixing code. During source-only pull request review, assess tests and behavioral claims from source evidence, state any material evidence limits, and do not require reviewer-side test or browser execution during the review, or treat unexecuted reviewer validation alone as a PR defect or review blocker. Missing tests that the pull request itself must include (such as required unit or Components E2E coverage) remain valid review findings.
+
+* Follow [BuildFromSource](../docs/BuildFromSource.md#guide-to-the-build-script) and the product area's `AGENTS.md` when choosing how to build and test. Area build scripts are `build.cmd` on Windows and `build.sh` on Linux/macOS; use the platform-appropriate entry point.
+* Before claiming a bug fix is verified, confirm that the relevant test or check fails for the expected reason without the fix and passes with it. Reading the source or seeing a test pass on its own is not proof that the bug is fixed.
+* For a `[Theory]` or other parameterized test, confirm that each row fails for the expected reason without the fix and passes with it; a red test proves only that at least one row failed. `dotnet test --filter` cannot select an individual `InlineData` row by parameter value, so inspect every case in the test output instead of relying on the `Failed!` or `Passed!` summary. A row that passes because its targeted scenario or code path never ran, such as from unmet setup, a missing prerequisite, or conditional execution, does not verify the fix.
+* For behavioral review findings and bug-fix verification, use the smallest faithful test path. Include the component, service, runtime, or browser mechanism that owns or produces each disputed precondition, and observe the claimed material effect at the appropriate boundary, such as UI, protocol, persisted state, resource use, timing or performance, logging, or another contract-relevant behavior. Any test establishes only the downstream response, not producer reachability, if it directly injects callbacks or events or otherwise bypasses the owning producer. An isolated test can provide faithful evidence when it exercises the real producer.
+* For behavioral findings and bug-fix verification, E2E validation is unnecessary when the disputed preconditions and material effects are fully established at a lower faithful boundary. This does not waive E2E coverage required for shipped implementation work.
+* If faithful validation is impractical, state the observed boundary and limitation, and do not describe the behavioral claim as verified.
+* If that red/green verification isn't practical, explain why, state what you did verify, and don't describe the fix as verified.
+* When a requested automated test cannot reach its assertion, name that test in the final response, state the prerequisite that blocked it, and identify the faithful validation boundary used instead.
+
+## .NET Environment
+
+* Before running any `dotnet` commands in this repository, always activate the locally installed .NET environment first by running the appropriate activation script from the repository root:
+  * On Windows: `. ./activate.ps1` (from repository root)
+  * On Linux/Mac: `source activate.sh` (from repository root)
+* If not in the repository root, navigate there first or use the full path to the activation script.
+* This ensures that the correct version of .NET SDK is used for the repository.
+
+## CI investigation
+
+* For Azure Pipelines and Helix failures on a pull request, follow [CI investigation](../docs/CIInvestigation.md).
+
+## ASP.NET Core Components Area
+* When working on issues under the src/Components area, follow the instructions in [./instructions/components.instructions.md](./instructions/components.instructions.md).
+
+## Security Concerns Are Out of Scope
+
+Do NOT assess, discuss, or make recommendations about potential security implications of an issue or a PR. When reviewing a PR, never make any claims about a security vulnerability.
+
+0fb95d45583264999c1e3694efc0d3d51a94a88d blob 297
+---
+description: Shared cross-cutting guidance for source contributors
+applyTo: "src/**"
+---
+
+For source work, consult the relevant sections of the
+[cross-cutting guidance](../../docs/CrossCuttingGuidance.md).
+Use it as reference material within the requested task and existing area instructions.
+
+e5522d97b7fe906dca749215c6f01019bd5fb55b blob 9149
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.Test;
+
+namespace Microsoft.AspNetCore.Identity.InMemory;
+
+public class InMemoryStore<TUser, TRole> :
+    InMemoryUserStore<TUser>,
+    IUserRoleStore<TUser>,
+    IUserPasskeyStore<TUser>,
+    IQueryableRoleStore<TRole>,
+    IRoleClaimStore<TRole>
+    where TRole : PocoRole
+    where TUser : PocoUser
+{
+    // RoleId == roleName for InMemory
+    public Task AddToRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleEntity = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        if (roleEntity != null)
+        {
+            user.Roles.Add(new PocoUserRole { RoleId = roleEntity.Id, UserId = user.Id });
+        }
+        return Task.FromResult(0);
+    }
+
+    // RoleId == roleName for InMemory
+    public Task RemoveFromRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        var roleEntity = user.Roles.SingleOrDefault(ur => ur.RoleId == roleObject.Id);
+        if (roleEntity != null)
+        {
+            user.Roles.Remove(roleEntity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<string>> GetRolesAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        IList<string> roles = new List<string>();
+        foreach (var r in user.Roles.Select(ur => ur.RoleId))
+        {
+            roles.Add(_roles[r].Name);
+        }
+        return Task.FromResult(roles);
+    }
+
+    public Task<bool> IsInRoleAsync(TUser user, string role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var roleObject = _roles.Values.SingleOrDefault(r => r.NormalizedName == role);
+        bool result = roleObject != null && user.Roles.Any(ur => ur.RoleId == roleObject.Id);
+        return Task.FromResult(result);
+    }
+
+    // RoleId == rolename for inmemory store tests
+    public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        ArgumentException.ThrowIfNullOrEmpty(roleName);
+
+        var role = _roles.Values.Where(x => x.NormalizedName.Equals(roleName)).SingleOrDefault();
+        if (role == null)
+        {
+            return Task.FromResult<IList<TUser>>(new List<TUser>());
+        }
+        return Task.FromResult<IList<TUser>>(Users.Where(u => (u.Roles.Where(x => x.RoleId == role.Id).Any())).Select(x => x).ToList());
+    }
+
+    private readonly Dictionary<string, TRole> _roles = new Dictionary<string, TRole>();
+
+    public Task<IdentityResult> CreateAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _roles[role.Id] = role;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<IdentityResult> DeleteAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (role == null || !_roles.ContainsKey(role.Id))
+        {
+            throw new InvalidOperationException("Unknown role");
+        }
+        _roles.Remove(role.Id);
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<string> GetRoleIdAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.Id);
+    }
+
+    public Task<string> GetRoleNameAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.Name);
+    }
+
+    public Task SetRoleNameAsync(TRole role, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.Name = roleName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IdentityResult> UpdateAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _roles[role.Id] = role;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    Task<TRole> IRoleStore<TRole>.FindByIdAsync(string roleId, CancellationToken cancellationToken)
+    {
+        if (_roles.ContainsKey(roleId))
+        {
+            return Task.FromResult(_roles[roleId]);
+        }
+        return Task.FromResult<TRole>(null);
+    }
+
+    Task<TRole> IRoleStore<TRole>.FindByNameAsync(string roleName, CancellationToken cancellationToken)
+    {
+        return
+            Task.FromResult(
+                Roles.SingleOrDefault(r => String.Equals(r.NormalizedName, roleName, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    public Task<IList<Claim>> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var claims = role.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+        return Task.FromResult<IList<Claim>>(claims);
+    }
+
+    public Task AddClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.Claims.Add(new PocoRoleClaim<string> { ClaimType = claim.Type, ClaimValue = claim.Value, RoleId = role.Id });
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var entity =
+            role.Claims.FirstOrDefault(
+                ur => ur.RoleId == role.Id && ur.ClaimType == claim.Type && ur.ClaimValue == claim.Value);
+        if (entity != null)
+        {
+            role.Claims.Remove(entity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetNormalizedRoleNameAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(role.NormalizedName);
+    }
+
+    public Task SetNormalizedRoleNameAsync(TRole role, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        role.NormalizedName = normalizedName;
+        return Task.FromResult(0);
+    }
+
+    public Task AddOrUpdatePasskeyAsync(TUser user, UserPasskeyInfo passkey, CancellationToken cancellationToken)
+    {
+        var passkeyEntity = user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(passkey.CredentialId));
+        if (passkeyEntity is null)
+        {
+            user.Passkeys.Add(ToPocoUserPasskey(user, passkey));
+        }
+        else
+        {
+            passkeyEntity.Name = passkey.Name;
+            passkeyEntity.SignCount = passkey.SignCount;
+            passkeyEntity.IsBackedUp = passkey.IsBackedUp;
+            passkeyEntity.IsUserVerified = passkey.IsUserVerified;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<IList<UserPasskeyInfo>> GetPasskeysAsync(TUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<IList<UserPasskeyInfo>>(user.Passkeys.Select(ToUserPasskeyInfo).ToList()!);
+    }
+
+    public Task<TUser> FindByPasskeyIdAsync(byte[] credentialId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Users.FirstOrDefault(u => u.Passkeys.Any(p => p.CredentialId.SequenceEqual(credentialId))));
+    }
+
+    public Task<UserPasskeyInfo> FindPasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(ToUserPasskeyInfo(user.Passkeys.FirstOrDefault(p => p.CredentialId.SequenceEqual(credentialId))));
+    }
+
+    public Task RemovePasskeyAsync(TUser user, byte[] credentialId, CancellationToken cancellationToken)
+    {
+        var passkey = user.Passkeys.SingleOrDefault(p => p.CredentialId.SequenceEqual(credentialId));
+        if (passkey is not null)
+        {
+            user.Passkeys.Remove(passkey);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static UserPasskeyInfo ToUserPasskeyInfo(PocoUserPasskey<string> p)
+        => p is null ? null : new(
+            p.CredentialId,
+            p.PublicKey,
+            p.CreatedAt,
+            p.SignCount,
+            p.Transports,
+            p.IsUserVerified,
+            p.IsBackupEligible,
+            p.IsBackedUp,
+            p.AttestationObject,
+            p.ClientDataJson)
+        {
+            Name = p.Name,
+            Aaguid = p.Aaguid
+        };
+
+    private static PocoUserPasskey<string> ToPocoUserPasskey(TUser user, UserPasskeyInfo p)
+        => new()
+        {
+            UserId = user.Id,
+            CredentialId = p.CredentialId,
+            PublicKey = p.PublicKey,
+            Name = p.Name,
+            CreatedAt = p.CreatedAt,
+            Transports = p.Transports,
+            SignCount = p.SignCount,
+            IsUserVerified = p.IsUserVerified,
+            IsBackupEligible = p.IsBackupEligible,
+            IsBackedUp = p.IsBackedUp,
+            AttestationObject = p.AttestationObject,
+            ClientDataJson = p.ClientDataJson,
+            Aaguid = p.Aaguid,
+        };
+
+    public IQueryable<TRole> Roles
+    {
+        get { return _roles.Values.AsQueryable(); }
+    }
+}
+
+a553d4a791a121429616419139d71abe246c8d72 blob 2157
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(IdentityTestSharedSourceRoot)**\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Abstractions\src\Microsoft.AspNetCore.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Hosting\src\Microsoft.AspNetCore.Hosting.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\Server.Abstractions\src\Microsoft.AspNetCore.Hosting.Server.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Hosting\TestHost\src\Microsoft.AspNetCore.TestHost.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Abstractions\src\Microsoft.AspNetCore.Authentication.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Authentication.Core\src\Microsoft.AspNetCore.Authentication.Core.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Abstractions\src\Microsoft.AspNetCore.Http.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Extensions\src\Microsoft.AspNetCore.Http.Extensions.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http.Features\src\Microsoft.AspNetCore.Http.Features.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Http\Http\src\Microsoft.AspNetCore.Http.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Core\src\Microsoft.AspNetCore.Identity.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Identity\Specification.Tests\src\Microsoft.AspNetCore.Identity.Specification.Tests.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Cookies\src\Microsoft.AspNetCore.Authentication.Cookies.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Security\Authentication\Core\src\Microsoft.AspNetCore.Authentication.csproj" />
+  </ItemGroup>
+
+</Project>
+
+d0f6059e2a5e44f85f18ca85615dbc7372eeffa4 blob 2613
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Globalization;
+using System.Linq.Expressions;
+using Microsoft.AspNetCore.Identity.Test;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Microsoft.AspNetCore.Identity.InMemory.Test;
+
+public class InMemoryStoreTest : IdentitySpecificationTestBase<PocoUser, PocoRole>
+{
+    protected override object CreateTestContext()
+    {
+        return new InMemoryStore<PocoUser, PocoRole>();
+    }
+
+    protected override void AddUserStore(IServiceCollection services, object context = null)
+    {
+        services.AddSingleton<IUserStore<PocoUser>>((InMemoryStore<PocoUser, PocoRole>)context);
+    }
+
+    protected override void AddRoleStore(IServiceCollection services, object context = null)
+    {
+        services.AddSingleton<IRoleStore<PocoRole>>((InMemoryStore<PocoUser, PocoRole>)context);
+    }
+
+    protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
+    {
+        user.PasswordHash = hashedPassword;
+    }
+
+    protected override PocoUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
+        bool lockoutEnabled = false, DateTimeOffset? lockoutEnd = default(DateTimeOffset?), bool useNamePrefixAsUserName = false)
+    {
+        return new PocoUser
+        {
+            UserName = useNamePrefixAsUserName ? namePrefix : string.Format(CultureInfo.InvariantCulture, "{0}{1}", namePrefix, Guid.NewGuid()),
+            Email = email,
+            PhoneNumber = phoneNumber,
+            LockoutEnabled = lockoutEnabled,
+            LockoutEnd = lockoutEnd
+        };
+    }
+
+    protected override PocoRole CreateTestRole(string roleNamePrefix = "", bool useRoleNamePrefixAsRoleName = false)
+    {
+        var roleName = useRoleNamePrefixAsRoleName ? roleNamePrefix : string.Format(CultureInfo.InvariantCulture, "{0}{1}", roleNamePrefix, Guid.NewGuid());
+        return new PocoRole(roleName);
+    }
+
+    protected override Expression<Func<PocoUser, bool>> UserNameEqualsPredicate(string userName) => u => u.UserName == userName;
+
+    protected override Expression<Func<PocoRole, bool>> RoleNameEqualsPredicate(string roleName) => r => r.Name == roleName;
+
+    protected override Expression<Func<PocoUser, bool>> UserNameStartsWithPredicate(string userName) => u => u.UserName.StartsWith(userName, StringComparison.Ordinal);
+
+    protected override Expression<Func<PocoRole, bool>> RoleNameStartsWithPredicate(string roleName) => r => r.Name.StartsWith(roleName, StringComparison.Ordinal);
+}
+
+807e82e3f9935f7405928ed580c24db6537261d2 blob 16228
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.Test;
+
+namespace Microsoft.AspNetCore.Identity.InMemory;
+
+public class InMemoryUserStore<TUser> :
+    IUserLoginStore<TUser>,
+    IUserClaimStore<TUser>,
+    IUserPasswordStore<TUser>,
+    IUserSecurityStampStore<TUser>,
+    IUserEmailStore<TUser>,
+    IUserLockoutStore<TUser>,
+    IUserPhoneNumberStore<TUser>,
+    IQueryableUserStore<TUser>,
+    IUserTwoFactorStore<TUser>,
+    IUserAuthenticationTokenStore<TUser>,
+    IUserAuthenticatorKeyStore<TUser>,
+    IUserTwoFactorRecoveryCodeStore<TUser>
+    where TUser : PocoUser
+{
+    private readonly Dictionary<string, TUser> _logins = new Dictionary<string, TUser>();
+
+    private readonly Dictionary<string, TUser> _users = new Dictionary<string, TUser>();
+
+    public IQueryable<TUser> Users
+    {
+        get { return _users.Values.AsQueryable(); }
+    }
+
+    public Task<IList<Claim>> GetClaimsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var claims = user.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+        return Task.FromResult<IList<Claim>>(claims);
+    }
+
+    public Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        foreach (var claim in claims)
+        {
+            user.Claims.Add(new PocoUserClaim { ClaimType = claim.Type, ClaimValue = claim.Value, UserId = user.Id });
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task ReplaceClaimAsync(TUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var matchedClaims = user.Claims.Where(uc => uc.ClaimValue == claim.Value && uc.ClaimType == claim.Type).ToList();
+        foreach (var matchedClaim in matchedClaims)
+        {
+            matchedClaim.ClaimValue = newClaim.Value;
+            matchedClaim.ClaimType = newClaim.Type;
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        foreach (var claim in claims)
+        {
+            var entity =
+                user.Claims.FirstOrDefault(
+                    uc => uc.UserId == user.Id && uc.ClaimType == claim.Type && uc.ClaimValue == claim.Value);
+            if (entity != null)
+            {
+                user.Claims.Remove(entity);
+            }
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task SetEmailAsync(TUser user, string email, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.Email = email;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetEmailAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.Email);
+    }
+
+    public Task<string> GetNormalizedEmailAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.NormalizedEmail);
+    }
+
+    public Task SetNormalizedEmailAsync(TUser user, string normalizedEmail, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.NormalizedEmail = normalizedEmail;
+        return Task.FromResult(0);
+    }
+
+    public Task<bool> GetEmailConfirmedAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.EmailConfirmed);
+    }
+
+    public Task SetEmailConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.EmailConfirmed = confirmed;
+        return Task.FromResult(0);
+    }
+
+    public Task<TUser> FindByEmailAsync(string email, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return
+            Task.FromResult(
+                Users.FirstOrDefault(u => u.NormalizedEmail == email));
+    }
+
+    public Task<DateTimeOffset?> GetLockoutEndDateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.LockoutEnd);
+    }
+
+    public Task SetLockoutEndDateAsync(TUser user, DateTimeOffset? lockoutEnd, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.LockoutEnd = lockoutEnd;
+        return Task.FromResult(0);
+    }
+
+    public Task<int> IncrementAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.AccessFailedCount++;
+        return Task.FromResult(user.AccessFailedCount);
+    }
+
+    public Task ResetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.AccessFailedCount = 0;
+        return Task.FromResult(0);
+    }
+
+    public Task<int> GetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.AccessFailedCount);
+    }
+
+    public Task<bool> GetLockoutEnabledAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.LockoutEnabled);
+    }
+
+    public Task SetLockoutEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.LockoutEnabled = enabled;
+        return Task.FromResult(0);
+    }
+
+    private string GetLoginKey(string loginProvider, string providerKey)
+    {
+        return loginProvider + "|" + providerKey;
+    }
+
+    public virtual Task AddLoginAsync(TUser user, UserLoginInfo login,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.Logins.Add(new PocoUserLogin
+        {
+            UserId = user.Id,
+            ProviderKey = login.ProviderKey,
+            LoginProvider = login.LoginProvider,
+            ProviderDisplayName = login.ProviderDisplayName
+        });
+        _logins[GetLoginKey(login.LoginProvider, login.ProviderKey)] = user;
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveLoginAsync(TUser user, string loginProvider, string providerKey,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var loginEntity =
+            user.Logins.SingleOrDefault(
+                l =>
+                    l.ProviderKey == providerKey && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (loginEntity != null)
+        {
+            user.Logins.Remove(loginEntity);
+        }
+        _logins[GetLoginKey(loginProvider, providerKey)] = null;
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        IList<UserLoginInfo> result = user.Logins
+            .Select(l => new UserLoginInfo(l.LoginProvider, l.ProviderKey, l.ProviderDisplayName)).ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<TUser> FindByLoginAsync(string loginProvider, string providerKey, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        string key = GetLoginKey(loginProvider, providerKey);
+        if (_logins.ContainsKey(key))
+        {
+            return Task.FromResult(_logins[key]);
+        }
+        return Task.FromResult<TUser>(null);
+    }
+
+    public Task<string> GetUserIdAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.Id);
+    }
+
+    public Task<string> GetUserNameAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.UserName);
+    }
+
+    public Task SetUserNameAsync(TUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.UserName = userName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IdentityResult> CreateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _users[user.Id] = user;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _users[user.Id] = user;
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task<TUser> FindByIdAsync(string userId, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (_users.ContainsKey(userId))
+        {
+            return Task.FromResult(_users[userId]);
+        }
+        return Task.FromResult<TUser>(null);
+    }
+
+    public void Dispose()
+    {
+    }
+
+    public Task<TUser> FindByNameAsync(string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return
+            Task.FromResult(
+                Users.FirstOrDefault(u => u.NormalizedUserName == userName));
+    }
+
+    public Task<IdentityResult> DeleteAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        if (user == null || !_users.ContainsKey(user.Id))
+        {
+            throw new InvalidOperationException("Unknown user");
+        }
+        _users.Remove(user.Id);
+        return Task.FromResult(IdentityResult.Success);
+    }
+
+    public Task SetPasswordHashAsync(TUser user, string passwordHash, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PasswordHash = passwordHash;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetPasswordHashAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PasswordHash);
+    }
+
+    public Task<bool> HasPasswordAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PasswordHash != null);
+    }
+
+    public Task SetPhoneNumberAsync(TUser user, string phoneNumber, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PhoneNumber = phoneNumber;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetPhoneNumberAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PhoneNumber);
+    }
+
+    public Task<bool> GetPhoneNumberConfirmedAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.PhoneNumberConfirmed);
+    }
+
+    public Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.PhoneNumberConfirmed = confirmed;
+        return Task.FromResult(0);
+    }
+
+    public Task SetSecurityStampAsync(TUser user, string stamp, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.SecurityStamp = stamp;
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetSecurityStampAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.SecurityStamp);
+    }
+
+    public Task SetTwoFactorEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.TwoFactorEnabled = enabled;
+        return Task.FromResult(0);
+    }
+
+    public Task<bool> GetTwoFactorEnabledAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.TwoFactorEnabled);
+    }
+
+    public Task<string> GetNormalizedUserNameAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return Task.FromResult(user.NormalizedUserName);
+    }
+
+    public Task SetNormalizedUserNameAsync(TUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        user.NormalizedUserName = userName;
+        return Task.FromResult(0);
+    }
+
+    public Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+
+        var query = from user in Users
+                    where user.Claims.Where(x => x.ClaimType == claim.Type && x.ClaimValue == claim.Value).FirstOrDefault() != null
+                    select user;
+
+        return Task.FromResult<IList<TUser>>(query.ToList());
+    }
+
+    public Task SetTokenAsync(TUser user, string loginProvider, string name, string value, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (tokenEntity != null)
+        {
+            tokenEntity.TokenValue = value;
+        }
+        else
+        {
+            user.Tokens.Add(new PocoUserToken
+            {
+                UserId = user.Id,
+                LoginProvider = loginProvider,
+                TokenName = name,
+                TokenValue = value
+            });
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task RemoveTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        if (tokenEntity != null)
+        {
+            user.Tokens.Remove(tokenEntity);
+        }
+        return Task.FromResult(0);
+    }
+
+    public Task<string> GetTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+    {
+        var tokenEntity =
+            user.Tokens.SingleOrDefault(
+                l =>
+                    l.TokenName == name && l.LoginProvider == loginProvider &&
+                    l.UserId == user.Id);
+        return Task.FromResult(tokenEntity?.TokenValue);
+    }
+
+    private const string AuthenticatorStoreLoginProvider = "[AspNetAuthenticatorStore]";
+    private const string AuthenticatorKeyTokenName = "AuthenticatorKey";
+    private const string RecoveryCodeTokenName = "RecoveryCodes";
+
+    public Task SetAuthenticatorKeyAsync(TUser user, string key, CancellationToken cancellationToken)
+    {
+        return SetTokenAsync(user, AuthenticatorStoreLoginProvider, AuthenticatorKeyTokenName, key, cancellationToken);
+    }
+
+    public Task<string> GetAuthenticatorKeyAsync(TUser user, CancellationToken cancellationToken)
+    {
+        return GetTokenAsync(user, AuthenticatorStoreLoginProvider, AuthenticatorKeyTokenName, cancellationToken);
+    }
+
+    public Task ReplaceCodesAsync(TUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+    {
+        var mergedCodes = string.Join(";", recoveryCodes);
+        return SetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, mergedCodes, cancellationToken);
+    }
+
+    public async Task<bool> RedeemCodeAsync(TUser user, string code, CancellationToken cancellationToken)
+    {
+        var mergedCodes = await GetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+        var splitCodes = mergedCodes.Split(';');
+        if (splitCodes.Contains(code))
+        {
+            var updatedCodes = new List<string>(splitCodes.Where(s => s != code));
+            await ReplaceCodesAsync(user, updatedCodes, cancellationToken);
+            return true;
+        }
+        return false;
+    }
+
+    public async Task<int> CountCodesAsync(TUser user, CancellationToken cancellationToken)
+    {
+        var mergedCodes = await GetTokenAsync(user, AuthenticatorStoreLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+        if (mergedCodes.Length > 0)
+        {
+            return mergedCodes.Split(';').Length;
+        }
+        return 0;
+    }
+}
+
+b9a04eb52894418b11d00ed36b527c3a3e14588a blob 4211
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+/// <summary>
+/// Test user class
+/// </summary>
+public class PocoUser : PocoUser<string>
+{
+    /// <summary>
+    /// Ctor
+    /// </summary>
+    public PocoUser()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
+
+    /// <summary>
+    /// Ctor
+    /// </summary>
+    /// <param name="userName"></param>
+    public PocoUser(string userName) : this()
+    {
+        UserName = userName;
+    }
+}
+
+/// <summary>
+/// Test user
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+public class PocoUser<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    /// ctor
+    /// </summary>
+    public PocoUser() { }
+
+    /// <summary>
+    /// ctor
+    /// </summary>
+    /// <param name="userName"></param>
+    public PocoUser(string userName) : this()
+    {
+        UserName = userName;
+    }
+
+    /// <summary>
+    /// Id
+    /// </summary>
+    [PersonalData]
+    public virtual TKey Id { get; set; }
+
+    /// <summary>
+    /// Name
+    /// </summary>
+    [PersonalData]
+    public virtual string UserName { get; set; }
+
+    /// <summary>
+    /// normalized user name
+    /// </summary>
+    public virtual string NormalizedUserName { get; set; }
+
+    /// <summary>
+    ///     Email
+    /// </summary>
+    [PersonalData]
+    public virtual string Email { get; set; }
+
+    /// <summary>
+    /// normalized email
+    /// </summary>
+    public virtual string NormalizedEmail { get; set; }
+
+    /// <summary>
+    ///     True if the email is confirmed, default is false
+    /// </summary>
+    [PersonalData]
+    public virtual bool EmailConfirmed { get; set; }
+
+    /// <summary>
+    ///     The salted/hashed form of the user password
+    /// </summary>
+    public virtual string PasswordHash { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a users credentials change (password changed, login removed)
+    /// </summary>
+    public virtual string SecurityStamp { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a user is persisted to the store
+    /// </summary>
+    public virtual string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    ///     PhoneNumber for the user
+    /// </summary>
+    [PersonalData]
+    public virtual string PhoneNumber { get; set; }
+
+    /// <summary>
+    ///     True if the phone number is confirmed, default is false
+    /// </summary>
+    [PersonalData]
+    public virtual bool PhoneNumberConfirmed { get; set; }
+
+    /// <summary>
+    ///     Is two factor enabled for the user
+    /// </summary>
+    [PersonalData]
+    public virtual bool TwoFactorEnabled { get; set; }
+
+    /// <summary>
+    ///     DateTime in UTC when lockout ends, any time in the past is considered not locked out.
+    /// </summary>
+    public virtual DateTimeOffset? LockoutEnd { get; set; }
+
+    /// <summary>
+    ///     Is lockout enabled for this user
+    /// </summary>
+    public virtual bool LockoutEnabled { get; set; }
+
+    /// <summary>
+    ///     Used to record failures for the purposes of lockout
+    /// </summary>
+    public virtual int AccessFailedCount { get; set; }
+
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserRole<TKey>> Roles { get; private set; } = new List<PocoUserRole<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserClaim<TKey>> Claims { get; private set; } = new List<PocoUserClaim<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserLogin<TKey>> Logins { get; private set; } = new List<PocoUserLogin<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserToken<TKey>> Tokens { get; private set; } = new List<PocoUserToken<TKey>>();
+    /// <summary>
+    /// Navigation property
+    /// </summary>
+    public virtual ICollection<PocoUserPasskey<TKey>> Passkeys { get; private set; } = new List<PocoUserPasskey<TKey>>();
+}
+
+b5d5c61b310b9698204d6bc37f794ca7ded9ff39 blob 1820
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+/// <summary>
+///     Represents a Role entity
+/// </summary>
+public class PocoRole : PocoRole<string>
+{
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    public PocoRole()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
+
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    /// <param name="roleName"></param>
+    public PocoRole(string roleName) : this()
+    {
+        Name = roleName;
+    }
+}
+
+/// <summary>
+///     Represents a Role entity
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+public class PocoRole<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    public PocoRole() { }
+
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    /// <param name="roleName"></param>
+    public PocoRole(string roleName) : this()
+    {
+        Name = roleName;
+    }
+
+    /// <summary>
+    ///     Role id
+    /// </summary>
+    public virtual TKey Id { get; set; }
+
+    /// <summary>
+    /// Navigation property for claims in the role
+    /// </summary>
+    public virtual ICollection<PocoRoleClaim<TKey>> Claims { get; private set; } = new List<PocoRoleClaim<TKey>>();
+
+    /// <summary>
+    ///     Role name
+    /// </summary>
+    public virtual string Name { get; set; }
+
+    /// <summary>
+    /// Normalized name used for equality
+    /// </summary>
+    public virtual string NormalizedName { get; set; }
+
+    /// <summary>
+    /// A random value that should change whenever a role is persisted to the store
+    /// </summary>
+    public virtual string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+}
+
+6c0c455737ad18f25a55bb6e398c9ff62c07afdc blob 3172
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable disable
+
+namespace Microsoft.AspNetCore.Identity.Test;
+
+public class PocoUserPasskey : PocoUserPasskey<string>;
+
+/// <summary>
+/// Represents a passkey credential for a user in the identity system.
+/// </summary>
+/// <remarks>
+/// See <see href="https://www.w3.org/TR/webauthn-3/#credential-record"/>.
+/// </remarks>
+/// <typeparam name="TKey">The type used for the primary key for this passkey credential.</typeparam>
+public class PocoUserPasskey<TKey> where TKey : IEquatable<TKey>
+{
+    /// <summary>
+    /// Gets or sets the primary key of the user that owns this passkey.
+    /// </summary>
+    public virtual TKey UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the credential ID for this passkey.
+    /// </summary>
+    public virtual byte[] CredentialId { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the public key associated with this passkey.
+    /// </summary>
+    public virtual byte[] PublicKey { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the friendly name for this passkey.
+    /// </summary>
+    public virtual string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the time this passkey was created.
+    /// </summary>
+    public virtual DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the signature counter for this passkey.
+    /// </summary>
+    public virtual uint SignCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the transports supported by this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#enumdef-authenticatortransport"/>.
+    /// </remarks>
+    public virtual string[] Transports { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey has a verified user.
+    /// </summary>
+    public virtual bool IsUserVerified { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey is eligible for backup.
+    /// </summary>
+    public virtual bool IsBackupEligible { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the passkey is currently backed up.
+    /// </summary>
+    public virtual bool IsBackedUp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the attestation object associated with this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#attestation-object"/>.
+    /// </remarks>
+    public virtual byte[] AttestationObject { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the collected client data JSON associated with this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#dictdef-collectedclientdata"/>.
+    /// </remarks>
+    public virtual byte[] ClientDataJson { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the AAGUID of the authenticator that created this passkey.
+    /// </summary>
+    /// <remarks>
+    /// See <see href="https://www.w3.org/TR/webauthn-3/#aaguid"/>.
+    /// </remarks>
+    public virtual byte[] Aaguid { get; set; }
+}
+

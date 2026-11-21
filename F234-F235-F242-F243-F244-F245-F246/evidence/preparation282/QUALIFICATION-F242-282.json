@@ -1,0 +1,143 @@
+{
+  "finding": "F242",
+  "turn": 282,
+  "actualOwner": "0cc047c2-0858-4ee5-8cc3-b5742fe3d066",
+  "scope": "Independent SOURCE ONLY qualification of retained linear-contains-inside-loop",
+  "disposition": {
+    "recommendationToParent": "source-only-no-material-candidate",
+    "retainedSetupOnly": true,
+    "reason": "The only named-action removal rule supplies a one-element string array. The other rule supplies null and short-circuits Contains entirely. The source establishes no growing removal-name collection; descriptor production is cached per collection-provider instance between updates. No material HashSet candidate is established by this retained producer.",
+    "notTestLocationOnlyRejection": true,
+    "notMeasuredNoGain": true,
+    "noClaimHashSetIsSlower": true,
+    "noCandidateImplemented": true,
+    "parentAcceptanceRetirementFinalizationRequired": true,
+    "canonicalOuterStatusNotChanged": "pending"
+  },
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "DefaultRepository": "dotnet/aspnetcore",
+    "DefaultBranch": "main",
+    "freshObservation": "Saved complete gh repository metadata and git-ref response in roots 002 and 003; immutable commit object independently hashed in root 008",
+    "all15SelectedWholeBodiesHaveIdenticalRawBytesAcrossRoles": true,
+    "identityLimit": "Selected source identity does not establish full framework, factory, runtime, selected-binary, test-execution, or performance equivalence."
+  },
+  "retainedProducer": {
+    "configuration": "RoutingWebSite.StartupWithoutEndpointRouting.ConfigureRoutingServices",
+    "baseSetup": "Startup.ConfigureServices calls AddMvc(ConfigureMvcOptions), AddNewtonsoftJson, AddRazorPagesOptions, then virtual ConfigureRoutingServices",
+    "legacySetup": "Override disables endpoint routing and uses app.UseMvc; the helper is registered with ServiceDescriptor.Singleton<IActionDescriptorProvider>(the constructed instance)",
+    "outerRuleArrayLength": 2,
+    "rules": [
+      {
+        "controller": "EndpointRoutingController",
+        "actions": null,
+        "meaning": "Remove all matching controller descriptors; the || short circuit does not evaluate ActionName or Contains",
+        "declaredControllerActionMethods": ["Index", "ParameterTransformer", "Get"]
+      },
+      {
+        "controller": "PageRouteController",
+        "actions": ["AttributeRoute"],
+        "arrayProducer": "new[] { nameof(PageRouteController.AttributeRoute) }",
+        "membershipArrayLength": 1,
+        "declaredControllerActionMethods": ["ConventionalRoute", "AttributeRoute"]
+      }
+    ],
+    "configurationEvidence": "EVIDENCE-ANCHORS.json: legacy-options-and-retained-rules, real-service-setup, declared-two-page-actions, declared-endpoint-actions",
+    "directFilenameDiscoveryLimit": "Original exact helper/removal-type search and Default exact helper search each returned its definition plus this startup. Broader StartupWithoutEndpointRouting matches include other websites and are not counted as callers of this helper."
+  },
+  "descriptorProducerAndCardinality": {
+    "frameworkProducer": "ControllerActionDescriptorProvider.GetDescriptors populates ControllerFeature, calls ApplicationModelFactory.CreateApplicationModel, then ControllerActionDescriptorBuilder.Build",
+    "modelSource": "Selected DefaultApplicationModelProvider enumerates reflected methods, filters with IsAction, constructs ActionModel values and selectors",
+    "descriptorSource": "Selected builder delegates flattening to ApplicationModelFactory.Flatten and constructs ControllerActionDescriptor with ActionName from ActionModel and ControllerTypeInfo from ControllerModel",
+    "normalNamedActionBranch": "PageRouteController declares two non-Async public action methods; one is decorated with a single HttpGet template. No ActionName attribute is present on either selected method",
+    "membershipBound": "For each descriptor reaching the PageRoute rule, the supplied membership sequence has one element. At most one element-equality check is needed by normal array Contains; descriptors for the all-actions rule and unmatched controller types do not call Contains",
+    "exactTotalContextDescriptorCount": null,
+    "exactExecutedPageRouteDescriptorCount": null,
+    "unknownCountsReason": "ApplicationPartManager feature population, full application parts, DI/model-factory wiring and Flatten implementation were not all captured. No exact active descriptor/controller cardinality or route-expansion total is claimed",
+    "noLargeCollectionsOrRepeatedStartupAssumed": true,
+    "noIsolatedMembershipBenchmark": true
+  },
+  "frequencyAndLifetime": {
+    "collectionProviderSource": "DefaultActionDescriptorCollectionProvider caches ActionDescriptors, initializes under a lock, subscribes to change notifications, and calls providers during UpdateCollection",
+    "providerOrder": "Collection provider sorts ascending Order; framework controller producer is -1000 and remover is int.MaxValue. Reverse callbacks follow; remover OnProvidersExecuted is empty. Ties and all other providers are not exhaustively audited",
+    "notAnEstablishedPerRequestRebuild": true,
+    "initializationAndChangeCountsNotObserved": true,
+    "fixtureSource": "RoutingTestsBase.Initialize constructs a new MvcTestFixture, applies UseStartup<TStartup>, and creates a client; Dispose disposes Factory. MvcTestFixture configures Production and delegates host/server creation",
+    "fixtureFrequencyLimit": "This proves work declared for each invocation of the initialization hook, not actual runner invocation counts, actual host starts, or repeated startup as a workload",
+    "providerRuleLifetime": "Constructor retains the supplied array; the field is readonly but its array, entries and public rule properties are not immutable. The retained startup does not keep a separate rule/Actions variable or show later mutation",
+    "frameworkCollectionProviderDiLifetimeNotClosed": true
+  },
+  "contracts": {
+    "normalization": "Remover performs no text normalization. Default model uses ActionNameAttribute.Name when present, otherwise the method name with optional ordinal Async-suffix suppression. Neither applies a name change to the selected PageRoute methods; builder copies ActionName. Routing case-insensitivity must not be substituted for membership equality",
+    "equality": "Controller selection compares Type values, not controller-name strings. String-array Contains has no explicit comparer; the standard string default-equality contract is case-sensitive ordinal value equality, not culture-sensitive or ordinal-ignore-case matching. Runtime implementation was not executed or independently captured",
+    "nullAndEmpty": "Actions null means remove all. A non-null empty Actions array would match none. The retained non-null array has exactly one non-null nameof-produced string",
+    "duplicates": "Current rules use two different typeof values and the singleton action list cannot contain duplicate entries. General duplicate controller rules make SingleOrDefault throw rather than merge; duplicate action strings would not change the membership Boolean",
+    "getters": "ControllerToRemove.ControllerType and Actions are declared auto-properties. For a selected non-null Actions rule, the source reads Actions for the null test and again as the Contains receiver, then reads descriptor.ActionName as its argument. The all-actions branch short-circuits. Framework descriptor property definitions were not captured; no runtime getter-purity assertion is made",
+    "ordering": "ToList snapshots context.Results before removals. The helper traverses that snapshot in order, ignores non-ControllerActionDescriptor items, and calls context.Results.Remove(item) in that traversal order. A set of names would not itself preserve or replace this descriptor-removal protocol",
+    "exceptions": "There are no constructor guards in this helper. Null rule arrays, null entries, invalid contexts or duplicate controller matches could change failure behavior under a rewrite. These are general source/API-contract considerations, not observed failures of the valid retained registration",
+    "mutability": "Caching a derived set would need an explicit policy for the mutable retained array and rule properties. This source-only result does not propose or authorize that change",
+    "otherOperationsOutOfScope": "The ToList snapshot, SingleOrDefault rule scan and Results.Remove have distinct costs. They are not repackaged as an F242 Contains performance candidate"
+  },
+  "tests": {
+    "execution": "NOT RUN: explicit SOURCE ONLY scope forbids SDK activation, dotnet, restore/build/test and hosted execution",
+    "sourceDeclarations": [
+      {
+        "test": "RoutingTests.HasEndpointMatch",
+        "assertedBoundary": "HTTP /Routing/HasEndpointMatch returns OK and deserialized false; the class selects RoutingWebSite.StartupWithoutEndpointRouting"
+      },
+      {
+        "test": "RoutingTestsBase<TStartup>.ConventionalRoutedAction_RouteContainsPage_RouteNotMatched",
+        "assertedBoundary": "HTTP PageRoute/ConventionalRoute/pagevalue returns OK, PageRoute/ConventionalRoute action identity, and no page route value; inherited by RoutingTests"
+      },
+      {
+        "test": "RoutingTestsBase<TStartup>.CanRunMiddlewareAfterRouting",
+        "assertedBoundary": "HTTP /afterrouting returns OK and expected response text"
+      },
+      {
+        "test": "RoutingTestsBase<TStartup>.CanUseLinkGeneration_To_ConventionalActionWithPageParameter",
+        "assertedBoundary": "HTTP link generation produces /PageParameter/PageParameter?page=17"
+      }
+    ],
+    "noExecutedAssertionsOrRedGreenVerificationClaimed": true,
+    "faithfulBoundaryUsedInstead": "Whole immutable source of the actual retained registration, target controllers, framework producer components and real HTTP fixture/test declarations. No injected callbacks, fake descriptor workload or synthetic Contains loop was executed",
+    "directRemovalRegressionTestNotEstablished": true
+  },
+  "history": {
+    "targetLog": "roots\\007-target-history-default\\stdout.bin",
+    "websiteLog": "roots\\016-website-removal-history-default\\stdout.bin",
+    "targetLatestReturnedPathCommit": "c85baf8db0c72ae8e68643029d514b2e737c9fae",
+    "targetLatestReturnedAuthorDate": "2022-01-02T20:09:22+05:30",
+    "limits": "Bounded commit/message/path metadata only, max 12 records per query, no follow-rename traversal or historical body/diff capture. Commit subjects are not treated as proof of historical behavior or motivation"
+  },
+  "budgetsAndProvenance": {
+    "wholeLogicalGitFilesPerRole": 15,
+    "commonRepositoryGuidanceChargedPerRole": 3,
+    "rawWholeBodyBytesPerRole": 137709,
+    "commitObjectsAdditional": 2,
+    "directGitGhRootsUsedIncludingFailuresAndReservedNavigation": 18,
+    "directGitGhRootMaximum": 32,
+    "failedSourceRoots": 0,
+    "sourceBodyBudgetClosed": true,
+    "sourceEvidence": "SOURCE-VERIFICATION.json and inputs\\capture-*.json bind commit:path, mode, type, byte count, Git object ID, SHA256, exact saved stdin/stdout/stderr, and raw cat-file frame offsets",
+    "independentSavedGitFramingAndObjectHashReverification": true,
+    "noArchiveOrEolNormalization": true,
+    "orchestrationAccounting": "Policy/registration/campaign, early control navigation and loaded skill context are orchestration inputs rather than immutable product-role evidence. The loaded general scan workflow was not executed and supplies no behavior evidence"
+  },
+  "gapsAndFutureScope": {
+    "file": "FINITE-SOURCE-GAPS.json",
+    "additionalSourceReadOrExecutionAuthorizedNow": false,
+    "requiredForNarrowNoMaterialRecommendation": false,
+    "sourceOnlyRecommendationDoesNotCloseRuntimeOrFullGraphQualification": true
+  },
+  "terminalAndAuthority": {
+    "directSourceRoots": "18 actual exit-0 records and both pipe endings, no creation deadline expiration",
+    "observationLimit": "No exhaustive descendant census, universal descendant-closure proof, unrelated-process absence, selected runtime or dedicated-machine claim",
+    "reservedCheckout": "Only navigation and Git-object reads; starting and ending branch/HEAD matched the reserved pin. Working-tree content was never used as Default",
+    "outputRootOnly": "autoperf-parallelism\\finding-F242-282",
+    "sharedStateWrites": 0,
+    "publicationOrLedgerWrites": 0,
+    "testsBuildsMeasurementsCandidates": 0,
+    "finalSealerOwnExit": "Unknown while this report is written; actual outer tool receipt must be reported only after the final sealing tool returns"
+  }
+}

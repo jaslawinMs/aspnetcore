@@ -1,0 +1,114 @@
+{
+  "scope": "GO286 source-only inherited manager-factory dispatch and explicit selected-store lifetime",
+  "actualOwner": "cb6dfbf4-dd69-4c3e-b55f-d49f1820df2b",
+  "newWholeSourcePath": "src/Identity/Specification.Tests/src/UserManagerSpecificationTests.cs",
+  "newWholeSourceBytesPerRole": 83120,
+  "newWholeSourceSha256BothRoles": "10BC2D9F9ABA89EE9A15D74555C8113E4BC6EBEFB5653A473D5AF31B2CC25185",
+  "wholeSourceReviewBoundary": "Original whole body reviewed; the separately captured Default whole body has identical exact binary SHA256 and Git blob identity. No normalized text was substituted for either member.",
+  "inheritance": [
+    {
+      "source": "src/Identity/test/InMemory.Test/InMemoryStoreTest.cs",
+      "lines": [11, 25],
+      "evidenceStage": 268,
+      "relationship": "InMemoryStoreTest derives from IdentitySpecificationTestBase<PocoUser,PocoRole>; overrides CreateTestContext, AddUserStore and AddRoleStore."
+    },
+    {
+      "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+      "lines": [19, 33],
+      "evidenceStage": 268,
+      "relationship": "The two-argument IdentitySpecificationTestBase selects its three-argument string-key form, which derives from UserManagerSpecificationTestBase<TUser,TKey>."
+    },
+    {
+      "source": "src/Identity/Specification.Tests/src/UserManagerSpecificationTests.cs",
+      "lines": [18, 27],
+      "evidenceStage": 286,
+      "relationship": "The actual two-argument UserManagerSpecificationTestBase is defined here. Its separate one-argument string-key convenience form is not an extra factory layer in this target's inheritance chain."
+    }
+  ],
+  "ordinaryRoleFixtureDispatch": [
+    {
+      "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+      "lines": [566, 597],
+      "evidenceStage": 268,
+      "operation": "CanGetUsersInRole calls CreateTestContext once, CreateManager(context) once and CreateRoleManager(context) once. It supplies no service collections or configureServices callback."
+    },
+    {
+      "source": "src/Identity/test/InMemory.Test/InMemoryStoreTest.cs",
+      "lines": [13, 25],
+      "evidenceStage": 268,
+      "operation": "CreateTestContext constructs one fresh InMemoryStore<PocoUser,PocoRole>. The user-store and role-store overrides register the supplied same context object as their singleton instance, rather than constructing independent stores."
+    },
+    {
+      "source": "src/Identity/Specification.Tests/src/UserManagerSpecificationTests.cs",
+      "lines": [79, 92],
+      "evidenceStage": 286,
+      "operation": "Inherited CreateManager creates a ServiceCollection when omitted, preserves a non-null supplied context, dispatches virtual SetupIdentityServices, invokes the optional callback afterwards, builds a provider and requests UserManager<TUser>."
+    },
+    {
+      "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+      "lines": [40, 58],
+      "evidenceStage": 268,
+      "operation": "For InMemoryStoreTest the virtual call selects this override: AddIdentity<TUser,TRole> and default token providers, then AddUserStore and AddRoleStore using the passed context, followed by logging registrations."
+    },
+    {
+      "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+      "lines": [81, 93],
+      "evidenceStage": 268,
+      "operation": "CreateRoleManager independently creates its own omitted ServiceCollection, preserves the same supplied context, calls the same SetupIdentityServices override, builds another provider and requests RoleManager<TRole>."
+    }
+  ],
+  "setupBuilderDistinction": {
+    "baseDefaultDispatch": {
+      "source": "src/Identity/Specification.Tests/src/UserManagerSpecificationTests.cs",
+      "lines": [44, 70],
+      "evidenceStage": 286,
+      "observation": "The base SetupIdentityServices implementation forwards to virtual SetupBuilder. The base builder calls AddIdentityCore<TUser>, default token providers, AddUserStore and logging."
+    },
+    "identityOverride": {
+      "source": "src/Identity/Specification.Tests/src/IdentitySpecificationTestBase.cs",
+      "lines": [66, 73],
+      "evidenceStage": 268,
+      "observation": "Its SetupBuilder override explicitly calls base.SetupBuilder and then AddRoles<TRole>, AddRoleStore and role logging."
+    },
+    "ordinaryRoleFixture": "The ordinary CreateManager path selects IdentitySpecificationTestBase.SetupIdentityServices directly. It does NOT also execute the base SetupIdentityServices expression or either SetupBuilder body. Do not double-count these alternative setup paths.",
+    "otherConsumers": "Direct SetupBuilder consumers and other subclasses are not broadened into ordinary role/global-passkey traffic."
+  },
+  "lifetime": {
+    "sourceOwnedFixture": "CanGetUsersInRole in InMemoryStoreTest",
+    "contextCreationsPerShownInvocation": 1,
+    "userManagerFactoryCallsPerShownInvocation": 1,
+    "roleManagerFactoryCallsPerShownInvocation": 1,
+    "serviceCollectionsAndProviderBuildCallsPerShownInvocation": 2,
+    "sameExplicitStoreInstanceAcrossBothCompositions": true,
+    "whyShared": "Both separate compositions register the very same non-null context object supplied by the fixture. They are NOT one shared service provider, and their instance registrations are NOT the separate implementation-type registrations in ControllerTest.",
+    "backingData": [
+      {
+        "source": "src/Identity/test/InMemory.Test/InMemoryUserStore.cs",
+        "lines": [24, 31],
+        "evidenceStage": 268,
+        "observation": "_users is an instance dictionary and Users exposes its Values.AsQueryable()."
+      },
+      {
+        "source": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+        "lines": [71, 76],
+        "evidenceStage": 268,
+        "observation": "_roles is an instance dictionary and CreateAsync inserts into that instance."
+      }
+    ],
+    "defaultContextBehavior": "CreateManager without a context requests a fresh CreateTestContext; this target override constructs a fresh store. A non-null caller-supplied context is reused. Other caller-supplied collections/callbacks can change composition, so there is no all-callers invariant.",
+    "notClaimed": [
+      "A process-global data population merely because an instance is registered as singleton.",
+      "One manager or service provider reused across all tests.",
+      "Provider/store disposal, GC timing, runner scheduling or measured retained-resource lifetime.",
+      "Executed DI resolution, selected runtime concrete manager/store, selected SDK/CLR/testhost, or a passing test."
+    ]
+  },
+  "qualification": {
+    "inheritedNamedFactoryDispatchAndExplicitInstanceLifetimeEstablishedAtSource": true,
+    "actualDiRegistrationExtensionBodiesOpenedIn286": false,
+    "effectiveDiConstructionOrRuntimeSelectionExecuted": false,
+    "normalCompleteGlobalPasskeyScenarioEstablished": false,
+    "materialCostEstablished": false,
+    "recursiveFurtherSourceAuthorized": false
+  }
+}

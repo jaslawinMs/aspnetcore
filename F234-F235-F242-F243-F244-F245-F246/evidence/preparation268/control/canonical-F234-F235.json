@@ -1,0 +1,56 @@
+[
+  {
+    "id": "F234",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 68,
+      "line_end": 68,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "GetUsersInRoleAsync scans each user's role list inside the outer user query.",
+      "explanation": "For every user considered by Users.Where, the predicate enumerates that user's Roles sequence to find the role ID. This is the card's nested sequential-search shape, retained as informational for the test in-memory store.",
+      "snippet": "Users.Where(u => (u.Roles.Where(x => x.RoleId == role.Id).Any())).Select(x => x).ToList()",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  },
+  {
+    "id": "F235",
+    "finding": {
+      "card_id": "linear-contains-inside-loop",
+      "file": "src/Identity/test/InMemory.Test/InMemoryStore.cs",
+      "line_start": 186,
+      "line_end": 186,
+      "project": "Microsoft.AspNetCore.Identity.InMemory.Test",
+      "target_frameworks": [
+        "net12.0"
+      ],
+      "severity": "informational",
+      "confidence": "high",
+      "classification": "informational",
+      "hot_path": "low",
+      "tfm_sensitive": false,
+      "summary": "FindByPasskeyIdAsync scans every user's passkeys inside the outer user search.",
+      "explanation": "Users.FirstOrDefault evaluates user.Passkeys.Any for each candidate user, producing nested sequential scans over users and passkeys. This is retained as informational because it is test-store code.",
+      "snippet": "Users.FirstOrDefault(u => u.Passkeys.Any(p => p.CredentialId.SequenceEqual(credentialId)))",
+      "suppressed": false
+    },
+    "status": "pending",
+    "notes": [],
+    "branch": null,
+    "pr_url": null,
+    "updated_at": null
+  }
+]

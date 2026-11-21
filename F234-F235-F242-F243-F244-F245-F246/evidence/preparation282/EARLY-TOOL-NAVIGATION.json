@@ -1,0 +1,27 @@
+{
+  "purpose": "Disclose orchestration-only context outside saved Git source roots; do not reconstruct or replay its outputs",
+  "loadedSkill": {
+    "tool": "functions.skill",
+    "name": "common-anti-pattern-scan",
+    "suppliesProductBehaviorEvidence": false,
+    "workflowExecution": "Not run. Python, SDK/card acquisition, scan broadening, telemetry and publication conflict with explicit SOURCE ONLY scope"
+  },
+  "bootstrapFilenameMetadata": {
+    "tool": "functions.powershell",
+    "shellId": "4711",
+    "actualExitCodeAfterReturn": 0,
+    "command": "$par = 'C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism'; Get-ChildItem -LiteralPath $par -File | Where-Object { $_.Name -match 'policy|lease|ledger|owner|queue|hold|quiesc|pending|282' } | Select-Object Name, Length, LastWriteTimeUtc | ConvertTo-Json -Depth 4",
+    "scope": "Read-only PAR leaf filename/length/time metadata, no repository source discovery",
+    "rawToolOutputLocation": "Conversation tool record only; not claimed as a byte-captured artifact or Git source provenance"
+  },
+  "earlyReadOnlyControlViews": [
+    "autoperf-parallelism\\policy.json",
+    "autoperf-parallelism\\owner-registrations-282-283.json",
+    "autoperf-parallelism\\Register-Owners-282-283.mjs"
+  ],
+  "controlHelperExecuted": false,
+  "controlViewPurpose": "Locate actual guard schema, lease path and campaign path before first source root. Whole current policy/registration/campaign bytes are independently saved with every source-root guard",
+  "sourceToolNavigation": "Subsequent view/rg operations referenced selected captured whole raw source files only. Their conversation presentation is not substituted for the saved raw Git inputs",
+  "unrelatedCodeIntelligenceNotUsed": "Configured Bluebird msazure/One is unrelated; reserved-checkout C# LSP is not evidence for either immutable source role",
+  "noFailedHelpersOrOutputsDeletedOrReplayed": true
+}

@@ -1,0 +1,728 @@
+8a6fcccc1101e5b045493f51319b33371977a7fb blob 3487
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace RoutingWebSite;
+
+public class StartupWithoutEndpointRouting : Startup
+{
+    public override void Configure(IApplicationBuilder app)
+    {
+        app.UseMvc(routes =>
+        {
+            routes.MapRoute(
+                "NonParameterConstraintRoute",
+                "NonParameterConstraintRoute/{controller}/{action}",
+                defaults: null,
+                constraints: new { controller = "NonParameterConstraint", nonParameter = new QueryStringConstraint() });
+
+            routes.MapRoute(
+                "DataTokensRoute",
+                "DataTokensRoute/{controller}/{action}",
+                defaults: null,
+                constraints: new { controller = "DataTokens" },
+                dataTokens: new { hasDataTokens = true });
+
+            routes.MapRoute(
+                "DefaultValuesRoute_OptionalParameter",
+                "DefaultValuesRoute/Optional/{controller=DEFAULTVALUES}/{action=OPTIONALPARAMETER}/{id?}/{**catchAll}",
+                defaults: null,
+                constraints: new { controller = "DefaultValues", action = "OptionalParameter" });
+
+            routes.MapRoute(
+                "DefaultValuesRoute_DefaultParameter",
+                "DefaultValuesRoute/Default/{controller=DEFAULTVALUES}/{action=DEFAULTPARAMETER}/{id=17}/{**catchAll}",
+                defaults: null,
+                constraints: new { controller = "DefaultValues", action = "DefaultParameter" });
+
+            routes.MapAreaRoute(
+                "flightRoute",
+                "adminRoute",
+                "{area:exists}/{controller}/{action}",
+                defaults: new { controller = "Home", action = "Index" },
+                constraints: new { area = "Travel" });
+
+            routes.MapRoute(
+                "ActionAsMethod",
+                "{controller}/{action}",
+                defaults: new { controller = "Home", action = "Index" });
+
+            routes.MapRoute(
+                "RouteWithOptionalSegment",
+                "{controller}/{action}/{path?}");
+        });
+
+        app.Map("/afterrouting", b => b.Run(c =>
+        {
+            return c.Response.WriteAsync("Hello from middleware after routing");
+        }));
+    }
+
+    // Do not call base implementations of these methods. Those are specific to endpoint routing.
+    protected override void ConfigureMvcOptions(MvcOptions options)
+    {
+        options.EnableEndpointRouting = false;
+    }
+
+    protected override void ConfigureRoutingServices(IServiceCollection services)
+    {
+        // EndpointRoutingController is not compatible with old routing
+        // Remove its action to avoid errors
+        var actionDescriptorProvider = new RemoveControllerActionDescriptorProvider(
+            new ControllerToRemove
+            {
+                ControllerType = typeof(EndpointRoutingController),
+                Actions = null, // remove all
+            },
+            new ControllerToRemove
+            {
+                ControllerType = typeof(PageRouteController),
+                Actions = new[] { nameof(PageRouteController.AttributeRoute) }
+            });
+
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IActionDescriptorProvider>(actionDescriptorProvider));
+    }
+}
+
+1559d121efae02bb59f6aa7cc14ee8dac5e1ea08 blob 3147
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+internal sealed class ControllerActionDescriptorProvider : IActionDescriptorProvider
+{
+    private readonly ApplicationPartManager _partManager;
+    private readonly ApplicationModelFactory _applicationModelFactory;
+
+    public ControllerActionDescriptorProvider(
+        ApplicationPartManager partManager,
+        ApplicationModelFactory applicationModelFactory)
+    {
+        ArgumentNullException.ThrowIfNull(partManager);
+        ArgumentNullException.ThrowIfNull(applicationModelFactory);
+
+        _partManager = partManager;
+        _applicationModelFactory = applicationModelFactory;
+    }
+
+    public int Order => -1000;
+
+    /// <inheritdoc />
+    public void OnProvidersExecuting(ActionDescriptorProviderContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        foreach (var descriptor in GetDescriptors())
+        {
+            context.Results.Add(descriptor);
+        }
+    }
+
+    /// <inheritdoc />
+    public void OnProvidersExecuted(ActionDescriptorProviderContext context)
+    {
+        // After all of the providers have run, we need to provide a 'null' for each all of route values that
+        // participate in action selection.
+        //
+        // This is important for scenarios like Razor Pages, that use the 'page' route value. An action that
+        // uses 'page' shouldn't match when 'action' is set, and an action that uses 'action' shouldn't match when
+        // 'page is specified.
+        //
+        // Or for another example, consider areas. A controller that's not in an area needs a 'null' value for
+        // area so it can't match when the route produces an 'area' value.
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < context.Results.Count; i++)
+        {
+            var action = context.Results[i];
+            foreach (var key in action.RouteValues.Keys)
+            {
+                keys.Add(key);
+            }
+        }
+
+        for (var i = 0; i < context.Results.Count; i++)
+        {
+            var action = context.Results[i];
+            foreach (var key in keys)
+            {
+                if (!action.RouteValues.ContainsKey(key))
+                {
+                    action.RouteValues.Add(key, null);
+                }
+            }
+        }
+    }
+
+    internal IEnumerable<ControllerActionDescriptor> GetDescriptors()
+    {
+        var controllerTypes = GetControllerTypes();
+        var application = _applicationModelFactory.CreateApplicationModel(controllerTypes);
+        return ControllerActionDescriptorBuilder.Build(application);
+    }
+
+    private IEnumerable<TypeInfo> GetControllerTypes()
+    {
+        var feature = new ControllerFeature();
+        _partManager.PopulateFeature(feature);
+
+        return feature.Controllers;
+    }
+}
+
+de898296646a030c315abbe21e9a6df88ba3b93c blob 6838
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable enable
+
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
+
+namespace Microsoft.AspNetCore.Mvc.Infrastructure;
+
+internal sealed partial class DefaultActionDescriptorCollectionProvider : ActionDescriptorCollectionProvider
+{
+    private readonly IActionDescriptorProvider[] _actionDescriptorProviders;
+    private readonly IActionDescriptorChangeProvider[] _actionDescriptorChangeProviders;
+    private readonly ILogger _logger;
+
+    // The lock is used to protect WRITES to the following (do not need to protect reads once initialized).
+    private readonly object _lock;
+    private ActionDescriptorCollection? _collection;
+    private IChangeToken? _changeToken;
+    private CancellationTokenSource? _cancellationTokenSource;
+    private int _version;
+
+    public DefaultActionDescriptorCollectionProvider(
+        IEnumerable<IActionDescriptorProvider> actionDescriptorProviders,
+        IEnumerable<IActionDescriptorChangeProvider> actionDescriptorChangeProviders,
+        ILogger<DefaultActionDescriptorCollectionProvider> logger)
+    {
+        _actionDescriptorProviders = actionDescriptorProviders
+            .OrderBy(p => p.Order)
+            .ToArray();
+
+        _actionDescriptorChangeProviders = actionDescriptorChangeProviders.ToArray();
+
+        _lock = new object();
+
+        _logger = logger;
+
+        // IMPORTANT: this needs to be the last thing we do in the constructor. Change notifications can happen immediately!
+        ChangeToken.OnChange(
+            GetCompositeChangeToken,
+            UpdateCollection);
+    }
+
+    /// <summary>
+    /// Returns a cached collection of <see cref="ActionDescriptor" />.
+    /// </summary>
+    public override ActionDescriptorCollection ActionDescriptors
+    {
+        get
+        {
+            Initialize();
+            Debug.Assert(_collection != null);
+            Debug.Assert(_changeToken != null);
+
+            return _collection;
+        }
+    }
+
+    /// <summary>
+    /// Gets an <see cref="IChangeToken"/> that will be signaled after the <see cref="ActionDescriptors"/>
+    /// collection has changed.
+    /// </summary>
+    /// <returns>The <see cref="IChangeToken"/>.</returns>
+    public override IChangeToken GetChangeToken()
+    {
+        Initialize();
+        Debug.Assert(_collection != null);
+        Debug.Assert(_changeToken != null);
+
+        return _changeToken;
+    }
+
+    private IChangeToken GetCompositeChangeToken()
+    {
+        if (_actionDescriptorChangeProviders.Length == 1)
+        {
+            return _actionDescriptorChangeProviders[0].GetChangeToken();
+        }
+
+        var changeTokens = new IChangeToken[_actionDescriptorChangeProviders.Length];
+        for (var i = 0; i < _actionDescriptorChangeProviders.Length; i++)
+        {
+            changeTokens[i] = _actionDescriptorChangeProviders[i].GetChangeToken();
+        }
+
+        return new CompositeChangeToken(changeTokens);
+    }
+
+    private void Initialize()
+    {
+        // Using double-checked locking on initialization because we fire change token callbacks
+        // when the collection changes. We don't want to do that repeatedly for redundant changes.
+        //
+        // The main call path of this code on the first call is async initialization from Endpoint Routing
+        // which is done in a non-blocking way so in practice no caller will ever block here.
+        if (_collection == null)
+        {
+            lock (_lock)
+            {
+                if (_collection == null)
+                {
+                    UpdateCollection();
+                }
+            }
+        }
+    }
+
+    private void UpdateCollection()
+    {
+        // Using the lock to initialize writes means that we serialize changes. This eliminates
+        // the potential for changes to be processed out of order - the risk is that newer data
+        // could be overwritten by older data.
+        lock (_lock)
+        {
+            var context = new ActionDescriptorProviderContext();
+
+            for (var i = 0; i < _actionDescriptorProviders.Length; i++)
+            {
+                _actionDescriptorProviders[i].OnProvidersExecuting(context);
+            }
+
+            for (var i = _actionDescriptorProviders.Length - 1; i >= 0; i--)
+            {
+                _actionDescriptorProviders[i].OnProvidersExecuted(context);
+            }
+
+            if (context.Results.Count == 0)
+            {
+                // Emit a log message if after all providers still no action
+                // descriptors detected in the context.
+                Log.NoActionDescriptors(_logger);
+            }
+
+            // The sequence for an update is important because we don't want anyone to obtain
+            // the new change token but the old action descriptor collection.
+            // 1. Obtain the old cancellation token source (don't trigger it yet)
+            // 2. Set the new action descriptor collection
+            // 3. Set the new change token
+            // 4. Trigger the old cancellation token source
+            //
+            // Consumers who poll will observe a new action descriptor collection at step 2 - they will see
+            // the new collection and ignore the change token.
+            //
+            // Consumers who listen to the change token will re-query at step 4 - they will see the new collection
+            // and new change token.
+            //
+            // Anyone who acquires the collection and change token between steps 2 and 3 will be notified of
+            // a no-op change at step 4.
+
+            // Step 1.
+            var oldCancellationTokenSource = _cancellationTokenSource;
+
+            // Step 2.
+            _collection = new ActionDescriptorCollection(
+                new ReadOnlyCollection<ActionDescriptor>(context.Results),
+                _version++);
+
+            // Step 3.
+            _cancellationTokenSource = new CancellationTokenSource();
+            _changeToken = new CancellationChangeToken(_cancellationTokenSource.Token);
+
+            // Step 4 - might be null if it's the first time.
+            oldCancellationTokenSource?.Cancel();
+        }
+    }
+
+    public static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 1,
+            EventName = "NoActionDescriptors",
+            Level = LogLevel.Information,
+            Message = "No action descriptors found. This may indicate an incorrectly configured application or missing application parts. To learn more, visit https://aka.ms/aspnet/mvc/app-parts")]
+        public static partial void NoActionDescriptors(ILogger logger);
+    }
+}
+
+8a6fcccc1101e5b045493f51319b33371977a7fb blob 3487
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace RoutingWebSite;
+
+public class StartupWithoutEndpointRouting : Startup
+{
+    public override void Configure(IApplicationBuilder app)
+    {
+        app.UseMvc(routes =>
+        {
+            routes.MapRoute(
+                "NonParameterConstraintRoute",
+                "NonParameterConstraintRoute/{controller}/{action}",
+                defaults: null,
+                constraints: new { controller = "NonParameterConstraint", nonParameter = new QueryStringConstraint() });
+
+            routes.MapRoute(
+                "DataTokensRoute",
+                "DataTokensRoute/{controller}/{action}",
+                defaults: null,
+                constraints: new { controller = "DataTokens" },
+                dataTokens: new { hasDataTokens = true });
+
+            routes.MapRoute(
+                "DefaultValuesRoute_OptionalParameter",
+                "DefaultValuesRoute/Optional/{controller=DEFAULTVALUES}/{action=OPTIONALPARAMETER}/{id?}/{**catchAll}",
+                defaults: null,
+                constraints: new { controller = "DefaultValues", action = "OptionalParameter" });
+
+            routes.MapRoute(
+                "DefaultValuesRoute_DefaultParameter",
+                "DefaultValuesRoute/Default/{controller=DEFAULTVALUES}/{action=DEFAULTPARAMETER}/{id=17}/{**catchAll}",
+                defaults: null,
+                constraints: new { controller = "DefaultValues", action = "DefaultParameter" });
+
+            routes.MapAreaRoute(
+                "flightRoute",
+                "adminRoute",
+                "{area:exists}/{controller}/{action}",
+                defaults: new { controller = "Home", action = "Index" },
+                constraints: new { area = "Travel" });
+
+            routes.MapRoute(
+                "ActionAsMethod",
+                "{controller}/{action}",
+                defaults: new { controller = "Home", action = "Index" });
+
+            routes.MapRoute(
+                "RouteWithOptionalSegment",
+                "{controller}/{action}/{path?}");
+        });
+
+        app.Map("/afterrouting", b => b.Run(c =>
+        {
+            return c.Response.WriteAsync("Hello from middleware after routing");
+        }));
+    }
+
+    // Do not call base implementations of these methods. Those are specific to endpoint routing.
+    protected override void ConfigureMvcOptions(MvcOptions options)
+    {
+        options.EnableEndpointRouting = false;
+    }
+
+    protected override void ConfigureRoutingServices(IServiceCollection services)
+    {
+        // EndpointRoutingController is not compatible with old routing
+        // Remove its action to avoid errors
+        var actionDescriptorProvider = new RemoveControllerActionDescriptorProvider(
+            new ControllerToRemove
+            {
+                ControllerType = typeof(EndpointRoutingController),
+                Actions = null, // remove all
+            },
+            new ControllerToRemove
+            {
+                ControllerType = typeof(PageRouteController),
+                Actions = new[] { nameof(PageRouteController.AttributeRoute) }
+            });
+
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IActionDescriptorProvider>(actionDescriptorProvider));
+    }
+}
+
+1559d121efae02bb59f6aa7cc14ee8dac5e1ea08 blob 3147
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+
+namespace Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+internal sealed class ControllerActionDescriptorProvider : IActionDescriptorProvider
+{
+    private readonly ApplicationPartManager _partManager;
+    private readonly ApplicationModelFactory _applicationModelFactory;
+
+    public ControllerActionDescriptorProvider(
+        ApplicationPartManager partManager,
+        ApplicationModelFactory applicationModelFactory)
+    {
+        ArgumentNullException.ThrowIfNull(partManager);
+        ArgumentNullException.ThrowIfNull(applicationModelFactory);
+
+        _partManager = partManager;
+        _applicationModelFactory = applicationModelFactory;
+    }
+
+    public int Order => -1000;
+
+    /// <inheritdoc />
+    public void OnProvidersExecuting(ActionDescriptorProviderContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        foreach (var descriptor in GetDescriptors())
+        {
+            context.Results.Add(descriptor);
+        }
+    }
+
+    /// <inheritdoc />
+    public void OnProvidersExecuted(ActionDescriptorProviderContext context)
+    {
+        // After all of the providers have run, we need to provide a 'null' for each all of route values that
+        // participate in action selection.
+        //
+        // This is important for scenarios like Razor Pages, that use the 'page' route value. An action that
+        // uses 'page' shouldn't match when 'action' is set, and an action that uses 'action' shouldn't match when
+        // 'page is specified.
+        //
+        // Or for another example, consider areas. A controller that's not in an area needs a 'null' value for
+        // area so it can't match when the route produces an 'area' value.
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < context.Results.Count; i++)
+        {
+            var action = context.Results[i];
+            foreach (var key in action.RouteValues.Keys)
+            {
+                keys.Add(key);
+            }
+        }
+
+        for (var i = 0; i < context.Results.Count; i++)
+        {
+            var action = context.Results[i];
+            foreach (var key in keys)
+            {
+                if (!action.RouteValues.ContainsKey(key))
+                {
+                    action.RouteValues.Add(key, null);
+                }
+            }
+        }
+    }
+
+    internal IEnumerable<ControllerActionDescriptor> GetDescriptors()
+    {
+        var controllerTypes = GetControllerTypes();
+        var application = _applicationModelFactory.CreateApplicationModel(controllerTypes);
+        return ControllerActionDescriptorBuilder.Build(application);
+    }
+
+    private IEnumerable<TypeInfo> GetControllerTypes()
+    {
+        var feature = new ControllerFeature();
+        _partManager.PopulateFeature(feature);
+
+        return feature.Controllers;
+    }
+}
+
+de898296646a030c315abbe21e9a6df88ba3b93c blob 6838
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable enable
+
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
+
+namespace Microsoft.AspNetCore.Mvc.Infrastructure;
+
+internal sealed partial class DefaultActionDescriptorCollectionProvider : ActionDescriptorCollectionProvider
+{
+    private readonly IActionDescriptorProvider[] _actionDescriptorProviders;
+    private readonly IActionDescriptorChangeProvider[] _actionDescriptorChangeProviders;
+    private readonly ILogger _logger;
+
+    // The lock is used to protect WRITES to the following (do not need to protect reads once initialized).
+    private readonly object _lock;
+    private ActionDescriptorCollection? _collection;
+    private IChangeToken? _changeToken;
+    private CancellationTokenSource? _cancellationTokenSource;
+    private int _version;
+
+    public DefaultActionDescriptorCollectionProvider(
+        IEnumerable<IActionDescriptorProvider> actionDescriptorProviders,
+        IEnumerable<IActionDescriptorChangeProvider> actionDescriptorChangeProviders,
+        ILogger<DefaultActionDescriptorCollectionProvider> logger)
+    {
+        _actionDescriptorProviders = actionDescriptorProviders
+            .OrderBy(p => p.Order)
+            .ToArray();
+
+        _actionDescriptorChangeProviders = actionDescriptorChangeProviders.ToArray();
+
+        _lock = new object();
+
+        _logger = logger;
+
+        // IMPORTANT: this needs to be the last thing we do in the constructor. Change notifications can happen immediately!
+        ChangeToken.OnChange(
+            GetCompositeChangeToken,
+            UpdateCollection);
+    }
+
+    /// <summary>
+    /// Returns a cached collection of <see cref="ActionDescriptor" />.
+    /// </summary>
+    public override ActionDescriptorCollection ActionDescriptors
+    {
+        get
+        {
+            Initialize();
+            Debug.Assert(_collection != null);
+            Debug.Assert(_changeToken != null);
+
+            return _collection;
+        }
+    }
+
+    /// <summary>
+    /// Gets an <see cref="IChangeToken"/> that will be signaled after the <see cref="ActionDescriptors"/>
+    /// collection has changed.
+    /// </summary>
+    /// <returns>The <see cref="IChangeToken"/>.</returns>
+    public override IChangeToken GetChangeToken()
+    {
+        Initialize();
+        Debug.Assert(_collection != null);
+        Debug.Assert(_changeToken != null);
+
+        return _changeToken;
+    }
+
+    private IChangeToken GetCompositeChangeToken()
+    {
+        if (_actionDescriptorChangeProviders.Length == 1)
+        {
+            return _actionDescriptorChangeProviders[0].GetChangeToken();
+        }
+
+        var changeTokens = new IChangeToken[_actionDescriptorChangeProviders.Length];
+        for (var i = 0; i < _actionDescriptorChangeProviders.Length; i++)
+        {
+            changeTokens[i] = _actionDescriptorChangeProviders[i].GetChangeToken();
+        }
+
+        return new CompositeChangeToken(changeTokens);
+    }
+
+    private void Initialize()
+    {
+        // Using double-checked locking on initialization because we fire change token callbacks
+        // when the collection changes. We don't want to do that repeatedly for redundant changes.
+        //
+        // The main call path of this code on the first call is async initialization from Endpoint Routing
+        // which is done in a non-blocking way so in practice no caller will ever block here.
+        if (_collection == null)
+        {
+            lock (_lock)
+            {
+                if (_collection == null)
+                {
+                    UpdateCollection();
+                }
+            }
+        }
+    }
+
+    private void UpdateCollection()
+    {
+        // Using the lock to initialize writes means that we serialize changes. This eliminates
+        // the potential for changes to be processed out of order - the risk is that newer data
+        // could be overwritten by older data.
+        lock (_lock)
+        {
+            var context = new ActionDescriptorProviderContext();
+
+            for (var i = 0; i < _actionDescriptorProviders.Length; i++)
+            {
+                _actionDescriptorProviders[i].OnProvidersExecuting(context);
+            }
+
+            for (var i = _actionDescriptorProviders.Length - 1; i >= 0; i--)
+            {
+                _actionDescriptorProviders[i].OnProvidersExecuted(context);
+            }
+
+            if (context.Results.Count == 0)
+            {
+                // Emit a log message if after all providers still no action
+                // descriptors detected in the context.
+                Log.NoActionDescriptors(_logger);
+            }
+
+            // The sequence for an update is important because we don't want anyone to obtain
+            // the new change token but the old action descriptor collection.
+            // 1. Obtain the old cancellation token source (don't trigger it yet)
+            // 2. Set the new action descriptor collection
+            // 3. Set the new change token
+            // 4. Trigger the old cancellation token source
+            //
+            // Consumers who poll will observe a new action descriptor collection at step 2 - they will see
+            // the new collection and ignore the change token.
+            //
+            // Consumers who listen to the change token will re-query at step 4 - they will see the new collection
+            // and new change token.
+            //
+            // Anyone who acquires the collection and change token between steps 2 and 3 will be notified of
+            // a no-op change at step 4.
+
+            // Step 1.
+            var oldCancellationTokenSource = _cancellationTokenSource;
+
+            // Step 2.
+            _collection = new ActionDescriptorCollection(
+                new ReadOnlyCollection<ActionDescriptor>(context.Results),
+                _version++);
+
+            // Step 3.
+            _cancellationTokenSource = new CancellationTokenSource();
+            _changeToken = new CancellationChangeToken(_cancellationTokenSource.Token);
+
+            // Step 4 - might be null if it's the first time.
+            oldCancellationTokenSource?.Cancel();
+        }
+    }
+
+    public static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 1,
+            EventName = "NoActionDescriptors",
+            Level = LogLevel.Information,
+            Message = "No action descriptors found. This may indicate an incorrectly configured application or missing application parts. To learn more, visit https://aka.ms/aspnet/mvc/app-parts")]
+        public static partial void NoActionDescriptors(ILogger logger);
+    }
+}
+
