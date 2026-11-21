@@ -1,0 +1,42 @@
+{
+  "findings": ["F222", "F223", "F224"],
+  "decision": "BOUNDED_SOURCE_MATERIALITY_UNESTABLISHED_NO_CANDIDATE",
+  "proposedStatuses": {"F222": "rejected", "F223": "rejected", "F224": "rejected"},
+  "observedBoundary": "Exact immutable source producers, callers, test declarations, history, modes and byte identities. No executing test, selected framework/assertion binary, allocation or performance observation.",
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "reservedCheckout": "Navigation and Git object storage only, not Default"
+  },
+  "F222": {
+    "pattern": "Generic private callback comparer hashes obj.ToString(); actual instances compare XNode and XAttribute.",
+    "producer": "Store_Then_Get constructs three simple element1 elements, stores clones in real EphemeralXmlRepository and compares array expectations against read-only lists of fresh deep copies at lengths two and three.",
+    "dispatchWitness": "Declared xUnit 2.9.2 release's Asserts submodule is cac8b688c193c0f244a0bedf3bb60feeb32d377a. CollectionAsserts.Equal(IEnumerable<T>,IEnumerable<T>,IEqualityComparer<T>) builds a typed adapter; EqualityAsserts/AssertEqualityComparer select collection tracking; the actual array/read-only-list shape reaches element Equals, not the both-ISet custom-comparer hash-set branch. This is a source contract, not selected-binary execution.",
+    "materiality": "No material large XML hashing producer was established. The two located direct comparer uses are this small linear-container Fact; the local core also uses ordered SequenceEqual. Do not invent a hash-set/large-node/repetition workload or assert GetHashCode can never be invoked by any consumer.",
+    "contracts": "Preserve semantic node equality, filtered comments/xmlns, sorted attributes, duplicate/order behavior, failure diagnostics and comparator/hash behavior. No unrelated equality/hash correctness change.",
+    "existingTestNotRun": "Microsoft.AspNetCore.DataProtection.Repositories.EphemeralXmlRepositoryTests.Store_Then_Get"
+  },
+  "F223": {
+    "pattern": "Each non-error compiler/analyzer diagnostic evaluates SupportedDiagnostics.Any with exact string Id equality; errors short-circuit the getter.",
+    "producer": "Real InternalUsageAnalyzer registers operation/symbol analysis and reports diagnostics. Component BL0006 is an enabled warning. Both component analyzer copies call ImmutableArray.Create(one descriptor) per getter, whereas RouteHandlerAnalyzer retains an eight-descriptor initialized property. The scan's universal retained-array explanation was too broad.",
+    "cardinality": "Existing component declaration/body Facts each supply one source document and assert six/five retained diagnostics. These counts do not bound all incoming compiler diagnostics or all analyzers. Two actual route-handler Facts each supply two source documents and assert one retained diagnostic.",
+    "materiality": "Repeated membership and per-get factory work are genuine source costs. Actual total incoming non-error count, getter allocations and whole-compilation/test contribution were not measured; no material candidate was justified by large artificial descriptor/diagnostic sets.",
+    "contracts": "Preserve ordinal Id equality, error short circuit, supported-getter observation/exception timing, compiler/analyzer distinction, additional diagnostics and output order. Test asset netstandard2.0 and public/protected helpers do not establish closed-world consumers or universal small sizes."
+  },
+  "F224": {
+    "pattern": "Each retained source diagnostic scans all documents from all supplied projects, awaits each syntax-tree request and appends once per matching tree without breaking.",
+    "producer": "Component runner wraps one source; Framework runner passes each two-source test through DiagnosticProject.Create and adds metadata references, not source documents. DiagnosticProject caches reference-only base Solutions by assembly and adds one Document per source string. This is real project/diagnostic production, not injected diagnostic events.",
+    "materiality": "Repeated document enumeration/awaited tree requests are real. Source does not prove every request reparses or performs I/O. Supplied one-/two-document test declarations do not establish a material whole-test gain or a universal document bound.",
+    "contracts": "Preserve document-match multiplicity and project/document order, final SourceSpan.Start stable ordering, None/metadata shortcut, deferred project enumeration and exception timing. Do not silently add break/unique-tree assumptions, cache globally, or change the unrelated string-overload getAllDiagnostics forwarding."
+  },
+  "existingAnalyzerTestsNotRun": [
+    "ComponentInternalUsageDiagnosticsAnalyzerTest.InternalUsage_FindsUseOfInternalTypesInDeclarations",
+    "ComponentInternalUsageDiagnosticsAnalyzerTest.InternalUsage_FindsUseOfInternalTypesInMethodBody",
+    "DisallowReturningActionResultsFromMapMethodsTest.MinimalAction_ReturningActionResultOfTFromANonLocalFunction_ProducesDiagnostics",
+    "DisallowReturningActionResultsFromMapMethodsTest.MinimalAction_ReturningActionResultOfTDeclarationInDifferentFile_ProducesDiagnostics"
+  ],
+  "unrunReason": "Explicit source-only scope; no candidate or selected unchanged Original/Default product-test graph was authorized in this preparation. Source assertions are not passing product tests or red/green evidence.",
+  "distinctOutcomes": "F223 descriptor filtering and F224 document attribution have different producers and contracts despite sharing a file/card. F222 targets XML serialization-for-hash, not either membership scan. No duplicate-by-file classification.",
+  "runtimeTestsCandidateComparisonsStarted": 0,
+  "publicationNotSelfAttested": true
+}

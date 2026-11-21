@@ -1,0 +1,435 @@
+commit fa8126f62f64eaf37292ff1e334ace99bc757bcf
+Author:     Jiri Cincura ↹ <jiri@cincura.net>
+AuthorDate: Thu Jul 2 12:29:48 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Jul 2 10:29:48 2026 +0000
+
+    Fix typos in code. (#67428)
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+index 4f08f727c2..685946e318 100644
+--- a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Analyzer.Testing;
+ 
+ /// <summary>
+ /// Base type for executing a <see cref="DiagnosticAnalyzer" />. Derived types implemented in the test assembly will
+-/// correctly resolve reference assemblies required for compilaiton.
++/// correctly resolve reference assemblies required for compilation.
+ /// </summary>
+ public abstract class DiagnosticAnalyzerRunner
+ {
+
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+index 315fd7ad9e..4f08f727c2 100644
+--- a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -9,113 +9,112 @@ using Microsoft.CodeAnalysis;
+ using Microsoft.CodeAnalysis.Diagnostics;
+ using Xunit;
+ 
+-namespace Microsoft.AspNetCore.Analyzer.Testing
++namespace Microsoft.AspNetCore.Analyzer.Testing;
++
++/// <summary>
++/// Base type for executing a <see cref="DiagnosticAnalyzer" />. Derived types implemented in the test assembly will
++/// correctly resolve reference assemblies required for compilaiton.
++/// </summary>
++public abstract class DiagnosticAnalyzerRunner
+ {
+     /// <summary>
+-    /// Base type for executing a <see cref="DiagnosticAnalyzer" />. Derived types implemented in the test assembly will
+-    /// correctly resolve reference assemblies required for compilaiton.
++    /// Given classes in the form of strings, and an DiagnosticAnalyzer to apply to it, return the diagnostics found in the string after converting it to a document.
+     /// </summary>
+-    public abstract class DiagnosticAnalyzerRunner
++    /// <param name="sources">Classes in the form of strings</param>
++    /// <param name="analyzer">The analyzer to be run on the sources</param>
++    /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
++    /// <param name="getAllDiagnostics">
++    /// When <c>true</c>, returns all diagnostics including compilation errors.
++    /// Otherwise; only returns analyzer diagnostics.
++    /// </param>
++    /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
++    protected Task<Diagnostic[]> GetDiagnosticsAsync(
++        string[] sources,
++        DiagnosticAnalyzer analyzer,
++        string[] additionalEnabledDiagnostics,
++        bool getAllDiagnostics = true)
+     {
+-        /// <summary>
+-        /// Given classes in the form of strings, and an DiagnosticAnalyzer to apply to it, return the diagnostics found in the string after converting it to a document.
+-        /// </summary>
+-        /// <param name="sources">Classes in the form of strings</param>
+-        /// <param name="analyzer">The analyzer to be run on the sources</param>
+-        /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
+-        /// <param name="getAllDiagnostics">
+-        /// When <c>true</c>, returns all diagnostics including compilation errors.
+-        /// Otherwise; only returns analyzer diagnostics.
+-        /// </param>
+-        /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
+-        protected Task<Diagnostic[]> GetDiagnosticsAsync(
+-            string[] sources,
+-            DiagnosticAnalyzer analyzer,
+-            string[] additionalEnabledDiagnostics,
+-            bool getAllDiagnostics = true)
+-        {
+-            var project = DiagnosticProject.Create(GetType().Assembly, sources);
+-            return GetDiagnosticsAsync(new[] { project }, analyzer, additionalEnabledDiagnostics);
+-        }
++        var project = DiagnosticProject.Create(GetType().Assembly, sources);
++        return GetDiagnosticsAsync(new[] { project }, analyzer, additionalEnabledDiagnostics);
++    }
+ 
+-        /// <summary>
+-        /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
+-        /// The returned diagnostics are then ordered by location in the source document.
+-        /// </summary>
+-        /// <param name="projects">Projects that the analyzer will be run on</param>
+-        /// <param name="analyzer">The analyzer to run on the documents</param>
+-        /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
+-        /// <param name="getAllDiagnostics">
+-        /// When <c>true</c>, returns all diagnostics including compilation errors.
+-        /// Otherwise only returns analyzer diagnostics.
+-        /// </param>
+-        /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
+-        protected async Task<Diagnostic[]> GetDiagnosticsAsync(
+-            IEnumerable<Project> projects,
+-            DiagnosticAnalyzer analyzer,
+-            string[] additionalEnabledDiagnostics,
+-            bool getAllDiagnostics = true)
++    /// <summary>
++    /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
++    /// The returned diagnostics are then ordered by location in the source document.
++    /// </summary>
++    /// <param name="projects">Projects that the analyzer will be run on</param>
++    /// <param name="analyzer">The analyzer to run on the documents</param>
++    /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
++    /// <param name="getAllDiagnostics">
++    /// When <c>true</c>, returns all diagnostics including compilation errors.
++    /// Otherwise only returns analyzer diagnostics.
++    /// </param>
++    /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
++    protected async Task<Diagnostic[]> GetDiagnosticsAsync(
++        IEnumerable<Project> projects,
++        DiagnosticAnalyzer analyzer,
++        string[] additionalEnabledDiagnostics,
++        bool getAllDiagnostics = true)
++    {
++        var diagnostics = new List<Diagnostic>();
++        foreach (var project in projects)
+         {
+-            var diagnostics = new List<Diagnostic>();
+-            foreach (var project in projects)
+-            {
+-                var compilation = await project.GetCompilationAsync();
++            var compilation = await project.GetCompilationAsync();
+ 
+-                // Enable any additional diagnostics
+-                var options = ConfigureCompilationOptions(compilation.Options);
+-                if (additionalEnabledDiagnostics.Length > 0)
+-                {
+-                    options = compilation.Options
+-                        .WithSpecificDiagnosticOptions(
+-                            additionalEnabledDiagnostics.ToDictionary(s => s, s => ReportDiagnostic.Info));
+-                }
++            // Enable any additional diagnostics
++            var options = ConfigureCompilationOptions(compilation.Options);
++            if (additionalEnabledDiagnostics.Length > 0)
++            {
++                options = compilation.Options
++                    .WithSpecificDiagnosticOptions(
++                        additionalEnabledDiagnostics.ToDictionary(s => s, s => ReportDiagnostic.Info));
++            }
+ 
+-                var compilationWithAnalyzers = compilation
+-                    .WithOptions(options)
+-                    .WithAnalyzers(ImmutableArray.Create(analyzer));
++            var compilationWithAnalyzers = compilation
++                .WithOptions(options)
++                .WithAnalyzers(ImmutableArray.Create(analyzer));
+ 
+-                if (getAllDiagnostics)
+-                {
+-                    var diags = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
++            if (getAllDiagnostics)
++            {
++                var diags = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
+ 
+-                    Assert.DoesNotContain(diags, d => d.Id == "AD0001");
++                Assert.DoesNotContain(diags, d => d.Id == "AD0001");
+ 
+-                    // Filter out non-error diagnostics not produced by our analyzer
+-                    // We want to KEEP errors because we might have written bad code. But sometimes we leave warnings in to make the
+-                    // test code more convenient
+-                    diags = diags.Where(d => d.Severity == DiagnosticSeverity.Error || analyzer.SupportedDiagnostics.Any(s => s.Id.Equals(d.Id))).ToImmutableArray();
++                // Filter out non-error diagnostics not produced by our analyzer
++                // We want to KEEP errors because we might have written bad code. But sometimes we leave warnings in to make the
++                // test code more convenient
++                diags = diags.Where(d => d.Severity == DiagnosticSeverity.Error || analyzer.SupportedDiagnostics.Any(s => s.Id.Equals(d.Id))).ToImmutableArray();
+ 
+-                    foreach (var diag in diags)
++                foreach (var diag in diags)
++                {
++                    if (diag.Location == Location.None || diag.Location.IsInMetadata)
+                     {
+-                        if (diag.Location == Location.None || diag.Location.IsInMetadata)
+-                        {
+-                            diagnostics.Add(diag);
+-                        }
+-                        else
++                        diagnostics.Add(diag);
++                    }
++                    else
++                    {
++                        foreach (var document in projects.SelectMany(p => p.Documents))
+                         {
+-                            foreach (var document in projects.SelectMany(p => p.Documents))
++                            var tree = await document.GetSyntaxTreeAsync();
++                            if (tree == diag.Location.SourceTree)
+                             {
+-                                var tree = await document.GetSyntaxTreeAsync();
+-                                if (tree == diag.Location.SourceTree)
+-                                {
+-                                    diagnostics.Add(diag);
+-                                }
++                                diagnostics.Add(diag);
+                             }
+                         }
+                     }
+                 }
+-                else
+-                {
+-                    diagnostics.AddRange(await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync());
+-                }
+             }
+-
+-            return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
++            else
++            {
++                diagnostics.AddRange(await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync());
++            }
+         }
+ 
+-        protected virtual CompilationOptions ConfigureCompilationOptions(CompilationOptions options)
+-        {
+-            return options.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+-        }
++        return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
++    }
++
++    protected virtual CompilationOptions ConfigureCompilationOptions(CompilationOptions options)
++    {
++        return options.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+     }
+ }
+
+commit 2d0b20b4b8ae77a2666826f75978f1973bbb82f4
+Author:     Kevin Pilch <kevinpi@microsoft.com>
+AuthorDate: Tue Jul 20 14:21:33 2021 -0700
+Commit:     Kevin Pilch <kevinpi@microsoft.com>
+CommitDate: Thu Jul 22 15:54:56 2021 -0700
+
+    Fix some licenses in non-standard places, or with extra lines
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+index bfc9406335..315fd7ad9e 100644
+--- a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -1,6 +1,5 @@
+ // Licensed to the .NET Foundation under one or more agreements.
+ // The .NET Foundation licenses this file to you under the MIT license.
+-// See the LICENSE file in the project root for more information.
+ 
+ using System.Collections.Generic;
+ using System.Collections.Immutable;
+
+commit 5c489400b9e446ebdddbc41b21278b741ada3042
+Author:     Sam Harwell <Sam.Harwell@microsoft.com>
+AuthorDate: Wed Feb 26 10:31:24 2020 -0800
+Commit:     Sam Harwell <Sam.Harwell@microsoft.com>
+CommitDate: Wed Feb 26 11:05:13 2020 -0800
+
+    Switch file headers to the MIT license
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+index 01f3699c09..bfc9406335 100644
+--- a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -1,5 +1,6 @@
+-// Copyright (c) .NET Foundation. All rights reserved.
+-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++// See the LICENSE file in the project root for more information.
+ 
+ using System.Collections.Generic;
+ using System.Collections.Immutable;
+
+commit e44d9d3103ec73b66b68957c971b66859ae0b844
+Author:     Pavel Krymets <pavel@krymets.com>
+AuthorDate: Fri Feb 22 12:35:31 2019 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Feb 22 12:35:31 2019 -0800
+
+    Add xml docs to targeting pack (#1149)
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+index df3b01d413..01f3699c09 100644
+--- a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -42,7 +42,7 @@ namespace Microsoft.AspNetCore.Analyzer.Testing
+         /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
+         /// The returned diagnostics are then ordered by location in the source document.
+         /// </summary>
+-        /// <param name="documents">The Documents that the analyzer will be run on</param>
++        /// <param name="projects">Projects that the analyzer will be run on</param>
+         /// <param name="analyzer">The analyzer to run on the documents</param>
+         /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
+         /// <param name="getAllDiagnostics">
+
+commit 3a68e6540d97218e77ffe200a8e3ca903cbde1a2
+Author:     Nate McMaster <nate.mcmaster@microsoft.com>
+AuthorDate: Tue Oct 30 16:39:06 2018 -0700
+Commit:     Nate McMaster <nate.mcmaster@microsoft.com>
+CommitDate: Tue Oct 30 16:39:06 2018 -0700
+
+    Merge branch 'release/2.1' into release/2.2
+
+diff --git a/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+new file mode 100644
+index 0000000000..df3b01d413
+--- /dev/null
++++ b/src/Analyzers/Microsoft.AspNetCore.Analyzer.Testing/src/DiagnosticAnalyzerRunner.cs
+@@ -0,0 +1,121 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System.Collections.Generic;
++using System.Collections.Immutable;
++using System.Linq;
++using System.Threading.Tasks;
++using Microsoft.CodeAnalysis;
++using Microsoft.CodeAnalysis.Diagnostics;
++using Xunit;
++
++namespace Microsoft.AspNetCore.Analyzer.Testing
++{
++    /// <summary>
++    /// Base type for executing a <see cref="DiagnosticAnalyzer" />. Derived types implemented in the test assembly will
++    /// correctly resolve reference assemblies required for compilaiton.
++    /// </summary>
++    public abstract class DiagnosticAnalyzerRunner
++    {
++        /// <summary>
++        /// Given classes in the form of strings, and an DiagnosticAnalyzer to apply to it, return the diagnostics found in the string after converting it to a document.
++        /// </summary>
++        /// <param name="sources">Classes in the form of strings</param>
++        /// <param name="analyzer">The analyzer to be run on the sources</param>
++        /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
++        /// <param name="getAllDiagnostics">
++        /// When <c>true</c>, returns all diagnostics including compilation errors.
++        /// Otherwise; only returns analyzer diagnostics.
++        /// </param>
++        /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
++        protected Task<Diagnostic[]> GetDiagnosticsAsync(
++            string[] sources,
++            DiagnosticAnalyzer analyzer,
++            string[] additionalEnabledDiagnostics,
++            bool getAllDiagnostics = true)
++        {
++            var project = DiagnosticProject.Create(GetType().Assembly, sources);
++            return GetDiagnosticsAsync(new[] { project }, analyzer, additionalEnabledDiagnostics);
++        }
++
++        /// <summary>
++        /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
++        /// The returned diagnostics are then ordered by location in the source document.
++        /// </summary>
++        /// <param name="documents">The Documents that the analyzer will be run on</param>
++        /// <param name="analyzer">The analyzer to run on the documents</param>
++        /// <param name="additionalEnabledDiagnostics">Additional diagnostics to enable at Info level</param>
++        /// <param name="getAllDiagnostics">
++        /// When <c>true</c>, returns all diagnostics including compilation errors.
++        /// Otherwise only returns analyzer diagnostics.
++        /// </param>
++        /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
++        protected async Task<Diagnostic[]> GetDiagnosticsAsync(
++            IEnumerable<Project> projects,
++            DiagnosticAnalyzer analyzer,
++            string[] additionalEnabledDiagnostics,
++            bool getAllDiagnostics = true)
++        {
++            var diagnostics = new List<Diagnostic>();
++            foreach (var project in projects)
++            {
++                var compilation = await project.GetCompilationAsync();
++
++                // Enable any additional diagnostics
++                var options = ConfigureCompilationOptions(compilation.Options);
++                if (additionalEnabledDiagnostics.Length > 0)
++                {
++                    options = compilation.Options
++                        .WithSpecificDiagnosticOptions(
++                            additionalEnabledDiagnostics.ToDictionary(s => s, s => ReportDiagnostic.Info));
++                }
++
++                var compilationWithAnalyzers = compilation
++                    .WithOptions(options)
++                    .WithAnalyzers(ImmutableArray.Create(analyzer));
++
++                if (getAllDiagnostics)
++                {
++                    var diags = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
++
++                    Assert.DoesNotContain(diags, d => d.Id == "AD0001");
++
++                    // Filter out non-error diagnostics not produced by our analyzer
++                    // We want to KEEP errors because we might have written bad code. But sometimes we leave warnings in to make the
++                    // test code more convenient
++                    diags = diags.Where(d => d.Severity == DiagnosticSeverity.Error || analyzer.SupportedDiagnostics.Any(s => s.Id.Equals(d.Id))).ToImmutableArray();
++
++                    foreach (var diag in diags)
++                    {
++                        if (diag.Location == Location.None || diag.Location.IsInMetadata)
++                        {
++                            diagnostics.Add(diag);
++                        }
++                        else
++                        {
++                            foreach (var document in projects.SelectMany(p => p.Documents))
++                            {
++                                var tree = await document.GetSyntaxTreeAsync();
++                                if (tree == diag.Location.SourceTree)
++                                {
++                                    diagnostics.Add(diag);
++                                }
++                            }
++                        }
++                    }
++                }
++                else
++                {
++                    diagnostics.AddRange(await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync());
++                }
++            }
++
++            return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
++        }
++
++        protected virtual CompilationOptions ConfigureCompilationOptions(CompilationOptions options)
++        {
++            return options.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
++        }
++    }
++}
