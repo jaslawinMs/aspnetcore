@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "finding": "F192",
+  "preparation": 212,
+  "decision": "bounded-source-only-no-candidate",
+  "decisionMeaning": "No implementation is justified by this bounded source qualification. This is not a measurement, a claim of impossible benefit, a false-premise verdict, or proof of runtime correctness.",
+  "sourceRoles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultAuthority": "Read-only dotnet/aspnetcore branches/main API, observed 2026-11-21T00:37:01.065Z through 2026-11-21T00:37:01.698Z; complete raw response retained.",
+    "forkMain": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "forkMainIsNotDefaultAuthority": true,
+    "reservedCheckoutIsNotABaseline": true,
+    "taskBlobInBothRoles": "40694436f5415d628bea164fa2fd43341292869c",
+    "wixTargetsBlobInBothRoles": "d9ae983b09418b52628b5bdf5a7af3a0207c1cc2",
+    "wixPropsBlobInBothRoles": "0b629899a1bcf3bdf2391a672131363130ad2e19",
+    "uuidBlobInBothRoles": "418983a070ae41218f7efbbdff85ccdf960a7ddb",
+    "taskProjectBlobInBothRoles": "5fc522cd51cde16a1d921cc7d8ecba38165ef9e8",
+    "rawBytesAndMemberships": "commands\\{original,default}-*-raw.stdout and corresponding *-membership.stdout; static audit verifies Git blob hashes."
+  },
+  "reportedStatement": "var value = string.Join(\",\", Values.Select(o => o.ItemSpec).ToArray()).ToLowerInvariant();",
+  "producerAndConsumer": {
+    "task": {
+      "source": "eng\\tools\\RepoTasks\\GenerateGuid.cs:11-36",
+      "ValuesDeclaredConcreteCollection": "Microsoft.Build.Framework.ITaskItem[]",
+      "notAnUnboundedDeferredValuesProducer": "The input property is an array, not an arbitrary IEnumerable. The Select projection is deferred, but its source count is already fixed.",
+      "requiredInputs": [
+        "NamespaceGuid",
+        "Values"
+      ],
+      "output": "Guid property, consumed as an MSBuild property",
+      "errors": "Execute catches Exception, logs through LogErrorFromException, then returns !Log.HasLoggedErrors."
+    },
+    "registration": {
+      "source": "eng\\tools\\RepoTasks\\RepoTasks.tasks:3-7",
+      "taskName": "RepoTasks.GenerateGuid",
+      "assembly": "$(ArtifactsBinDir)RepoTasks\\$(Configuration)\\RepoTasks.dll",
+      "taskFactory": "TaskHostFactory",
+      "runtime": "NET",
+      "import": "Directory.Build.props:227-228 excludes RepoTasks itself and DesignTimeBuild=true.",
+      "taskFramework": "RepoTasks.csproj uses DefaultNetCoreTargetFramework (net12.0 in eng\\Versions.props) or BundledNETCoreAppTargetFramework for DotNetBuild=true.",
+      "runtimeCaveat": "No build or task host was started. Actual loaded task-host image, out-of-process translation, source-build host and runtime selection are not attested."
+    },
+    "msbuildSourceProducer": {
+      "repository": "dotnet/dotnet",
+      "commit": "76e3c03e6b29f1bbe1aca97d655c560db2320436",
+      "sourceIdentityBasis": "Installed SDK .version and Microsoft.Build.dll ProductVersion, read as bytes/file metadata without executing dotnet.",
+      "sdk": "12.0.100-alpha.1.26557.102",
+      "msbuildProductVersion": "18.14.0-1.26557.102+76e3c03e6b29f1bbe1aca97d655c560db2320436",
+      "expansion": "Expander.cs:284-345 expands properties, splits semicolon-delimited expressions and creates literal items through ProjectItemInstance.TaskItem.TaskItemFactory.",
+      "localSideElementType": "Microsoft.Build.Execution.ProjectItemInstance.TaskItem (TaskExecutionHost.cs:32; Expander.cs:14-15).",
+      "arraySetter": "TaskExecutionHost.cs:1002-1024 makes a new ITaskItem[taskItems.Count] and copies task items in order; InitializeTaskVectorParameter at 1768-1807 supplies the expanded list.",
+      "caveat": "This establishes the pinned SDK local-side producer implementation, not a runtime observation of the class arriving through the registered TaskHostFactory."
+    },
+    "invocationSurface": {
+      "trackedTaskInvocationFile": "src\\Installers\\Windows\\Wix.targets",
+      "syntacticGenerateGuidSites": 6,
+      "imports": "Windows\\Directory.Build.props and Directory.Build.targets import Wix.props/Wix.targets only for .wixproj projects.",
+      "entryPoint": "GenerateGUIDs, BeforeTargets=BeforeBuild, DependsOnTargets=_GeneratePackageGuids;_GenerateBundleGuids, Condition DisableGuidGeneration != true.",
+      "scope": "A cold installer/build path. No application request consumer or in-tree repeated task loop was found. No claim is made about overall build frequency, external project imports, explicit private-target calls or arbitrary property overrides."
+    },
+    "callSites": [
+      {
+        "line": 44,
+        "target": "_GeneratePackageGuids",
+        "condition": "OutputType=package and ProductNameShort != HostOptionsNameShort",
+        "orderedScalarSlots": [
+          "ProductNameShort",
+          "Version",
+          "Platform",
+          "VersionSuffix"
+        ],
+        "output": "ProductCode",
+        "qualification": "Four source scalar slots, not a measured array length. The two tracked non-HostOptions package projects set DisableGuidGeneration=true. This is not evidence for a large active Values collection."
+      },
+      {
+        "line": 47,
+        "target": "_GeneratePackageGuids",
+        "condition": "OutputType=package and ProductNameShort != HostOptionsNameShort",
+        "orderedScalarSlots": [
+          "ProductNameShort",
+          "Version",
+          "Platform",
+          "VersionSuffix",
+          "OutputType"
+        ],
+        "output": "UpgradeCode",
+        "qualification": "Five source scalar slots, not a measured array length; same normal-entry-point exclusion as line 44. Empty values or externally supplied unescaped semicolons are not assigned invented cardinalities."
+      },
+      {
+        "line": 51,
+        "target": "_GeneratePackageGuids",
+        "project": "src\\Installers\\Windows\\HostOptions\\HostOptions.wixproj",
+        "orderedInputs": [
+          "AspNetCore.HostOptions",
+          "$(Version)"
+        ],
+        "sourceDefinedCardinalityUnderTrackedScalarDefinitions": 2,
+        "output": "ProductCode",
+        "producerProof": "HostOptions.wixproj:8-19, Wix.props:20-23, Wix.targets:4-10,51-53.",
+        "runtimeObserved": false
+      },
+      {
+        "line": 54,
+        "target": "_GeneratePackageGuids",
+        "project": "src\\Installers\\Windows\\HostOptions\\HostOptions.wixproj",
+        "orderedInputs": [
+          "AspNetCore.HostOptions",
+          "$(AspNetCoreMajorMinorVersion)",
+          "Package"
+        ],
+        "sourceDefinedCardinalityUnderTrackedScalarDefinitions": 3,
+        "output": "UpgradeCode",
+        "producerProof": "HostOptions.wixproj:8-19, eng\\Versions.props:11-13,38, Wix.targets:54-59.",
+        "runtimeObserved": false
+      },
+      {
+        "line": 70,
+        "target": "_GenerateBundleGuids",
+        "project": "src\\Installers\\Windows\\WindowsHostingBundle\\WindowsHostingBundle.wixproj",
+        "orderedInputs": [
+          "$(AspNetCoreMajorMinorVersion)",
+          "x86"
+        ],
+        "sourceDefinedCardinalityUnderTrackedScalarDefinitions": 2,
+        "output": "BundleProviderKey",
+        "producerProof": "WindowsHostingBundle.wixproj:10-16 and Wix.targets:63-75; BundleGuidInputs is two scalar properties.",
+        "runtimeObserved": false
+      },
+      {
+        "line": 73,
+        "target": "_GenerateBundleGuids",
+        "project": "src\\Installers\\Windows\\WindowsHostingBundle\\WindowsHostingBundle.wixproj",
+        "orderedInputs": [
+          "$(AspNetCoreMajorMinorVersion)",
+          "x86"
+        ],
+        "sourceDefinedCardinalityUnderTrackedScalarDefinitions": 2,
+        "output": "BundleUpgradeCode",
+        "producerProof": "Same source-defined inputs and namespace as line 70, separate call; no duplicate-call refactor is proposed.",
+        "runtimeObserved": false
+      }
+    ],
+    "otherTrackedWixProjects": [
+      {
+        "project": "src\\Installers\\Windows\\AspNetCoreModule-Setup\\ANCMV2\\AncmV2.wixproj",
+        "source": "lines 7-11",
+        "OutputType": "Package",
+        "DisableGuidGeneration": "true"
+      },
+      {
+        "project": "src\\Installers\\Windows\\AspNetCoreModule-Setup\\ANCMIISExpressV2\\AncmIISExpressV2.wixproj",
+        "source": "lines 7-10",
+        "OutputType": "Package",
+        "DisableGuidGeneration": "true"
+      }
+    ],
+    "cardinalityLimits": [
+      "The normal enabled tracked producers supply two or three scalar items per call under the captured definitions, not a file glob or arbitrarily long item vector.",
+      "These are source-defined shapes, not results from an evaluated MSBuild project or instrumented task.",
+      "Arbitrary command-line/global property overrides, externally imported targets and explicit invocation of private targets are excluded, not asserted impossible."
+    ]
+  },
+  "joinQualification": {
+    "candidateConsideredOnly": "Remove .ToArray() and pass Values.Select(o => o.ItemSpec) directly to string.Join.",
+    "candidateImplemented": false,
+    "baselineOverloadSourceReasoning": "ToArray returns string[]. The string.Join(string?, params string?[]) overload takes it directly and delegates to span-based JoinCore.",
+    "candidateOverloadSourceReasoning": "The projected IEnumerable<string> selects the non-generic IEnumerable<string?> Join overload. Its projected iterator is not the recognized string[] or List<string> fast-path input.",
+    "source": "runtime-source\\26557-String.Manipulation.cs:763-850,1054-1143",
+    "arrayPath": "JoinCore sums string/separator lengths, creates an exactly sized result, and copies strings and separators; it special-cases a one-character separator.",
+    "enumerablePath": "The IEnumerable overload recognizes arrays and lists, but otherwise obtains an enumerator and appends into ValueStringBuilder before producing the result string.",
+    "linqPath": "Select.cs:45-59 recognizes an array source in the ordinary non-size-optimized path; ArraySelectIterator.ToArray at Select.SpeedOpt.cs:138-169 creates a result array of the known source length and fills it directly. ToCollection.cs:12-24 dispatches to that iterator override when applicable.",
+    "importantDistinction": "Deleting ToArray does not delete Select's projected iterator and does not preserve the baseline's string-array join path. A single-use array is not sufficient source evidence of an improvement.",
+    "runtimeSourceProvenance": {
+      "repository": "dotnet/dotnet",
+      "installedVersionCommitBindings": {
+        "12.0.0-alpha.1.26557.102": "76e3c03e6b29f1bbe1aca97d655c560db2320436",
+        "12.0.0-alpha.1.26562.105": "dfd6ac738610ea05f42e704be82b386e71052e12",
+        "12.0.0-alpha.1.26565.104": "8fc142ba6d733754f83a1e9a9b87cad5de06b650"
+      },
+      "StringManipulationBlobInAllThree": "f3a2c16a91057981c094bb76ebd7c027ff52b606",
+      "completeRawBytesAndGitMemberships": "runtime-source-index-v1.json and raw GitHub API responses.",
+      "loadedRuntimeObserved": false
+    },
+    "materialityDecision": "The actual normal tracked inputs are tiny installer-only scalar arrays. Removing the temporary array trades a specialized known-count projection and exact-size join for iterator/builder joining. No evidence here establishes a useful improvement for those real inputs. No candidate survives the materiality gate.",
+    "notClaimed": [
+      "IEnumerable joining is slower in all cases.",
+      "No alternative implementation could benefit.",
+      "Any elapsed time, managed resource amount or measured no-gain result.",
+      "Runtime output equivalence, MSBuild evaluation success or task-host execution success."
+    ]
+  },
+  "deterministicOutputContract": {
+    "boundary": "Source-established contract only; no GUID outputs were generated or compared at runtime.",
+    "steps": [
+      "Read ItemSpec strings in Values array order.",
+      "Join with a literal comma, preserving order and duplicates.",
+      "Apply ToLowerInvariant to the complete joined string.",
+      "Parse NamespaceGuid and pass the normalized string to the existing Uuid.Create.",
+      "Uuid.Create converts the namespace's first fields to network order, encodes the name with Encoding.Unicode, hashes namespace bytes plus name bytes with SHA256, truncates to 16 bytes, applies the existing version/variant bits and constructs Guid.",
+      "GenerateGuid calls ToString and returns the Guid property to the selected MSBuild property."
+    ],
+    "algorithmCaveat": "The code comments use UUID3/RFC terminology, but this report describes the actual existing SHA256 implementation; it does not substitute a different UUID algorithm.",
+    "materialConsumers": [
+      "Wix.targets:59 appends ProductCode and UpgradeCode to DefineConstants; HostOptions\\Product.wxs:3 consumes both on the WiX Package element.",
+      "Wix.targets:78 exports BundleVersion, BundleProviderKey and BundleUpgradeCode as DefineConstants; WindowsHostingBundle\\Bundle.wxs:2 consumes BundleUpgradeCode.",
+      "Wix.props:22-25 explicitly warns that stable namespace GUIDs must not change."
+    ],
+    "stability": [
+      "HostOptions ProductCode includes the version/revision-bearing Version; its UpgradeCode uses the major/minor band and OutputType.",
+      "Both bundle calls use the same namespace and same ordered major/minor plus platform inputs, implying the same GUID for unchanged inputs; no runtime comparison was run.",
+      "A candidate would have to preserve normalization, item order, encoding, hash construction, format and material WiX properties, not merely make a standalone Join expression return a plausible string."
+    ]
+  },
+  "history": [
+    {
+      "commit": "b67a14126326cec4c74ff844500b3bd830dde880",
+      "date": "2018-08-17",
+      "meaning": "Introduces the same ToArray-plus-lowercase construction in the historical Windows installer task path."
+    },
+    {
+      "commit": "4fde84a7ad48c8265fe868650351c857bcf1bfc2",
+      "date": "2019-06-19",
+      "meaning": "KoreBuild-to-Arcade reorganization moves RepoTasks into eng\\tools."
+    },
+    {
+      "commit": "a450cb69b5e4549f5515cdb057a68771f56cefd7",
+      "date": "2021-11-06",
+      "meaning": "File-scoped namespace change; reported statement remains unchanged."
+    },
+    {
+      "commit": "c3f89a91ab6d497fb734be176df82d3568e6d396",
+      "pullRequest": 26064,
+      "meaning": "Installer ProductVersion/GuidInputs and bundle major/minor identity were deliberately changed for version-band update behavior."
+    },
+    {
+      "commit": "f6b7b83b9a52073918a06b5a01c41bf34689613a",
+      "pullRequest": 26065,
+      "meaning": "Release/3.1 counterpart retained in relevant history and independently read PR metadata/files."
+    },
+    {
+      "commit": "ba98a075c0fe2f684055372818181afdb8337c4d",
+      "pullRequest": 37966,
+      "meaning": "Adds distinct HostOptions product and upgrade identity inputs for Hosting Bundle upgrades."
+    },
+    {
+      "commit": "f2922455de1f771e464bb7a8a25843ebddb83ef2",
+      "pullRequest": 62885,
+      "meaning": "WiX update selects HostOptions by ProductNameShort/HostOptionsNameShort, matching the current producer shape."
+    },
+    {
+      "commit": "2e05e269f599be5615cea4fcd2d27f7080f6e54f",
+      "pullRequest": 68090,
+      "meaning": "Removes the older separate _GenerateANCMGuids invocation. That historical one-item call is not substituted for current source."
+    }
+  ],
+  "boundedRelatedWork": {
+    "method": "Read-only gh api GET; complete responses in commands.",
+    "queriesPerRepository": [
+      "\"GenerateGuid\" (per_page=20)",
+      "\"Wix\" \"Guid\" (per_page=20)",
+      "commits affecting eng/tools/RepoTasks/GenerateGuid.cs (per_page=10)"
+    ],
+    "upstream": {
+      "repository": "dotnet/aspnetcore",
+      "generateGuidTotal": 1,
+      "generateGuidNumbers": [26065],
+      "wixGuidTotal": 8,
+      "wixGuidNumbers": [63711, 29649, 37114, 18619, 26064, 26065, 25579, 21801],
+      "searchIncompleteResults": false,
+      "taskHistory": "Four commits at the current task path; newest is a450cb69 (2021). Local --follow history also inspects prior paths.",
+      "detailsRead": "PR26064 and PR26065 metadata and complete three-file lists, not the linked Azure build URLs."
+    },
+    "fork": {
+      "repository": "jaslawinMs/aspnetcore",
+      "generateGuidTotal": 0,
+      "wixGuidTotal": 0,
+      "searchIncompleteResults": false,
+      "taskHistory": "Same four current-path commits on fork main."
+    },
+    "limit": "No directly matching optimization was identified in these finite returned results. This is not exhaustive across all branch code, unnamed work or search indexing."
+  },
+  "validation": {
+    "level": "Pinned source, source-membership verification and JSON/artifact integrity only.",
+    "buildDocsRead": [
+      ".github\\instructions\\build.instructions.md",
+      "docs\\BuildFromSource.md (activation, focused project and build-script commands)",
+      "docs\\BuildErrors.md",
+      "src\\Installers\\Windows\\README.md",
+      "src\\Installers\\Windows\\build.ps1",
+      "docs\\UpdatingMajorVersionAndTFM.md"
+    ],
+    "areaAgents": "No root, eng, eng\\tools or eng\\tools\\RepoTasks AGENTS.md was found in the pinned area membership check; root and eng absence were also observed directly.",
+    "prospectiveFaithfulBoundary": "Existing HostOptions.wixproj _GeneratePackageGuids and WindowsHostingBundle.wixproj _GenerateBundleGuids, observing their actual MSBuild/WiX output properties. No new compiler/project/test seam is warranted.",
+    "nativeValidation": "Not activated because no candidate qualified, despite the separate explicit GO212. No dotnet/SDK activation, compiler, build, test, restore, task execution or custom reproduction workload was started.",
+    "selectedAutomatedTests": [],
+    "blockedAutomatedTests": [],
+    "bugRedGreen": "Not applicable: no behavioral bug fix or implementation was made.",
+    "excluded": [
+      "Runtime correctness and actual evaluated Values/cardinalities.",
+      "WiX installer build, package production or installation/upgrade execution.",
+      "Arbitrary external property/import overrides and source-build host configurations.",
+      "All timings, benchmarks, warmups, managed resource measurements, profiling and counters."
+    ]
+  },
+  "changes": {
+    "shippingCode": [],
+    "tests": [],
+    "repositoryDocs": [],
+    "privateGraphsCreated": [],
+    "commits": [],
+    "githubWrites": [],
+    "policyRegistryLeaseOrLedgerWrites": [],
+    "evidenceOnlyUnderAssignedRoot": true
+  }
+}

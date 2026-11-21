@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "finding": "F196",
+  "preparation": 216,
+  "scope": "src/Mvc/test/WebSites/TagHelpersWebSite/TagHelpers/TagCloudViewComponentTagHelper.cs: GetTags single-use materialization",
+  "initialDecision": "source-investigation-only",
+  "criteria": [
+    {
+      "id": "pinned-source",
+      "requirement": "Independently observe reserved R and current upstream main read-only; retain original/default/reserved membership, complete pinned relevant source, actual revisions and observation times.",
+      "status": "done",
+      "evidence": "RAW_SOURCE_INDEX.json; revision_summary_06.json; TARGET_SOURCE_EQUALITY.json; SOURCE_AUDIT.json"
+    },
+    {
+      "id": "producer-and-consumer",
+      "requirement": "Establish real Tags producer/backing/counts, GetTags defaults/callers/edge semantics, joined rendered consumer, and framework/test lifecycle without invented workload.",
+      "status": "done",
+      "evidence": "ANALYSIS.json; static_producer_check_05.json; complete pinned source under source"
+    },
+    {
+      "id": "context",
+      "requirement": "Read area/cross-cutting/build guidance and documented commands; inspect relevant history and bounded current upstream/fork related work.",
+      "status": "done",
+      "evidence": "guidance_02.json; docs/build/test sources; history command outputs; related_work_summary_04.json; related_pr_membership_05.json"
+    },
+    {
+      "id": "candidate-gate",
+      "requirement": "Retain only a justified smallest candidate preserving snapshot, exceptions, order and count behavior, or explicitly conclude a bounded source-only no-material-candidate decision without claiming measured no-gain.",
+      "status": "done",
+      "evidence": "ANALYSIS.json: bounded-source-only-no-material-candidate; no retained candidate"
+    },
+    {
+      "id": "isolation",
+      "requirement": "Do not modify reserved R, its inherited reports, shared policy/registry/lease/ledger, manifests, SDK pins or Git refs. No private graph unless a candidate survives.",
+      "status": "done",
+      "evidence": "ISOLATION_08.json; DIFF_INDEX.json; protected report SHA256/length/timestamp equality; no private graphs"
+    },
+    {
+      "id": "native-gate",
+      "requirement": "Run no native build/test/restore without actual coordinator registry GO and lease/HOLD observation; no timing, benchmark, warmup, allocation or profiling work under any outcome.",
+      "status": "done",
+      "evidence": "SOURCE_AUDIT.json; PREPARATION.json; zero native/measurement starts; no gate bypass"
+    },
+    {
+      "id": "sealed-handoff",
+      "requirement": "Write exactly one sealed HANDOFF.json with artifact SHA256 index, raw source/revision/membership evidence, commands/results/failures, empty or changed-file diff index, limitations and owned-process terminal state.",
+      "status": "done",
+      "evidence": "This finalizer verifies every artifact digest and writes exactly one persistent HANDOFF.json last"
+    }
+  ],
+  "excluded": [
+    "Other findings",
+    "Synthetic tags or amplified counts/render loops",
+    "Native performance measurements",
+    "Public API/default/convention/cache changes",
+    "Publishing, commits, pushes, PRs or issues",
+    "Remote execution or Azure/DevBox/SSH",
+    "Subagents"
+  ],
+  "finalDecision": "bounded-source-only-no-material-candidate",
+  "completedUtc": "2026-11-21T01:00:32.7822124Z",
+  "nativeValidation": "Not applicable after source-only rejection; not performed or claimed."
+}

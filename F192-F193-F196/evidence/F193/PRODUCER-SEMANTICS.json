@@ -1,0 +1,775 @@
+{
+  "finding": "F193",
+  "preparation": 213,
+  "recordedUtc": "2026-11-21T00:52:57.669Z",
+  "validationBoundary": "Pinned source only; no request, browser, test, compiler, timing or allocation observation",
+  "sourceRoles": {
+    "Original": {
+      "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "localCommitExists": true
+    },
+    "Default": {
+      "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+      "localCommitExists": true
+    }
+  },
+  "backingSourceScope": "Declared Microsoft.Extensions.Primitives and Microsoft.NETCore.App.Ref source revisions in eng\\Version.Details.xml; not proof of any loaded implementation image",
+  "sourceIdentityEvidence": [
+    "source-manifest.json",
+    "external-source-manifest.json",
+    "SOURCE-COMPARISON.json",
+    "SOURCE-CHECKS.json"
+  ],
+  "producerToConsumer": [
+    {
+      "step": "Existing owning test and workload",
+      "fact": "HttpClientTest uses the WASM BasicTestApp fixture and a separate BasicTestAppServerSiteFixture<CorsStartup>. CanSendRequestHeaders adds testheader=Value from test and another-header=Another value, each once, then issues one DELETE per test invocation. There is no header-count, rate or loop workload inferred beyond this source scenario.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Tests/HttpClientTest.cs",
+          "lines": [
+            16,
+            40
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Tests\\HttpClientTest.cs",
+          "gitBlob": "df388907dac8460943102982fb8bbadaaba15216",
+          "sha256": "8BFB6CBE881585958A3722B04F4B66259D461E573B9E47A1C59117B62E4EF179"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Tests/HttpClientTest.cs",
+          "lines": [
+            86,
+            95
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Tests\\HttpClientTest.cs",
+          "gitBlob": "df388907dac8460943102982fb8bbadaaba15216",
+          "sha256": "8BFB6CBE881585958A3722B04F4B66259D461E573B9E47A1C59117B62E4EF179"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Tests/HttpClientTest.cs",
+          "lines": [
+            138,
+            163
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Tests\\HttpClientTest.cs",
+          "gitBlob": "df388907dac8460943102982fb8bbadaaba15216",
+          "sha256": "8BFB6CBE881585958A3722B04F4B66259D461E573B9E47A1C59117B62E4EF179"
+        }
+      ]
+    },
+    {
+      "step": "Real request creation and configured cardinalities",
+      "fact": "HttpRequestsComponent owns a List<RequestHeader>, creates a new HttpRequestMessage for the click, and calls TryAddWithoutValidation once per configured row. The owning test configures two different names with one nonempty string each and an empty body, so this code supplies no HttpContent for that DELETE. Browser/transport-added headers, total received field count and protocol were not observed.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/BasicTestApp/HttpClientTest/HttpRequestsComponent.razor",
+          "lines": [
+            57,
+            99
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\BasicTestApp\\HttpClientTest\\HttpRequestsComponent.razor",
+          "gitBlob": "9a1bc45c1d10988dc4fbd537ec2d5e2552f50954",
+          "sha256": "156E817F4F31281D8DB60D59C6DC3A42E1D0CE7FC65DC6F0F25E911DFD8671BE"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/BasicTestApp/Program.cs",
+          "lines": [
+            25,
+            44
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\BasicTestApp\\Program.cs",
+          "gitBlob": "e9619b663afe5fca3e2170d8bce3cbc29392ba86",
+          "sha256": "20835981A517DA4A8965CEA7E8CF82A685CE7F11FFEFDFEB783FCFBF12490DF6"
+        }
+      ]
+    },
+    {
+      "step": "Client null normalization and browser dispatch",
+      "fact": "HttpHeaders.TryAddWithoutValidation(string,string?) normalizes null to string.Empty, stores a first raw value as a string, and retains further values rather than discarding empty slots. BrowserHttpController flattens each request/content header value into ordered names/values; http_wasm_fetch appends them into native Headers and calls fetch_like. Source does not establish exact native Headers coalescing, wire representation, or browser-added values; comma-containing text must not be equated with StringValues.Count > 1.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+          "gitPath": "src/runtime/src/libraries/System.Net.Http/src/System/Net/Http/Headers/HttpHeaders.cs",
+          "lines": [
+            160,
+            190
+          ],
+          "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Net.Http\\src\\System\\Net\\Http\\Headers\\HttpHeaders.cs",
+          "gitBlob": "f6dafc471ec871c1197b5f7797558bd015943665",
+          "sha256": "C866E8ADB5CAF49F2A4FA59499F92965C0C19ABBB54FAF9D13B05B4335E26E42"
+        },
+        {
+          "role": "Default",
+          "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+          "gitPath": "src/runtime/src/libraries/System.Net.Http/src/System/Net/Http/BrowserHttpHandler/BrowserHttpHandler.cs",
+          "lines": [
+            200,
+            237
+          ],
+          "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Net.Http\\src\\System\\Net\\Http\\BrowserHttpHandler\\BrowserHttpHandler.cs",
+          "gitBlob": "44ff681f0660badbda91111fe4a5ad18849ba718",
+          "sha256": "F64DF67AF706BB761B9B3F39B8A2DB42C992862FF201421CD7DD4D93519C9EF8"
+        },
+        {
+          "role": "Default",
+          "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+          "gitPath": "src/runtime/src/mono/browser/runtime/http.ts",
+          "lines": [
+            152,
+            187
+          ],
+          "artifact": "external-source\\Default\\src\\runtime\\src\\mono\\browser\\runtime\\http.ts",
+          "gitBlob": "b59e779c0f9670b1bd394c10de338b3a964b341f",
+          "sha256": "41CEE342C37A17590666DEBC34D88D5D4F104ED25006BB25D620BA5E682A95CF"
+        }
+      ]
+    },
+    {
+      "step": "HTTP server and endpoint",
+      "fact": "The API fixture selects TestServer.Program.BuildWebHost<CorsStartup>; its loopback host uses ConfigureWebHostDefaults and CorsStartup maps /subdir, routing and controllers. PersonController has route api/[controller] and HttpDelete on Delete. This is a synchronous request-header echo in the existing test asset, not a component render-loop optimization.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Infrastructure/ServerFixtures/BasicTestAppServerSiteFixture.cs",
+          "lines": [
+            14,
+            19
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Infrastructure\\ServerFixtures\\BasicTestAppServerSiteFixture.cs",
+          "gitBlob": "57a9f8ebb6cc80f4158c7b47fee7d890ea14f562",
+          "sha256": "15D398848F928EC90A934E95DCA25A3EEA7AC2AB0D07B851FEC9764CCF77D09A"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Infrastructure/ServerFixtures/AspNetSiteServerFixture.cs",
+          "lines": [
+            29,
+            55
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Infrastructure\\ServerFixtures\\AspNetSiteServerFixture.cs",
+          "gitBlob": "bd51576b15feb1048d6245b3dee29c3a102ef39c",
+          "sha256": "32776D48C108249A8DB8E69D5F4BAF361FBBF85EB9A75C093BB37A359084A3E8"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/Program.cs",
+          "lines": [
+            81,
+            106
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\Program.cs",
+          "gitBlob": "99c88291e15df357dd6b93fc3de730645888f9db",
+          "sha256": "D9B8A11C42700FB627E8651B069BEB49B33FAF59778E272CDBAA10D9B4A871F8"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/CorsStartup.cs",
+          "lines": [
+            49,
+            65
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\CorsStartup.cs",
+          "gitBlob": "5f66e9f7e30d35ba04e63ab574c02037b0e03d6c",
+          "sha256": "638FCC658DA09A684D246688A3C0C04750BE6AF02E3A7B29160A6DB487723724"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs",
+          "lines": [
+            11,
+            13
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\Controllers\\PersonController.cs",
+          "gitBlob": "cfdc2372a44db7584dca0507a7f028094471741d",
+          "sha256": "1B290C2723851914FC61F976598E6E160E98F08B080D1A54F4F6F1BD6906F3A1"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs",
+          "lines": [
+            47,
+            57
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\Controllers\\PersonController.cs",
+          "gitBlob": "cfdc2372a44db7584dca0507a7f028094471741d",
+          "sha256": "1B290C2723851914FC61F976598E6E160E98F08B080D1A54F4F6F1BD6906F3A1"
+        }
+      ]
+    },
+    {
+      "step": "Server-owned StringValues producer and backing",
+      "fact": "In the retained Kestrel HTTP/1 source path, parser callbacks flow through Http1ParsingHandler.OnHeader to HttpProtocol.OnHeader and HttpRequestHeaders.Append. First known fields use new StringValues(decodedString); unknown fields use AppendUnknownHeaders and AppendValue -> StringValues.Concat(existing,string). Concat(empty,string) yields scalar backing; a repeated field appends into an array, preserving append order. The two test-named custom headers are unknown names on this path. This establishes concrete source producers, not an observed browser request or an all-protocol equivalence claim.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/Http1ParsingHandler.cs",
+          "lines": [
+            23,
+            32
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\Http1ParsingHandler.cs",
+          "gitBlob": "050a7661f2929b06ee7890d15a1dde4897b8c650",
+          "sha256": "5E33E1B144CD4E66BD593031BDD06632E08AAB6E547325A3B6029607BF29AE0E"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpProtocol.cs",
+          "lines": [
+            549,
+            554
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpProtocol.cs",
+          "gitBlob": "583cb10505ceae1a876bdc43fd303dff0f79b43a",
+          "sha256": "06311AE801E46E96B061D5F30337F7BA9CE3A01D7FC9D9E6E566136D33F18B60"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpHeaders.Generated.cs",
+          "lines": [
+            7877,
+            7923
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpHeaders.Generated.cs",
+          "gitBlob": "abda287bd85507758b823f3f911f2ef028b2a59d",
+          "sha256": "3F613B3C7390EF20A944AF03F685E4BF5EF5B0DD13E809BBF6280389001B4370"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs",
+          "lines": [
+            158,
+            170
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpRequestHeaders.cs",
+          "gitBlob": "3fbcc4854f42fe65f7e806c6fc311f19cdf0aaf0",
+          "sha256": "C47307FBC3F34EFAB02BC8DD37553FCB38B6B3FF5D2C30EA358679EA8E600016"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpHeaders.cs",
+          "lines": [
+            149,
+            152
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpHeaders.cs",
+          "gitBlob": "9b5d2bb34296030b91b67593da9c64d8ffa81aba",
+          "sha256": "C6C4218E164906AE8B39ADC5B5FF28CC2341C171195EEC960A0E2F1006298A80"
+        },
+        {
+          "role": "Default",
+          "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+          "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+          "lines": [
+            475,
+            493
+          ],
+          "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+          "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+          "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+        }
+      ]
+    },
+    {
+      "step": "Header access and lifetime",
+      "fact": "HttpProtocol resets its request header container and assigns RequestHeaders=HttpRequestHeaders for a new request. DefaultHttpRequest.Headers exposes IHttpRequestFeature.Headers, whose Kestrel implementation exposes that RequestHeaders value. Header strings may be reused across requests for known headers; unknown values are cleared at reset. Delete enumerates and joins immediately, holds no header-array reference past the synchronous action and introduces no cache or asynchronous deferred consumer.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpProtocol.cs",
+          "lines": [
+            404,
+            414
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpProtocol.cs",
+          "gitBlob": "583cb10505ceae1a876bdc43fd303dff0f79b43a",
+          "sha256": "06311AE801E46E96B061D5F30337F7BA9CE3A01D7FC9D9E6E566136D33F18B60"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpProtocol.FeatureCollection.cs",
+          "lines": [
+            76,
+            80
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpProtocol.FeatureCollection.cs",
+          "gitBlob": "d6d070bd7de1a9742e33096d7623f2d7063aa95a",
+          "sha256": "D69C7FA8345DBE7179959C0CA07E2E575F71362AB8F208C4BB28A2F7F3CFE54D"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Http/Http/src/Internal/DefaultHttpRequest.cs",
+          "lines": [
+            133,
+            136
+          ],
+          "artifact": "source\\Default\\src\\Http\\Http\\src\\Internal\\DefaultHttpRequest.cs",
+          "gitBlob": "9bdd5dccc2479f6d7416c15b608fbe2f6db91860",
+          "sha256": "4EC3DFC7EC8AE3A14EE870B4A7565C3568249F75A143870D5D6ABAA9BD3FEBB5"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpRequestHeaders.cs",
+          "lines": [
+            59,
+            71
+          ],
+          "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpRequestHeaders.cs",
+          "gitBlob": "3fbcc4854f42fe65f7e806c6fc311f19cdf0aaf0",
+          "sha256": "C47307FBC3F34EFAB02BC8DD37553FCB38B6B3FF5D2C30EA358679EA8E600016"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs",
+          "lines": [
+            48,
+            57
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\Controllers\\PersonController.cs",
+          "gitBlob": "cfdc2372a44db7584dca0507a7f028094471741d",
+          "sha256": "1B290C2723851914FC61F976598E6E160E98F08B080D1A54F4F6F1BD6906F3A1"
+        }
+      ]
+    },
+    {
+      "step": "Response contract and actual existing consumer",
+      "fact": "Delete appends each currently enumerated header as key, colon-space, comma-without-added-space joined values, then an AppendLine newline; it prefixes REQUEST HEADERS followed by LF. The default MVC options register StringOutputFormatter, which writes a string to the HTTP response. HttpRequestsComponent reads response.Content.ReadAsStringAsync and renders it in response-body; CanSendRequestHeaders asserts OK and Contains for the two values. It does not assert total header count, whole body, key iteration order or null/empty/multiple-value rows.",
+      "evidence": [
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs",
+          "lines": [
+            48,
+            57
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\Components.TestServer\\Controllers\\PersonController.cs",
+          "gitBlob": "cfdc2372a44db7584dca0507a7f028094471741d",
+          "sha256": "1B290C2723851914FC61F976598E6E160E98F08B080D1A54F4F6F1BD6906F3A1"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Mvc/Mvc.Core/src/Infrastructure/MvcCoreMvcOptionsSetup.cs",
+          "lines": [
+            72,
+            86
+          ],
+          "artifact": "source\\Default\\src\\Mvc\\Mvc.Core\\src\\Infrastructure\\MvcCoreMvcOptionsSetup.cs",
+          "gitBlob": "908a33ef721c9025be442b8bb933a9a6f67d8c22",
+          "sha256": "2C5888451EF37FEBDDAEDF4B757CF137843BB880DFCAAE0DA7B2C58B0410F732"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Mvc/Mvc.Core/src/Formatters/StringOutputFormatter.cs",
+          "lines": [
+            43,
+            55
+          ],
+          "artifact": "source\\Default\\src\\Mvc\\Mvc.Core\\src\\Formatters\\StringOutputFormatter.cs",
+          "gitBlob": "1fa91387f90e93390ae004d2d77fa808a91116b3",
+          "sha256": "30D8D41EDA020678275CCF24EA7477CD005F4FA96A94438D372749BF22416455"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/BasicTestApp/HttpClientTest/HttpRequestsComponent.razor",
+          "lines": [
+            42,
+            47
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\BasicTestApp\\HttpClientTest\\HttpRequestsComponent.razor",
+          "gitBlob": "9a1bc45c1d10988dc4fbd537ec2d5e2552f50954",
+          "sha256": "156E817F4F31281D8DB60D59C6DC3A42E1D0CE7FC65DC6F0F25E911DFD8671BE"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/testassets/BasicTestApp/HttpClientTest/HttpRequestsComponent.razor",
+          "lines": [
+            99,
+            107
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\testassets\\BasicTestApp\\HttpClientTest\\HttpRequestsComponent.razor",
+          "gitBlob": "9a1bc45c1d10988dc4fbd537ec2d5e2552f50954",
+          "sha256": "156E817F4F31281D8DB60D59C6DC3A42E1D0CE7FC65DC6F0F25E911DFD8671BE"
+        },
+        {
+          "role": "Default",
+          "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+          "gitPath": "src/Components/test/E2ETest/Tests/HttpClientTest.cs",
+          "lines": [
+            86,
+            95
+          ],
+          "artifact": "source\\Default\\src\\Components\\test\\E2ETest\\Tests\\HttpClientTest.cs",
+          "gitBlob": "df388907dac8460943102982fb8bbadaaba15216",
+          "sha256": "8BFB6CBE881585958A3722B04F4B66259D461E573B9E47A1C59117B62E4EF179"
+        }
+      ]
+    }
+  ],
+  "stringValuesBackingAndToArray": {
+    "documentationAndImplementation": [
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          19,
+          47
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          91,
+          112
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          269,
+          300
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      }
+    ],
+    "facts": [
+      "The instance ToArray method is selected on StringValues, not Enumerable.ToArray.",
+      "Null backing, including default(StringValues) and a null string constructor, has Count zero; ToArray substitutes shared Array.Empty<string>().",
+      "Any string[] backing is returned by identity, including newly allocated zero-length arrays, one-element arrays and multi-element arrays. This path does not copy or enumerate its elements.",
+      "A scalar string backing, including an empty string, has Count one; GetArrayValue constructs a new one-element array holding that same string reference.",
+      "The declared source therefore contains a one-element-array construction for the scalar path, but no runtime allocation bytes, frequency or savings were measured.",
+      "Missing request keys are not entries in the foreach. Null elements are not demonstrated by the inspected wire decoder path; general array-backed StringValues can contain them and source contract analysis retains that distinction."
+    ]
+  },
+  "joinAndToString": {
+    "baseline": "ToArray returns string?[]; the baseline has an identity conversion to Join(string? separator, params string?[] value), which delegates to the span JoinCore. No new params wrapper or IEnumerable walk is required by that source call shape.",
+    "baselineEvidence": [
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          277,
+          300
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/System.Private.CoreLib/src/System/String.Manipulation.cs",
+        "lines": [
+          763,
+          770
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs",
+        "gitBlob": "2638ad3a2da291b04f64f0497477a9a1d447b5f6",
+        "sha256": "860F8B245232F7DE7D477AA28D86AAE95AD9E2270EE74B9B89A425085D6638DB"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/System.Private.CoreLib/src/System/String.Manipulation.cs",
+        "lines": [
+          1054,
+          1143
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs",
+        "gitBlob": "2638ad3a2da291b04f64f0497477a9a1d447b5f6",
+        "sha256": "860F8B245232F7DE7D477AA28D86AAE95AD9E2270EE74B9B89A425085D6638DB"
+      }
+    ],
+    "sequenceSemantics": "Join preserves element positions and order, writing a comma for every boundary. Null elements contribute no characters but do not remove boundaries. Empty arrays yield empty string; one null element yields empty string; a scalar comma-containing string remains one element and is not parsed, quoted, split or trimmed.",
+    "toStringDifference": "StringValues.ToString returns GetStringValue() ?? string.Empty; its multi-array join skips both null and empty values. It is not a generally behavior-preserving replacement for the existing Join. This is source-level contract reasoning, not a reproduced failure of CanSendRequestHeaders.",
+    "toStringEvidence": [
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          167,
+          258
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      }
+    ],
+    "explicitEnumerableAlternative": "Passing StringValues explicitly as IEnumerable<string?> would use the enumerable Join path, not its concrete List<string> or string[] shortcuts. The readonly struct and its struct enumerator cross interface boundaries. No assumption is made that this beats the existing array specialization, nor that source boxing conversions establish runtime allocation counts.",
+    "enumerableEvidence": [
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          19,
+          20
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          397,
+          411
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/System.Private.CoreLib/src/System/String.Manipulation.cs",
+        "lines": [
+          804,
+          849
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs",
+        "gitBlob": "2638ad3a2da291b04f64f0497477a9a1d447b5f6",
+        "sha256": "860F8B245232F7DE7D477AA28D86AAE95AD9E2270EE74B9B89A425085D6638DB"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/System.Private.CoreLib/src/System/String.Manipulation.cs",
+        "lines": [
+          935,
+          959
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs",
+        "gitBlob": "2638ad3a2da291b04f64f0497477a9a1d447b5f6",
+        "sha256": "860F8B245232F7DE7D477AA28D86AAE95AD9E2270EE74B9B89A425085D6638DB"
+      }
+    ],
+    "bareRemovalCaution": "Removing only .ToArray() is not established to select an IEnumerable overload. Related issue 44509 documents implicit-array overload selection and null-array behavior on .NET 6. The current source still distinguishes implicit string[] conversion (which can return null) from ToArray (never null). No hypothetical .NET 12/C# compiler binding was executed or claimed.",
+    "implicitConversionEvidence": [
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          80,
+          86
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      },
+      {
+        "role": "Default",
+        "revision": "4f30608f5e5220a5671e61f4bd5dece130657f47",
+        "gitPath": "src/runtime/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs",
+        "lines": [
+          277,
+          300
+        ],
+        "artifact": "external-source\\Default\\src\\runtime\\src\\libraries\\Microsoft.Extensions.Primitives\\src\\StringValues.cs",
+        "gitBlob": "be0c20acec5441f716649bdd5a5c7090d027876d",
+        "sha256": "8CE6BA4842113F61F6FE81D318A8085DB699DEB60B5A8187F5B57E5F909398CC"
+      }
+    ],
+    "relatedEvidence": "related-work-null-array-excerpts.json",
+    "ordering": "Preserve the order of values in a header and the current foreach output; no key sorting or claimed header-name order guarantee is introduced. Existing consumer assertions are substring checks.",
+    "delimiter": "The controller Join adds comma without space; spaces or commas already in individual wire values remain ordinary characters. AppendLine uses Environment.NewLine while the existing prefix uses LF; neither is changed."
+  },
+  "semanticCases": {
+    "nature": "Source-derived table only. These rows were not sent, tested, benchmarked, or used to inflate the existing workload.",
+    "columns": [
+      "backing",
+      "count",
+      "toArray",
+      "baselineJoinComma",
+      "StringValuesToString",
+      "producerBoundary"
+    ],
+    "rows": [
+      [
+        "null/default",
+        0,
+        "shared empty array",
+        "",
+        "",
+        "Not a demonstrated enumerated header in the configured DELETE"
+      ],
+      [
+        "string.Empty scalar",
+        1,
+        "new one-element array",
+        "",
+        "",
+        "Client normalizes null to empty; received empty-field behavior was not run"
+      ],
+      [
+        "nonempty scalar Value from test",
+        1,
+        "new one-element array",
+        "Value from test",
+        "Value from test",
+        "Concrete configured value in owning test; server scalar path established in source"
+      ],
+      [
+        "caller-provided empty string[]",
+        0,
+        "same backing array",
+        "",
+        "",
+        "General StringValues representation, not a configured test request"
+      ],
+      [
+        "string[] containing null",
+        1,
+        "same backing array",
+        "",
+        "",
+        "General StringValues representation, not demonstrated by decoded-string producer"
+      ],
+      [
+        "string[] containing a single empty string",
+        1,
+        "same backing array",
+        "",
+        "",
+        "Representation differs from scalar empty despite same Count"
+      ],
+      [
+        "string[] [b,a]",
+        2,
+        "same backing array",
+        "b,a",
+        "b,a",
+        "Repeated field source path can create arrays; this row was not sent"
+      ],
+      [
+        "string[] [a,empty,b]",
+        3,
+        "same backing array",
+        "a,,b",
+        "a,b",
+        "Demonstrates source contract distinction, not an observed browser/wire case"
+      ],
+      [
+        "string[] [a,null,b]",
+        3,
+        "same backing array",
+        "a,,b",
+        "a,b",
+        "General nullable array contract, not demonstrated wire producer"
+      ],
+      [
+        "string[] [empty,empty]",
+        2,
+        "same backing array",
+        ",",
+        "",
+        "Demonstrates empty-slot delimiter distinction at general contract boundary"
+      ],
+      [
+        "string[] [null,null]",
+        2,
+        "same backing array",
+        ",",
+        "",
+        "General nullable array contract only"
+      ],
+      [
+        "string[] [null,a,empty]",
+        3,
+        "same backing array",
+        ",a,",
+        "a",
+        "General nullable array contract only"
+      ],
+      [
+        "scalar a,b",
+        1,
+        "new one-element array",
+        "a,b",
+        "a,b",
+        "Comma-containing text is not proof of multiple StringValues elements"
+      ]
+    ]
+  },
+  "historyAndRelatedWork": {
+    "focusedHistory": [
+      "commands\\history-Original-controller-follow.stdout.txt",
+      "commands\\history-Default-controller-follow.stdout.txt",
+      "commands\\history-2018-httpclient-controller-change.stdout.txt"
+    ],
+    "facts": [
+      "Follow history resolves the current file through the April 2023 TestServer -> Components.TestServer rename, January 2019 testapps -> testassets relocation and November 2018 Components relocation.",
+      "Commit 8590f6e7a53e9eee1262ae1323511dee4383e9cb (2018-02-23), Remainder of initial HttpClient features plus E2E tests, already contains the DELETE header echo with header.Value.ToArray(). Its historical path and full bytes are retained.",
+      "The finding line, owning request component and owning test have identical complete source bytes at Original and observed Default."
+    ],
+    "boundedQueries": "related-work-query-index.json",
+    "queryCounts": {
+      "upstreamPersonController": 9,
+      "upstreamStringValuesToArray": 17,
+      "forkPersonController": 0,
+      "forkStringValuesToArray": 0
+    },
+    "limitation": "Search page 1, at most 20 issue/PR title/body results for each exact query. Results are not exhaustive code/fork-branch proof or assurance that no related change exists. Fork repository metadata never serves as upstream Default.",
+    "documentation": [
+      "instruction-read-manifest.json",
+      "source\\Default\\docs\\BuildFromSource.md",
+      "source\\Default\\docs\\CrossCuttingGuidance.md",
+      "source\\Default\\docs\\BlazorComponentsGuidance.md"
+    ]
+  },
+  "limitations": [
+    "No real request or browser was run; exact wire cardinalities, protocol, browser normalization and automatically added headers remain unobserved.",
+    "No throughput, allocation, latency, JIT, trimming or GC claim is made.",
+    "Pinned declared dependency source is not proof of selected SDK, resolved packages or loaded runtime image; no native graph was created or activated.",
+    "LSP provided navigation but no semantic hover/binding for Join; unavailable server log lookup is retained in navigation-tool-results.json.",
+    "This is not a behavioral bug report and no behavioral failure/red-green result is fabricated."
+  ]
+}

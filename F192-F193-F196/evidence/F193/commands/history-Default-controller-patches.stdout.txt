@@ -1,0 +1,138 @@
+commit a419b2204d7eda5637142d03d980ee87a48054fe
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Fri Apr 7 23:43:43 2023 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Apr 7 23:43:43 2023 +0100
+
+    Streaming SSR: DOM updating (#47605)
+    
+    * Merge HtmlComponentWriter into StaticHtmlRenderer so that subclasses will be able to customize HTML rendering
+    
+    * Rename files
+    
+    * Move most of the streaming concerns into EndpointHtmlRenderer so it can vary its output based on this
+    
+    * Emit streaming boundary markers, but only for streaming components
+    
+    * Tests for streaming boundary markers
+    
+    * Can now simplify by removing HtmlComponentBase and changing HtmlComponent to a readonly struct
+    
+    * Further clarify by renaming it to HtmlRootComponent
+    
+    * Move StreamRenderingAttribute to .Web namespace
+    
+    * Make HeadOutlet stream so that page title (etc) can be updated from streaming components
+    
+    * Add blazor.web.js and embed/serve it using the same patterns we have for blazor.server.js
+    
+    * Serve sourcemaps (but in debug builds only)
+    
+    We used to serve sourcemaps when working on this repo. Not sure when that got broken.
+    
+    * Render only the minimal subset of updated components in each streaming render batch (to avoid duplicated HTML)
+    
+    * Move StreamRenderingAttribute into M.A.Components so we can support streaming output into SectionOutlet
+    
+    This automatically deals with HeadOutlet as a special case
+    
+    * Fix VS complaining that SignalR was not referenced in tests even though it actually is already (transitively). This did not affect CLI builds.
+    
+    * Fix longstanding build issue whereby VS always thinks M.A.C.WebAssembly.Authentication needs to be rebuilt
+    
+    * Adding a Blazor United flavour of TestServer
+    
+    * When starting E2E tests manually, don't randomize the port numbers
+    
+    It was so inconvenient not being able to just reload the existing browser tab
+    
+    * Fix response content type
+    
+    * Beginning content for new test app
+    
+    * Rename TestServer directory to match project name. Fixes longstanding issues with launching browser.
+    
+    * Update CodeCheck.ps1
+    
+    * Add/update prebuilt JS files
+    
+    * Add streaming rendering E2E test app code
+    
+    * Flush response after each streaming update so we can send multiple batches
+    
+    * Fix sln following rename
+    
+    * E2E tests
+    
+    * Fix slnf
+
+diff --git a/src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs b/src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs
+new file mode 100644
+index 0000000000..cfdc2372a4
+--- /dev/null
++++ b/src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs
+@@ -0,0 +1,64 @@
++﻿// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.ComponentModel.DataAnnotations;
++using System.Text;
++using Microsoft.AspNetCore.Cors;
++using Microsoft.AspNetCore.Mvc;
++
++namespace TestServer.Controllers;
++
++[EnableCors("AllowAll")]
++[Route("api/[controller]")]
++public class PersonController : Controller
++{
++    // GET api/person
++    [HttpGet]
++    public IEnumerable<string> Get()
++    {
++        HttpContext.Response.Headers.Add("MyCustomHeader", "My custom value");
++        return new string[] { "value1", "value2" };
++    }
++
++    // POST api/person
++    [HttpPost]
++    public async Task<string> Post()
++    {
++        using (var reader = new StreamReader(Request.Body))
++        {
++            var plainTextBodyContent = await reader.ReadToEndAsync();
++            return $"You posted: {plainTextBodyContent}";
++        }
++    }
++
++    [HttpGet("referrer")]
++    public string GetReferer()
++    {
++        return $"The referrer is: {Request.Headers.Referer.ToString()}";
++    }
++
++    // PUT api/person
++    [HttpPut]
++    public Person Put([FromBody, Required] Person person)
++    {
++        return person;
++    }
++
++    // DELETE api/person
++    [HttpDelete]
++    public string Delete()
++    {
++        var result = new StringBuilder();
++        foreach (var header in Request.Headers)
++        {
++            result.AppendLine(FormattableString.Invariant($"{header.Key}: {string.Join(",", header.Value.ToArray())}"));
++        }
++        return "REQUEST HEADERS:\n" + result.ToString();
++    }
++
++    public class Person
++    {
++        public int Id { get; set; }
++        public string Name { get; set; }
++    }
++}

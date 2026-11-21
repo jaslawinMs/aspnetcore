@@ -1,0 +1,526 @@
+2e05e269f599be5615cea4fcd2d27f7080f6e54f
+2026-07-29T19:04:48Z
+[main] Source code updates from dotnet/dotnet (#68090)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 761aa364f9..3035acc7cb 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -79,16 +79,6 @@
+     </PropertyGroup>
+   </Target>
+ 
+-  <Target Name="_GenerateANCMGuids" Condition="'$(ANCMDepProviderKey)' != ''" BeforeTargets="CoreCompile">
+-    <GenerateGuid NamespaceGuid="$(ANCMNamespaceGuid)" Values="$(ANCMDepProviderKey)">
+-      <Output TaskParameter="Guid" PropertyName="DepProviderGuid" />
+-    </GenerateGuid>
+-
+-    <PropertyGroup>
+-      <DefineConstants>$(DefineConstants);DepProviderGuid=$(DepProviderGuid)</DefineConstants>
+-    </PropertyGroup>
+-  </Target>
+-
+   <Target Name="_CheckPackageFileNameIsSet" BeforeTargets="PrepareForBuild">
+     <Error Text="Missing required property: PackageFileName" Condition="'$(PackageFileName)' == ''" />
+   </Target>
+f2922455de1f771e464bb7a8a25843ebddb83ef2
+2025-09-17T15:38:10-07:00
+Update to wix5 (#62885)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 47a17c955f..43323e6b49 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -24,6 +24,10 @@
+     <InstallDir>$(ProductName)</InstallDir>
+     <DepProviderKey>Microsoft.$(ProductNameShort)_$(Platform)_$(Lang),v$(_GeneratedPackageVersion)</DepProviderKey>
+     <DefineConstants>$(DefineConstants);DepProviderKey=$(DepProviderKey)</DefineConstants>
++    <!-- Everything built in those projects _except_ the final package & MSI are shipping assets. -->
++    <_GeneratedPackageVersion>$(PackageVersion)</_GeneratedPackageVersion>
++    <_GeneratedPackageVersion
++        Condition="! $(PackageVersion.Contains('$(_BuildNumberLabels)'))">$(VersionPrefix)-$(_PreReleaseLabel)$(_BuildNumberLabels)</_GeneratedPackageVersion>
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+@@ -44,17 +48,17 @@
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+ 
+   <Target Name="_GeneratePackageGuids" Condition="'$(OutputType)' == 'package'">
+-    <GenerateGuid Condition="'$(OutputName)' != '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs)">
++    <GenerateGuid Condition="'$(ProductNameShort)' != '$(HostOptionsNameShort)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="ProductCode" />
+     </GenerateGuid>
+-    <GenerateGuid Condition="'$(OutputName)' != '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs);$(OutputType)">
++    <GenerateGuid Condition="'$(ProductNameShort)' != '$(HostOptionsNameShort)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs);$(OutputType)">
+       <Output TaskParameter="Guid" PropertyName="UpgradeCode" />
+     </GenerateGuid>
+ 
+-    <GenerateGuid Condition="'$(OutputName)' == '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(Version)">
++    <GenerateGuid Condition="'$(ProductNameShort)' == '$(HostOptionsNameShort)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(Version)">
+       <Output TaskParameter="Guid" PropertyName="ProductCode" />
+     </GenerateGuid>
+-    <GenerateGuid Condition="'$(OutputName)' == '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(AspNetCoreMajorMinorVersion);$(OutputType)">
++    <GenerateGuid Condition="'$(ProductNameShort)' == '$(HostOptionsNameShort)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(AspNetCoreMajorMinorVersion);$(OutputType)">
+       <Output TaskParameter="Guid" PropertyName="UpgradeCode" />
+     </GenerateGuid>
+ 
+@@ -82,6 +86,16 @@
+     </PropertyGroup>
+   </Target>
+ 
++  <Target Name="_GenerateANCMGuids" Condition="'$(ANCMDepProviderKey)' != ''" BeforeTargets="CoreCompile">
++    <GenerateGuid NamespaceGuid="$(ANCMNamespaceGuid)" Values="$(ANCMDepProviderKey)">
++      <Output TaskParameter="Guid" PropertyName="DepProviderGuid" />
++    </GenerateGuid>
++
++    <PropertyGroup>
++      <DefineConstants>$(DefineConstants);DepProviderGuid=$(DepProviderGuid)</DefineConstants>
++    </PropertyGroup>
++  </Target>
++
+   <Target Name="_CheckPackageFileNameIsSet" BeforeTargets="PrepareForBuild">
+     <Error Text="Missing required property: PackageFileName" Condition="'$(PackageFileName)' == ''" />
+   </Target>
+@@ -96,28 +110,30 @@
+     <Copy SourceFiles="@(_cabs)" DestinationFolder="$(InstallersOutputPath)" />
+   </Target>
+ 
+-  <Target Name="CreateWixPackageDrop" AfterTargets="CopyToArtifactsDirectory">
+-    <MakeDir Directories="$(WixCommandPackagesDir)" />
+-    <ItemGroup>
+-      <WixInstallerFilesToProcess Include="$(TargetPath)" />
+-      <WixInstallerFilesToProcess Include="$(InstallersOutputPath)$(PackageFileName)"
+-        Condition=" '$(IsShipping)' == 'true' AND '$(SkipCopyToArtifactsDirectory)' != 'true' " />
+-    </ItemGroup>
+-    <CreateLightCommandPackageDrop
+-      LightCommandWorkingDir="$(WixCommandObjDir)"
+-      OutputFolder="$(WixCommandPackagesDir)"
+-      NoLogo="true"
+-      Cultures="en-us"
+-      InstallerFile="%(WixInstallerFilesToProcess.Identity)"
+-      AdditionalBasePaths="$(MSBuildProjectDirectory);$(PkgMicrosoft_DotNet_Build_Tasks_Installers)\build\wix\bundle"
+-      WixExtensions="@(WixExtension)"
+-      Loc="@(EmbeddedResource)"
+-      Sice="$(SuppressIces)"
+-      WixProjectFile="$(MSBuildProjectFile)"
+-      Fv="true"
+-      WixSrcFiles="@(CompileObjOutput);@(WixObject);@(WixLibProjects);@(_ResolvedWixLibraryPaths)">
+-      <Output TaskParameter="OutputFile" PropertyName="_LightCommandPackageNameOutput" />
+-    </CreateLightCommandPackageDrop>
++  <Target Name="GenerateWixpackPackage" AfterTargets="CoreCompile">
++    <PropertyGroup>
++      <WixpackWorkingDir>$(IntermediateOutputPath)wixpack</WixpackWorkingDir>
++      <WixpackOutputDir>$(ArtifactsNonShippingPackagesDir)</WixpackOutputDir>
++    </PropertyGroup>
++
++    <CreateWixBuildWixpack
++      BindTrackingFile="$(IntermediateOutputPath)$(BindTrackingFilePrefix)%(CultureGroup.OutputSuffix)$(BindTrackingFileExtension)"
++      Cultures="%(CultureGroup.Identity)"
++      DefineConstants="$(DefineConstants);$(SolutionDefineConstants);$(ProjectDefineConstants);$(ProjectReferenceDefineConstants)"
++      Extensions="@(_ResolvedWixExtensionPaths)"
++      InstallerPlatform="$(InstallerPlatform)"
++      InstallerFile="$(IntermediateOutputPath)%(CultureGroup.OutputFolder)$(TargetFileName)"
++      IntermediateDirectory="$(IntermediateOutputPath)%(CultureGroup.OutputFolder)"
++      OutputFolder="$(WixpackOutputDir)"
++      OutputType="$(OutputType)"
++      PdbFile="$(IntermediateOutputPath)%(CultureGroup.OutputFolder)$(TargetPdbFileName)"
++      PdbType="$(DebugType)"
++      SourceFiles="@(Compile)"
++      LocalizationFiles="@(_WixLocalizationFile)"
++      BindPaths="@(BindPath)"
++      WixpackWorkingDir="$(WixpackWorkingDir)">
++      <Output TaskParameter="OutputFile" PropertyName="_WixBuildCommandPackageNameOutput" />
++    </CreateWixBuildWixpack>
+   </Target>
+ 
+   <!-- wixprojs don't do any packaging but the target is called from Arcade's Build.proj. -->
+ba98a075c0fe2f684055372818181afdb8337c4d
+2021-11-04T17:18:29-07:00
+Allow Hosting Bundle to be upgraded by MU (#37966)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index b4e443a29c..3da4205a0b 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -45,10 +45,17 @@
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+ 
+   <Target Name="_GeneratePackageGuids" Condition="'$(OutputType)' == 'package'">
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs)">
++    <GenerateGuid Condition="'$(OutputName)' != '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="ProductCode" />
+     </GenerateGuid>
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs);$(OutputType)">
++    <GenerateGuid Condition="'$(OutputName)' != '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs);$(OutputType)">
++      <Output TaskParameter="Guid" PropertyName="UpgradeCode" />
++    </GenerateGuid>
++
++    <GenerateGuid Condition="'$(OutputName)' == '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(Version)">
++      <Output TaskParameter="Guid" PropertyName="ProductCode" />
++    </GenerateGuid>
++    <GenerateGuid Condition="'$(OutputName)' == '$(HostOptionsName)'" NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(AspNetCoreMajorMinorVersion);$(OutputType)">
+       <Output TaskParameter="Guid" PropertyName="UpgradeCode" />
+     </GenerateGuid>
+ 
+f6b7b83b9a52073918a06b5a01c41bf34689613a
+2020-10-13T13:06:29-07:00
+[release/3.1] Generate non-stable version for installer (#26065)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 17b41491fa..dacb9e7904 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -1,12 +1,12 @@
+ <Project>
+   <!-- Set versioning properties after Arcade SDK targets have been imported. -->
+   <PropertyGroup>
+-    <!-- Used for generating stable upgrade codes for bundles -->
+-    <Version>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).0</Version>
+     <!-- Actual upgrade code used in bundles to ensure upgrades withing a version band, e.g. 3.0.0.xxx -->
+     <_FileRevisionVersion>$(VersionSuffixDateStamp)</_FileRevisionVersion>
+     <_FileRevisionVersion Condition=" '$(_FileRevisionVersion)' == '' ">42424</_FileRevisionVersion>
+-    <BundleVersion>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).$(_FileRevisionVersion)</BundleVersion>
++    <BundleVersion>$(AspNetCoreMajorMinorVersion).$(AspNetCorePatchVersion).$(_FileRevisionVersion)</BundleVersion>
++    <!-- Used for generating stable upgrade codes for bundles -->
++    <Version>$(BundleVersion)</Version>
+ 
+     <DefineConstants>$(DefineConstants);MajorVersion=$(AspNetCoreMajorVersion)</DefineConstants>
+     <DefineConstants>$(DefineConstants);MinorVersion=$(AspNetCoreMinorVersion)</DefineConstants>
+@@ -21,7 +21,7 @@
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+-    <GuidInputs>$(Version);$(Platform);$(VersionSuffix);$(_BuildNumberLabels)</GuidInputs>
++    <GuidInputs>$(Version);$(Platform);$(VersionSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+@@ -44,7 +44,7 @@
+          the upgrade code. Bundle upgrades pivot on Major.Minor.Patch changes. For example, 3.0.1-preview 1 can upgrade to 3.0.1-preview 8, but 3.0.1
+          cannot upgrade to 3.0.2 or 3.1. -->
+     <PropertyGroup>
+-      <BundleGuidInputs>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)</BundleGuidInputs>
++      <BundleGuidInputs>$(AspNetCoreMajorMinorVersion);$(Platform)</BundleGuidInputs>
+     </PropertyGroup>
+     <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleGuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+c3f89a91ab6d497fb734be176df82d3568e6d396
+2020-10-01T09:51:30-07:00
+Generate non-stable version for installer (#26064)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index eb4adf4c30..8c84c8b3e8 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -1,12 +1,12 @@
+ <Project>
+   <!-- Set versioning properties after Arcade SDK targets have been imported. -->
+   <PropertyGroup>
+-    <!-- Used for generating stable upgrade codes for bundles -->
+-    <Version>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).0</Version>
+     <!-- Actual upgrade code used in bundles to ensure upgrades withing a version band, e.g. 3.0.0.xxx -->
+     <_FileRevisionVersion>$(VersionSuffixDateStamp)</_FileRevisionVersion>
+     <_FileRevisionVersion Condition=" '$(_FileRevisionVersion)' == '' ">42424</_FileRevisionVersion>
+-    <BundleVersion>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).$(_FileRevisionVersion)</BundleVersion>
++    <BundleVersion>$(AspNetCoreMajorMinorVersion).$(AspNetCorePatchVersion).$(_FileRevisionVersion)</BundleVersion>
++    <!-- Used for generating stable upgrade codes for bundles -->
++    <Version>$(BundleVersion)</Version>
+ 
+     <!-- ARM64 MSIs require the installer version to be at least 500. -->
+     <!-- See: https://docs.microsoft.com/en-us/windows/win32/msi/64-bit-windows-installer-packages -->
+@@ -26,7 +26,7 @@
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+-    <GuidInputs>$(Version);$(Platform);$(VersionSuffix);$(_BuildNumberLabels)</GuidInputs>
++    <GuidInputs>$(Version);$(Platform);$(VersionSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <ItemGroup>
+@@ -61,7 +61,7 @@
+          the upgrade code. Bundle upgrades pivot on Major.Minor.Patch changes. For example, 3.0.1-preview 1 can upgrade to 3.0.1-preview 8, but 3.0.1
+          cannot upgrade to 3.0.2 or 3.1. -->
+     <PropertyGroup>
+-      <BundleGuidInputs>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)</BundleGuidInputs>
++      <BundleGuidInputs>$(AspNetCoreMajorMinorVersion);$(Platform)</BundleGuidInputs>
+     </PropertyGroup>
+     <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleGuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+817127dfd0589e73532e43815f312e4fdc357cda
+2020-05-14T16:34:09-07:00
+[release/3.1] Give .msi's non-stable branding (#21801)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index de6636d51d..17b41491fa 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -21,7 +21,7 @@
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+-    <GuidInputs>$(Version);$(Platform);$(VersionSuffix)</GuidInputs>
++    <GuidInputs>$(Version);$(Platform);$(VersionSuffix);$(_BuildNumberLabels)</GuidInputs>
+   </PropertyGroup>
+ 
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+99ee868090cac89c6e19d9cc1c64e90db930c19f
+2019-07-05T09:46:26-07:00
+Resolve Guid inputs correctly (#11865)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 8970b74341..f7323ee110 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -21,7 +21,7 @@
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+-    <GuidInputs>$(Version);$(Platform);(VersionSuffix)</GuidInputs>
++    <GuidInputs>$(Version);$(Platform);$(VersionSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+ef19361731617687698071cd8b3c64d7d68b28ac
+2019-06-28T21:47:44-07:00
+Ensure builds have unique package GUIDs (#11703)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index ce8b898299..8970b74341 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -21,7 +21,7 @@
+   </PropertyGroup>
+ 
+   <PropertyGroup>
+-    <GuidInputs>$(Version);$(Platform)</GuidInputs>
++    <GuidInputs>$(Version);$(Platform);(VersionSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+41ce223c1cf4ffd482c4ea36e88ed44a94db37b3
+2019-06-07T17:19:41-07:00
+Replace Internal.AspNetCore.Sdk with Microsoft.DotNet.Arcade.Sdk (#10674)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index c84993bb7d..ce8b898299 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -1,4 +1,19 @@
+ <Project>
++  <!-- Set versioning properties after Arcade SDK targets have been imported. -->
++  <PropertyGroup>
++    <!-- Used for generating stable upgrade codes for bundles -->
++    <Version>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).0</Version>
++    <!-- Actual upgrade code used in bundles to ensure upgrades withing a version band, e.g. 3.0.0.xxx -->
++    <_FileRevisionVersion>$(VersionSuffixDateStamp)</_FileRevisionVersion>
++    <_FileRevisionVersion Condition=" '$(_FileRevisionVersion)' == '' ">42424</_FileRevisionVersion>
++    <BundleVersion>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion).$(_FileRevisionVersion)</BundleVersion>
++
++    <DefineConstants>$(DefineConstants);MajorVersion=$(AspNetCoreMajorVersion)</DefineConstants>
++    <DefineConstants>$(DefineConstants);MinorVersion=$(AspNetCoreMinorVersion)</DefineConstants>
++    <DefineConstants>$(DefineConstants);Version=$(Version)</DefineConstants>
++    <DefineConstants>$(DefineConstants);PackageVersion=$(PackageVersion)</DefineConstants>
++  </PropertyGroup>
++
+   <PropertyGroup Condition="'$(OutputType)' == 'package'">
+     <InstallDir>$(ProductName)</InstallDir>
+     <DepProviderKey>Microsoft.$(ProductNameShort)_$(Platform)_$(Lang),v$(PackageVersion)</DepProviderKey>
+@@ -7,7 +22,6 @@
+ 
+   <PropertyGroup>
+     <GuidInputs>$(Version);$(Platform)</GuidInputs>
+-    <GuidInputs Condition="'$(IsFinalBuild)' != 'true'">$(GuidInputs);$(BuildNumberSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+@@ -44,10 +58,14 @@
+     </PropertyGroup>
+   </Target>
+ 
++  <Target Name="_CheckPackageFileNameIsSet" BeforeTargets="PrepareForBuild">
++    <Error Text="Missing required property: PackageFileName" Condition="'$(PackageFileName)' == ''" />
++  </Target>
++
+   <Target Name="CopyToArtifactsDirectory"
+-          Condition=" '$(IsProductInstaller)' == 'true' "
++          Condition=" '$(IsShipping)' == 'true' "
+           AfterTargets="Build">
+-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(InstallersOutputPath)" />
++    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(InstallersOutputPath)$(PackageFileName)" />
+     <ItemGroup>
+       <_cabs Include="$(TargetDir)**/*.cab" />
+     </ItemGroup>
+eb1ce947c5877048386a062e5000614fbf2857d7
+2019-03-13T09:19:23-07:00
+Fix up property group, preprocessor statement
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 194b2713bf..ea5824f2d0 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -29,7 +29,9 @@
+     <!-- Don't need to use the name of the bundle since we have separate namespace GUIDs. The name will also changes based on the milestone and destabalize
+          the upgrade code. Bundle upgrades pivot on Major.Minor.Patch changes. For example, 3.0.1-preview 1 can upgrade to 3.0.1-preview 8, but 3.0.1
+          cannot upgrade to 3.0.2 or 3.1. -->
+-    <BundleGuidInputs>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)</BundleGuidInputs>
++    <PropertyGroup>
++      <BundleGuidInputs>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)</BundleGuidInputs>
++    </PropertyGroup>
+     <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleGuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+     </GenerateGuid>
+eb8ca48e77275d7c1a5cf67f412a1507d2270eab
+2019-03-12T14:11:58-07:00
+Remove duplicate inputs
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 9ca5a357d9..194b2713bf 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -29,10 +29,11 @@
+     <!-- Don't need to use the name of the bundle since we have separate namespace GUIDs. The name will also changes based on the milestone and destabalize
+          the upgrade code. Bundle upgrades pivot on Major.Minor.Patch changes. For example, 3.0.1-preview 1 can upgrade to 3.0.1-preview 8, but 3.0.1
+          cannot upgrade to 3.0.2 or 3.1. -->
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)">
++    <BundleGuidInputs>$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)</BundleGuidInputs>
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleGuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+     </GenerateGuid>
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);Platform)">
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleGuidInputs)">
+       <Output TaskParameter="Guid" PropertyName="BundleUpgradeCode" />
+     </GenerateGuid>
+ 
+2aabd9f8478ac68f5d917252a12c9132c6096041
+2019-03-12T14:08:07-07:00
+Fix inputs for UpgradeCode
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 025ec99946..9ca5a357d9 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -32,7 +32,7 @@
+     <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+     </GenerateGuid>
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion);$(AspNetCorePatchVersion);Platform)">
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);Platform)">
+       <Output TaskParameter="Guid" PropertyName="BundleUpgradeCode" />
+     </GenerateGuid>
+ 
+f87c75a90dec87256b458297f08a51076f94c728
+2019-03-12T13:51:15-07:00
+Fix for #7729 to ensure upgradable bundles
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 1ceda1d5a5..025ec99946 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -26,15 +26,18 @@
+   </Target>
+ 
+   <Target Name="_GenerateBundleGuids" Condition="'$(OutputType)' == 'bundle'">
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleNameShort);$(GuidInputs)">
++    <!-- Don't need to use the name of the bundle since we have separate namespace GUIDs. The name will also changes based on the milestone and destabalize
++         the upgrade code. Bundle upgrades pivot on Major.Minor.Patch changes. For example, 3.0.1-preview 1 can upgrade to 3.0.1-preview 8, but 3.0.1
++         cannot upgrade to 3.0.2 or 3.1. -->
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion).$(AspNetCorePatchVersion);$(Platform)">
+       <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
+     </GenerateGuid>
+-    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleNameShort);$(GuidInputs);$(OutputType)">
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(AspNetCoreMajorVersion).$(AspNetCoreMinorVersion);$(AspNetCorePatchVersion);Platform)">
+       <Output TaskParameter="Guid" PropertyName="BundleUpgradeCode" />
+     </GenerateGuid>
+ 
+     <PropertyGroup>
+-      <DefineConstants>$(DefineConstants);BundleProviderKey=$(BundleProviderKey);BundleUpgradeCode=$(BundleUpgradeCode)</DefineConstants>
++      <DefineConstants>$(DefineConstants);BundleVersion=$(BundleVersion);BundleProviderKey=$(BundleProviderKey);BundleUpgradeCode=$(BundleUpgradeCode)</DefineConstants>
+     </PropertyGroup>
+   </Target>
+ 
+2b7a3a222af721a8b6ab1cbe6a40594a4270a3d8
+2018-12-31T10:54:15-08:00
+Build Windows Installers using the repo's main build script and repotasks (#6139)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index d4504f10c3..1ceda1d5a5 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -10,8 +10,6 @@
+     <GuidInputs Condition="'$(IsFinalBuild)' != 'true'">$(GuidInputs);$(BuildNumberSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+-  <UsingTask AssemblyFile="$(OutputPath)..\InstallerTasks\InstallerTasks.dll" TaskName="RepoTasks.GenerateGuid" />
+-
+   <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" Condition=" '$(DisableGuidGeneration)' != 'true' " />
+ 
+   <Target Name="_GeneratePackageGuids" Condition="'$(OutputType)' == 'package'">
+0cbfa9ce6dd03829199977bf8855021580c3171d
+2018-11-20T19:47:12-08:00
+Update branding to 3.0.0-preview (#4171)
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+index 85eecfa243..8abf268608 100644
+--- a/src/Installers/Windows/Wix.targets
++++ b/src/Installers/Windows/Wix.targets
+@@ -7,7 +7,7 @@
+ 
+   <PropertyGroup>
+     <GuidInputs>$(Version);$(Platform)</GuidInputs>
+-    <GuidInputs Condition="'$(IsFinalBuild)' != 'true'">$(GuidInputs);$(BuildNumber)</GuidInputs>
++    <GuidInputs Condition="'$(IsFinalBuild)' != 'true'">$(GuidInputs);$(BuildNumberSuffix)</GuidInputs>
+   </PropertyGroup>
+ 
+   <UsingTask AssemblyFile="$(OutputPath)..\InstallerTasks\InstallerTasks.dll" TaskName="RepoTasks.GenerateGuid" />
+b67a14126326cec4c74ff844500b3bd830dde880
+2018-08-17T10:01:57-07:00
+Add code for building the Windows Hosting Bundle and ASP.NET Core runtime installers into this repo
+
+diff --git a/src/Installers/Windows/Wix.targets b/src/Installers/Windows/Wix.targets
+new file mode 100644
+index 0000000000..a40275cd06
+--- /dev/null
++++ b/src/Installers/Windows/Wix.targets
+@@ -0,0 +1,42 @@
++<Project>
++  <PropertyGroup Condition="'$(OutputType)' == 'package'">
++    <InstallDir>$(ProductName)</InstallDir>
++    <DepProviderKey>Microsoft.$(ProductNameShort)_$(Platform)_$(Lang),v$(PackageVersion)</DepProviderKey>
++    <DefineConstants>$(DefineConstants);DepProviderKey=$(DepProviderKey)</DefineConstants>
++  </PropertyGroup>
++
++  <PropertyGroup>
++    <GuidInputs>$(Version);$(Platform)</GuidInputs>
++    <GuidInputs Condition="'$(IsFinalBuild)' != 'true'">$(GuidInputs);$(BuildNumber)</GuidInputs>
++  </PropertyGroup>
++
++  <UsingTask AssemblyFile="$(OutputPath)..\InstallerTasks\InstallerTasks.dll" TaskName="RepoTasks.GenerateGuid" />
++
++  <Target Name="GenerateGUIDs" BeforeTargets="BeforeBuild" DependsOnTargets="_GeneratePackageGuids;_GenerateBundleGuids" />
++
++  <Target Name="_GeneratePackageGuids" Condition="'$(OutputType)' == 'package'">
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs)">
++      <Output TaskParameter="Guid" PropertyName="ProductCode" />
++    </GenerateGuid>
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(ProductNameShort);$(GuidInputs);$(OutputType)">
++      <Output TaskParameter="Guid" PropertyName="UpgradeCode" />
++    </GenerateGuid>
++
++    <PropertyGroup>
++      <DefineConstants>$(DefineConstants);ProductCode=$(ProductCode);UpgradeCode=$(UpgradeCode)</DefineConstants>
++    </PropertyGroup>
++  </Target>
++
++  <Target Name="_GenerateBundleGuids" Condition="'$(OutputType)' == 'bundle'">
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleNameShort);$(GuidInputs)">
++      <Output TaskParameter="Guid" PropertyName="BundleProviderKey" />
++    </GenerateGuid>
++    <GenerateGuid NamespaceGuid="$(NamespaceGuid)" Values="$(BundleNameShort);$(GuidInputs);$(OutputType)">
++      <Output TaskParameter="Guid" PropertyName="BundleUpgradeCode" />
++    </GenerateGuid>
++
++    <PropertyGroup>
++      <DefineConstants>$(DefineConstants);BundleProviderKey=$(BundleProviderKey);BundleUpgradeCode=$(BundleUpgradeCode)</DefineConstants>
++    </PropertyGroup>
++  </Target>
++</Project>

@@ -1,0 +1,1040 @@
+[
+  {
+    "label": "decoder",
+    "role": "Original",
+    "gitPath": "src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs",
+    "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "sha256": "182CEEDC96F9A96EDE8A0098E6B5B2FF4804C53B236B214A0A1141532721667B",
+    "artifact": "source\\Original\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\HttpUtilities.cs",
+    "startLine": 108,
+    "endLine": 191,
+    "numberedLines": [
+      {
+        "line": 108,
+        "text": "    // Null checks must be done independently of this method (if required)"
+      },
+      {
+        "line": 109,
+        "text": "    public static string GetAsciiString(this Span<byte> span)"
+      },
+      {
+        "line": 110,
+        "text": "        => StringUtilities.GetAsciiString(span);"
+      },
+      {
+        "line": 111,
+        "text": ""
+      },
+      {
+        "line": 112,
+        "text": "    // Null checks must be done independently of this method (if required)"
+      },
+      {
+        "line": 113,
+        "text": "    public static string GetAsciiOrUTF8String(this ReadOnlySpan<byte> span)"
+      },
+      {
+        "line": 114,
+        "text": "        => StringUtilities.GetAsciiOrUTF8String(span, DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 115,
+        "text": ""
+      },
+      {
+        "line": 116,
+        "text": "    public static string GetRequestHeaderString(this ReadOnlySpan<byte> span, string name, Func<string, Encoding?> encodingSelector, bool checkForNewlineChars)"
+      },
+      {
+        "line": 117,
+        "text": "    {"
+      },
+      {
+        "line": 118,
+        "text": "        string result;"
+      },
+      {
+        "line": 119,
+        "text": "        if (ReferenceEquals(KestrelServerOptions.DefaultHeaderEncodingSelector, encodingSelector))"
+      },
+      {
+        "line": 120,
+        "text": "        {"
+      },
+      {
+        "line": 121,
+        "text": "            result = span.GetAsciiOrUTF8String(DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 122,
+        "text": "        }"
+      },
+      {
+        "line": 123,
+        "text": "        else"
+      },
+      {
+        "line": 124,
+        "text": "        {"
+      },
+      {
+        "line": 125,
+        "text": "            result = span.GetRequestHeaderStringWithoutDefaultEncodingCore(name, encodingSelector);"
+      },
+      {
+        "line": 126,
+        "text": "        }"
+      },
+      {
+        "line": 127,
+        "text": ""
+      },
+      {
+        "line": 128,
+        "text": "        // New Line characters (CR, LF) are considered invalid at this point."
+      },
+      {
+        "line": 129,
+        "text": "        // Null characters are also not allowed."
+      },
+      {
+        "line": 130,
+        "text": "        var hasInvalidChar = checkForNewlineChars ?"
+      },
+      {
+        "line": 131,
+        "text": "            ((ReadOnlySpan<char>)result).ContainsAny('\\r', '\\n', '\\0')"
+      },
+      {
+        "line": 132,
+        "text": "            : ((ReadOnlySpan<char>)result).Contains('\\0');"
+      },
+      {
+        "line": 133,
+        "text": ""
+      },
+      {
+        "line": 134,
+        "text": "        if (hasInvalidChar)"
+      },
+      {
+        "line": 135,
+        "text": "        {"
+      },
+      {
+        "line": 136,
+        "text": "            ThrowForInvalidCharacter(checkForNewlineChars);"
+      },
+      {
+        "line": 137,
+        "text": "        }"
+      },
+      {
+        "line": 138,
+        "text": ""
+      },
+      {
+        "line": 139,
+        "text": "        return result;"
+      },
+      {
+        "line": 140,
+        "text": "    }"
+      },
+      {
+        "line": 141,
+        "text": ""
+      },
+      {
+        "line": 142,
+        "text": "    [MethodImpl(MethodImplOptions.NoInlining)]"
+      },
+      {
+        "line": 143,
+        "text": "    private static void ThrowForInvalidCharacter(bool checkForNewlines)"
+      },
+      {
+        "line": 144,
+        "text": "    {"
+      },
+      {
+        "line": 145,
+        "text": "        if (checkForNewlines)"
+      },
+      {
+        "line": 146,
+        "text": "        {"
+      },
+      {
+        "line": 147,
+        "text": "            throw new InvalidOperationException(\"Newline characters (CR/LF) or Null are not allowed in request headers.\");"
+      },
+      {
+        "line": 148,
+        "text": "        }"
+      },
+      {
+        "line": 149,
+        "text": "        else"
+      },
+      {
+        "line": 150,
+        "text": "        {"
+      },
+      {
+        "line": 151,
+        "text": "            throw new InvalidOperationException(\"Null characters are not allowed in request headers.\");"
+      },
+      {
+        "line": 152,
+        "text": "        }"
+      },
+      {
+        "line": 153,
+        "text": "    }"
+      },
+      {
+        "line": 154,
+        "text": ""
+      },
+      {
+        "line": 155,
+        "text": "    private static string GetRequestHeaderStringWithoutDefaultEncodingCore(this ReadOnlySpan<byte> span, string name, Func<string, Encoding?> encodingSelector)"
+      },
+      {
+        "line": 156,
+        "text": "    {"
+      },
+      {
+        "line": 157,
+        "text": "        var encoding = encodingSelector(name);"
+      },
+      {
+        "line": 158,
+        "text": ""
+      },
+      {
+        "line": 159,
+        "text": "        if (encoding is null)"
+      },
+      {
+        "line": 160,
+        "text": "        {"
+      },
+      {
+        "line": 161,
+        "text": "            return span.GetAsciiOrUTF8String(DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 162,
+        "text": "        }"
+      },
+      {
+        "line": 163,
+        "text": "        if (ReferenceEquals(encoding, Encoding.Latin1))"
+      },
+      {
+        "line": 164,
+        "text": "        {"
+      },
+      {
+        "line": 165,
+        "text": "            return span.GetLatin1String();"
+      },
+      {
+        "line": 166,
+        "text": "        }"
+      },
+      {
+        "line": 167,
+        "text": "        try"
+      },
+      {
+        "line": 168,
+        "text": "        {"
+      },
+      {
+        "line": 169,
+        "text": "            return encoding.GetString(span);"
+      },
+      {
+        "line": 170,
+        "text": "        }"
+      },
+      {
+        "line": 171,
+        "text": "        catch (DecoderFallbackException ex)"
+      },
+      {
+        "line": 172,
+        "text": "        {"
+      },
+      {
+        "line": 173,
+        "text": "            throw new InvalidOperationException(ex.Message, ex);"
+      },
+      {
+        "line": 174,
+        "text": "        }"
+      },
+      {
+        "line": 175,
+        "text": "    }"
+      },
+      {
+        "line": 176,
+        "text": ""
+      },
+      {
+        "line": 177,
+        "text": "    public static string GetAsciiStringEscaped(this ReadOnlySpan<byte> span, int maxChars)"
+      },
+      {
+        "line": 178,
+        "text": "    {"
+      },
+      {
+        "line": 179,
+        "text": "        var sb = new StringBuilder();"
+      },
+      {
+        "line": 180,
+        "text": ""
+      },
+      {
+        "line": 181,
+        "text": "        for (var i = 0; i < Math.Min(span.Length, maxChars); i++)"
+      },
+      {
+        "line": 182,
+        "text": "        {"
+      },
+      {
+        "line": 183,
+        "text": "            var ch = span[i];"
+      },
+      {
+        "line": 184,
+        "text": "            sb.Append(ch < 0x20 || ch >= 0x7F ? $\"\\\\x{ch:X2}\" : ((char)ch).ToString());"
+      },
+      {
+        "line": 185,
+        "text": "        }"
+      },
+      {
+        "line": 186,
+        "text": ""
+      },
+      {
+        "line": 187,
+        "text": "        if (span.Length > maxChars)"
+      },
+      {
+        "line": 188,
+        "text": "        {"
+      },
+      {
+        "line": 189,
+        "text": "            sb.Append(\"...\");"
+      },
+      {
+        "line": 190,
+        "text": "        }"
+      },
+      {
+        "line": 191,
+        "text": ""
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  },
+  {
+    "label": "decoder",
+    "role": "Default",
+    "gitPath": "src/Servers/Kestrel/Core/src/Internal/Infrastructure/HttpUtilities.cs",
+    "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "sha256": "182CEEDC96F9A96EDE8A0098E6B5B2FF4804C53B236B214A0A1141532721667B",
+    "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Infrastructure\\HttpUtilities.cs",
+    "startLine": 108,
+    "endLine": 191,
+    "numberedLines": [
+      {
+        "line": 108,
+        "text": "    // Null checks must be done independently of this method (if required)"
+      },
+      {
+        "line": 109,
+        "text": "    public static string GetAsciiString(this Span<byte> span)"
+      },
+      {
+        "line": 110,
+        "text": "        => StringUtilities.GetAsciiString(span);"
+      },
+      {
+        "line": 111,
+        "text": ""
+      },
+      {
+        "line": 112,
+        "text": "    // Null checks must be done independently of this method (if required)"
+      },
+      {
+        "line": 113,
+        "text": "    public static string GetAsciiOrUTF8String(this ReadOnlySpan<byte> span)"
+      },
+      {
+        "line": 114,
+        "text": "        => StringUtilities.GetAsciiOrUTF8String(span, DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 115,
+        "text": ""
+      },
+      {
+        "line": 116,
+        "text": "    public static string GetRequestHeaderString(this ReadOnlySpan<byte> span, string name, Func<string, Encoding?> encodingSelector, bool checkForNewlineChars)"
+      },
+      {
+        "line": 117,
+        "text": "    {"
+      },
+      {
+        "line": 118,
+        "text": "        string result;"
+      },
+      {
+        "line": 119,
+        "text": "        if (ReferenceEquals(KestrelServerOptions.DefaultHeaderEncodingSelector, encodingSelector))"
+      },
+      {
+        "line": 120,
+        "text": "        {"
+      },
+      {
+        "line": 121,
+        "text": "            result = span.GetAsciiOrUTF8String(DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 122,
+        "text": "        }"
+      },
+      {
+        "line": 123,
+        "text": "        else"
+      },
+      {
+        "line": 124,
+        "text": "        {"
+      },
+      {
+        "line": 125,
+        "text": "            result = span.GetRequestHeaderStringWithoutDefaultEncodingCore(name, encodingSelector);"
+      },
+      {
+        "line": 126,
+        "text": "        }"
+      },
+      {
+        "line": 127,
+        "text": ""
+      },
+      {
+        "line": 128,
+        "text": "        // New Line characters (CR, LF) are considered invalid at this point."
+      },
+      {
+        "line": 129,
+        "text": "        // Null characters are also not allowed."
+      },
+      {
+        "line": 130,
+        "text": "        var hasInvalidChar = checkForNewlineChars ?"
+      },
+      {
+        "line": 131,
+        "text": "            ((ReadOnlySpan<char>)result).ContainsAny('\\r', '\\n', '\\0')"
+      },
+      {
+        "line": 132,
+        "text": "            : ((ReadOnlySpan<char>)result).Contains('\\0');"
+      },
+      {
+        "line": 133,
+        "text": ""
+      },
+      {
+        "line": 134,
+        "text": "        if (hasInvalidChar)"
+      },
+      {
+        "line": 135,
+        "text": "        {"
+      },
+      {
+        "line": 136,
+        "text": "            ThrowForInvalidCharacter(checkForNewlineChars);"
+      },
+      {
+        "line": 137,
+        "text": "        }"
+      },
+      {
+        "line": 138,
+        "text": ""
+      },
+      {
+        "line": 139,
+        "text": "        return result;"
+      },
+      {
+        "line": 140,
+        "text": "    }"
+      },
+      {
+        "line": 141,
+        "text": ""
+      },
+      {
+        "line": 142,
+        "text": "    [MethodImpl(MethodImplOptions.NoInlining)]"
+      },
+      {
+        "line": 143,
+        "text": "    private static void ThrowForInvalidCharacter(bool checkForNewlines)"
+      },
+      {
+        "line": 144,
+        "text": "    {"
+      },
+      {
+        "line": 145,
+        "text": "        if (checkForNewlines)"
+      },
+      {
+        "line": 146,
+        "text": "        {"
+      },
+      {
+        "line": 147,
+        "text": "            throw new InvalidOperationException(\"Newline characters (CR/LF) or Null are not allowed in request headers.\");"
+      },
+      {
+        "line": 148,
+        "text": "        }"
+      },
+      {
+        "line": 149,
+        "text": "        else"
+      },
+      {
+        "line": 150,
+        "text": "        {"
+      },
+      {
+        "line": 151,
+        "text": "            throw new InvalidOperationException(\"Null characters are not allowed in request headers.\");"
+      },
+      {
+        "line": 152,
+        "text": "        }"
+      },
+      {
+        "line": 153,
+        "text": "    }"
+      },
+      {
+        "line": 154,
+        "text": ""
+      },
+      {
+        "line": 155,
+        "text": "    private static string GetRequestHeaderStringWithoutDefaultEncodingCore(this ReadOnlySpan<byte> span, string name, Func<string, Encoding?> encodingSelector)"
+      },
+      {
+        "line": 156,
+        "text": "    {"
+      },
+      {
+        "line": 157,
+        "text": "        var encoding = encodingSelector(name);"
+      },
+      {
+        "line": 158,
+        "text": ""
+      },
+      {
+        "line": 159,
+        "text": "        if (encoding is null)"
+      },
+      {
+        "line": 160,
+        "text": "        {"
+      },
+      {
+        "line": 161,
+        "text": "            return span.GetAsciiOrUTF8String(DefaultRequestHeaderEncoding);"
+      },
+      {
+        "line": 162,
+        "text": "        }"
+      },
+      {
+        "line": 163,
+        "text": "        if (ReferenceEquals(encoding, Encoding.Latin1))"
+      },
+      {
+        "line": 164,
+        "text": "        {"
+      },
+      {
+        "line": 165,
+        "text": "            return span.GetLatin1String();"
+      },
+      {
+        "line": 166,
+        "text": "        }"
+      },
+      {
+        "line": 167,
+        "text": "        try"
+      },
+      {
+        "line": 168,
+        "text": "        {"
+      },
+      {
+        "line": 169,
+        "text": "            return encoding.GetString(span);"
+      },
+      {
+        "line": 170,
+        "text": "        }"
+      },
+      {
+        "line": 171,
+        "text": "        catch (DecoderFallbackException ex)"
+      },
+      {
+        "line": 172,
+        "text": "        {"
+      },
+      {
+        "line": 173,
+        "text": "            throw new InvalidOperationException(ex.Message, ex);"
+      },
+      {
+        "line": 174,
+        "text": "        }"
+      },
+      {
+        "line": 175,
+        "text": "    }"
+      },
+      {
+        "line": 176,
+        "text": ""
+      },
+      {
+        "line": 177,
+        "text": "    public static string GetAsciiStringEscaped(this ReadOnlySpan<byte> span, int maxChars)"
+      },
+      {
+        "line": 178,
+        "text": "    {"
+      },
+      {
+        "line": 179,
+        "text": "        var sb = new StringBuilder();"
+      },
+      {
+        "line": 180,
+        "text": ""
+      },
+      {
+        "line": 181,
+        "text": "        for (var i = 0; i < Math.Min(span.Length, maxChars); i++)"
+      },
+      {
+        "line": 182,
+        "text": "        {"
+      },
+      {
+        "line": 183,
+        "text": "            var ch = span[i];"
+      },
+      {
+        "line": 184,
+        "text": "            sb.Append(ch < 0x20 || ch >= 0x7F ? $\"\\\\x{ch:X2}\" : ((char)ch).ToString());"
+      },
+      {
+        "line": 185,
+        "text": "        }"
+      },
+      {
+        "line": 186,
+        "text": ""
+      },
+      {
+        "line": 187,
+        "text": "        if (span.Length > maxChars)"
+      },
+      {
+        "line": 188,
+        "text": "        {"
+      },
+      {
+        "line": 189,
+        "text": "            sb.Append(\"...\");"
+      },
+      {
+        "line": 190,
+        "text": "        }"
+      },
+      {
+        "line": 191,
+        "text": ""
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  },
+  {
+    "label": "kestrel-request-header-assignment",
+    "role": "Original",
+    "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpProtocol.cs",
+    "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "sha256": "06311AE801E46E96B061D5F30337F7BA9CE3A01D7FC9D9E6E566136D33F18B60",
+    "artifact": "source\\Original\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpProtocol.cs",
+    "startLine": 401,
+    "endLine": 421,
+    "numberedLines": [
+      {
+        "line": 401,
+        "text": ""
+      },
+      {
+        "line": 402,
+        "text": "        ConnectionIdFeature = ConnectionId;"
+      },
+      {
+        "line": 403,
+        "text": ""
+      },
+      {
+        "line": 404,
+        "text": "        HttpRequestHeaders.Reset();"
+      },
+      {
+        "line": 405,
+        "text": "        HttpRequestHeaders.EncodingSelector = ServerOptions.RequestHeaderEncodingSelector;"
+      },
+      {
+        "line": 406,
+        "text": "        HttpRequestHeaders.ReuseHeaderValues = !ServerOptions.DisableStringReuse;"
+      },
+      {
+        "line": 407,
+        "text": "        HttpResponseHeaders.Reset();"
+      },
+      {
+        "line": 408,
+        "text": "        HttpResponseHeaders.EncodingSelector = ServerOptions.ResponseHeaderEncodingSelector;"
+      },
+      {
+        "line": 409,
+        "text": "        RequestHeaders = HttpRequestHeaders;"
+      },
+      {
+        "line": 410,
+        "text": "        ResponseHeaders = HttpResponseHeaders;"
+      },
+      {
+        "line": 411,
+        "text": "        RequestTrailers.Clear();"
+      },
+      {
+        "line": 412,
+        "text": "        ResponseTrailers?.Reset();"
+      },
+      {
+        "line": 413,
+        "text": "        RequestTrailersAvailable = false;"
+      },
+      {
+        "line": 414,
+        "text": ""
+      },
+      {
+        "line": 415,
+        "text": "        _isLeasedMemoryInvalid = true;"
+      },
+      {
+        "line": 416,
+        "text": "        _hasAdvanced = false;"
+      },
+      {
+        "line": 417,
+        "text": ""
+      },
+      {
+        "line": 418,
+        "text": "        if (_scheme == null)"
+      },
+      {
+        "line": 419,
+        "text": "        {"
+      },
+      {
+        "line": 420,
+        "text": "            var tlsFeature = ConnectionFeatures?[typeof(ITlsConnectionFeature)];"
+      },
+      {
+        "line": 421,
+        "text": "            _scheme = tlsFeature != null ? SchemeHttps : SchemeHttp;"
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  },
+  {
+    "label": "kestrel-request-header-assignment",
+    "role": "Default",
+    "gitPath": "src/Servers/Kestrel/Core/src/Internal/Http/HttpProtocol.cs",
+    "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "sha256": "06311AE801E46E96B061D5F30337F7BA9CE3A01D7FC9D9E6E566136D33F18B60",
+    "artifact": "source\\Default\\src\\Servers\\Kestrel\\Core\\src\\Internal\\Http\\HttpProtocol.cs",
+    "startLine": 401,
+    "endLine": 421,
+    "numberedLines": [
+      {
+        "line": 401,
+        "text": ""
+      },
+      {
+        "line": 402,
+        "text": "        ConnectionIdFeature = ConnectionId;"
+      },
+      {
+        "line": 403,
+        "text": ""
+      },
+      {
+        "line": 404,
+        "text": "        HttpRequestHeaders.Reset();"
+      },
+      {
+        "line": 405,
+        "text": "        HttpRequestHeaders.EncodingSelector = ServerOptions.RequestHeaderEncodingSelector;"
+      },
+      {
+        "line": 406,
+        "text": "        HttpRequestHeaders.ReuseHeaderValues = !ServerOptions.DisableStringReuse;"
+      },
+      {
+        "line": 407,
+        "text": "        HttpResponseHeaders.Reset();"
+      },
+      {
+        "line": 408,
+        "text": "        HttpResponseHeaders.EncodingSelector = ServerOptions.ResponseHeaderEncodingSelector;"
+      },
+      {
+        "line": 409,
+        "text": "        RequestHeaders = HttpRequestHeaders;"
+      },
+      {
+        "line": 410,
+        "text": "        ResponseHeaders = HttpResponseHeaders;"
+      },
+      {
+        "line": 411,
+        "text": "        RequestTrailers.Clear();"
+      },
+      {
+        "line": 412,
+        "text": "        ResponseTrailers?.Reset();"
+      },
+      {
+        "line": 413,
+        "text": "        RequestTrailersAvailable = false;"
+      },
+      {
+        "line": 414,
+        "text": ""
+      },
+      {
+        "line": 415,
+        "text": "        _isLeasedMemoryInvalid = true;"
+      },
+      {
+        "line": 416,
+        "text": "        _hasAdvanced = false;"
+      },
+      {
+        "line": 417,
+        "text": ""
+      },
+      {
+        "line": 418,
+        "text": "        if (_scheme == null)"
+      },
+      {
+        "line": 419,
+        "text": "        {"
+      },
+      {
+        "line": 420,
+        "text": "            var tlsFeature = ConnectionFeatures?[typeof(ITlsConnectionFeature)];"
+      },
+      {
+        "line": 421,
+        "text": "            _scheme = tlsFeature != null ? SchemeHttps : SchemeHttp;"
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  },
+  {
+    "label": "default-string-formatter-registration",
+    "role": "Original",
+    "gitPath": "src/Mvc/Mvc.Core/src/Infrastructure/MvcCoreMvcOptionsSetup.cs",
+    "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "sha256": "2C5888451EF37FEBDDAEDF4B757CF137843BB880DFCAAE0DA7B2C58B0410F732",
+    "artifact": "source\\Original\\src\\Mvc\\Mvc.Core\\src\\Infrastructure\\MvcCoreMvcOptionsSetup.cs",
+    "startLine": 72,
+    "endLine": 86,
+    "numberedLines": [
+      {
+        "line": 72,
+        "text": ""
+      },
+      {
+        "line": 73,
+        "text": "        // Media type formatter mappings for JSON"
+      },
+      {
+        "line": 74,
+        "text": "        options.FormatterMappings.SetMediaTypeMappingForFormat(\"json\", MediaTypeHeaderValues.ApplicationJson);"
+      },
+      {
+        "line": 75,
+        "text": ""
+      },
+      {
+        "line": 76,
+        "text": "        // Set up default output formatters."
+      },
+      {
+        "line": 77,
+        "text": "        options.OutputFormatters.Add(new HttpNoContentOutputFormatter());"
+      },
+      {
+        "line": 78,
+        "text": "        options.OutputFormatters.Add(new StringOutputFormatter());"
+      },
+      {
+        "line": 79,
+        "text": "        options.OutputFormatters.Add(new StreamOutputFormatter());"
+      },
+      {
+        "line": 80,
+        "text": ""
+      },
+      {
+        "line": 81,
+        "text": "        var jsonOutputFormatter = SystemTextJsonOutputFormatter.CreateFormatter(_jsonOptions.Value);"
+      },
+      {
+        "line": 82,
+        "text": "        options.OutputFormatters.Add(jsonOutputFormatter);"
+      },
+      {
+        "line": 83,
+        "text": ""
+      },
+      {
+        "line": 84,
+        "text": "        // Set up ValueProviders"
+      },
+      {
+        "line": 85,
+        "text": "        options.ValueProviderFactories.Add(new FormValueProviderFactory());"
+      },
+      {
+        "line": 86,
+        "text": "        options.ValueProviderFactories.Add(new RouteValueProviderFactory());"
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  },
+  {
+    "label": "default-string-formatter-registration",
+    "role": "Default",
+    "gitPath": "src/Mvc/Mvc.Core/src/Infrastructure/MvcCoreMvcOptionsSetup.cs",
+    "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "sha256": "2C5888451EF37FEBDDAEDF4B757CF137843BB880DFCAAE0DA7B2C58B0410F732",
+    "artifact": "source\\Default\\src\\Mvc\\Mvc.Core\\src\\Infrastructure\\MvcCoreMvcOptionsSetup.cs",
+    "startLine": 72,
+    "endLine": 86,
+    "numberedLines": [
+      {
+        "line": 72,
+        "text": ""
+      },
+      {
+        "line": 73,
+        "text": "        // Media type formatter mappings for JSON"
+      },
+      {
+        "line": 74,
+        "text": "        options.FormatterMappings.SetMediaTypeMappingForFormat(\"json\", MediaTypeHeaderValues.ApplicationJson);"
+      },
+      {
+        "line": 75,
+        "text": ""
+      },
+      {
+        "line": 76,
+        "text": "        // Set up default output formatters."
+      },
+      {
+        "line": 77,
+        "text": "        options.OutputFormatters.Add(new HttpNoContentOutputFormatter());"
+      },
+      {
+        "line": 78,
+        "text": "        options.OutputFormatters.Add(new StringOutputFormatter());"
+      },
+      {
+        "line": 79,
+        "text": "        options.OutputFormatters.Add(new StreamOutputFormatter());"
+      },
+      {
+        "line": 80,
+        "text": ""
+      },
+      {
+        "line": 81,
+        "text": "        var jsonOutputFormatter = SystemTextJsonOutputFormatter.CreateFormatter(_jsonOptions.Value);"
+      },
+      {
+        "line": 82,
+        "text": "        options.OutputFormatters.Add(jsonOutputFormatter);"
+      },
+      {
+        "line": 83,
+        "text": ""
+      },
+      {
+        "line": 84,
+        "text": "        // Set up ValueProviders"
+      },
+      {
+        "line": 85,
+        "text": "        options.ValueProviderFactories.Add(new FormValueProviderFactory());"
+      },
+      {
+        "line": 86,
+        "text": "        options.ValueProviderFactories.Add(new RouteValueProviderFactory());"
+      }
+    ],
+    "nature": "Raw source excerpt for manual inspection, not an executed runtime check"
+  }
+]

@@ -1,0 +1,265 @@
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+M	eng/tools/RepoTasks/GenerateGuid.cs
+
+commit f2c3abcb724b0a6ec4b713d4f27f448d0e7d2a6e
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Mon Aug 16 09:15:59 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 16 09:15:59 2021 -0700
+
+    Update SDK to 6.0.100-rc.1.21410.3 (#35229)
+
+M	eng/tools/RepoTasks/GenerateGuid.cs
+
+commit 9da42b9fab4c61fe46627ac0c6877905ec845d5a
+Author:     Kevin Pilch <kevinpi@microsoft.com>
+AuthorDate: Tue Jul 20 13:29:55 2021 -0700
+Commit:     Kevin Pilch <kevinpi@microsoft.com>
+CommitDate: Thu Jul 22 15:54:29 2021 -0700
+
+    Find and Replace Apache License -> MIT
+
+M	eng/tools/RepoTasks/GenerateGuid.cs
+
+commit 4fde84a7ad48c8265fe868650351c857bcf1bfc2
+Author:     Nate McMaster <natemcmaster@users.noreply.github.com>
+AuthorDate: Wed Jun 19 10:03:38 2019 -0700
+Commit:     John Luo <johluo@microsoft.com>
+CommitDate: Wed Jun 19 10:03:38 2019 -0700
+
+    Replace KoreBuild with Arcade (#11122)
+    
+    * Replace usages of $(CI) with $(ContinuousIntegrationBuild)
+    
+    * Move RepoTasks to eng/tools/
+    
+    * Remove dead code
+    
+    * Update build.sh/ps1 to invoke Arcade instead of KoreBuild
+    
+    * build/repo.props => eng/Build.props
+    
+    * build/CodeSign.{props,targets} => eng/Signing.props
+    
+    * build/repo.targets => eng/Build.props, eng/CodeGen.proj, and eng/AfterSolutionBuild.targets
+    
+    * Remove AddAllProjectRefsToSolution.ps1
+    
+    * Put selenium process tracking into artifacts/tmp/
+    
+    * build/docker => eng/docker
+    
+    * Move content from korebuild.json to global.json
+    
+    * Remove cibuild.{sh,cmd} and update ci.yml
+    
+    * Ensure vswhere detects BuildTools installations
+    
+    * Remove sign check exclusions (Arcade does not support)
+    
+    * list VS required components in global.json
+    
+    * Update CodeCheck.ps1
+    
+    * Update arcade (#11143)
+    
+    * Fixups to broken build
+    
+    * capture test results in xunit form
+    * attempt to fix code check
+    * restore before linux build
+    * remove duplicate signinfos
+    
+    * More build fixes
+    
+    * exclude node_modules from unique project check
+    * fixup signing props
+    
+    * More build fixes
+    
+    * Remove unused NoWarns
+    * Skip building site extension
+    * Suppress xunit color in console output
+    * Install x86 runtime
+    
+    * Run KillProcesses.ps1 at end of build on CI
+    
+    * activate env vars in codecheck.ps1
+    
+    * Fix signing and generate build manifests
+    
+    * Fixup code check and linux installers build
+    
+    * Remove custom restore targets
+    
+    * Import flaky test props
+    
+    * Restore original manifest generation code and set warnAsErrors=false
+    
+    * Alwasy restore the toolset
+    
+    * More attempts at build fixes
+    
+    * run restore before building deb/rpm packages
+    * pre-install Yarn.MSBuild
+    * Remove WIX workaround
+    
+    * Attempt to fix RPM installers and x86 build
+    
+    * Fix helix tests, java auto-detection, and code gen steps
+    
+    * Globally disable MSBuild node resuse and capture MSbuild crash logs
+    
+    * Cleanup build invocation for installers
+    
+    * Set max time on xunit tests to 15 min
+    
+    * Update helix-test.yml
+    
+    * Fix Hosting tests
+    
+    * Fix TestHost
+    
+    * Fix Negotiate.Test
+    
+    * Fix Mvc tests
+    
+    * Capture results
+    
+    * Fix Hosting tests
+    
+    * Fix Kestrel tests
+    
+    * Fix ServerComparison tests
+    
+    * Fix DefaultBuilder functional tests
+    
+    * Skip template tests
+    
+    Need to run pack before running tests on mac/linux now
+    
+    * Fix Identity test
+    
+    * Fix ServerComparison tests
+    
+    * Verify nginx installation on ubuntu
+    
+    * Verify nginx installation?
+    
+    * Try adding to path
+    
+    * Try symlink
+    
+    * Sudo?
+    
+    * Woot it works
+    
+    * Disable timeout
+    
+    Template tests require more than 15 mins
+    
+    * list env vars
+    
+    * Use correct dotnet_home
+    
+    * Prepent path instead
+    
+    * Fix npmproj tests
+    
+    * Fix CORS tests
+    
+    * Debug signalr tests
+    
+    * Debug signalr
+    
+    * Capture bin
+    
+    * Try building templates sequentially
+    
+    * Debug signalr
+    
+    * Cleanup
+    
+    * Disable signalr npm tests
+    
+    * Debug template test
+    
+    * Try to fix templates again and make steps more reliable
+    
+    * Cleanup
+    
+    * Feedback
+
+R100	build/tasks/GenerateGuid.cs	eng/tools/RepoTasks/GenerateGuid.cs
+
+commit 2b7a3a222af721a8b6ab1cbe6a40594a4270a3d8
+Author:     Justin Kotalik <jukotali@microsoft.com>
+AuthorDate: Mon Dec 31 10:54:15 2018 -0800
+Commit:     Nate McMaster <natemcmaster@users.noreply.github.com>
+CommitDate: Mon Dec 31 10:54:15 2018 -0800
+
+    Build Windows Installers using the repo's main build script and repotasks (#6139)
+    
+    Follow-up to #6078
+    
+    This should solve race conditions in restoring .wixproj files.
+    
+    Co-authored-by: Nate McMaster <natemcmaster@users.noreply.github.com>
+    Co-authored-by: Justin Kotalik <jkotalik@users.noreply.github.com>
+
+R100	src/Installers/Windows/InstallerTasks/GenerateGuid.cs	build/tasks/GenerateGuid.cs
+
+commit 354c636498ac5c16e634fef6d3afc6720da9152d
+Author:     Nate McMaster <natemcmaster@users.noreply.github.com>
+AuthorDate: Fri Dec 21 09:44:31 2018 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Dec 21 09:44:31 2018 -0800
+
+    Update Windows installer projects to use ProjectReference (#6078)
+    
+    Changes:
+    * Build installer projects in parallel.
+    * Use `ProjectReference` to ferry bits between installer projects.
+    * Don't build wixproj to a unified output directory. This was only done to simplify finding file paths to MSI's built by other projects, but ProjectRef solves that.
+    * Add a VS solution for working on wixproj and the associated C++ custom actions.
+       * To make wixproj work in VS, I replaced default globs with listing .wxs and .wxl files in the wixproj file.
+    * Add a target to copy the installers to the artifacts directory according to the layout described in /docs/Artifacts.md
+
+R100	src/Installers/Windows/tasks/GenerateGuid.cs	src/Installers/Windows/InstallerTasks/GenerateGuid.cs
+
+commit fb3f5d95c2dc5c395efe1248763221ac2b2b3de6
+Author:     Nate McMaster <nate.mcmaster@microsoft.com>
+AuthorDate: Fri Oct 12 07:33:28 2018 -0700
+Commit:     Nate McMaster <nate.mcmaster@microsoft.com>
+CommitDate: Fri Oct 12 13:59:43 2018 -0700
+
+    Backport infrastructure changes and source reorganization
+    
+    * Add build definition for Azure DevOps
+    * Put code for metapackages in a subfolder
+    * Update targets to prepare for submodules merging into this repo
+    * Add source code for windows installer
+    * Add source code for Debian installers
+
+A	src/Installers/Windows/tasks/GenerateGuid.cs
+
+commit b67a14126326cec4c74ff844500b3bd830dde880
+Author:     Nate McMaster <nate.mcmaster@microsoft.com>
+AuthorDate: Fri Aug 17 10:01:57 2018 -0700
+Commit:     Nate McMaster <nate.mcmaster@microsoft.com>
+CommitDate: Mon Aug 20 15:56:22 2018 -0700
+
+    Add code for building the Windows Hosting Bundle and ASP.NET Core runtime installers into this repo
+    
+    This code previously was in private repos because it had references to internal locations and drop shares. This code has been modified to remove these internal-only pieces.
+
+A	src/Installers/Windows/tasks/GenerateGuid.cs

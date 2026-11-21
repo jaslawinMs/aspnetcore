@@ -1,0 +1,159 @@
+a450cb69b5e4549f5515cdb057a68771f56cefd7
+2021-11-05T17:52:08-07:00
+Use file scoped namespaces (#38076)
+
+diff --git a/eng/tools/RepoTasks/GenerateGuid.cs b/eng/tools/RepoTasks/GenerateGuid.cs
+index 9e5985d1a1..40694436f5 100644
+--- a/eng/tools/RepoTasks/GenerateGuid.cs
++++ b/eng/tools/RepoTasks/GenerateGuid.cs
+@@ -6,33 +6,32 @@ using System.Linq;
+ using Microsoft.Build.Framework;
+ using Microsoft.Build.Utilities;
+ 
+-namespace RepoTasks
++namespace RepoTasks;
++
++public class GenerateGuid : Microsoft.Build.Utilities.Task
+ {
+-    public class GenerateGuid : Microsoft.Build.Utilities.Task
+-    {
+-        [Output]
+-        public string Guid { get; private set; }
++    [Output]
++    public string Guid { get; private set; }
+ 
+-        [Required]
+-        public string NamespaceGuid { get; set; }
++    [Required]
++    public string NamespaceGuid { get; set; }
+ 
+-        [Required]
+-        public ITaskItem[] Values { get; set; }
++    [Required]
++    public ITaskItem[] Values { get; set; }
+ 
+-        public override bool Execute()
++    public override bool Execute()
++    {
++        try
+         {
+-            try
+-            {
+-                var value = string.Join(",", Values.Select(o => o.ItemSpec).ToArray()).ToLowerInvariant();
+-
+-                Guid = Uuid.Create(new Guid(NamespaceGuid), value).ToString();
+-            }
+-            catch (Exception e)
+-            {
+-                Log.LogErrorFromException(e);
+-            }
+-
+-            return !Log.HasLoggedErrors;
++            var value = string.Join(",", Values.Select(o => o.ItemSpec).ToArray()).ToLowerInvariant();
++
++            Guid = Uuid.Create(new Guid(NamespaceGuid), value).ToString();
+         }
++        catch (Exception e)
++        {
++            Log.LogErrorFromException(e);
++        }
++
++        return !Log.HasLoggedErrors;
+     }
+ }
+fb3f5d95c2dc5c395efe1248763221ac2b2b3de6
+2018-10-12T07:33:28-07:00
+Backport infrastructure changes and source reorganization
+
+diff --git a/src/Installers/Windows/tasks/GenerateGuid.cs b/src/Installers/Windows/tasks/GenerateGuid.cs
+new file mode 100644
+index 0000000000..f6e8039864
+--- /dev/null
++++ b/src/Installers/Windows/tasks/GenerateGuid.cs
+@@ -0,0 +1,38 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Linq;
++using Microsoft.Build.Framework;
++using Microsoft.Build.Utilities;
++
++namespace RepoTasks
++{
++    public class GenerateGuid : Task
++    {
++        [Output]
++        public string Guid { get; private set; }
++
++        [Required]
++        public string NamespaceGuid { get; set; }
++
++        [Required]
++        public ITaskItem[] Values { get; set; }
++
++        public override bool Execute()
++        {
++            try
++            {
++                var value = string.Join(",", Values.Select(o => o.ItemSpec).ToArray()).ToLowerInvariant();
++
++                Guid = Uuid.Create(new Guid(NamespaceGuid), value).ToString();
++            }
++            catch (Exception e)
++            {
++                Log.LogErrorFromException(e);
++            }
++
++            return !Log.HasLoggedErrors;
++        }
++    }
++}
+b67a14126326cec4c74ff844500b3bd830dde880
+2018-08-17T10:01:57-07:00
+Add code for building the Windows Hosting Bundle and ASP.NET Core runtime installers into this repo
+
+diff --git a/src/Installers/Windows/tasks/GenerateGuid.cs b/src/Installers/Windows/tasks/GenerateGuid.cs
+new file mode 100644
+index 0000000000..f6e8039864
+--- /dev/null
++++ b/src/Installers/Windows/tasks/GenerateGuid.cs
+@@ -0,0 +1,38 @@
++// Copyright (c) .NET Foundation. All rights reserved.
++// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
++
++using System;
++using System.Linq;
++using Microsoft.Build.Framework;
++using Microsoft.Build.Utilities;
++
++namespace RepoTasks
++{
++    public class GenerateGuid : Task
++    {
++        [Output]
++        public string Guid { get; private set; }
++
++        [Required]
++        public string NamespaceGuid { get; set; }
++
++        [Required]
++        public ITaskItem[] Values { get; set; }
++
++        public override bool Execute()
++        {
++            try
++            {
++                var value = string.Join(",", Values.Select(o => o.ItemSpec).ToArray()).ToLowerInvariant();
++
++                Guid = Uuid.Create(new Guid(NamespaceGuid), value).ToString();
++            }
++            catch (Exception e)
++            {
++                Log.LogErrorFromException(e);
++            }
++
++            return !Log.HasLoggedErrors;
++        }
++    }
++}

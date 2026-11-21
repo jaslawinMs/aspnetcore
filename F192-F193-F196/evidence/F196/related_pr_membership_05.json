@@ -1,0 +1,44 @@
+[
+  {
+    "pullRequest": 49394,
+    "returnedFiles": 19,
+    "page": 1,
+    "perPage": 100,
+    "possiblyTruncatedAtPageBound": false,
+    "targetMatches": [],
+    "siteMatches": []
+  },
+  {
+    "pullRequest": 42079,
+    "returnedFiles": 33,
+    "page": 1,
+    "perPage": 100,
+    "possiblyTruncatedAtPageBound": false,
+    "targetMatches": [],
+    "siteMatches": []
+  },
+  {
+    "pullRequest": 42215,
+    "returnedFiles": 42,
+    "page": 1,
+    "perPage": 100,
+    "possiblyTruncatedAtPageBound": false,
+    "targetMatches": [],
+    "siteMatches": []
+  },
+  {
+    "pullRequest": 62703,
+    "returnedFiles": 32,
+    "page": 1,
+    "perPage": 100,
+    "possiblyTruncatedAtPageBound": false,
+    "targetMatches": [],
+    "siteMatches": [
+      {
+        "filename": "src/Mvc/test/WebSites/TagHelpersWebSite/Startup.cs",
+        "status": "modified",
+        "patch": "@@ -1,6 +1,8 @@\n // Licensed to the .NET Foundation under one or more agreements.\n // The .NET Foundation licenses this file to you under the MIT license.\n \n+using Microsoft.Extensions.Hosting;\n+\n namespace TagHelpersWebSite;\n \n public class Startup\n@@ -23,18 +25,22 @@ public void Configure(IApplicationBuilder app)\n \n     public static void Main(string[] args)\n     {\n-        var host = CreateWebHostBuilder(args)\n+        using var host = CreateHostBuilder(args)\n             .Build();\n \n         host.Run();\n     }\n \n-    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>\n-        new WebHostBuilder()\n-            .UseContentRoot(Directory.GetCurrentDirectory())\n-            .UseStaticWebAssets()\n-            .UseStartup<Startup>()\n-            .UseKestrel()\n-            .UseIISIntegration();\n+    public static IHostBuilder CreateHostBuilder(string[] args) =>\n+        new HostBuilder()\n+            .ConfigureWebHost(webHostBuilder =>\n+            {\n+                webHostBuilder\n+                    .UseContentRoot(Directory.GetCurrentDirectory())\n+                    .UseStaticWebAssets()\n+                    .UseStartup<Startup>()\n+                    .UseKestrel()\n+                    .UseIISIntegration();\n+            });\n }\n "
+      }
+    ]
+  }
+]

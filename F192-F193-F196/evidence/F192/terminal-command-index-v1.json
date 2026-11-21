@@ -1,0 +1,32 @@
+[
+  {
+    "id": "post-source-audit-exact-pid-identity",
+    "cwd": "C:\\src\\aspnetcore",
+    "argv": [
+      "powershell",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "$ids=@(36616,12304,11180,43932,43376,46860,43292,22760,38764,28884,45700,50000); $p=@(Get-Process -Id $ids -ErrorAction SilentlyContinue | ForEach-Object { [pscustomobject]@{Id=$_.Id;StartTimeUtc=$_.StartTime.ToUniversalTime().ToString('o');Path=$_.Path} }); [pscustomobject]@{ObservedUtc=[DateTime]::UtcNow.ToString('o');KnownPriorIds=$ids;CurrentlyObserved=$p;Scope='Exact final-source helper/child identities only; no process stops or unrelated-machine activity claim.'} | ConvertTo-Json -Depth 4 -Compress"
+    ],
+    "helperPid": 50432,
+    "childPid": 48276,
+    "startedUtc": "2026-11-21T00:53:01.708Z",
+    "completedUtc": "2026-11-21T00:53:02.346Z",
+    "exitCode": 0,
+    "signal": null,
+    "launchError": null,
+    "stdout": {
+      "path": "commands\\post-source-audit-exact-pid-identity.stdout",
+      "bytes": 274,
+      "sha256": "474a3c5aeec049c23fee1af85a1e2bd46a20f8715aa2416b79a9242957bc0938"
+    },
+    "stderr": {
+      "path": "commands\\post-source-audit-exact-pid-identity.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rootWaited": true,
+    "redirectedStdoutAndStderrFullyCollected": true
+  }
+]

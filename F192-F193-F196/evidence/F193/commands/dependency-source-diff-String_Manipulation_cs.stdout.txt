@@ -1,0 +1,13 @@
+diff --git "a/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F193-213\\external-source\\Original\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs" "b/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F193-213\\external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs"
+index f3a2c16a91..2638ad3a2d 100644
+--- "a/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F193-213\\external-source\\Original\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs"
++++ "b/C:\\Users\\jaslawin\\.copilot\\session-state\\a24edcfd-1bb9-4160-afce-6ba54b1b7f00\\files\\autoperf-parallelism\\finding-F193-213\\external-source\\Default\\src\\runtime\\src\\libraries\\System.Private.CoreLib\\src\\System\\String.Manipulation.cs"
+@@ -2322,7 +2322,7 @@ namespace System
+                 Vector128<ushort> v2 = Vector128.Create((ushort)c2);
+                 Vector128<ushort> v3 = Vector128.Create((ushort)c3);
+ 
+-                if (Sse2.IsSupported && PackedSpanHelpers.CanUsePackedIndexOf(c) && PackedSpanHelpers.CanUsePackedIndexOf(c2) && PackedSpanHelpers.CanUsePackedIndexOf(c3))
++                if (PackedSpanHelpers.PackedIndexOfIsSupported && PackedSpanHelpers.CanUsePackedIndexOf(c) && PackedSpanHelpers.CanUsePackedIndexOf(c2) && PackedSpanHelpers.CanUsePackedIndexOf(c3))
+                 {
+                     // Process in double chunks & check if either chunk is likely to contain matches at once.
+                     // If we get multiple matches in a single chunk, we assume they're likely to be close &

@@ -1,0 +1,176 @@
+commit a419b2204d7eda5637142d03d980ee87a48054fe
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Fri Apr 7 23:43:43 2023 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Apr 7 23:43:43 2023 +0100
+
+    Streaming SSR: DOM updating (#47605)
+    
+    * Merge HtmlComponentWriter into StaticHtmlRenderer so that subclasses will be able to customize HTML rendering
+    
+    * Rename files
+    
+    * Move most of the streaming concerns into EndpointHtmlRenderer so it can vary its output based on this
+    
+    * Emit streaming boundary markers, but only for streaming components
+    
+    * Tests for streaming boundary markers
+    
+    * Can now simplify by removing HtmlComponentBase and changing HtmlComponent to a readonly struct
+    
+    * Further clarify by renaming it to HtmlRootComponent
+    
+    * Move StreamRenderingAttribute to .Web namespace
+    
+    * Make HeadOutlet stream so that page title (etc) can be updated from streaming components
+    
+    * Add blazor.web.js and embed/serve it using the same patterns we have for blazor.server.js
+    
+    * Serve sourcemaps (but in debug builds only)
+    
+    We used to serve sourcemaps when working on this repo. Not sure when that got broken.
+    
+    * Render only the minimal subset of updated components in each streaming render batch (to avoid duplicated HTML)
+    
+    * Move StreamRenderingAttribute into M.A.Components so we can support streaming output into SectionOutlet
+    
+    This automatically deals with HeadOutlet as a special case
+    
+    * Fix VS complaining that SignalR was not referenced in tests even though it actually is already (transitively). This did not affect CLI builds.
+    
+    * Fix longstanding build issue whereby VS always thinks M.A.C.WebAssembly.Authentication needs to be rebuilt
+    
+    * Adding a Blazor United flavour of TestServer
+    
+    * When starting E2E tests manually, don't randomize the port numbers
+    
+    It was so inconvenient not being able to just reload the existing browser tab
+    
+    * Fix response content type
+    
+    * Beginning content for new test app
+    
+    * Rename TestServer directory to match project name. Fixes longstanding issues with launching browser.
+    
+    * Update CodeCheck.ps1
+    
+    * Add/update prebuilt JS files
+    
+    * Add streaming rendering E2E test app code
+    
+    * Flush response after each streaming update so we can send multiple batches
+    
+    * Fix sln following rename
+    
+    * E2E tests
+    
+    * Fix slnf
+
+R100	src/Components/test/testassets/TestServer/Controllers/PersonController.cs	src/Components/test/testassets/Components.TestServer/Controllers/PersonController.cs
+
+commit c85baf8db0c72ae8e68643029d514b2e737c9fae
+Author:     Shreyas Jejurkar <shreyasjejurkar123@live.com>
+AuthorDate: Sun Jan 2 20:09:22 2022 +0530
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sun Jan 2 06:39:22 2022 -0800
+
+    chore : Remove unwanted `using` statement (#39176)
+
+M	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit a450cb69b5e4549f5515cdb057a68771f56cefd7
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Fri Nov 5 17:52:08 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Nov 6 00:52:08 2021 +0000
+
+    Use file scoped namespaces (#38076)
+    
+    * Use file scoped namespaces
+
+M	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit e3230e53729098b8b4e73d19d7b3624542d1339f
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Sat Aug 28 06:50:54 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Aug 28 06:50:54 2021 -0700
+
+    Re-enable CA1305 (#35867)
+    
+    * Re-enable CA1305
+    Fixes https://github.com/dotnet/aspnetcore/issues/34361
+
+M	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit c7867ddd43404040bb84ce0a06796b41e37efca7
+Author:     Kevin Pilch <kevinpi@microsoft.com>
+AuthorDate: Tue Jul 20 15:58:30 2021 -0700
+Commit:     Kevin Pilch <kevinpi@microsoft.com>
+CommitDate: Thu Jul 22 15:54:56 2021 -0700
+
+    Use Visual Studio fix to add missing license headers
+
+M	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit 6427d9cc718f8093c506b62b6fd12544411b477f
+Author:     Ben Adams <thundercat@illyriad.co.uk>
+AuthorDate: Mon Apr 26 23:52:36 2021 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Apr 26 15:52:36 2021 -0700
+
+    Use default interfaces for getting and setting headers (#31519)
+
+M	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit 5a70f5312fb57fc3788e5af56a99e7b43761e195
+Author:     Nate McMaster <natemcmaster@users.noreply.github.com>
+AuthorDate: Wed Jan 16 12:28:04 2019 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Jan 16 12:28:04 2019 -0800
+
+    Convert Components projects to use ProjectRef (#6698)
+    
+    This addresses #4246 for src/Components/. A few other changes were necessary because components had been using stale dependencies.
+
+R100	src/Components/test/testapps/TestServer/Controllers/PersonController.cs	src/Components/test/testassets/TestServer/Controllers/PersonController.cs
+
+commit 07e2d5420cdd190a8ad1d1ac2afd39a2d6768a9a
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Tue Nov 27 11:03:30 2018 +0000
+Commit:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+CommitDate: Tue Nov 27 11:03:30 2018 +0000
+
+    Move all Components sources into src/Components
+
+R100	test/testapps/TestServer/Controllers/PersonController.cs	src/Components/test/testapps/TestServer/Controllers/PersonController.cs
+
+commit 1626b3b8c8f410829ff9c36e80a91f96b993aae7
+Author:     Olivier Lefebvre <olivier.lefebvre@live.com>
+AuthorDate: Sun Mar 25 15:12:13 2018 +0200
+Commit:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+CommitDate: Wed Apr 4 10:12:42 2018 +0100
+
+    Support arbitrary 'fetch' arguments
+
+M	test/testapps/TestServer/Controllers/PersonController.cs
+
+commit 8590f6e7a53e9eee1262ae1323511dee4383e9cb
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Fri Feb 23 14:43:57 2018 +0000
+Commit:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+CommitDate: Fri Feb 23 22:31:26 2018 +0000
+
+    Remainder of initial HttpClient features plus E2E tests
+
+M	test/testapps/TestServer/Controllers/PersonController.cs
+
+commit ea6b6bcd19915f45c5933c616b97140b712dc911
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Fri Feb 23 13:07:49 2018 +0000
+Commit:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+CommitDate: Fri Feb 23 13:07:49 2018 +0000
+
+    Add an example API server project that can be used in E2E tests
+
+A	test/testapps/TestServer/Controllers/PersonController.cs

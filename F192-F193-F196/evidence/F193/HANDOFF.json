@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "finding": "F193",
+  "preparation": 213,
+  "ownerAgentId": "c1cf1d27-371f-40da-9895-3a099570e45e",
+  "recordedUtc": "2026-11-21T00:56:30.7655062Z",
+  "status": "sealed-bounded-source-level-no-candidate",
+  "coordinatorAcceptance": "Not self-accepted; coordinator review and acceptance remain required.",
+  "scope": "PersonController DELETE request-header echo only, both source roles on this physical host",
+  "host": "CPC-jasla-LSEJU",
+  "sourceRoles": {
+    "Original": {
+      "revision": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+      "localCommitExists": true
+    },
+    "Default": {
+      "revision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+      "localCommitExists": true
+    }
+  },
+  "upstreamDefaultObservations": {
+    "initialObservedRevision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "initialObservationStartedUtc": "2026-11-21T00:39:12.336Z",
+    "finalObservedRevision": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "finalObservationStartedUtc": "2026-11-21T00:53:59.743Z",
+    "finalObservationFinishedUtc": "2026-11-21T00:54:00.373Z",
+    "finalCommandExit": 0,
+    "sameAsSourcePin": true,
+    "noRefUpdatesOrFetch": true,
+    "changedOrUnavailableConsequence": "If final observation differs or is unavailable, the source gate is bounded to the initial explicitly observed pin; no older pin is silently relabeled current."
+  },
+  "findingSource": "src\\Components\\test\\testassets\\Components.TestServer\\Controllers\\PersonController.cs:54",
+  "conclusion": "No candidate qualified. Array-backed StringValues is already reused by ToArray; scalar backing creates a one-element array, but inspected test-asset producers do not establish material need for a change. ToString changes general empty/null multi-array delimiter semantics; IEnumerable/bare removal is not assumed beneficial.",
+  "acceptance": [
+    {
+      "id": "pinned-source",
+      "status": "green-source-only",
+      "evidence": [
+        "SOURCE-ROLES.json",
+        "source-manifest.json",
+        "external-source-manifest.json",
+        "FINAL-OBSERVATIONS.json"
+      ]
+    },
+    {
+      "id": "producer-consumer",
+      "status": "green-source-only-with-wire-runtime-limitations",
+      "evidence": [
+        "PRODUCER-SEMANTICS.json",
+        "producer-source-excerpts.json"
+      ]
+    },
+    {
+      "id": "semantics",
+      "status": "green-source-derived-not-executed",
+      "evidence": [
+        "PRODUCER-SEMANTICS.json",
+        "SOURCE-CHECKS.json"
+      ]
+    },
+    {
+      "id": "history-related-work",
+      "status": "green-bounded-reads",
+      "evidence": [
+        "PRODUCER-SEMANTICS.json",
+        "related-work-query-index.json",
+        "related-work-null-array-excerpts.json",
+        "instruction-read-manifest.json"
+      ]
+    },
+    {
+      "id": "candidate-gate",
+      "status": "green-no-candidate-valid-outcome",
+      "evidence": [
+        "MATERIALITY-GATE.json",
+        "DIFF-INDEX.json"
+      ]
+    },
+    {
+      "id": "native-conditional",
+      "status": "not-applicable-no-candidate-no-native-start",
+      "evidence": [
+        "MATERIALITY-GATE.json",
+        "OWNED-PROCESSES.json"
+      ]
+    },
+    {
+      "id": "sealed-handoff",
+      "status": "sealed-and-indexed-by-this-script",
+      "evidence": [
+        "FINAL-OBSERVATIONS.json",
+        "COMMANDS-INDEX.json",
+        "OWNED-PROCESSES.json",
+        "ARTIFACT-INDEX.sha256.json"
+      ]
+    }
+  ],
+  "correctnessBoundary": "Source-derived producer and contract analysis; no runtime correctness or bug-fix verification claim.",
+  "native": {
+    "coordinatorGo213Received": true,
+    "candidateSurvivalPrerequisiteMet": false,
+    "dotnetInvocations": 0,
+    "builds": 0,
+    "tests": 0,
+    "restores": 0,
+    "compilerInvocations": 0,
+    "browserRuns": 0,
+    "benchmarkOrCounterRuns": 0,
+    "benchmarkAuthorizationsConsumed": 0,
+    "exactExistingTest": "Microsoft.AspNetCore.Components.E2ETest.Tests.HttpClientTest.CanSendRequestHeaders",
+    "existingProject": "src\\Components\\test\\E2ETest\\Microsoft.AspNetCore.Components.E2ETests.csproj",
+    "testResult": "Not scheduled or run: source/materiality gate admitted no candidate. Not a pass, failed assertion, missing-dependency failure or red/green verification.",
+    "SDKActivationAndExistence": "Not attempted or asserted because no native start was warranted.",
+    "noRestoreExceptionNeeded": true
+  },
+  "candidateDiffIndex": "DIFF-INDEX.json",
+  "privateGraphsCreated": false,
+  "reservedWorktreePreserved": true,
+  "fourInheritedUntrackedReportsUnchanged": true,
+  "policyRegistryLeaseLedgerChangedByOwner": false,
+  "commitsPushesPullRequestsIssuesOrOtherWrites": [],
+  "benchmarkAuthorizationsConsumed": 0,
+  "failuresAndCorrections": [
+    {
+      "attempt": "python .\\collect_source_213.py",
+      "actualExit": 9009,
+      "cause": "Unavailable Python Windows Store alias",
+      "correction": "Already-installed Node v26.13.0, no installation",
+      "evidence": [
+        "collector.initial.exit.json",
+        "collector.initial.stderr.txt",
+        "collect_source_213.py",
+        "node.version.exit.json",
+        "INITIAL.json"
+      ]
+    },
+    {
+      "attempt": "LSP Join hover and Http1ParsingHandler definition lookup",
+      "result": "No semantic information; default lsp-csharp log lookup also unavailable",
+      "correction": "Retained pinned raw Git source and explicit dependency-revision blobs; no hypothetical compiler-binding claim",
+      "evidence": [
+        "navigation-tool-results.json"
+      ]
+    }
+  ],
+  "sourceIntegrity": {
+    "completeSourceEntriesReverified": 95,
+    "originalDefaultControllerProducerConsumerSameBytes": true,
+    "stringValuesSameCompleteBytes": true,
+    "joinRegionSameBytes": true,
+    "evidence": [
+      "SOURCE-CHECKS.json",
+      "SOURCE-COMPARISON.json"
+    ]
+  },
+  "processTerminalState": "No native workload, server or benchmark root was started. All executed collector invocations have recorded terminal exits; captured read-only child roots and redirected streams were awaited. See OWNED-PROCESSES.json for exact observation scope and PID-reuse limits.",
+  "limitations": [
+    "No real request, browser, compiler, native test, runtime allocation or performance observation was made.",
+    "Actual browser/transport-added headers, native Headers coalescing, protocol, total header count and request frequency remain unobserved.",
+    "Declared dependency source does not prove resolved SDK/package or loaded runtime image identity.",
+    "This is a bounded source-level no-candidate gate, not a universal immateriality, optimality, no-benefit or runtime-equivalence claim.",
+    "No behavioral regression or red/green theory-row result was fabricated.",
+    "Initial full directory-listing output is retained only in tool history; its exact request and material results are transcribed.",
+    "No universal unobserved-descendant, unrelated-process absence, broad host quiescence or dedicated-host claim is made."
+  ],
+  "nextActor": "Coordinator: review this bounded no-candidate gate, verify artifact index, accept/retire the owner if satisfied. No comparison, publication or performance claim requested.",
+  "seal": {
+    "artifactIndex": "ARTIFACT-INDEX.sha256.json",
+    "coverage": "Every regular file below this evidence root, including HANDOFF.json and all scripts/failures/source/command stdout and stderr. The hash index excludes only itself to avoid recursive self-hashing.",
+    "noArtifactWritesAfterIndex": true,
+    "outerToolExitIsFinalSealerCompletionEvidence": true
+  }
+}

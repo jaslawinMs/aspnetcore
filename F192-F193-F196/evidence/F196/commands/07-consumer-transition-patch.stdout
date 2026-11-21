@@ -1,0 +1,22 @@
+commit f1fa1bd8f41a8c42f944ea41eed80cc0b6909cbb
+Author:     ryanbrandenburg <rybrande@microsoft.com>
+AuthorDate: Wed Feb 24 11:20:59 2016 -0800
+Commit:     ryanbrandenburg <rybrande@microsoft.com>
+CommitDate: Fri Mar 11 11:40:54 2016 -0800
+
+     * Remove JsonViewComponentResult
+
+diff --git a/test/WebSites/TagHelpersWebSite/TagHelpers/TagCloudViewComponentTagHelper.cs b/test/WebSites/TagHelpersWebSite/TagHelpers/TagCloudViewComponentTagHelper.cs
+index 817a794553..50c86e7e25 100644
+--- a/test/WebSites/TagHelpersWebSite/TagHelpers/TagCloudViewComponentTagHelper.cs
++++ b/test/WebSites/TagHelpersWebSite/TagHelpers/TagCloudViewComponentTagHelper.cs
+@@ -72,7 +72,8 @@ namespace MvcSample.Web.Components
+         public async Task<IViewComponentResult> InvokeAsync(int count)
+         {
+             var tags = await GetTagsAsync(count);
+-            return new JsonViewComponentResult(tags);
++
++            return new ContentViewComponentResult(string.Join(",", tags));
+         }
+ 
+         private Task<string[]> GetTagsAsync(int count)

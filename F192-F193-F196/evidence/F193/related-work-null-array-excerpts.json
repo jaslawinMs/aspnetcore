@@ -1,0 +1,33 @@
+{
+  "issue": {
+    "number": 44509,
+    "title": "(string[])Request.Headers[\"NonExistentHeader\"] is null while (IEnumerable<string>)Request.Headers[\"NonExistentHeader\"] is not",
+    "url": "https://github.com/dotnet/aspnetcore/issues/44509",
+    "state": "closed",
+    "body": "### Is there an existing issue for this?\r\n\r\n- [X] I have searched the existing issues\r\n\r\n### Describe the bug\r\n\r\nConsider the following code:\r\n\r\n```c#\r\nstring value = string.Join(\"\\n\", Request.Headers[\"NonExistentHeader\"]);\r\n```\r\n\r\nIt causes the following exception in runtime at method `string.Join(string separator, string[] value)`:\r\n\r\n`ArgumentNullException: Value cannot be null. (Parameter 'value')`\r\n\r\nFor a very strange reason, the implicit cast of an empty `StringValues` struct to `string[]` type returns `null`:\r\n\r\n```c#\r\nstring[] arr = default(StringValues);\r\nConsole.WriteLine(\"string[] is null: {0}\", arr is null);  // prints 'string[] is null: True' message\r\n```\r\n\r\nWhile a similar cast  to IEnumerable<string> returns an expected non-null value:\r\n\r\n```c#\r\nvar seq = (IEnumerable<string>)default(StringValues);\r\nConsole.WriteLine(\"IEnumerable<string> is null: {0}\", seq is null);  // prints 'IEnumerable<string> is null: False' message\r\n```\r\n\r\nWhen C# compiler compiles `string.Join(\"\\n\", Request.Headers[\"NonExistentHeader\"])` expression, it selects `string.Join(string separator, string[] value)` overload and this makes the expression to crash at runtime. While the project has nullable checks enabled, C# compiler is not able to catch that null reference error at compile time.\r\n\r\nIt looks like a bug because structs are never expected to be `null` and thus their cast operators should avoid producing `null` values as well, unless there is a very good reason for that.\r\n\r\nThe following approach allows to workaround the issue:\r\n\r\n```c#\r\nstring value = string.Join(\"\\n\", (IEnumerable<string>)Request.Headers[\"NonExistentHeader\"]);\r\n```\r\n\r\nIt would be nice to have a consistent behavior here (non-null `string[]` is expected and preferred). But even if there is a `null` then C# compiler should be able to catch it at compile time.\r\n\r\n\r\n### Expected Behavior\r\n\r\n`(string[])default(StringValues)` aways returns a non-null value.\r\n\r\n### Steps To Reproduce\r\n\r\n```c#\r\nstring value = string.Join(\"\\n\", Request.Headers[\"NonExistentHeader\"]);\r\n```\r\n\r\n### Exceptions (if any)\r\n\r\nArgumentNullException: Value cannot be null. (Parameter 'value')\r\nat string.Join(string separator, string[] value)\r\n\r\n### .NET Version\r\n\r\n6.0.401\r\n\r\n### Anything else?\r\n\r\nServer: Kestrel"
+  },
+  "commentPageBound": 30,
+  "returnedComments": 24,
+  "reportedIssueComments": 24,
+  "selectedComments": [
+    {
+      "id": 1276803449,
+      "author": "Tratcher",
+      "url": "https://github.com/dotnet/aspnetcore/issues/44509#issuecomment-1276803449",
+      "body": "Which server was this on, IIS, Kestrel, or HttpSys? They each have their own header collection implementation."
+    },
+    {
+      "id": 1276803453,
+      "author": "snickler",
+      "url": "https://github.com/dotnet/aspnetcore/issues/44509#issuecomment-1276803453",
+      "body": "> For a very strange reason, the implicit cast of an empty StringValues struct to string[] type returns null:\r\n\r\nThis looks to be by design\r\n\r\nhttps://github.com/dotnet/runtime/blob/main/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs#L83\r\nhttps://github.com/dotnet/runtime/blob/main/src/libraries/Microsoft.Extensions.Primitives/src/StringValues.cs#L280\r\n\r\nMay be better to do `Request.Headers[\"NonExistentHeader\"].ToArray()` since it returns an empty `Array<string>` if the value is null.  "
+    },
+    {
+      "id": 1276803459,
+      "author": "adityamandaleeka",
+      "url": "https://github.com/dotnet/aspnetcore/issues/44509#issuecomment-1276803459",
+      "body": "@hrumhurum yea, I guess this is unexpected behavior.\r\n\r\n> May be better to do Request.Headers[\"NonExistentHeader\"].ToArray() since it returns an empty Array<string> if the value is null.\r\n\r\n@snickler, this seems like a reasonable suggestion. We would consider a PR to unify this."
+    }
+  ],
+  "relevance": "Distinguishes implicit array conversion from ToArray and warns that actual server header collection implementations differ. Not a proposed F193 fix or proof of a hot path."
+}
