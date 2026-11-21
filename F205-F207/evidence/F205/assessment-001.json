@@ -1,0 +1,260 @@
+{
+  "finding": "F205",
+  "preparation": 222,
+  "owner": "e2ba3013-578f-4603-8c85-a43ba9a905b5",
+  "card": "expensive-branch-result-computed-eagerly",
+  "outcome": "SOURCE_ONLY_NO_CANDIDATE",
+  "dispositionAuthority": "Coordinator only; this is a preparation handoff, not campaign acceptance, publication or finalization.",
+  "summary": "The eager builder/property work is real in both pinned roles. Standard registrations produce at most two unsupported pairs per initialized or refreshed component data source. This is initialization/metadata-refresh work, not per-route or steady-state per-request work. No material performance effect is established at this faithful producer boundary, and arbitrary public builder/provider ordering is not proven harmless. No candidate, private graph, native correctness run or performance execution is justified by this assessment.",
+  "acceptanceFrozenForThisSourceAssessment": [
+    "Independently GET actual upstream dotnet/aspnetcore main and pin it separately from Original and the reserved checkout; retain full response and exact source memberships/raw bytes.",
+    "Trace actual service registrations, configured-mode producers, deduplication/cardinality, consumers and the owning hot-reload refresh.",
+    "Inspect builder creation/property effects, public provider/factory extension contracts and relevant history without presuming purity or materiality.",
+    "Do not amplify providers, routes or refreshes; do not start native product work after a no-candidate gate.",
+    "Keep the reserved checkout, its four untracked reports and all shared campaign state unchanged; retain explicit empty authored-change diffs.",
+    "Seal source evidence, failures, validation limitations, owned-work terminal observations and an artifact byte/SHA256 index; re-read generated JSON."
+  ],
+  "sourceRoles": {
+    "original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "defaultReceipt": "receipts-002\\upstream-actual-main-get.json",
+    "defaultFullHttpResponse": "receipts-002\\upstream-actual-main-get.stdout.bin",
+    "rolePin": "source-roles-002.json",
+    "reservedCheckoutNotUsedAsDefault": true,
+    "target": "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs",
+    "targetGitBlobBothRoles": "d5767a343f7b25de028ac46351007f10bc1e830f",
+    "targetBytesEach": 8856,
+    "targetSha256Each": "E64531E7DDC9D69175ED3FC59CA675E87E1FD4A5824C02A48B4D1511C0A257DE",
+    "membershipManifests": [
+      "source-membership-002.json",
+      "source-membership-003.json",
+      "source-membership-004.json"
+    ],
+    "uniquePinnedPaths": 51,
+    "roleDifferences": [
+      "src/Components/ARCHITECTURE.md",
+      "docs/BlazorComponentsGuidance.md"
+    ],
+    "roleDifferenceScope": "Only two guidance documents differ in the 51-path trace. All captured product, sample, native test/project and builder/factory source bytes are identical across the two roles. Both versions of the guidance documents are retained rather than silently pooled."
+  },
+  "producer": {
+    "registration": [
+      {
+        "fact": "AddRazorComponents registers the data-source factory and endpoint factory but does not register either interactive RenderModeEndpointProvider. The data-source factory receives IEnumerable<RenderModeEndpointProvider>; each data source snapshots it with ToArray().",
+        "sources": [
+          "src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs",
+          "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSourceFactory.cs",
+          "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:39-60"
+        ]
+      },
+      {
+        "fact": "AddInteractiveServerComponents uses TryAddEnumerable with a singleton CircuitEndpointProvider; AddInteractiveWebAssemblyComponents uses TryAddEnumerable with a singleton WebAssemblyEndpointProvider. Repeating these standard registrations does not create an arbitrary provider matrix. Additional application registrations remain possible through the public provider abstraction.",
+        "sources": [
+          "src/Components/Server/src/DependencyInjection/ServerRazorComponentsBuilderExtensions.cs:33-40",
+          "src/Components/WebAssembly/Server/src/WebAssemblyRazorComponentsBuilderExtensions.cs:26-31",
+          "src/Components/Endpoints/src/Builder/RenderModeEndpointProvider.cs"
+        ]
+      }
+    ],
+    "configuredModes": [
+      {
+        "fact": "AddInteractiveServerRenderMode creates InternalServerRenderMode(options); AddInteractiveWebAssemblyRenderMode creates WebAssemblyRenderModeWithOptions(options). The public ComponentEndpointConventionBuilderHelper forwards these to the internal builder's AddRenderMode.",
+        "sources": [
+          "src/Components/Server/src/Builder/ServerRazorComponentsEndpointConventionBuilderExtensions.cs:33-43",
+          "src/Components/Server/src/Builder/InternalServerRenderMode.cs",
+          "src/Components/WebAssembly/Server/src/Builder/WebAssemblyRazorComponentsEndpointConventionBuilderExtensions.cs:26-52",
+          "src/Components/WebAssembly/Server/src/Builder/WebAssemblyRenderModeWithOptions.cs",
+          "src/Components/Endpoints/src/Builder/ComponentEndpointConventionBuilderHelper.cs",
+          "src/Components/Endpoints/src/Builder/RazorComponentsEndpointConventionBuilder.cs:73-76"
+        ]
+      },
+      {
+        "fact": "ConfiguredRenderModes is a HashSet whose comparer coalesces all InteractiveServerRenderMode instances into one family and all InteractiveWebAssemblyRenderMode instances into one family. Its hash function rejects other render-mode families. Thus the current ordinary configuration has zero, one or two modes, not one mode per page/component.",
+        "source": "src/Components/Endpoints/src/Builder/RazorComponentDataSourceOptions.cs:16-33"
+      },
+      {
+        "fact": "The active UpdateEndpoints enumerates Options.ConfiguredRenderModes directly. It does not derive this loop from discovered page render-mode attributes. InteractiveAuto is a component activation mode, not a third standard configured endpoint mode. Both built-in Supports methods recognize Auto, but the current options comparer does not admit it as a third configured family.",
+        "sources": [
+          "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:119-146",
+          "src/Components/Endpoints/src/Builder/RazorComponentDataSourceOptions.cs",
+          "src/Components/Server/src/DependencyInjection/ServerRazorComponentsBuilderExtensions.cs:117-125",
+          "src/Components/WebAssembly/Server/src/WebAssemblyEndpointProvider.cs:49-50",
+          "src/Components/Web/src/RenderMode/InteractiveAutoRenderMode.cs"
+        ]
+      }
+    ],
+    "actualRepositoryScenario": {
+      "fact": "Both canonical BlazorWebAppGlobal and BlazorWebAppPerPage Program.cs files register both providers and explicitly configure the two endpoint modes once on one MapRazorComponents<App>() chain. The Global App.razor applies InteractiveAuto to HeadOutlet and Routes. This concrete source setup produces the ordinary 2x2 endpoint loop without inventing pages/providers/refresh frequency.",
+      "sources": [
+        "src/Components/Samples/BlazorWebAppGlobal/Program.cs",
+        "src/Components/Samples/BlazorWebAppGlobal/Components/App.razor",
+        "src/Components/Samples/BlazorWebAppPerPage/Program.cs"
+      ],
+      "validation": "Source configuration only; neither sample was built or run and browser behavior is not claimed."
+    }
+  },
+  "boundedSourceModel": {
+    "notARuntimeMeasurement": true,
+    "scope": "Per successful UpdateEndpoints call on one data source, with only the two standard provider implementations registered as indicated. Counts refer only to this loop, not nested builders inside accepted providers.",
+    "formula": "Current loop creates M*P builders. Moving creation inside the existing Supports branch would omit only the unsupported pairs, leaving Supports enumeration and accepted-provider endpoint work.",
+    "cases": [
+      { "configuration": "Static endpoint configuration, even if both interactive services were registered", "modes": 0, "providers": 2, "loopBuilderCreations": 0, "unsupportedPairs": 0 },
+      { "configuration": "Server mode with only standard Server provider", "modes": 1, "providers": 1, "loopBuilderCreations": 1, "unsupportedPairs": 0 },
+      { "configuration": "WebAssembly mode with only standard WebAssembly provider", "modes": 1, "providers": 1, "loopBuilderCreations": 1, "unsupportedPairs": 0 },
+      { "configuration": "Server mode with both standard providers", "modes": 1, "providers": 2, "loopBuilderCreations": 2, "unsupportedPairs": 1 },
+      { "configuration": "WebAssembly mode with both standard providers", "modes": 1, "providers": 2, "loopBuilderCreations": 2, "unsupportedPairs": 1 },
+      { "configuration": "Server and WebAssembly endpoint modes with both providers, including the canonical Auto-capable samples", "modes": 2, "providers": 2, "loopBuilderCreations": 4, "unsupportedPairs": 2 }
+    ],
+    "importantLimits": [
+      "The inner provider loop is outside the foreach(context.Pages) loop. More page routes do not multiply these builder calls.",
+      "The bound is per data source and actual refresh, not a claim that every possible application has at most two builders.",
+      "MapRazorComponents reuses the data source for the same root-component type on the same IEndpointRouteBuilder. Other roots/builders and custom providers can exist, but no actual high-cardinality producer was established here.",
+      "A missing matching provider throws. Repeated failed initialization of an invalid configuration is not used as a useful performance workload.",
+      "No arbitrary mode/provider matrix, route count, application-property padding or refresh loop was executed."
+    ]
+  },
+  "semanticsAndSideEffects": [
+    {
+      "fact": "Current order for each pair is CreateApplicationBuilder -> obtain/write Properties[__ResourceCollectionKey] -> Supports ->, when true, GetEndpointBuilders and AddEndpoints. The suggested rewrite changes both the count of factory/property operations and their order relative to Supports on supported pairs.",
+      "source": "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:139-161"
+    },
+    {
+      "fact": "WebApplication's explicit route-builder factory calls its explicit IApplicationBuilder.New, which clones the internal ApplicationBuilder and removes __GlobalEndpointRouteBuilder from the clone. DefaultEndpointRouteBuilder calls the supplied IApplicationBuilder.New; RouteGroupBuilder delegates to its outer route builder.",
+      "sources": [
+        "src/DefaultBuilder/src/WebApplication.cs:209-230",
+        "src/Http/Routing/src/DefaultEndpointRouteBuilder.cs",
+        "src/Http/Routing/src/RouteGroupBuilder.cs:34-36"
+      ]
+    },
+    {
+      "fact": "ApplicationBuilder.New constructs a new builder, component list and CopyOnWriteDictionary, and checks debugger state. First mutation of the copy-on-write dictionary materializes a Dictionary copy of inherited properties. WebApplication's property removal can trigger this copy before the resource-key assignment; the ordinary default route-builder branch triggers it on assignment. Actual copy work depends on real inherited properties; it was not timed or padded.",
+      "sources": [
+        "src/Http/Http/src/Builder/ApplicationBuilder.cs:16-69",
+        "src/Http/Http/src/Builder/ApplicationBuilder.cs:144-156",
+        "src/Shared/CopyOnWriteDictionary/CopyOnWriteDictionary.cs:41-51",
+        "src/Shared/CopyOnWriteDictionary/CopyOnWriteDictionary.cs:85-97"
+      ]
+    },
+    {
+      "fact": "The built-in Supports methods are type tests and do not receive the created builder. No built-in ordering dependency on the unused builder was found. Unsupported pairs do not execute GetEndpointBuilders, middleware construction or endpoint Build; those larger costs must not be attributed to the eager seam.",
+      "sources": [
+        "src/Components/Server/src/DependencyInjection/ServerRazorComponentsBuilderExtensions.cs:117-125",
+        "src/Components/WebAssembly/Server/src/WebAssemblyEndpointProvider.cs:49-50",
+        "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:148-160"
+      ]
+    },
+    {
+      "fact": "MapRazorComponents accepts a public IEndpointRouteBuilder. Its CreateApplicationBuilder contract does not promise purity. IApplicationBuilder.New and its Properties dictionary are likewise interface calls. The public abstract RenderModeEndpointProvider.Supports contract does not specify purity or its ordering relative to builder creation/property assignment. User implementations can therefore have observable calls, state or exceptions; this source assessment neither fabricates such a provider nor proves a real application regression.",
+      "sources": [
+        "src/Http/Routing/src/IEndpointRouteBuilder.cs",
+        "src/Http/Http.Abstractions/src/IApplicationBuilder.cs",
+        "src/Components/Endpoints/src/Builder/RenderModeEndpointProvider.cs",
+        "src/Components/Endpoints/src/Builder/RazorComponentsEndpointRouteBuilderExtensions.cs:25-33"
+      ]
+    },
+    {
+      "fact": "The public hosting IApplicationBuilderFactory is a real additional extension seam, not an assumed inert factory: GenericWebHostBuilder and SlimWebHostBuilder use TryAddSingleton for its default; GenericWebHostService receives the service and calls CreateBuilder(Server.Features) before application configuration. The default factory returns ApplicationBuilder. In the conventional UseRouting/UseEndpoints path, routing wraps the supplied builder in DefaultEndpointRouteBuilder, whose later CreateApplicationBuilder delegates to that builder's New. This does not imply a custom factory replaces WebApplication's separately owned internal builder.",
+      "sources": [
+        "src/Hosting/Hosting/src/Builder/IApplicationBuilderFactory.cs",
+        "src/Hosting/Hosting/src/Builder/ApplicationBuilderFactory.cs",
+        "src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs:79-81",
+        "src/Hosting/Hosting/src/GenericHost/SlimWebHostBuilder.cs:53-55",
+        "src/Hosting/Hosting/src/GenericHost/GenericWebHostService.cs:18-41",
+        "src/Hosting/Hosting/src/GenericHost/GenericWebHostService.cs:126-144",
+        "src/Http/Routing/src/Builder/EndpointRoutingApplicationBuilderExtensions.cs:38-61",
+        "src/Http/Routing/src/Builder/EndpointRoutingApplicationBuilderExtensions.cs:85-94"
+      ]
+    }
+  ],
+  "resourceAndEndpointConsumers": [
+    {
+      "fact": "WithStaticAssets registers ResourceCollectionConvention before endpoint creation and as an endpoint convention. The convention resolves resource metadata and, for configured WebAssembly, resource-collection endpoints. UpdateEndpoints reads ResourceAssetCollection from the already-created endpoint metadata and places that exact value, including null, on each application builder.",
+      "sources": [
+        "src/Components/Endpoints/src/Builder/RazorComponentsEndpointConventionBuilderExtensions.cs:50-65",
+        "src/Components/Endpoints/src/Builder/ResourceCollectionConvention.cs",
+        "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:122-149"
+      ]
+    },
+    {
+      "fact": "The WebAssembly provider reads __ResourceCollectionKey. With an existing ResourceAssetCollection it returns no legacy framework-file endpoint; without one it configures UseBlazorFrameworkFiles, builds the branch and maps the framework fallback. The supported WebAssembly pair is not equivalent to an unused builder merely because it can return an empty endpoint list.",
+      "source": "src/Components/WebAssembly/Server/src/WebAssemblyEndpointProvider.cs:17-46"
+    },
+    {
+      "fact": "The Server provider uses the accepted builder to construct hub endpoints and optional additional branches. RenderModeEndpointProvider.AddEndpoints attaches root/render-mode metadata, applies conventions and final conventions, and builds the returned endpoints. Page endpoints are created separately before the provider loop, with delegates that resolve IRazorComponentEndpointInvoker per request.",
+      "sources": [
+        "src/Components/Server/src/DependencyInjection/ServerRazorComponentsBuilderExtensions.cs:57-115",
+        "src/Components/Endpoints/src/Builder/RenderModeEndpointProvider.cs:35-60",
+        "src/Components/Endpoints/src/Builder/RazorComponentEndpointFactory.cs"
+      ]
+    }
+  ],
+  "lifecycleAndHotReload": {
+    "skillUsed": "support-hot-reload",
+    "owner": "Endpoints HotReloadService; no new cache or independent metadata-update handler",
+    "initialization": "Endpoints and GetChangeToken call Initialize. A double-checked _endpoints null guard builds the list lazily once on success. A routing consumer can trigger this on the first request or another endpoint-discovery access; this is not repeated construction on every successful request.",
+    "routingConsumer": "EndpointRoutingMiddleware caches matcher initialization. DataSourceDependentMatcher initializes DataSourceDependentCache, whose Initialize reads the data source change token and endpoint list and registers a callback. MatchAsync uses the current matcher, not UpdateEndpoints per request.",
+    "refreshProducer": "The assembly MetadataUpdateHandler is Endpoints.HotReloadService. Its UpdateApplication notifies the subscribed instance; NotifyUpdateApplication exchanges/cancels/disposes its token. A supported data source subscribes through ChangeToken.OnChange to UpdateEndpoints.",
+    "refreshWork": "UpdateEndpoints disposes its prior subscription, replays component-application builder actions into a fresh ComponentApplicationBuilder, rebuilds endpoints using the existing options/provider snapshot, replaces the outward change token, cancels/disposes the old source and re-subscribes to the owning hot-reload service.",
+    "runtimeDeltaNotExercised": true,
+    "sources": [
+      "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:64-99",
+      "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:103-180",
+      "src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs:209-216",
+      "src/Components/Endpoints/src/DependencyInjection/HotReloadService.cs",
+      "src/Components/Endpoints/src/DependencyInjection/RazorComponentsServiceCollectionExtensions.cs:48-53",
+      "src/Http/Routing/src/EndpointRoutingMiddleware.cs:98-122",
+      "src/Http/Routing/src/EndpointRoutingMiddleware.cs:279-319",
+      "src/Http/Routing/src/Matching/DataSourceDependentMatcher.cs:15-35",
+      "src/Http/Routing/src/DataSourceDependentCache.cs:46-76"
+    ]
+  },
+  "historyAndRelatedWork": {
+    "records": [
+      {
+        "commit": "d6229213d37e0f6d48b77e064a3e5ae51e2a0cf8",
+        "pr": "https://github.com/dotnet/aspnetcore/pull/48283",
+        "relevance": "2023 discovery/provider dispatch introduction used Supports before _applicationBuilder.New inside the accepted branch. Historical lazy ordering is evidence, not proof of a documented ordering guarantee today.",
+        "receipt": "receipts-003\\supports-dispatch-history.stdout.bin"
+      },
+      {
+        "commit": "c283d05ce0e49941c7df3eeea6143ca58e2d0b3b",
+        "pr": "https://github.com/dotnet/aspnetcore/pull/56045",
+        "relevance": "2024 fingerprinted-resource integration introduced the present eager CreateApplicationBuilder plus resource-property write before Supports. The same change introduced the property-reading WebAssembly provider.",
+        "receipt": "receipts-003\\resource-property-introduction.stdout.bin"
+      },
+      {
+        "commit": "982cae2c12aeb6fffd91cbe980353304a5ad8a96",
+        "pr": "https://github.com/dotnet/aspnetcore/pull/63972",
+        "relevance": "2025 refresh fix moved token disposal into UpdateEndpoints and replayed configuration actions into a new component application builder to avoid stale route data. Current Original and Default already contain this owning mechanism.",
+        "gitReceipt": "receipts-003\\hot-reload-refresh-fix.stdout.bin",
+        "fullReadOnlyGithubReceipt": "receipts-003\\related-hot-reload-pr.stdout.bin"
+      }
+    ],
+    "boundedRelatedPrSearch": {
+      "query": "repo:dotnet/aspnetcore is:pr \"RazorComponentEndpointDataSource\" in:title,body",
+      "receipt": "receipts-003\\related-source-pr-search.stdout.bin",
+      "totalCount": 3,
+      "numbers": [63972, 63976, 50031],
+      "scopeLimit": "Only that public title/body search, not a claim that no other related implementation or performance work exists."
+    },
+    "currentRoleHistory": "Original is an ancestor of the pinned Default; the captured target and all traced product source bytes remain unchanged between them."
+  },
+  "candidateGate": {
+    "decision": "DO_NOT_PREPARE_CANDIDATE",
+    "primaryReason": "Only a small bounded initialization/real-refresh saving is established in the actual producer. No material consumer effect is established, and the task forbids manufacturing it with extra modes, providers, pages, property padding or refresh loops.",
+    "compatibilityQualification": "Known built-ins have simple Supports tests, but interface factories/property dictionaries and public providers are not promised inert. Reordering or deleting their calls is not silently declared harmless; neither is an actual compatibility regression claimed.",
+    "notClaimed": [
+      "Measured no gain",
+      "Zero possible benefit",
+      "Performance impossibility from source",
+      "A proven behavioral bug in either current role",
+      "A proven arbitrary-extension regression",
+      "Verified correctness of an unimplemented candidate"
+    ],
+    "implementationAcceptance": "Not entered: there is no candidate to edit or validate.",
+    "changedFiles": [],
+    "privateWorktrees": [],
+    "branchesCreated": [],
+    "emptyDiffReceipts": "empty-diffs-004.json"
+  }
+}

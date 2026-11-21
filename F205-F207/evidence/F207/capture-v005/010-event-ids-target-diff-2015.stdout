@@ -1,0 +1,48 @@
+commit c48173c9480267dab753eb5c9dc09b57242172f3
+Author:     Pavel Krymets <pavel@krymets.com>
+AuthorDate: Tue Nov 17 13:32:57 2015 -0800
+Commit:     Pavel Krymets <pavel@krymets.com>
+CommitDate: Wed Nov 18 11:36:15 2015 -0800
+
+    Add event ids to all log calls
+
+diff --git a/src/Microsoft.AspNet.DataProtection/XmlEncryption/DpapiXmlEncryptor.cs b/src/Microsoft.AspNet.DataProtection/XmlEncryption/DpapiXmlEncryptor.cs
+index c1726eb7b6..192644d8fa 100644
+--- a/src/Microsoft.AspNet.DataProtection/XmlEncryption/DpapiXmlEncryptor.cs
++++ b/src/Microsoft.AspNet.DataProtection/XmlEncryption/DpapiXmlEncryptor.cs
+@@ -60,17 +60,13 @@ namespace Microsoft.AspNet.DataProtection.XmlEncryption
+             {
+                 throw new ArgumentNullException(nameof(plaintextElement));
+             }
+-
+-            if (_logger.IsVerboseLevelEnabled())
++            if (_protectToLocalMachine)
+             {
+-                if (_protectToLocalMachine)
+-                {
+-                    _logger.LogVerbose("Encrypting to Windows DPAPI for local machine account.");
+-                }
+-                else
+-                {
+-                    _logger.LogVerboseF($"Encrypting to Windows DPAPI for current user account ({WindowsIdentity.GetCurrent().Name}).");
+-                }
++                _logger.EncryptingToWindowsDPAPIForLocalMachineAccount();
++            }
++            else
++            {
++                _logger.EncryptingToWindowsDPAPIForCurrentUserAccount(WindowsIdentity.GetCurrent().Name);
+             }
+ 
+             // Convert the XML element to a binary secret so that it can be run through DPAPI
+@@ -84,10 +80,7 @@ namespace Microsoft.AspNet.DataProtection.XmlEncryption
+             }
+             catch (Exception ex)
+             {
+-                if (_logger.IsErrorLevelEnabled())
+-                {
+-                    _logger.LogError(ex, "An error occurred while encrypting to Windows DPAPI.");
+-                }
++                _logger.ErrorOccurredWhileEncryptingToWindowsDPAPI(ex);
+                 throw;
+             }
+ 

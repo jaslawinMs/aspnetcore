@@ -1,0 +1,934 @@
+03f95931934603530ca599fdcb455d349b859c88 blob 1421
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+#nullable enable
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
+
+namespace Microsoft.AspNetCore.Hosting.Builder;
+
+/// <summary>
+/// A factory for creating <see cref="IApplicationBuilder" /> instances.
+/// </summary>
+public class ApplicationBuilderFactory : IApplicationBuilderFactory
+{
+    private readonly IServiceProvider _serviceProvider;
+
+    /// <summary>
+    /// Initialize a new factory instance with an <see cref="IServiceProvider" />.
+    /// </summary>
+    /// <param name="serviceProvider">The <see cref="IServiceProvider"/> used to resolve dependencies and initialize components.</param>
+    public ApplicationBuilderFactory(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Create an <see cref="IApplicationBuilder" /> builder given a <paramref name="serverFeatures" />.
+    /// </summary>
+    /// <param name="serverFeatures">An <see cref="IFeatureCollection"/> of HTTP features.</param>
+    /// <returns>An <see cref="IApplicationBuilder"/> configured with <paramref name="serverFeatures"/>.</returns>
+    public IApplicationBuilder CreateBuilder(IFeatureCollection serverFeatures)
+    {
+        return new ApplicationBuilder(_serviceProvider, serverFeatures);
+    }
+}
+
+5bcbbb30d8483721591c12d2e06c9c85c6380bee blob 884
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
+
+namespace Microsoft.AspNetCore.Hosting.Builder;
+
+/// <summary>
+/// Provides an interface for implementing a factory that produces <see cref="IApplicationBuilder"/> instances.
+/// </summary>
+public interface IApplicationBuilderFactory
+{
+    /// <summary>
+    /// Create an <see cref="IApplicationBuilder" /> builder given a <paramref name="serverFeatures" />
+    /// </summary>
+    /// <param name="serverFeatures">An <see cref="IFeatureCollection"/> of HTTP features.</param>
+    /// <returns>An <see cref="IApplicationBuilder"/> configured with <paramref name="serverFeatures"/>.</returns>
+    IApplicationBuilder CreateBuilder(IFeatureCollection serverFeatures);
+}
+
+6dcecd3d50a5fd9cd5d46bb18297916275ae4e4a blob 9172
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.AspNetCore.Hosting.Builder;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.AspNetCore.Hosting;
+
+internal sealed partial class GenericWebHostService : IHostedService
+{
+    public GenericWebHostService(IOptions<GenericWebHostServiceOptions> options,
+                                 IServer server,
+                                 ILoggerFactory loggerFactory,
+                                 DiagnosticListener diagnosticListener,
+                                 ActivitySource activitySource,
+                                 DistributedContextPropagator propagator,
+                                 IHttpContextFactory httpContextFactory,
+                                 IApplicationBuilderFactory applicationBuilderFactory,
+                                 IEnumerable<IStartupFilter> startupFilters,
+                                 IConfiguration configuration,
+                                 IWebHostEnvironment hostingEnvironment,
+                                 HostingMetrics hostingMetrics)
+    {
+        Options = options.Value;
+        Server = server;
+        Logger = loggerFactory.CreateLogger("Microsoft.AspNetCore.Hosting.Diagnostics");
+        LifetimeLogger = loggerFactory.CreateLogger("Microsoft.Hosting.Lifetime");
+        DiagnosticListener = diagnosticListener;
+        ActivitySource = activitySource;
+        Propagator = propagator;
+        HttpContextFactory = httpContextFactory;
+        ApplicationBuilderFactory = applicationBuilderFactory;
+        StartupFilters = startupFilters;
+        Configuration = configuration;
+        HostingEnvironment = hostingEnvironment;
+        HostingMetrics = hostingMetrics;
+    }
+
+    public GenericWebHostServiceOptions Options { get; }
+    public IServer Server { get; }
+    public ILogger Logger { get; }
+    // Only for high level lifetime events
+    public ILogger LifetimeLogger { get; }
+    public DiagnosticListener DiagnosticListener { get; }
+    public ActivitySource ActivitySource { get; }
+    public DistributedContextPropagator Propagator { get; }
+    public IHttpContextFactory HttpContextFactory { get; }
+    public IApplicationBuilderFactory ApplicationBuilderFactory { get; }
+    public IEnumerable<IStartupFilter> StartupFilters { get; }
+    public IConfiguration Configuration { get; }
+    public IWebHostEnvironment HostingEnvironment { get; }
+    public HostingMetrics HostingMetrics { get; }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        HostingEventSource.Log.HostStart();
+
+        var serverAddressesFeature = Server.Features.Get<IServerAddressesFeature>();
+        var addresses = serverAddressesFeature?.Addresses;
+        if (addresses != null && !addresses.IsReadOnly && addresses.Count == 0)
+        {
+            // We support reading "urls" from app configuration
+            var urls = Configuration[WebHostDefaults.ServerUrlsKey];
+
+            // But fall back to host settings
+            if (string.IsNullOrEmpty(urls))
+            {
+                urls = Options.WebHostOptions.ServerUrls;
+            }
+
+            var httpPorts = Configuration[WebHostDefaults.HttpPortsKey] ?? string.Empty;
+            var httpsPorts = Configuration[WebHostDefaults.HttpsPortsKey] ?? string.Empty;
+            if (string.IsNullOrEmpty(urls))
+            {
+                // HTTP_PORTS and HTTPS_PORTS, these are lower priority than Urls.
+                static string ExpandPorts(string ports, string scheme)
+                {
+                    return string.Join(';',
+                        ports.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                        .Select(port => $"{scheme}://*:{port}"));
+                }
+
+                var httpUrls = ExpandPorts(httpPorts, Uri.UriSchemeHttp);
+                var httpsUrls = ExpandPorts(httpsPorts, Uri.UriSchemeHttps);
+                urls = $"{httpUrls};{httpsUrls}";
+            }
+            else if (!string.IsNullOrEmpty(httpPorts) || !string.IsNullOrEmpty(httpsPorts))
+            {
+                Logger.PortsOverridenByUrls(httpPorts, httpsPorts, urls);
+            }
+
+            if (!string.IsNullOrEmpty(urls))
+            {
+                // We support reading "preferHostingUrls" from app configuration
+                var preferHostingUrlsConfig = Configuration[WebHostDefaults.PreferHostingUrlsKey];
+
+                // But fall back to host settings
+                if (!string.IsNullOrEmpty(preferHostingUrlsConfig))
+                {
+                    serverAddressesFeature!.PreferHostingUrls = WebHostUtilities.ParseBool(preferHostingUrlsConfig);
+                }
+                else
+                {
+                    serverAddressesFeature!.PreferHostingUrls = Options.WebHostOptions.PreferHostingUrls;
+                }
+
+                foreach (var value in urls.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    addresses.Add(value);
+                }
+            }
+        }
+
+        RequestDelegate? application = null;
+
+        try
+        {
+            var configure = Options.ConfigureApplication;
+
+            if (configure == null)
+            {
+                throw new InvalidOperationException($"No application configured. Please specify an application via IWebHostBuilder.UseStartup, IWebHostBuilder.Configure, or specifying the startup assembly via {nameof(WebHostDefaults.StartupAssemblyKey)} in the web host configuration.");
+            }
+
+            var builder = ApplicationBuilderFactory.CreateBuilder(Server.Features);
+
+            foreach (var filter in Enumerable.Reverse(StartupFilters))
+            {
+                configure = filter.Configure(configure);
+            }
+
+            configure(builder);
+
+            // Build the request pipeline
+            application = builder.Build();
+        }
+        catch (Exception ex)
+        {
+            Logger.ApplicationError(ex);
+
+            if (!Options.WebHostOptions.CaptureStartupErrors)
+            {
+                throw;
+            }
+
+            var showDetailedErrors = HostingEnvironment.IsDevelopment() || Options.WebHostOptions.DetailedErrors;
+
+            application = ErrorPageBuilder.BuildErrorPageApplication(HostingEnvironment.ContentRootFileProvider, Logger, showDetailedErrors, ex);
+        }
+
+        var httpApplication = new HostingApplication(application, Logger, DiagnosticListener, ActivitySource, Propagator, HttpContextFactory, HostingEventSource.Log, HostingMetrics);
+
+        await Server.StartAsync(httpApplication, cancellationToken);
+        HostingEventSource.Log.ServerReady();
+
+        if (addresses != null)
+        {
+            foreach (var address in addresses)
+            {
+                Log.ListeningOnAddress(LifetimeLogger, address);
+                if (LifetimeLogger.IsEnabled(LogLevel.Information))
+                {
+                    if (address.Contains(".localhost", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(address, UriKind.Absolute, out var uri) && uri.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Log the localhost address without the sub-domain prefix too
+                        Log.ListeningOnAddress(LifetimeLogger, new UriBuilder(uri) { Host = "localhost" }.ToString().TrimEnd('/'));
+                    }
+                }
+            }
+        }
+
+        if (Logger.IsEnabled(LogLevel.Debug))
+        {
+            foreach (var assembly in Options.WebHostOptions.GetFinalHostingStartupAssemblies())
+            {
+                Log.StartupAssemblyLoaded(Logger, assembly);
+            }
+        }
+
+        if (Options.HostingStartupExceptions != null)
+        {
+            foreach (var exception in Options.HostingStartupExceptions.InnerExceptions)
+            {
+                Logger.HostingStartupAssemblyError(exception);
+            }
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Server.StopAsync(cancellationToken);
+        }
+        finally
+        {
+            HostingEventSource.Log.HostStop();
+        }
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(14, LogLevel.Information,
+            "Now listening on: {address}",
+            EventName = "ListeningOnAddress")]
+        public static partial void ListeningOnAddress(ILogger logger, string address);
+
+        [LoggerMessage(13, LogLevel.Debug,
+            "Loaded hosting startup assembly {assemblyName}",
+            EventName = "HostingStartupAssemblyLoaded",
+            SkipEnabledCheck = true)]
+        public static partial void StartupAssemblyLoaded(ILogger logger, string assemblyName);
+    }
+}
+
+83f416fa0089457a2d6beec424272c0fd0c6e1c1 blob 17869
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting.Builder;
+using Microsoft.AspNetCore.Hosting.Infrastructure;
+using Microsoft.AspNetCore.Hosting.Internal;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace Microsoft.AspNetCore.Hosting;
+
+internal sealed class GenericWebHostBuilder : WebHostBuilderBase, ISupportsStartup
+{
+    private const string _startupConfigName = "__UseStartup.StartupObject";
+    private readonly object _startupKey = new object();
+
+    private AggregateException? _hostingStartupErrors;
+    private HostingStartupWebHostBuilder? _hostingStartupWebHostBuilder;
+
+    public GenericWebHostBuilder(IHostBuilder builder, WebHostBuilderOptions options)
+        : base(builder, options)
+    {
+        _builder.ConfigureHostConfiguration(config =>
+        {
+            config.AddConfiguration(_config);
+
+            // We do this super early but still late enough that we can process the configuration
+            // wired up by calls to UseSetting
+            ExecuteHostingStartups();
+        });
+
+        // IHostingStartup needs to be executed before any direct methods on the builder
+        // so register these callbacks first
+        _builder.ConfigureAppConfiguration((context, configurationBuilder) =>
+        {
+            if (_hostingStartupWebHostBuilder != null)
+            {
+                var webhostContext = GetWebHostBuilderContext(context);
+                _hostingStartupWebHostBuilder.ConfigureAppConfiguration(webhostContext, configurationBuilder);
+            }
+        });
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            var webhostContext = GetWebHostBuilderContext(context);
+            var webHostOptions = (WebHostOptions)context.Properties[typeof(WebHostOptions)];
+
+            // Add the IHostingEnvironment and IApplicationLifetime from Microsoft.AspNetCore.Hosting
+            services.AddSingleton(webhostContext.HostingEnvironment);
+#pragma warning disable CS0618 // Type or member is obsolete
+            services.AddSingleton((AspNetCore.Hosting.IHostingEnvironment)webhostContext.HostingEnvironment);
+            services.AddSingleton<IApplicationLifetime, GenericWebHostApplicationLifetime>();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            services.Configure<GenericWebHostServiceOptions>(options =>
+            {
+                // Set the options
+                options.WebHostOptions = webHostOptions;
+                // Store and forward any startup errors
+                options.HostingStartupExceptions = _hostingStartupErrors;
+            });
+
+            // REVIEW: This is bad since we don't own this type. Anybody could add one of these and it would mess things up
+            // We need to flow this differently
+            services.TryAddSingleton(sp => new DiagnosticListener("Microsoft.AspNetCore"));
+            services.TryAddSingleton<DiagnosticSource>(sp => sp.GetRequiredService<DiagnosticListener>());
+            services.TryAddSingleton(sp => new ActivitySource("Microsoft.AspNetCore"));
+            services.TryAddSingleton(DistributedContextPropagator.Current);
+
+            services.TryAddSingleton<IHttpContextFactory, DefaultHttpContextFactory>();
+            services.TryAddScoped<IMiddlewareFactory, MiddlewareFactory>();
+            services.TryAddSingleton<IApplicationBuilderFactory, ApplicationBuilderFactory>();
+
+            services.AddMetrics();
+            services.TryAddSingleton<HostingMetrics>();
+
+            // IMPORTANT: This needs to run *before* direct calls on the builder (like UseStartup)
+            _hostingStartupWebHostBuilder?.ConfigureServices(webhostContext, services);
+
+            // Support UseStartup(assemblyName)
+            if (!string.IsNullOrEmpty(webHostOptions.StartupAssembly))
+            {
+                ScanAssemblyAndRegisterStartup(context, services, webhostContext, webHostOptions);
+            }
+        });
+    }
+
+    [UnconditionalSuppressMessage("Trimmer", "IL2072", Justification = "Finding startup type in assembly requires unreferenced code. Surfaced to user in UseStartup(assemblyName).")]
+    private void ScanAssemblyAndRegisterStartup(HostBuilderContext context, IServiceCollection services, WebHostBuilderContext webhostContext, WebHostOptions webHostOptions)
+    {
+        try
+        {
+            var startupType = StartupLoader.FindStartupType(webHostOptions.StartupAssembly!, webhostContext.HostingEnvironment.EnvironmentName);
+            UseStartup(startupType, context, services);
+        }
+        catch (Exception ex) when (webHostOptions.CaptureStartupErrors)
+        {
+            var capture = ExceptionDispatchInfo.Capture(ex);
+
+            services.Configure<GenericWebHostServiceOptions>(options =>
+            {
+                options.ConfigureApplication = app =>
+                {
+                    // Throw if there was any errors initializing startup
+                    capture.Throw();
+                };
+            });
+        }
+    }
+
+    private void ExecuteHostingStartups()
+    {
+        var webHostOptions = new WebHostOptions(_config);
+
+        if (webHostOptions.PreventHostingStartup)
+        {
+            return;
+        }
+
+        var exceptions = new List<Exception>();
+        var processed = new HashSet<Assembly>();
+
+        _hostingStartupWebHostBuilder = new HostingStartupWebHostBuilder(this);
+
+        // Execute the hosting startup assemblies
+        foreach (var assemblyName in webHostOptions.GetFinalHostingStartupAssemblies())
+        {
+            try
+            {
+                var assembly = Assembly.Load(new AssemblyName(assemblyName));
+
+                if (!processed.Add(assembly))
+                {
+                    // Already processed, skip it
+                    continue;
+                }
+
+                foreach (var attribute in assembly.GetCustomAttributes<HostingStartupAttribute>())
+                {
+                    var hostingStartup = (IHostingStartup)Activator.CreateInstance(attribute.HostingStartupType)!;
+                    hostingStartup.Configure(_hostingStartupWebHostBuilder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Capture any errors that happen during startup
+                exceptions.Add(new InvalidOperationException($"Startup assembly {assemblyName} failed to execute. See the inner exception for more details.", ex));
+            }
+        }
+
+        if (exceptions.Count > 0)
+        {
+            _hostingStartupErrors = new AggregateException(exceptions);
+        }
+    }
+
+    public IWebHostBuilder UseStartup([DynamicallyAccessedMembers(StartupLinkerOptions.Accessibility)] Type startupType)
+    {
+        var startupAssemblyName = startupType.Assembly.GetName().Name;
+
+        UseSetting(WebHostDefaults.ApplicationKey, startupAssemblyName);
+
+        // UseStartup can be called multiple times. Only run the last one.
+        _builder.Properties[_startupConfigName] = startupType;
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            // Run this delegate if the startup type matches
+            if (_builder.Properties.TryGetValue(_startupConfigName, out var startupObject) &&
+                object.ReferenceEquals(startupObject, startupType))
+            {
+                _builder.Properties.Remove(_startupConfigName);
+                UseStartup(startupType, context, services);
+            }
+        });
+
+        return this;
+    }
+
+    // Note: This method isn't 100% compatible with trimming. It is possible for the factory to return a derived type from TStartup.
+    // RequiresUnreferencedCode isn't on this method because the majority of people won't do that.
+    public IWebHostBuilder UseStartup<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] TStartup>(Func<WebHostBuilderContext, TStartup> startupFactory)
+    {
+        var startupAssemblyName = startupFactory.GetMethodInfo().DeclaringType!.Assembly.GetName().Name;
+
+        UseSetting(WebHostDefaults.ApplicationKey, startupAssemblyName);
+
+        // Clear the startup type
+        _builder.Properties[_startupConfigName] = startupFactory;
+
+        _builder.ConfigureServices(ConfigureStartup);
+
+        [UnconditionalSuppressMessage("Trimmer", "IL2072", Justification = "Startup type created by factory can't be determined statically.")]
+        void ConfigureStartup(HostBuilderContext context, IServiceCollection services)
+        {
+            // UseStartup can be called multiple times. Only run the last one.
+            if (_builder.Properties.TryGetValue(_startupConfigName, out var startupObject) &&
+                object.ReferenceEquals(startupObject, startupFactory))
+            {
+                _builder.Properties.Remove(_startupConfigName);
+                var webHostBuilderContext = GetWebHostBuilderContext(context);
+                var instance = startupFactory(webHostBuilderContext) ?? throw new InvalidOperationException("The specified factory returned null startup instance.");
+                UseStartup(instance.GetType(), context, services, instance);
+            }
+        }
+
+        return this;
+    }
+
+    private void UseStartup([DynamicallyAccessedMembers(StartupLinkerOptions.Accessibility)] Type startupType, HostBuilderContext context, IServiceCollection services, object? instance = null)
+    {
+        var webHostBuilderContext = GetWebHostBuilderContext(context);
+        var webHostOptions = (WebHostOptions)context.Properties[typeof(WebHostOptions)];
+
+        ExceptionDispatchInfo? startupError = null;
+        ConfigureBuilder? configureBuilder = null;
+
+        try
+        {
+            // We cannot support methods that return IServiceProvider as that is terminal and we need ConfigureServices to compose
+            if (typeof(IStartup).IsAssignableFrom(startupType))
+            {
+                throw new NotSupportedException($"{typeof(IStartup)} isn't supported");
+            }
+            if (StartupLoader.HasConfigureServicesIServiceProviderDelegate(startupType, context.HostingEnvironment.EnvironmentName))
+            {
+                throw new NotSupportedException($"ConfigureServices returning an {typeof(IServiceProvider)} isn't supported.");
+            }
+
+            instance ??= ActivatorUtilities.CreateInstance(new HostServiceProvider(webHostBuilderContext), startupType);
+            context.Properties[_startupKey] = instance;
+
+            // Startup.ConfigureServices
+            var configureServicesBuilder = StartupLoader.FindConfigureServicesDelegate(startupType, context.HostingEnvironment.EnvironmentName);
+            var configureServices = configureServicesBuilder.Build(instance);
+
+            configureServices(services);
+
+            // REVIEW: We're doing this in the callback so that we have access to the hosting environment
+            // Startup.ConfigureContainer
+            var configureContainerBuilder = StartupLoader.FindConfigureContainerDelegate(startupType, context.HostingEnvironment.EnvironmentName);
+            if (configureContainerBuilder.MethodInfo != null)
+            {
+                // Store the builder in the property bag
+                _builder.Properties[typeof(ConfigureContainerBuilder)] = configureContainerBuilder;
+
+                InvokeContainer(this, configureContainerBuilder);
+            }
+
+            // Resolve Configure after calling ConfigureServices and ConfigureContainer
+            configureBuilder = StartupLoader.FindConfigureDelegate(startupType, context.HostingEnvironment.EnvironmentName);
+        }
+        catch (Exception ex) when (webHostOptions.CaptureStartupErrors)
+        {
+            startupError = ExceptionDispatchInfo.Capture(ex);
+        }
+
+        // Startup.Configure
+        services.Configure<GenericWebHostServiceOptions>(options =>
+        {
+            options.ConfigureApplication = app =>
+            {
+                // Throw if there was any errors initializing startup
+                startupError?.Throw();
+
+                // Execute Startup.Configure
+                if (instance != null && configureBuilder != null)
+                {
+                    configureBuilder.Build(instance)(app);
+                }
+            };
+        });
+
+        [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
+            Justification = "There is a runtime check for ValueType startup container. It's unlikely anyone will use a ValueType here.")]
+        static void InvokeContainer(GenericWebHostBuilder genericWebHostBuilder, ConfigureContainerBuilder configureContainerBuilder)
+        {
+            var containerType = configureContainerBuilder.GetContainerType();
+
+            // Configure container uses MakeGenericType with the container type. MakeGenericType + struct container type requires IsDynamicCodeSupported.
+            if (containerType.IsValueType && !RuntimeFeature.IsDynamicCodeSupported)
+            {
+                throw new InvalidOperationException("A ValueType TContainerBuilder isn't supported with AOT.");
+            }
+
+            var actionType = typeof(Action<,>).MakeGenericType(typeof(HostBuilderContext), containerType);
+
+            // Get the private ConfigureContainer method on this type then close over the container type
+            var configureCallback = typeof(GenericWebHostBuilder).GetMethod(nameof(ConfigureContainerImpl), BindingFlags.NonPublic | BindingFlags.Instance)!
+                                             .MakeGenericMethod(containerType)
+                                             .CreateDelegate(actionType, genericWebHostBuilder);
+
+            // _builder.ConfigureContainer<T>(ConfigureContainer);
+            typeof(IHostBuilder).GetMethod(nameof(IHostBuilder.ConfigureContainer))!
+                .MakeGenericMethod(containerType)
+                .InvokeWithoutWrappingExceptions(genericWebHostBuilder._builder, new object[] { configureCallback });
+        }
+    }
+
+    private void ConfigureContainerImpl<TContainer>(HostBuilderContext context, TContainer container) where TContainer : notnull
+    {
+        var instance = context.Properties[_startupKey];
+        var builder = (ConfigureContainerBuilder)context.Properties[typeof(ConfigureContainerBuilder)];
+        builder.Build(instance)(container);
+    }
+
+    public IWebHostBuilder Configure(Action<IApplicationBuilder> configure)
+    {
+        var startupAssemblyName = configure.GetMethodInfo().DeclaringType!.Assembly.GetName().Name!;
+
+        UseSetting(WebHostDefaults.ApplicationKey, startupAssemblyName);
+
+        // Clear the startup type
+        _builder.Properties[_startupConfigName] = configure;
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            if (_builder.Properties.TryGetValue(_startupConfigName, out var startupObject) &&
+                object.ReferenceEquals(startupObject, configure))
+            {
+                _builder.Properties.Remove(_startupConfigName);
+                services.Configure<GenericWebHostServiceOptions>(options =>
+                {
+                    options.ConfigureApplication = configure;
+                });
+            }
+        });
+
+        return this;
+    }
+
+    public IWebHostBuilder Configure(Action<WebHostBuilderContext, IApplicationBuilder> configure)
+    {
+        var startupAssemblyName = configure.GetMethodInfo().DeclaringType!.Assembly.GetName().Name!;
+
+        UseSetting(WebHostDefaults.ApplicationKey, startupAssemblyName);
+
+        // Clear the startup type
+        _builder.Properties[_startupConfigName] = configure;
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            if (_builder.Properties.TryGetValue(_startupConfigName, out var startupObject) &&
+                object.ReferenceEquals(startupObject, configure))
+            {
+                _builder.Properties.Remove(_startupConfigName);
+                services.Configure<GenericWebHostServiceOptions>(options =>
+                {
+                    var webhostBuilderContext = GetWebHostBuilderContext(context);
+                    options.ConfigureApplication = app => configure(webhostBuilderContext, app);
+                });
+            }
+        });
+
+        return this;
+    }
+
+    // This exists just so that we can use ActivatorUtilities.CreateInstance on the Startup class
+    private sealed class HostServiceProvider : IServiceProvider
+    {
+        private readonly WebHostBuilderContext _context;
+
+        public HostServiceProvider(WebHostBuilderContext context)
+        {
+            _context = context;
+        }
+
+        public object? GetService(Type serviceType)
+        {
+            // The implementation of the HostingEnvironment supports both interfaces
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (serviceType == typeof(Microsoft.Extensions.Hosting.IHostingEnvironment)
+                || serviceType == typeof(Microsoft.AspNetCore.Hosting.IHostingEnvironment)
+#pragma warning restore CS0618 // Type or member is obsolete
+                    || serviceType == typeof(IWebHostEnvironment)
+                || serviceType == typeof(IHostEnvironment)
+                )
+            {
+                return _context.HostingEnvironment;
+            }
+
+            if (serviceType == typeof(IConfiguration))
+            {
+                return _context.Configuration;
+            }
+
+            return null;
+        }
+    }
+}
+
+ff99aed202a77a10d7cd8c90998ca43c8e1f957d blob 4045
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting.Builder;
+using Microsoft.AspNetCore.Hosting.Infrastructure;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace Microsoft.AspNetCore.Hosting;
+
+internal sealed class SlimWebHostBuilder : WebHostBuilderBase, ISupportsStartup
+{
+    public SlimWebHostBuilder(IHostBuilder builder, WebHostBuilderOptions options)
+        : base(builder, options)
+    {
+        _builder.ConfigureHostConfiguration(config =>
+        {
+            config.AddConfiguration(_config);
+        });
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            var webhostContext = GetWebHostBuilderContext(context);
+            var webHostOptions = (WebHostOptions)context.Properties[typeof(WebHostOptions)];
+
+            // Add the IHostingEnvironment and IApplicationLifetime from Microsoft.AspNetCore.Hosting
+            services.AddSingleton(webhostContext.HostingEnvironment);
+#pragma warning disable CS0618 // Type or member is obsolete
+            services.AddSingleton((AspNetCore.Hosting.IHostingEnvironment)webhostContext.HostingEnvironment);
+            services.AddSingleton<IApplicationLifetime, GenericWebHostApplicationLifetime>();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            services.Configure<GenericWebHostServiceOptions>(options =>
+            {
+                // Set the options
+                options.WebHostOptions = webHostOptions;
+            });
+
+            // REVIEW: This is bad since we don't own this type. Anybody could add one of these and it would mess things up
+            // We need to flow this differently
+            services.TryAddSingleton(sp => new DiagnosticListener("Microsoft.AspNetCore"));
+            services.TryAddSingleton<DiagnosticSource>(sp => sp.GetRequiredService<DiagnosticListener>());
+            services.TryAddSingleton(sp => new ActivitySource("Microsoft.AspNetCore"));
+            services.TryAddSingleton(DistributedContextPropagator.Current);
+
+            services.TryAddSingleton<IHttpContextFactory, DefaultHttpContextFactory>();
+            services.TryAddScoped<IMiddlewareFactory, MiddlewareFactory>();
+            services.TryAddSingleton<IApplicationBuilderFactory, ApplicationBuilderFactory>();
+
+            services.AddMetrics();
+            services.TryAddSingleton<HostingMetrics>();
+        });
+    }
+
+    public IWebHostBuilder Configure(Action<IApplicationBuilder> configure)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IWebHostBuilder UseStartup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type startupType)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IWebHostBuilder UseStartup<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] TStartup>(Func<WebHostBuilderContext, TStartup> startupFactory)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IWebHostBuilder Configure(Action<WebHostBuilderContext, IApplicationBuilder> configure)
+    {
+        var startupAssemblyName = configure.GetMethodInfo().DeclaringType!.Assembly.GetName().Name!;
+
+        UseSetting(WebHostDefaults.ApplicationKey, startupAssemblyName);
+
+        _builder.ConfigureServices((context, services) =>
+        {
+            services.Configure<GenericWebHostServiceOptions>(options =>
+            {
+                var webhostBuilderContext = GetWebHostBuilderContext(context);
+                options.ConfigureApplication = app => configure(webhostBuilderContext, app);
+            });
+        });
+
+        return this;
+    }
+}
+
+d58602fa48a12e9a04fbeb720ceffa73753b5438 blob 8009
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.AspNetCore.Builder;
+
+/// <summary>
+/// Contains extensions for configuring routing on an <see cref="IApplicationBuilder"/>.
+/// </summary>
+public static class EndpointRoutingApplicationBuilderExtensions
+{
+    private const string EndpointRouteBuilder = "__EndpointRouteBuilder";
+    private const string GlobalEndpointRouteBuilderKey = "__GlobalEndpointRouteBuilder";
+    private const string UseRoutingKey = "__UseRouting";
+
+    /// <summary>
+    /// Adds routing to the specified <see cref="IApplicationBuilder"/> so that incoming requests can be matched to endpoints.
+    /// </summary>
+    /// <param name="builder">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    /// <remarks>
+    /// <para>
+    /// A call to <see cref="UseRouting(IApplicationBuilder)"/> must be followed by a call to
+    /// <see cref="UseEndpoints(IApplicationBuilder, Action{IEndpointRouteBuilder})"/> for the same <see cref="IApplicationBuilder"/>
+    /// instance.
+    /// </para>
+    /// <para>
+    /// Routing adds a point in the middleware pipeline where routing decisions are made and an <see cref="Endpoint"/>
+    /// is associated with the <see cref="HttpContext"/>. Middleware between <see cref="UseRouting(IApplicationBuilder)"/>
+    /// and <see cref="UseEndpoints(IApplicationBuilder, Action{IEndpointRouteBuilder})"/> may observe or change the
+    /// <see cref="Endpoint"/> associated with the <see cref="HttpContext"/>.
+    /// </para>
+    /// </remarks>
+    public static IApplicationBuilder UseRouting(this IApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        VerifyRoutingServicesAreRegistered(builder);
+
+        IEndpointRouteBuilder endpointRouteBuilder;
+        if (builder.Properties.TryGetValue(GlobalEndpointRouteBuilderKey, out var obj))
+        {
+            endpointRouteBuilder = (IEndpointRouteBuilder)obj!;
+            // Let interested parties know if UseRouting() was called while a global route builder was set
+            builder.Properties[EndpointRouteBuilder] = endpointRouteBuilder;
+        }
+        else
+        {
+            endpointRouteBuilder = new DefaultEndpointRouteBuilder(builder);
+            builder.Properties[EndpointRouteBuilder] = endpointRouteBuilder;
+        }
+
+        // Add UseRouting function to properties so that middleware that can't reference UseRouting directly can call UseRouting via this property
+        // This is part of the global endpoint route builder concept
+        builder.Properties.TryAdd(UseRoutingKey, (object)UseRouting);
+
+        return builder.UseMiddleware<EndpointRoutingMiddleware>(endpointRouteBuilder);
+    }
+
+    /// <summary>
+    /// Adds endpoint execution to the specified <see cref="IApplicationBuilder"/> with the
+    /// <see cref="EndpointDataSource"/> instances built from the configured <see cref="IEndpointRouteBuilder"/>.
+    /// This middleware executes the <see cref="Endpoint"/> associated with the current request.
+    /// </summary>
+    /// <param name="builder">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
+    /// <param name="configure">An <see cref="Action{IEndpointRouteBuilder}"/> to configure the provided <see cref="IEndpointRouteBuilder"/>.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    /// <remarks>
+    /// <para>
+    /// A call to <see cref="UseEndpoints(IApplicationBuilder, Action{IEndpointRouteBuilder})"/> must be preceded by a call to
+    /// <see cref="UseRouting(IApplicationBuilder)"/> for the same <see cref="IApplicationBuilder"/>
+    /// instance.
+    /// </para>
+    /// <para>
+    /// Routing adds a point in the middleware pipeline where routing decisions are made and an <see cref="Endpoint"/>
+    /// is associated with the <see cref="HttpContext"/>. Middleware between <see cref="UseRouting(IApplicationBuilder)"/>
+    /// and <see cref="UseEndpoints(IApplicationBuilder, Action{IEndpointRouteBuilder})"/> may observe or change the
+    /// <see cref="Endpoint"/> associated with the <see cref="HttpContext"/>.
+    /// </para>
+    /// </remarks>
+    public static IApplicationBuilder UseEndpoints(this IApplicationBuilder builder, Action<IEndpointRouteBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        VerifyRoutingServicesAreRegistered(builder);
+
+        VerifyEndpointRoutingMiddlewareIsRegistered(builder, out var endpointRouteBuilder);
+
+        configure(endpointRouteBuilder);
+
+        // Yes, this mutates an IOptions. We're registering data sources in a global collection which
+        // can be used for discovery of endpoints or URL generation.
+        //
+        // Each middleware gets its own collection of data sources, and all of those data sources also
+        // get added to a global collection.
+        var routeOptions = builder.ApplicationServices.GetRequiredService<IOptions<RouteOptions>>();
+        foreach (var dataSource in endpointRouteBuilder.DataSources)
+        {
+            if (!routeOptions.Value.EndpointDataSources.Contains(dataSource))
+            {
+                routeOptions.Value.EndpointDataSources.Add(dataSource);
+            }
+        }
+
+        return builder.UseMiddleware<EndpointMiddleware>();
+    }
+
+    private static void VerifyRoutingServicesAreRegistered(IApplicationBuilder app)
+    {
+        // Verify if AddRouting was done before calling UseEndpointRouting/UseEndpoint
+        // We use the RoutingMarkerService to make sure if all the services were added.
+        if (app.ApplicationServices.GetService(typeof(RoutingMarkerService)) == null)
+        {
+            throw new InvalidOperationException(Resources.FormatUnableToFindServices(
+                nameof(IServiceCollection),
+                nameof(RoutingServiceCollectionExtensions.AddRouting),
+                "ConfigureServices(...)"));
+        }
+    }
+
+    private static void VerifyEndpointRoutingMiddlewareIsRegistered(IApplicationBuilder app, out IEndpointRouteBuilder endpointRouteBuilder)
+    {
+        if (!app.Properties.TryGetValue(EndpointRouteBuilder, out var obj))
+        {
+            var message =
+                $"{nameof(EndpointRoutingMiddleware)} matches endpoints setup by {nameof(EndpointMiddleware)} and so must be added to the request " +
+                $"execution pipeline before {nameof(EndpointMiddleware)}. " +
+                $"Please add {nameof(EndpointRoutingMiddleware)} by calling '{nameof(IApplicationBuilder)}.{nameof(UseRouting)}' inside the call " +
+                $"to 'Configure(...)' in the application startup code.";
+            throw new InvalidOperationException(message);
+        }
+
+        endpointRouteBuilder = (IEndpointRouteBuilder)obj!;
+
+        // This check handles the case where Map or something else that forks the pipeline is called between the two
+        // routing middleware.
+        if (endpointRouteBuilder is DefaultEndpointRouteBuilder defaultRouteBuilder && !object.ReferenceEquals(app, defaultRouteBuilder.ApplicationBuilder))
+        {
+            var message =
+                $"The {nameof(EndpointRoutingMiddleware)} and {nameof(EndpointMiddleware)} must be added to the same {nameof(IApplicationBuilder)} instance. " +
+                $"To use Endpoint Routing with 'Map(...)', make sure to call '{nameof(IApplicationBuilder)}.{nameof(UseRouting)}' before " +
+                $"'{nameof(IApplicationBuilder)}.{nameof(UseEndpoints)}' for each branch of the middleware pipeline.";
+            throw new InvalidOperationException(message);
+        }
+    }
+}
+

@@ -1,0 +1,59 @@
+{
+  "kind": "Tool navigation receipt; source evidence is separately retained as exact git/API blobs",
+  "lsp": [
+    {
+      "operation": "documentSymbol",
+      "file": "src\\DataProtection\\DataProtection\\src\\XmlEncryption\\DpapiXmlEncryptor.cs",
+      "result": "Displayed class at line 21 and Encrypt at line 50; exact source/ripgrep line for class is 22."
+    },
+    {
+      "operation": "findReferences",
+      "position": "DpapiXmlEncryptor.cs:21:21",
+      "result": "Wrong symbol position: 23 platform-attribute references, not DpapiXmlEncryptor callers. Not used as finding evidence."
+    },
+    {
+      "operation": "findReferences",
+      "position": "DpapiXmlEncryptor.cs:22:21",
+      "result": "Corrected class query: 9 references including declaration/constructor/self, DpapiXmlDecryptor, DataProtectionBuilderExtensions:332, XmlKeyManager:672 and :702, and DpapiXmlEncryptionTests:23. Bounded LSP result, not a complete runtime dispatch proof."
+    },
+    {
+      "operation": "goToDefinition",
+      "position": "DpapiXmlEncryptor.cs:59:21",
+      "result": "Resolved the logging call to LoggingExtensions.cs:119:32."
+    },
+    {
+      "operation": "workspaceSymbol",
+      "query": "EncryptingToWindowsDPAPIForCurrentUserAccount",
+      "result": "Found the string partial declaration and generated callbacks/methods for netstandard2.0/net462 from Microsoft.Extensions.Logging.Generators in existing package 12.0.0-alpha.1.26562.105. Source-generated URIs were navigation identities; generated file bytes were not exported or newly built."
+    },
+    {
+      "operation": "outgoingCalls",
+      "position": "LoggingExtensions.cs:119:32",
+      "result": "No calls returned from the partial declaration. Not used to infer no filtering. Filtering was established from the pinned generator and LoggerMessage source for both dependency revisions."
+    },
+    {
+      "operation": "incomingCalls",
+      "position": "XmlKeyManager.cs:145:17",
+      "result": "Concrete method query returned existing tests. The production IKeyManager interface call was established in captured KeyRingProvider source; absence from this concrete query was not treated as unreachability."
+    },
+    {
+      "operation": "workspaceSymbol",
+      "query": "ToMasterKeyElement / KeyManagementOptionsSetup",
+      "result": "Resolved SecretExtensions.cs and Internal\\KeyManagementOptionsSetup.cs; exact Original/Default sources and memberships captured in capture-v004."
+    }
+  ],
+  "artifactLookup": {
+    "query": "artifacts\\obj\\Microsoft.AspNetCore.DataProtection\\**\\LoggerMessage.g.cs",
+    "result": "No matches in that known local subtree; not a claim that no generated documents exist."
+  },
+  "additionalNonNativeToolFailures": [
+    {
+      "tool": "view",
+      "target": "capture-v005\\009-debug-guard-history-8.stdout lines 1-165",
+      "result": "Invalid view range because the successful git query returned an empty, zero-line stdout. Exact zero-byte stream and successful command exit retained."
+    }
+  ],
+  "codeGraph": "Not used: source rejected the candidate before native qualification; the configured Bluebird defaults are unrelated and were not treated as ASP.NET evidence.",
+  "subagents": "None launched.",
+  "earlierToolFailures": "capture-v001\\instruction-read-receipt.json"
+}

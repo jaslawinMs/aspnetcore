@@ -1,0 +1,63 @@
+commit 7e99eea5f03a90686267f8cb5b6143d9b44e5ac4
+Author:     Andrew Casey <amcasey@users.noreply.github.com>
+AuthorDate: Thu Jul 18 01:37:51 2024 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Jul 18 08:37:51 2024 +0000
+
+    Support key deletion in Data Protection (#53860)
+    
+    * Add deletion APIs to IKeyManager and IXmlRepository
+
+commit 4d11def519f764caebacdcf726313764eaa1df8e
+Author:     Andrew Casey <amcasey@users.noreply.github.com>
+AuthorDate: Fri Apr 19 14:13:15 2024 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Apr 19 21:13:15 2024 +0000
+
+    Allow retries in DefaultKeyResolver.CanCreateAuthenticatedEncryptor (#54711)
+    
+    * Allow retries in DefaultKeyResolver.CanCreateAuthenticatedEncryptor
+    
+    This code is trying to ensure that the selected key can be decrypted (i.e. is usable).  It may fail if, for example, Azure KeyVault is unreachable due to connectivity issues.  If it fails, there's a log message and then an immediately-activated key will be generated.  An immediately-activated key can cause problems for sessions making requests to multiple app instances and those problems won't obviously be connected to the (almost silent) failure in CanCreateAuthenticatedEncryptor.  Rather than effectively swallowing such errors, we should allow some retries.
+    
+    Part of #36157
+    
+    * Roll our own Lazy that allows resets
+    
+    Retries against the actual `Key` type weren't working because the exception was getting cached in the key's lazy descriptor.  Implement our own simple lazy and expose a method for clearing the cached value and exception.
+
+commit 919618df82eaa62ffe538ccf7f642a21c85e8dda
+Author:     Andrew Casey <amcasey@users.noreply.github.com>
+AuthorDate: Mon Mar 4 13:46:29 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Mar 4 13:46:29 2024 -0800
+
+    Throw if the default key is revoked (#54278)
+    
+    Under somewhat contrived circumstances, it's possible that the keyring, on determining that no suitable default key is available, will generate a new, immediately-activated key and that that key will also be immediately-revoked.  For example, it's possible to revoke all keys created before a given date and clock skew between servers could result in that being in the future for some servers.
+    
+    It's also possible that a third-party `IDefaultKeyResolver` could select a revoked key, since the contract doesn't state that it should not.  Having said that, we haven't really hardened against other misbehavior by resolvers, so this isn't terribly compelling.
+    
+    Still, no harm in throwing - better than using a revoked key to encrypt data.
+
+commit c643f1e39074555b8b2a4cf2241d0c7b419a0475
+Author:     Andrew Casey <amcasey@users.noreply.github.com>
+AuthorDate: Fri Jan 26 09:56:59 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Jan 26 09:56:59 2024 -0800
+
+    Introduce a read-only mode for data protection keyring consumers (#53539)
+    
+    * Introduce a read-only mode for data protection keyring consumers
+    
+    When multiple app instances consume the same keyring, they all try to rotate it, leading to races.  This change introduces an IConfiguration property (usually set as an env var) that puts data protection in a read-only mode.  The expectation is that writing will be done by a separate (i.e. non-app-instance) component.
+    
+    Fixes #52915
+
+commit 90c08fe18cd455d15add9b469b41fa288b26eb96
+Author:     Pranav K <prkrishn@hotmail.com>
+AuthorDate: Sat Jul 31 12:26:03 2021 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Jul 31 12:26:03 2021 -0700
+
+    Convert some LoggerMessage.Define to LoggerMessageAttribute (#34905)

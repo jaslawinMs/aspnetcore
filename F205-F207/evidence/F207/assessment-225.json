@@ -1,0 +1,116 @@
+{
+  "finding": "F207",
+  "preparation": 225,
+  "owner": "2d68b596-6cf0-421c-8e56-42a1a990cb9e",
+  "disposition": "SOURCE_NO_CANDIDATE_MATERIALITY_NOT_ESTABLISHED",
+  "evidenceBoundary": "Pinned source, source-generator implementation, public documentation, and existing-test inspection only. No native reproduction, generated-output build, correctness test, or performance observation.",
+  "roles": {
+    "Original": "37e809ead5824bc753a1c3d56f11615bdb1296c5",
+    "Default": "d3483989953ae3cccd773aea5ea04cb0c7198531",
+    "DefaultObservation": "Read-only gh api repos/dotnet/aspnetcore/branches/main, capture-v001\\008-upstream-main.stdout",
+    "reservedCheckout": "24875ef5dabb55567870b39f6eb0002170435e2f on autoperf/F145-hoist-large-response-utf8-encoding; not Default",
+    "comparisons": "capture-v004\\role-byte-comparisons.json: all captured product, producer, test, project, and area-build sources are byte-identical between Original and Default. The two differing captured files are .github\\copilot-instructions.md and eng\\Version.Details.xml.",
+    "dependencyProvenance": "capture-v005\\logging-source-role-dependencies.json: Original logging dependency 12.0.0-alpha.1.26562.105 / dotnet/dotnet dfd6ac738610ea05f42e704be82b386e71052e12; Default 12.0.0-alpha.1.26569.107 / 4f30608f5e5220a5671e61f4bd5dece130657f47. All seven captured logging/runtime implementation files are byte-identical across those dependency commits. These are source dependencies, not observed loaded runtimes."
+  },
+  "logging": {
+    "sourceClaimConfirmed": true,
+    "target": "src\\DataProtection\\DataProtection\\src\\XmlEncryption\\DpapiXmlEncryptor.cs:50-76",
+    "eventDeclaration": "src\\DataProtection\\DataProtection\\src\\LoggingExtensions.cs:118-119",
+    "eventId": 26,
+    "eventName": "EncryptingToWindowsDPAPIForCurrentUserAccount",
+    "level": "Debug",
+    "overload": "public static partial void EncryptingToWindowsDPAPIForCurrentUserAccount(this ILogger logger, string name)",
+    "argumentEvaluation": "On the non-null-input, protectToLocalMachine=false branch, WindowsIdentity.GetCurrent().Name is evaluated before entering the string-taking logging method. There is no caller-side IsEnabled check in the captured Original or Default target. This is not an interpolated-string-handler overload.",
+    "generatorContract": "LoggerMessageGenerator.Emitter.cs:59-83 selects LoggerMessage.Define for this non-generic, fixed-level, one-template/one-parameter method. Lines 440-453 generate Define<string> with callback SkipEnabledCheck=true; lines 472-487 place logger.IsEnabled(LogLevel.Debug) in the generated method before invoking that callback. LoggerMessageAttribute.SkipEnabledCheck is an unset Boolean property (line 117), not enabled by this declaration.",
+    "delegateContract": "LoggerMessage.cs:184-204 returns the unguarded logging delegate when LogDefineOptions.SkipEnabledCheck=true. The generated method therefore owns the normal enabled check; this check cannot make the already-evaluated string argument lazy.",
+    "disabledLoggerEvidence": "The existing DpapiXmlEncryptionTests uses NullLoggerFactory.Instance; the captured NullLogger.IsEnabled implementation returns false. This establishes that test's intended filter configuration from source only, not an executed row. Application logging configuration is not observed or assumed.",
+    "runtimeSourceOnly": "The captured WindowsIdentity.GetCurrent source calls GetCurrentInternal, obtains the current token, and constructs a WindowsIdentity. Name calls GetName, whose uncached path translates the user identifier to NTAccount. No WindowsIdentity API was invoked by this preparation; no account name was captured, and no cost or native failure was measured."
+  },
+  "producerAndFrequency": {
+    "configuration": "ProtectKeysWithDpapi() calls the Boolean overload with false (DataProtectionBuilderExtensions.cs:301-332). The fallback XmlKeyManager configuration selects DpapiXmlEncryptor on Windows with a user-profile repository and chooses current-user versus local-machine scope using the existing CanProtectToCurrentUserAccount probe (XmlKeyManager.cs:645-705). Explicit repositories/encryptors and other environments may select different paths.",
+    "normalProducer": [
+      "KeyRingBasedDataProtector.Protect gets the current key ring, then uses its DefaultAuthenticatedEncryptor for the payload (KeyRingBasedDataProtector.cs:96-123). This is not DpapiXmlEncryptor.Encrypt for every payload.",
+      "KeyRingProvider returns a valid cached ring directly. Its creation/refresh policy considers key resolution, default-key availability, expiration, an existing replacement, and automatic-generation settings before calling IKeyManager.CreateNewKey (KeyRingProvider.cs:83-165, 330-342). A ring refresh is not itself a new-key encryption.",
+      "XmlKeyManager.CreateNewKey reaches IInternalXmlKeyManager.CreateNewKey, exports the new descriptor, invokes existing escrow handling, then KeyEncryptor?.EncryptIfNecessary(keyElement) before repository StoreElement and cache invalidation (XmlKeyManager.cs:145-154, 504-555).",
+      "EncryptIfNecessary calls the configured IXmlEncryptor once per marked subtree, not once per request (XmlEncryptionExtensions.cs:102-135). KeyManagementOptionsSetup defaults to AuthenticatedEncryptorConfiguration when no configuration has been supplied. Its built-in AuthenticatedEncryptorDescriptor exports one MasterKey.ToMasterKeyElement; SecretExtensions marks that one masterKey element for encryption. This is the ordinary successful built-in descriptor path, not a bound on custom descriptors."
+    ],
+    "cadence": "KeyManagementOptions defaults NewKeyLifetime to 90 days, with a setter minimum of 7 days, a 24-hour ring-refresh period, and a 48-hour propagation window. KeyRingProvider's replacement test includes both refresh period and propagation window; no exact once-per-90-days execution rate is claimed. Empty/no-usable-key initialization and replacement creation can reach persistence; warm payload processing with a valid ring does not execute this XML encryption branch.",
+    "documentation": "Pinned dotnet/AspNetCore.Docs main 86b3c7749d99a82508050952f5aa052e65e6c4de, implementation\\key-management.md and configuration\\default-settings.md, confirm normal cached-ring operation and the 90-day lifetime convention. Source controls the precise current policy.",
+    "unverifiedBoundaries": [
+      "Direct public DpapiXmlEncryptor callers may invoke Encrypt at application-defined frequency.",
+      "Explicit IKeyManager.CreateNewKey calls, custom descriptors, invalid-ring conditions, and application/deployment patterns are not universally limited by the default lifetime.",
+      "No observed workload establishes frequent identity-name lookup, startup latency attributable to this lookup, or a material end-to-end saving.",
+      "No artificial rotation, large XML producer, encryption loop, repeated fresh-provider loop, or fleet-size extrapolation was introduced."
+    ]
+  },
+  "semantics": {
+    "currentOrder": "ThrowIfNull precedes scope selection. Current-user identity/name evaluation and the logging call precede XML serialization and are outside the DPAPI try/catch. The protected-secret using statement is inside that try. Encrypted XML construction happens after it; the upstream repository StoreElement and cache invalidation occur only after encryption returns.",
+    "exceptionBoundary": "Identity/name lookup failures and logger enabled-check/log-call failures can prevent serialization and persistence; they are not caught by DpapiXmlEncryptor's DPAPI catch. No such failure was induced or observed here.",
+    "hypotheticalGuardCaveat": "Adding an outer Debug IsEnabled check would intentionally skip identity/name work when false, move a filter call ahead of identity acquisition, and normally add another enabled check on the true path. ILogger implementations may throw or have stateful filtering. No blanket exception, side-effect, or ordering equivalence is asserted, and no guard was implemented.",
+    "disposal": "The existing identity temporary is not enclosed in a using or explicitly disposed at this call site. The existing plaintextElementAsSecret is disposed by its using inside the DPAPI try. No ownership/disposal change, leak claim, or resource measurement is made.",
+    "preservation": "No algorithm, account/identity default, key format, API/default/convention, cache, source local, branch shape, logger definition, or disposal policy was changed."
+  },
+  "reproductionBoundary": {
+    "sourceLevelOriginalAndDefault": "The exact same non-null-input/current-user path at target line 59 passes the evaluated Name string into the Debug method before its filter. The faithful production route is one real new-key creation through XmlKeyManager, descriptor export, EncryptIfNecessary, DpapiXmlEncryptor, and repository persistence; a warmed payload-only loop does not reproduce this producer.",
+    "native": "NOT_RUN",
+    "reason": "Source qualification did not establish a material normal-producer candidate. Per scope, no private graph, native test/build/restore, identity call, or generated key/certificate/plaintext file was created merely to investigate a low-frequency logging seam.",
+    "acceptance": "No implementation acceptance was frozen or executed because no candidate survived materiality qualification. qualification-criteria-225.json defines the source-qualification gates. This is not a verified fix or a measured no-gain result."
+  },
+  "existingTestsInspectedNotExecuted": [
+    {
+      "test": "DpapiXmlEncryptionTests.Encrypt_CurrentUserOrLocalMachine_Decrypt_RoundTrips",
+      "rows": [
+        { "protectToLocalMachine": true, "status": "NOT_RUN" },
+        { "protectToLocalMachine": false, "status": "NOT_RUN" }
+      ],
+      "sourceBoundary": "Windows-conditional real encryptor/decryptor, NullLoggerFactory, decryptor type, content obfuscation, and XML round-trip assertions. Not a real key-ring persistence producer test, nor an identity-lookup counter."
+    },
+    {
+      "test": "XmlKeyManagerTests.CreateNewKey_Internal_WithEscrowAndEncryption",
+      "status": "NOT_RUN",
+      "sourceBoundary": "Actual XmlKeyManager creation/export/persistence logic, mock descriptor/repository and NullXmlEncryptor. Source asserts escrow versus repository XML and cache-token behavior, not real DPAPI/name acquisition."
+    },
+    {
+      "test": "XmlEncryptionExtensionsTests.EncryptIfNecessary_NothingToEncrypt_ReturnsNull and EncryptIfNecessary_RootNodeRequiresEncryption_Success",
+      "status": "NOT_RUN",
+      "sourceBoundary": "Marked/unmarked XML dispatch, not the native identity producer."
+    },
+    {
+      "test": "KeyRingProviderTests.CreateCacheableKeyRing_NoGenerationRequired_DefaultKeyExpiresAfterRefreshPeriod and CreateCacheableKeyRing_GenerationRequired_NoDefaultKey_CreatesNewKeyWithImmediateActivation",
+      "status": "NOT_RUN",
+      "sourceBoundary": "Actual provider policy with mocked manager/resolver, including no-create and single-create call sequences. These source assertions are not observed native correctness results."
+    }
+  ],
+  "historyAndRelatedWork": {
+    "boundedHistory": [
+      "2015 e8cc1106d88710ce643104bb7aa6aebd4e7ceb3b already contains the identity/name expression, but it is inside an IsVerboseLevelEnabled outer guard. Merely finding the expression there is not evidence that the present eager-before-filter behavior existed at that point.",
+      "2015 c48173c9480267dab753eb5c9dc09b57242172f3, Add event ids to all log calls, removes that outer guard and introduces the current-user extension invocation with the eager Name argument. The exact focused diff is capture-v005\\010-event-ids-target-diff-2015.stdout.",
+      "2021 90c08fe18cd455d15add9b469b41fa288b26eb96, Convert some LoggerMessage.Define to LoggerMessageAttribute (#34905), preserves event 26 at Debug and the string parameter. Exact before/after logging sources and memberships are retained.",
+      "Target --follow history is capped at 20 entries; focused pickaxe histories and selected diffs are retained. The captured Original/Default target and logger bytes match exactly. This is not an exhaustive history or related-work claim."
+    ],
+    "finiteGitHubQueries": [
+      { "query": "gh search prs DpapiXmlEncryptor --repo dotnet/aspnetcore --limit 20", "returned": 0, "receipt": "capture-v002\\096-related-prs-target-20.stdout" },
+      { "query": "gh search issues DpapiXmlEncryptor --repo dotnet/aspnetcore --limit 20", "returned": 4, "receipt": "capture-v002\\097-related-issues-target-20.stdout", "scope": "Metadata only; bodies not fetched or assessed" },
+      { "query": "gh search prs \"WindowsIdentity logging\" --repo dotnet/aspnetcore --limit 20", "returned": 0, "receipt": "capture-v002\\098-related-prs-identity-20.stdout" }
+    ]
+  },
+  "candidate": {
+    "created": false,
+    "privateGraphsCreated": [],
+    "sourceChanges": [],
+    "diff": "candidate.diff",
+    "reason": "A real eager logging argument exists, but its normal producer is occasional key persistence, not repeated request execution; no supported material effect was established. The added filter's semantic caveats are unresolved and do not justify manufacturing native work."
+  },
+  "nativeAndPerformance": {
+    "dotnetInvocations": 0,
+    "builds": 0,
+    "tests": 0,
+    "restoresOrInstalls": 0,
+    "timingsWarmupsAllocationCountersProfilers": 0,
+    "nativeFailures": [],
+    "blockedNamedAssertions": [],
+    "actualDotnetHostSdkRuntimeIdentity": "Not observed; no graph was created or activated and no .NET host was invoked.",
+    "redGreen": "Not attempted; no implemented fix or runtime equivalence claim.",
+    "securityAssessment": "Not performed."
+  }
+}

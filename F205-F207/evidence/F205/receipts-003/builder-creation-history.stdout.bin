@@ -1,0 +1,252 @@
+commit 5493b413d1df3aaf00651bdf1cbd8135fa63f517
+Author:     Mackinnon Buck <mackinnon.buck@gmail.com>
+AuthorDate: Wed Nov 20 14:43:14 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Nov 20 14:43:14 2024 -0800
+
+    Add package for consuming Blazor framework assets (#58721)
+
+diff --git a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+index d4ca799ba4..a816105427 100644
+--- a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
++++ b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+@@ -10,9 +10,6 @@ using Microsoft.AspNetCore.Components.Discovery;
+ using Microsoft.AspNetCore.Components.Endpoints.Infrastructure;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Routing;
+-using Microsoft.AspNetCore.Routing.Patterns;
+-using Microsoft.AspNetCore.StaticFiles;
+-using Microsoft.Extensions.FileProviders;
+ using Microsoft.Extensions.Primitives;
+ using static Microsoft.AspNetCore.Internal.LinkerFlags;
+ 
+@@ -180,7 +177,6 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+     private void AddBlazorWebEndpoints(List<Endpoint> endpoints)
+     {
+         List<EndpointBuilder> blazorWebEndpoints = [
+-            ..GetBlazorWebJsEndpoint(_endpointRouteBuilder),
+             OpaqueRedirection.GetBlazorOpaqueRedirectionEndpoint()];
+ 
+         foreach (var endpoint in blazorWebEndpoints)
+@@ -199,56 +195,6 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+         }
+     }
+ 
+-    private static IEnumerable<EndpointBuilder> GetBlazorWebJsEndpoint(IEndpointRouteBuilder endpoints)
+-    {
+-        var app = endpoints.CreateApplicationBuilder();
+-
+-        var options = new StaticFileOptions
+-        {
+-            FileProvider = new ManifestEmbeddedFileProvider(typeof(RazorComponentsEndpointRouteBuilderExtensions).Assembly),
+-            OnPrepareResponse = CacheHeaderSettings.SetCacheHeaders
+-        };
+-
+-        app.Use(next => context =>
+-        {
+-            // Set endpoint to null so the static files middleware will handle the request.
+-            context.SetEndpoint(null);
+-
+-            return next(context);
+-        });
+-
+-        app.UseStaticFiles(options);
+-
+-        var requestDelegate = app.Build();
+-
+-        var blazorWebJsBuilder = new RouteEndpointBuilder(
+-            requestDelegate,
+-            RoutePatternFactory.Parse("/_framework/blazor.web.js"),
+-            int.MinValue)
+-        {
+-            DisplayName = "Blazor web static files"
+-        };
+-
+-        var allowedHttpMethods = new HttpMethodMetadata([HttpMethods.Get, HttpMethods.Head]);
+-        blazorWebJsBuilder.Metadata.Add(allowedHttpMethods);
+-
+-#if !DEBUG
+-        return [blazorWebJsBuilder];
+-#else
+-        // We only need to serve the sourcemap when working on the framework, not in the distributed packages
+-        var blazorWebJsDebugBuilder = new RouteEndpointBuilder(
+-            requestDelegate,
+-            RoutePatternFactory.Parse("/_framework/blazor.web.js.map"),
+-            int.MinValue)
+-        {
+-            DisplayName = "Blazor web static files sourcemap"
+-        };
+-        blazorWebJsDebugBuilder.Metadata.Add(allowedHttpMethods);
+-
+-        return [blazorWebJsBuilder, blazorWebJsDebugBuilder];
+-#endif
+-    }
+-
+     public void OnHotReloadClearCache(Type[]? types)
+     {
+         lock (_lock)
+
+commit d73a7afba057d47f692e9567f9bc67161c118b7c
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon Aug 5 12:42:37 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 5 12:42:37 2024 +0200
+
+    [Blazor] Add Blazor Web Endpoints to the endpoint data source (#57086)
+    
+    * Adds the Blazor Web endpoints to the endpoint data source to ensure that they can be customized via conventions.
+
+diff --git a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+index 7f8089446d..d4ca799ba4 100644
+--- a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
++++ b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Components.Discovery;
+ using Microsoft.AspNetCore.Components.Endpoints.Infrastructure;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Routing;
++using Microsoft.AspNetCore.Routing.Patterns;
++using Microsoft.AspNetCore.StaticFiles;
++using Microsoft.Extensions.FileProviders;
+ using Microsoft.Extensions.Primitives;
+ using static Microsoft.AspNetCore.Internal.LinkerFlags;
+ 
+@@ -115,6 +118,8 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+ 
+             DefaultBuilder.OnBeforeCreateEndpoints(endpointContext);
+ 
++            AddBlazorWebEndpoints(endpoints);
++
+             foreach (var definition in context.Pages)
+             {
+                 _factory.AddEndpoints(
+@@ -172,6 +177,78 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+         }
+     }
+ 
++    private void AddBlazorWebEndpoints(List<Endpoint> endpoints)
++    {
++        List<EndpointBuilder> blazorWebEndpoints = [
++            ..GetBlazorWebJsEndpoint(_endpointRouteBuilder),
++            OpaqueRedirection.GetBlazorOpaqueRedirectionEndpoint()];
++
++        foreach (var endpoint in blazorWebEndpoints)
++        {
++            foreach (var convention in _conventions)
++            {
++                convention(endpoint);
++            }
++
++            foreach (var convention in _finallyConventions)
++            {
++                convention(endpoint);
++            }
++
++            endpoints.Add(endpoint.Build());
++        }
++    }
++
++    private static IEnumerable<EndpointBuilder> GetBlazorWebJsEndpoint(IEndpointRouteBuilder endpoints)
++    {
++        var app = endpoints.CreateApplicationBuilder();
++
++        var options = new StaticFileOptions
++        {
++            FileProvider = new ManifestEmbeddedFileProvider(typeof(RazorComponentsEndpointRouteBuilderExtensions).Assembly),
++            OnPrepareResponse = CacheHeaderSettings.SetCacheHeaders
++        };
++
++        app.Use(next => context =>
++        {
++            // Set endpoint to null so the static files middleware will handle the request.
++            context.SetEndpoint(null);
++
++            return next(context);
++        });
++
++        app.UseStaticFiles(options);
++
++        var requestDelegate = app.Build();
++
++        var blazorWebJsBuilder = new RouteEndpointBuilder(
++            requestDelegate,
++            RoutePatternFactory.Parse("/_framework/blazor.web.js"),
++            int.MinValue)
++        {
++            DisplayName = "Blazor web static files"
++        };
++
++        var allowedHttpMethods = new HttpMethodMetadata([HttpMethods.Get, HttpMethods.Head]);
++        blazorWebJsBuilder.Metadata.Add(allowedHttpMethods);
++
++#if !DEBUG
++        return [blazorWebJsBuilder];
++#else
++        // We only need to serve the sourcemap when working on the framework, not in the distributed packages
++        var blazorWebJsDebugBuilder = new RouteEndpointBuilder(
++            requestDelegate,
++            RoutePatternFactory.Parse("/_framework/blazor.web.js.map"),
++            int.MinValue)
++        {
++            DisplayName = "Blazor web static files sourcemap"
++        };
++        blazorWebJsDebugBuilder.Metadata.Add(allowedHttpMethods);
++
++        return [blazorWebJsBuilder, blazorWebJsDebugBuilder];
++#endif
++    }
++
+     public void OnHotReloadClearCache(Type[]? types)
+     {
+         lock (_lock)
+
+commit 51838a26a52297c100027a52f1425096257119fb
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon May 13 18:04:54 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon May 13 18:04:54 2024 +0200
+
+    [Blazor] Adds compresion support for all assets in an application (#55558)
+    
+    Adds a new MapStaticAssetEndpoints routerware that reads a manifest generated at build / publish time and maps the endpoints defined in the manifest to the files in the application wwwroot folder.
+    
+    Adds a MatcherPolicy to perform content negotiation based on the Accept-Encoding header. Compressed resources contain a ContentEncoding attribute in their metadata that is used to filter out the compressed asset to serve to the client based on the Accept-Encoding header.
+    
+    The content encoding has an associated Quality value that represents the 'server preference' for the encoding. We always use the client preference and only rely on the server preference to break ties.
+    
+    This process is completely driven by de the build and transparent to the runtime, if in the future we add support for zstd, sbr, etc. we don't need to change the runtime.
+    
+    The logic for serving static files is borrowed from the static files middleware, with simplifications and additions. I've ported the relevant tests to ensure a high degree of compatibility.
+    
+    The logic is new "routerware" instead of directly baked into the static files middleware because we do not want to pollute that middleware with more complex logic and we are going to be layering fingerprinting on top of this change, which will register more endpoints that will include more custom headers, which is not suitable for the static files middleware.
+    
+    During development we wrap the endpoints we generate to support changing the files while the app is running (we recompute some of the values on the fly and also register a fallback route that matches file patterns to serve new files added while the app is running).
+    
+    The build/publish process computes all the required information about the assets that is used to emit the response. The ETag and Last-Modified values are computed using the Base64(SHA256) hash of the content and the LastWrite on the file at build/publish time.
+
+diff --git a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+index 06d3113f36..d7ce3ca90b 100644
+--- a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
++++ b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+@@ -39,12 +39,12 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+     public RazorComponentEndpointDataSource(
+         ComponentApplicationBuilder builder,
+         IEnumerable<RenderModeEndpointProvider> renderModeEndpointProviders,
+-        IApplicationBuilder applicationBuilder,
++        IEndpointRouteBuilder endpointRouteBuilder,
+         RazorComponentEndpointFactory factory,
+         HotReloadService? hotReloadService = null)
+     {
+         _builder = builder;
+-        _applicationBuilder = applicationBuilder;
++        _applicationBuilder = endpointRouteBuilder.CreateApplicationBuilder();
+         _renderModeEndpointProviders = renderModeEndpointProviders.ToArray();
+         _factory = factory;
+         _hotReloadService = hotReloadService;
+@@ -52,6 +52,7 @@ internal class RazorComponentEndpointDataSource<[DynamicallyAccessedMembers(Comp
+         DefaultBuilder = new RazorComponentsEndpointConventionBuilder(
+             _lock,
+             builder,
++            endpointRouteBuilder,
+             _options,
+             _conventions,
+             _finallyConventions);

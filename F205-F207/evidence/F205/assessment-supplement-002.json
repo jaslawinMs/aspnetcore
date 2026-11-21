@@ -1,0 +1,35 @@
+{
+  "finding": "F205",
+  "preparation": 222,
+  "sourceOutcome": "SOURCE_ONLY_NO_CANDIDATE",
+  "originalSourceAssessment": "assessment-001.json",
+  "sourceAndMaterialityConclusionsChanged": false,
+  "qualification": "The source assessment remains commit-pinned and no product work was launched, but the preparation must not be described as fully compliant with the reserved-checkout no-write constraint.",
+  "artifactPathIncident": {
+    "receipt": "reserved-artifact-path-incident-005.json",
+    "cause": "Relative System.IO.File.Open paths in two PowerShell evidence writers used the process .NET current directory rather than the PowerShell Set-Location location.",
+    "affectedFiles": [
+      "terminal-observation-001.json",
+      "launcher-seal-001.json",
+      "seal-outer-failure-001.json"
+    ],
+    "effect": "Three new owned JSON receipt files were briefly created in C:\\src\\aspnetcore. No tracked product/source edit was made. This was an actual reserved-root write violation, not merely a failed command.",
+    "detection": "The first immutable Node sealer failed with ENOENT when looking for its terminal receipt in the dedicated evidence root; its parent also exited 1.",
+    "recovery": "recover-evidence-005.mjs identified exactly the baseline four untracked reports plus these three task-owned files, verified each owned JSON signature, and moved only those three files byte-for-byte into the evidence root.",
+    "restorationProof": "reserved-restoration-005.json",
+    "finalState": "Reserved HEAD, branch, status, working/staged diffs and all four original untracked report byte/SHA256 values match the initial observation. All incident receipts remain preserved, and no executed helper was edited or replayed.",
+    "correction": "The replacement outer writer resolves and checks absolute evidence-root paths before System.IO.File.Open; the replacement Node writer uses absolute paths rooted at its own file directory.",
+    "wholePreparationNeverTouchedReservedUntrackedContent": false,
+    "finalReservedStateRestored": true,
+    "coordinatorMustReviewIncident": true
+  },
+  "supersededInterpretations": [
+    "reserved-invariants-004.json remains a true pre-incident observation; it is not evidence that the reserved root stayed untouched during later sealing.",
+    "An initial terminal observation existed but was misplaced; no first-seal success or final closure is claimed.",
+    "The source-assessment acceptance requirement to avoid every reserved-root write was not fully met historically, despite the final state being restored."
+  ],
+  "nativeProductStarts": 0,
+  "servicesStarted": 0,
+  "performanceExecutions": 0,
+  "coordinatorDisposition": "Pending; no campaign acceptance, publication or finalization."
+}

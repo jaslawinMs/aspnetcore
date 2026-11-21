@@ -1,0 +1,128 @@
+commit d6229213d37e0f6d48b77e064a3e5ae51e2a0cf8
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Wed May 24 01:27:05 2023 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed May 24 01:27:05 2023 +0200
+
+    [Blazor] Update discovery APIs and automatically configure the endpoints based on the discovered RenderModes (#48283)
+    
+    * Removes IRazorComponentApplication<TRootComponent>
+    * Adds APIs for component discovery across assemblies.
+    * Adds support for wiring up server endpoints.
+    * Adds support for automatic render mode detection.
+
+diff --git a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+index 8b0ce916c0..dbb16f1383 100644
+--- a/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
++++ b/src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+@@ -2,7 +2,9 @@
+ // The .NET Foundation licenses this file to you under the MIT license.
+ 
+ using System.Diagnostics;
++using System.Linq;
+ using Microsoft.AspNetCore.Builder;
++using Microsoft.AspNetCore.Components.Discovery;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Routing;
+ using Microsoft.Extensions.Primitives;
+@@ -14,6 +16,11 @@ internal class RazorComponentEndpointDataSource<TRootComponent> : EndpointDataSo
+     private readonly object _lock = new();
+     private readonly List<Action<EndpointBuilder>> _conventions = new();
+     private readonly List<Action<EndpointBuilder>> _finallyConventions = new();
++    private readonly RazorComponentDataSourceOptions _options = new();
++    private readonly ComponentApplicationBuilder _builder;
++    private readonly IApplicationBuilder _applicationBuilder;
++    private readonly RenderModeEndpointProvider[] _renderModeEndpointProviders;
++    private readonly RazorComponentEndpointFactory _factory;
+ 
+     private List<Endpoint>? _endpoints;
+     // TODO: Implement endpoint data source updates https://github.com/dotnet/aspnetcore/issues/47026
+@@ -22,13 +29,18 @@ internal class RazorComponentEndpointDataSource<TRootComponent> : EndpointDataSo
+ 
+     public RazorComponentEndpointDataSource(
+         ComponentApplicationBuilder builder,
++        IEnumerable<RenderModeEndpointProvider> renderModeEndpointProviders,
++        IApplicationBuilder applicationBuilder,
+         RazorComponentEndpointFactory factory)
+     {
+         _builder = builder;
++        _applicationBuilder = applicationBuilder;
++        _renderModeEndpointProviders = renderModeEndpointProviders.ToArray();
+         _factory = factory;
+         DefaultBuilder = new RazorComponentEndpointConventionBuilder(
+             _lock,
+             builder,
++            _options,
+             _conventions,
+             _finallyConventions);
+ 
+@@ -36,9 +48,6 @@ internal class RazorComponentEndpointDataSource<TRootComponent> : EndpointDataSo
+         _changeToken = new CancellationChangeToken(_cancellationTokenSource.Token);
+     }
+ 
+-    private readonly ComponentApplicationBuilder _builder;
+-    private readonly RazorComponentEndpointFactory _factory;
+-
+     internal RazorComponentEndpointConventionBuilder DefaultBuilder { get; }
+ 
+     public override IReadOnlyList<Endpoint> Endpoints
+@@ -59,6 +68,8 @@ internal class RazorComponentEndpointDataSource<TRootComponent> : EndpointDataSo
+         }
+     }
+ 
++    internal RazorComponentDataSourceOptions Options => _options;
++
+     private void Initialize()
+     {
+         if (_endpoints == null)
+@@ -77,14 +88,49 @@ internal class RazorComponentEndpointDataSource<TRootComponent> : EndpointDataSo
+     {
+         var endpoints = new List<Endpoint>();
+         var context = _builder.Build();
++
+         foreach (var definition in context.Pages)
+         {
+             _factory.AddEndpoints(endpoints, typeof(TRootComponent), definition, _conventions, _finallyConventions);
+         }
+ 
++        ICollection<IComponentRenderMode> renderModes = Options.ConfiguredRenderModes;
++
++        if (Options.UseDeclaredRenderModes)
++        {
++            var componentRenderModes = context.GetDeclaredRenderModesByDiscoveredComponents();
++            componentRenderModes.UnionWith(Options.ConfiguredRenderModes);
++            renderModes = componentRenderModes;
++        }
++
++        foreach (var renderMode in renderModes)
++        {
++            var found = false;
++            foreach (var provider in _renderModeEndpointProviders)
++            {
++                if (provider.Supports(renderMode))
++                {
++                    found = true;
++                    RenderModeEndpointProvider.AddEndpoints(
++                        endpoints,
++                        typeof(TRootComponent),
++                        provider.GetEndpointBuilders(renderMode, _applicationBuilder.New()),
++                        renderMode,
++                        _conventions,
++                        _finallyConventions);
++                }
++            }
++
++            if (!found)
++            {
++                throw new InvalidOperationException($"Unable to find a provider for the render mode: {renderMode.GetType().FullName}. This generally" +
++                    $"means that a call to 'AddWebAssemblyComponents' or 'AddServerComponents' is missing. " +
++                    $"Alternatively call 'AddWebAssemblyRenderMode', 'AddServerRenderMode' might be missing if you have set UseDeclaredRenderModes = false.");
++            }
++        }
++
+         _endpoints = endpoints;
+     }
+-
+     public override IChangeToken GetChangeToken()
+     {
+         // TODO: Handle updates if necessary (for hot reload).

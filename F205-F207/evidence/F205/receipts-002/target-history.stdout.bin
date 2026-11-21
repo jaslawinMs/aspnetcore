@@ -1,0 +1,482 @@
+commit 8e541b621209d1ced9c69e73fa3ad1b484f68ad4
+Author:     github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+AuthorDate: Mon Sep 21 09:58:19 2026 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Sep 21 09:58:19 2026 -0700
+
+    [Blazor][Hotreload] Add browser tools settings fallback endpoints (#69390) (#69413)
+    
+    * Add Gateway browser tools settings fallback
+    
+    
+    
+    * Use an ordered GET endpoint for browser tools settings
+    
+    
+    
+    * Add browser tools settings endpoint for Razor components
+    
+    
+    
+    ---------
+    
+    Co-authored-by: Javier Calvarro Nelson <jacalvar@microsoft.com>
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 9817792d3ba9aa6f6c9ac5804a672ce5954f3288
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon Sep 21 11:58:46 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Sep 21 11:58:46 2026 +0200
+
+    [Blazor][Hotreload] Add browser tools settings fallback endpoints (#69390)
+    
+    * Add Gateway browser tools settings fallback
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Use an ordered GET endpoint for browser tools settings
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    * Add browser tools settings endpoint for Razor components
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 982cae2c12aeb6fffd91cbe980353304a5ad8a96
+Author:     Ondřej Roztočil <roztocil@outlook.com>
+AuthorDate: Thu Oct 9 20:25:23 2025 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Oct 9 20:25:23 2025 +0200
+
+    Fix hot reload for Blazor route changes (#63972)
+    
+    * Fix hot reload for Blazor route changes
+    
+    * Update src/Components/Endpoints/test/HotReloadServiceTests.cs
+    
+    Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 5493b413d1df3aaf00651bdf1cbd8135fa63f517
+Author:     Mackinnon Buck <mackinnon.buck@gmail.com>
+AuthorDate: Wed Nov 20 14:43:14 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Nov 20 14:43:14 2024 -0800
+
+    Add package for consuming Blazor framework assets (#58721)
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit d73a7afba057d47f692e9567f9bc67161c118b7c
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon Aug 5 12:42:37 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 5 12:42:37 2024 +0200
+
+    [Blazor] Add Blazor Web Endpoints to the endpoint data source (#57086)
+    
+    * Adds the Blazor Web endpoints to the endpoint data source to ensure that they can be customized via conventions.
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit c283d05ce0e49941c7df3eeea6143ca58e2d0b3b
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Sat Jun 15 22:58:52 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sat Jun 15 22:58:52 2024 +0200
+
+    [Blazor] Consume fingerprinted assets in MVC and Blazor (#56045)
+    
+    * Adds support for using fingerprinted assets in Blazor and MVC.
+    * Fingerprinted assets are registered as additional endpoints to the system.
+    * Static Assets exposes the descriptors so that they can be consumed and used by Blazor and MVC/Razor pages.
+    * Helper methods `WithStaticAssets` map specific MapControllers/RazorPages/RazorComponents invocations to a given `MapStaticAsset` invocation and expose a `ResourceAssetCollection` as endpoint metadata that can be later on used by the system to change the way markup is rendered.
+    * There's built-in support in all MVC Tag helpers (URLTagHelper, ImageTagHelper, LinkTagHelper, ScriptTagHelper).
+    * There's support for JavaScript import maps in the ScriptTagHelper to render a JavaScript import map that maps JS modules to their fingerprinted URLs.
+    * `ComponentBase` exposes an `Assets` property that lets Blazor components consume the fingerprinted names of a given asset.
+    * When webassembly is in use, an additional couple of endpoints is registered exposing the mapping to webassembly as an additional JS Module that webassembly apps can use to consume the mapping from client code.
+    * Caching is disabled during development for all assets to avoid issues and can be re-enabled through a configuration property.
+    * Similarly, integrity is not exposed during development to avoid issues where users change a file on the fly while the app is running.
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 51838a26a52297c100027a52f1425096257119fb
+Author:     Javier Calvarro Nelson <jacalvar@microsoft.com>
+AuthorDate: Mon May 13 18:04:54 2024 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon May 13 18:04:54 2024 +0200
+
+    [Blazor] Adds compresion support for all assets in an application (#55558)
+    
+    Adds a new MapStaticAssetEndpoints routerware that reads a manifest generated at build / publish time and maps the endpoints defined in the manifest to the files in the application wwwroot folder.
+    
+    Adds a MatcherPolicy to perform content negotiation based on the Accept-Encoding header. Compressed resources contain a ContentEncoding attribute in their metadata that is used to filter out the compressed asset to serve to the client based on the Accept-Encoding header.
+    
+    The content encoding has an associated Quality value that represents the 'server preference' for the encoding. We always use the client preference and only rely on the server preference to break ties.
+    
+    This process is completely driven by de the build and transparent to the runtime, if in the future we add support for zstd, sbr, etc. we don't need to change the runtime.
+    
+    The logic for serving static files is borrowed from the static files middleware, with simplifications and additions. I've ported the relevant tests to ensure a high degree of compatibility.
+    
+    The logic is new "routerware" instead of directly baked into the static files middleware because we do not want to pollute that middleware with more complex logic and we are going to be layering fingerprinting on top of this change, which will register more endpoints that will include more custom headers, which is not suitable for the static files middleware.
+    
+    During development we wrap the endpoints we generate to support changing the files while the app is running (we recompute some of the values on the fly and also register a fallback route that matches file patterns to serve new files added while the app is running).
+    
+    The build/publish process computes all the required information about the assets that is used to emit the response. The ETag and Last-Modified values are computed using the Base64(SHA256) hash of the content and the LastWrite on the file at build/publish time.
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 06bb2b9bd69db34893bf28ae33f531ff907fd9af
+Author:     jacdavis <jacdavis@users.noreply.github.com>
+AuthorDate: Fri Feb 9 10:55:30 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Feb 9 18:55:30 2024 +0000
+
+    Add unit test to confirm change token is disposed during (#53827)
+    
+    * Add unit test to confirm change token is disposed during
+    razer hot reload.
+    
+    * Per Makinnon's feedback, switch to a callback model
+    to create the wrapped disposable for this unit test.
+    
+    * Update src/Components/Endpoints/test/HotReloadServiceTests.cs
+    
+    ---------
+    
+    Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 29f59f5d93ffe8fbae49c5916f86707cc61097f6
+Author:     jacdavis <jacdavis@users.noreply.github.com>
+AuthorDate: Thu Feb 1 13:49:04 2024 -0800
+Commit:     GitHub <noreply@github.com>
+CommitDate: Thu Feb 1 13:49:04 2024 -0800
+
+    Resolve change token leak in Blazor hot reload (#53750)
+    
+    Fix of razor hotreload change token leak. This disposes the
+    old change tokens after the ClearCache event or before overwriting.
+    If something goes wrong and this isn't cleared
+    before the next invocation of UpdateEndpoints on the
+    razor data source, clear it and dispose of it then.
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 8ef19340c0afa2738700797089cb86addda8a79f
+Author:     Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+AuthorDate: Fri Sep 15 15:28:14 2023 +0100
+Commit:     GitHub <noreply@github.com>
+CommitDate: Fri Sep 15 07:28:14 2023 -0700
+
+    Blazor Web project interactive options improvements. Rename render modes. (#50684)
+    
+    Fixes https://github.com/dotnet/aspnetcore/issues/50433 (Add root level interactivity option)
+    Fixes https://github.com/dotnet/aspnetcore/issues/50646 (Remove workaround for Counter component)
+    Fixes https://github.com/dotnet/aspnetcore/issues/50636 (Clarify the names of the interactive render modes)
+    
+    In terms of the code we now emit, there should be nothing controversial here. The template just has to do quite a bit of if/else in many places to account for all these options and how rendermodes are used and not used based on them.
+    
+    The PR is big because the renames have really wide impact, but almost all the "files changes" are just due to renames. The only real code changes are in the project templates.
+    
+    # Testing impact
+    
+    Adding this option, the BlazorWeb template now has **so many** possible combinations of options, including:
+    
+     - Whether or not to enable Server interactivity
+     - Whether or not to enable WebAssembly interactivity
+     - Whether or not to be interactive from the root
+     - Whether or not to include sample content
+     - Whether or not to use ProgramMain
+    
+    So that's around 32 combinations of output - without even accounting for auth options! We don't currently have E2E verification of any of them, as those tests are skipped due to unreliability. We're going to have to lean hard on CTI validations for this, and make sure all the important combinations are covered - cc @mkArtakMSFT.
+    
+    # Options design update
+    
+    Having a list of 6 separate checkboxes in VS is pretty unpleasant and hard to understand:
+    
+    <img src="https://github.com/dotnet/aspnetcore/assets/1101362/93713e83-0793-4140-82e1-95ca63580e3d" width="500" />
+    
+    So, in this PR I'm proposing (and have implemented, but we can still change it), a change to use dropdowns for the interactivity type and location options. This reduces the number of inputs by one, and means they can be more self-describing:
+    
+    <img src="https://github.com/dotnet/aspnetcore/assets/1101362/649c93fd-d464-499c-b1f2-36436ebf4e3c" width="500" />
+    
+     * The "interactivity type" choices are:
+       * **None**
+       * **Server** (default)
+       * **WebAssembly**
+       * **Auto (Server and WebAssembly)**.
+     * The "interactivity location" choices are:
+       * **Per page/component** (default)
+       * **Global**
+    
+    Note that "interactivity location" is disabled if interactivity type == "None", but [only CLI honors that right now](https://github.com/dotnet/templating/issues/5648) (VS should add support later, and until then, location will have no effect if there's no interactivity).
+    
+    I think this is much easier to understand, since you no longer have to infer that enabling both Server and WebAssembly means you're going to get Auto. It's also much better in the CLI, since it was completely ridiculous before that `--use-server` defaulted to true but `--use-wasm` defaulted to false, so to get WebAssembly you needed to set `--use-server false --use wasm`. Now you would say `--interactivity webassembly` (and not `wasm` - that was weird too).
+    
+    ![image](https://github.com/dotnet/aspnetcore/assets/1101362/0b4751ad-f91b-4bac-8edf-9e31aa761fbf)
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 9fff89219d6706f955e61ca35d4c620f20546754
+Author:     Mackinnon Buck <mackinnon.buck@gmail.com>
+AuthorDate: Tue Aug 29 12:20:49 2023 -0700
+Commit:     Mackinnon Buck <mackinnon.buck@gmail.com>
+CommitDate: Tue Aug 29 12:20:49 2023 -0700
+
+    Revert "[automated] Merge branch 'release/8.0' => 'main' (#50281)"
+    
+    This reverts commit 9402bfac90a695bb732dff17ba624801076df77f.
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs
+
+commit 9402bfac90a695bb732dff17ba624801076df77f
+Author:     dotnet-maestro-bot <dotnet-maestro-bot@microsoft.com>
+AuthorDate: Mon Aug 28 15:59:49 2023 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Aug 28 15:59:49 2023 -0700
+
+    [automated] Merge branch 'release/8.0' => 'main' (#50281)
+    
+    * Remove reflection from KestrelServer constructor (#50272)
+    
+    * Update dependencies from https://github.com/dotnet/extensions build 20230822.1 (#50288)
+    
+    [release/8.0] Update dependencies from dotnet/extensions
+    
+    * Ensure enhanced nav requests have the correct headers (#50263)
+    
+    * In SSR, supply HttpContext as cascading value (#50253)
+    
+    Fixes https://github.com/dotnet/aspnetcore/issues/48769
+    
+    ### Usage
+    
+    ```cs
+    [CascadingParameter] public HttpContext? Context { get; set; }
+    ```
+    
+    In SSR, this will receive the `HttpContext`. In other rendering modes where there is no HTTP context, no value will be supplied so the property will remain `null`.
+    
+    ### Alternative design considered
+    
+    In #48769 I suggested using `[SupplyParameterFromHttpContext]` but that turns out not to be practical unless we either (a) make `ICascadingValueSupplier` public, or (b) add an IVT from `M.A.Components` to `.Endpoints`.
+    
+    I'm not keen on doing either of the above on a whim. Plus, use of `[CascadingValue]` has advantages:
+    
+     * It's consistent with the existing pattern for authentication state (we have `[CascadingParameter] Task<AuthenticationState> AuthenticationStateTask { get; set; }`).
+     * Longer term, if we add more things like this, it would be nice not to add a separate special attribute for each one when `[CascadingParameter]` is already descriptive enough. Special attributes are needed only when the type of thing being supplied might reasonably clash with something else the application is doing (for example, we do need it for form/query, as they supply arbitrary types).
+    
+    ## Review notes
+    
+    It's best to look at the two commits in this PR completely separately:
+    
+    1. The first commit fixes an API design problem I discovered while considering how to do this. I realised that when we added `CascadingParameterAttributeBase`, we made a design mistake:
+       * We put the `Name` property on the abstract base class just because `CascadingParameterAttribute`, `SupplyParameterFromQuery`, and `SupplyParameterFromForm` all have a `Name`.
+       * However, in all three cases there, the `Name` has completely different meanings. For `CascadingParameterAttribute`, it's the name associated with `<CascadingValue Name=...>`, whereas for form it's the `Request.Form` entry or fall back on property name, and for query it's the `Request.Query` entry or fall back on property name. In general there's no reason why a `CascadingParameterAttributeBase` subclass should have a `Name` at all (`SupplyParameterFromHttpContext` wasn't going to), and if it does have one, its semantics are specific to it. So these should not be the same properties.
+       * The change we made to make `CascadingParameterAttribute.Name` virtual might even be breaking (see https://learn.microsoft.com/en-us/dotnet/core/compatibility/library-change-rules stating *DISALLOWED: Adding the virtual keyword to a member*). So it's good we can revert that here.
+    2. The second commit is the completely trivial implementation of supplying `HttpContext` as a cascading value, with an E2E test.
+    
+    * Fix SSR redirections. Fixes #49670 (#50261)
+    
+    Fixes #49670 trivially by making `HttpNavigationManager`'s redirection logic consistent with the other `NavigationManager` implementations.
+    
+    You'll be wondering why there are no E2E tests with this PR. The reason is that, surprisingly, we *already* have E2E tests for these kinds of non-root redirections. However, they were falsely passing, which is tracked by https://github.com/dotnet/aspnetcore/issues/50260 and is outside the scope of this PR. I think we should address that other issue in .NET 9 as there should be no developer/API impact from leaving it as-is for .NET 8.
+    
+    * API review followups (#50181)
+    
+    * RazorComponentResult: change namespace, make executor internal, merge test classes
+    
+    * RazorComponentResult: Nullability and trim annotations
+    
+    * RazorComponentResult: IStatusCodeHttpResult and IContentTypeHttpResult
+    
+    * Cleanup
+    
+    * Further clean up annotations
+    
+    * Remove HtmlRootComponent.ComponentId as per API review
+    
+    * Rename SupplyParameterFromFormAttribute.Handler to FormName
+    
+    * API review: seal
+    
+    * Clarify RenderModeAttribute inheritance. Fixes #49848
+    
+    * Rename valueFactory -> initialValueFactory
+    
+    * Remove unnecessary sequence params
+    
+    * Make [StreamRendering] default to true
+    
+    * Support hot reload for Blazor component endpoints (#50031)
+    
+    * Support hot reload for Blazor component endpoints
+    
+    * Use alternative navigation exports
+    
+    * Address feedback
+    
+    * Make HotReloadService optional
+    
+    * Address more feedback
+    
+    * [release/8.0] Update SDK (#50276)
+    
+    * [release/8.0] Update SDK
+    
+    * Fix IsAotCompatible warnings
+    
+    * Update nullability annotation for TemplatePart.Text
+    
+    * Update CodeGen.proj to account for conditional IsTrimmable metadata
+    
+    * Update Directory.Build.props.in
+    
+    ---------
+    
+    Co-authored-by: Stephen Halter <halter73@gmail.com>
+    
+    * Provide a better error (#50311)
+    
+    * Remove more setup overhead in RDG benchmarks (#50302)
+    
+    * Use polling to watch certificate paths (#50251)
+    
+    * Cache parsable and bindable type info in RDG (#50326)
+    
+    * Use absolute URLs for confirmation emails (#50297)
+    
+    This PR updates the MapIdentityApi endpoints that send confirmation emails to use absolute URLs. Previously the emails used relative links which of course do not work for links in emails.
+    
+    Fixes #50296
+    
+    * [release/8.0] [Blazor] Close the circuit when all Blazor Server components are disposed (#50170)
+    
+    # [Blazor] Close the circuit when all Blazor Server components are disposed
+    
+    Allows a Blazor Server circuit to close when all root Blazor Server components get dynamically removed from the page.
+    
+    ## Description
+    
+    The overall approach I've taken is:
+    1. Define what it means for the circuit to be in use (`WebRootComponentManager.hasAnyExistingOrPendingServerComponents()`):
+        * There are interactive Blazor Server components on the page, or...
+        * The initialization of an interactive Blazor Server component has started, but hasn't completed yet, or...
+        * There are SSR'd components on the page that haven't been initialized for interactivity yet (consider stream rendering, where we don't activate new components until the response completes), but they have either a "Server" or "Auto" render mode
+    2. Determine the cases where a circuit's "in use" status may have changed:
+        * After a render batch is applied (see `attachCircuitAfterRenderCallback` in `WebRootComponentManager.ts`)
+          * An applied render batch may result in the creation/disposal of a root component
+        * After an SSR update occurs, but before the first render batch is applied
+          * Consider the case where an SSR'd component with a Server render mode gets removed from the page, but before the circuit has a chance to initialize
+    3. Decide what to do if the "in use" status may have changed (`WebRootComponentManager.circuitMayHaveNoRootComponents()`):
+        * If the circuit is not in use:
+          * Start a timeout with some configurable duration (`SsrStartOptions.circuitInactivityTimeoutMs`), if it hasn't started already
+          * When the timeout expires, dispose the circuit
+        * If the circuit is not in use:
+          * Clear any existing timeout
+    
+    This PR also:
+    - [X] Addresses a bug preventing Virtualize from working correctly when a WebAssembly and Server instance is present on the page at the same time
+    - [X] Adds E2E tests
+    
+    Fixes #48765
+    
+    * [release/8.0] Update dependencies from dotnet/runtime (#50305)
+    
+    * Update dependencies from https://github.com/dotnet/runtime build 20230823.11
+    
+    Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting
+     From Version 8.0.0-rc.2.23418.14 -> To Version 8.0.0-rc.2.23423.11
+    
+    * Update dependencies from https://github.com/dotnet/runtime build 20230823.5
+    
+    Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting
+     From Version 8.0.0-rc.2.23418.14 -> To Version 8.0.0-rc.2.23423.5
+    
+    ---------
+    
+    Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+    
+    * Update Version.Details.xml
+    
+    * Update dependencies from https://github.com/dotnet/source-build-reference-packages build 20230824.1 (#50337)
+    
+    [release/8.0] Update dependencies from dotnet/source-build-reference-packages
+    
+    * Update Microsoft.Identity.Model to 7.0.0-preview3 (#50218)
+    
+    * Update Microsoft.Identity.Model to 7.0.0-preview3
+    
+    * fixing null refs in WsFed
+    
+    * Add link to tracking issue.
+    
+    * Add link to tracking issue.
+    
+    * Update dependencies from https://github.com/dotnet/source-build-externals build 20230824.1
+    
+    Microsoft.SourceBuild.Intermediate.source-build-externals
+     From Version 8.0.0-alpha.1.23421.1 -> To Version 8.0.0-alpha.1.23424.1
+    
+    * Workaround https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/2261 in a test.
+    
+    ---------
+    
+    Co-authored-by: Eric Erhardt <eric.erhardt@microsoft.com>
+    Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+    
+    * Update Versions.props
+    
+    * Quarantine tests (#50379)
+    
+    Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+    
+    * [release/8.0] Update dependencies from dotnet/runtime (#50350)
+    
+    * Update dependencies from https://github.com/dotnet/runtime build 20230825.9
+    
+    Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting
+     From Version 8.0.0-rc.2.23423.5 -> To Version 8.0.0-rc.2.23425.9
+    
+    * Update dependencies from https://github.com/dotnet/runtime build 20230826.4
+    
+    Microsoft.Bcl.AsyncInterfaces , Microsoft.Bcl.TimeProvider , Microsoft.Extensions.Caching.Abstractions , Microsoft.Extensions.Caching.Memory , Microsoft.Extensions.Configuration , Microsoft.Extensions.Configuration.Abstractions , Microsoft.Extensions.Configuration.Binder , Microsoft.Extensions.Configuration.CommandLine , Microsoft.Extensions.Configuration.EnvironmentVariables , Microsoft.Extensions.Configuration.FileExtensions , Microsoft.Extensions.Configuration.Ini , Microsoft.Extensions.Configuration.Json , Microsoft.Extensions.Configuration.UserSecrets , Microsoft.Extensions.Configuration.Xml , Microsoft.Extensions.DependencyInjection , Microsoft.Extensions.DependencyInjection.Abstractions , Microsoft.Extensions.DependencyModel , Microsoft.Extensions.Diagnostics , Microsoft.Extensions.Diagnostics.Abstractions , Microsoft.Extensions.FileProviders.Abstractions , Microsoft.Extensions.FileProviders.Composite , Microsoft.Extensions.FileProviders.Physical , Microsoft.Extensions.FileSystemGlobbing , Microsoft.Extensions.HostFactoryResolver.Sources , Microsoft.Extensions.Hosting , Microsoft.Extensions.Hosting.Abstractions , Microsoft.Extensions.Http , Microsoft.Extensions.Logging , Microsoft.Extensions.Logging.Abstractions , Microsoft.Extensions.Logging.Configuration , Microsoft.Extensions.Logging.Console , Microsoft.Extensions.Logging.Debug , Microsoft.Extensions.Logging.EventLog , Microsoft.Extensions.Logging.EventSource , Microsoft.Extensions.Logging.TraceSource , Microsoft.Extensions.Options , Microsoft.Extensions.Options.ConfigurationExtensions , Microsoft.Extensions.Options.DataAnnotations , Microsoft.Extensions.Primitives , Microsoft.Internal.Runtime.AspNetCore.Transport , Microsoft.NET.Runtime.MonoAOTCompiler.Task , Microsoft.NET.Runtime.WebAssembly.Sdk , Microsoft.NETCore.App.Ref , Microsoft.NETCore.App.Runtime.AOT.win-x64.Cross.browser-wasm , Microsoft.NETCore.App.Runtime.win-x64 , Microsoft.NETCore.BrowserDebugHost.Transport , Microsoft.NETCore.Platforms , System.Collections.Immutable , System.Composition , System.Configuration.ConfigurationManager , System.Diagnostics.DiagnosticSource , System.Diagnostics.EventLog , System.Diagnostics.PerformanceCounter , System.DirectoryServices.Protocols , System.IO.Hashing , System.IO.Pipelines , System.Net.Http.Json , System.Net.Http.WinHttpHandler , System.Reflection.Metadata , System.Resources.Extensions , System.Runtime.Caching , System.Security.Cryptography.Pkcs , System.Security.Cryptography.Xml , System.Security.Permissions , System.ServiceProcess.ServiceController , System.Text.Encodings.Web , System.Text.Json , System.Threading.AccessControl , System.Threading.Channels , System.Threading.RateLimiting
+     From Version 8.0.0-rc.2.23423.5 -> To Version 8.0.0-rc.2.23426.4
+    
+    ---------
+    
+    Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+    
+    * Update Versions.props
+    
+    ---------
+    
+    Co-authored-by: Stephen Halter <halter73@gmail.com>
+    Co-authored-by: dotnet-maestro[bot] <42748379+dotnet-maestro[bot]@users.noreply.github.com>
+    Co-authored-by: Steve Sanderson <SteveSandersonMS@users.noreply.github.com>
+    Co-authored-by: Safia Abdalla <safia@microsoft.com>
+    Co-authored-by: Andrew Casey <amcasey@users.noreply.github.com>
+    Co-authored-by: Mackinnon Buck <mackinnon.buck@gmail.com>
+    Co-authored-by: dotnet-maestro[bot] <dotnet-maestro[bot]@users.noreply.github.com>
+    Co-authored-by: jennyf19 <jeferrie@microsoft.com>
+    Co-authored-by: Eric Erhardt <eric.erhardt@microsoft.com>
+    Co-authored-by: William Godbe <wigodbe@microsoft.com>
+    Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+
+M	src/Components/Endpoints/src/Builder/RazorComponentEndpointDataSource.cs

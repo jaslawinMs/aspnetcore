@@ -1,0 +1,104 @@
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
+using System.Security.Principal;
+using System.Xml.Linq;
+using Microsoft.AspNet.Cryptography;
+using Microsoft.AspNet.DataProtection.AuthenticatedEncryption;
+using Microsoft.AspNet.DataProtection.Cng;
+using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
+
+namespace Microsoft.AspNet.DataProtection.XmlEncryption
+{
+    /// <summary>
+    /// An <see cref="IXmlEncryptor"/> that encrypts XML by using Windows DPAPI.
+    /// </summary>
+    /// <remarks>
+    /// This API is only supported on Windows platforms.
+    /// </remarks>
+    public sealed class DpapiXmlEncryptor : IXmlEncryptor
+    {
+        private readonly ILogger _logger;
+        private readonly bool _protectToLocalMachine;
+
+        /// <summary>
+        /// Creates a <see cref="DpapiXmlEncryptor"/> given a protection scope.
+        /// </summary>
+        /// <param name="protectToLocalMachine">'true' if the data should be decipherable by anybody on the local machine,
+        /// 'false' if the data should only be decipherable by the current Windows user account.</param>
+        public DpapiXmlEncryptor(bool protectToLocalMachine)
+            : this(protectToLocalMachine, services: null)
+        {
+        }
+
+        /// <summary>
+        /// Creates a <see cref="DpapiXmlEncryptor"/> given a protection scope and an <see cref="IServiceProvider"/>.
+        /// </summary>
+        /// <param name="protectToLocalMachine">'true' if the data should be decipherable by anybody on the local machine,
+        /// 'false' if the data should only be decipherable by the current Windows user account.</param>
+        /// <param name="services">An optional <see cref="IServiceProvider"/> to provide ancillary services.</param>
+        public DpapiXmlEncryptor(bool protectToLocalMachine, IServiceProvider services)
+        {
+            CryptoUtil.AssertPlatformIsWindows();
+
+            _protectToLocalMachine = protectToLocalMachine;
+            _logger = services.GetLogger<DpapiXmlEncryptor>();
+        }
+
+        /// <summary>
+        /// Encrypts the specified <see cref="XElement"/>.
+        /// </summary>
+        /// <param name="plaintextElement">The plaintext to encrypt.</param>
+        /// <returns>
+        /// An <see cref="EncryptedXmlInfo"/> that contains the encrypted value of
+        /// <paramref name="plaintextElement"/> along with information about how to
+        /// decrypt it.
+        /// </returns>
+        public EncryptedXmlInfo Encrypt([NotNull] XElement plaintextElement)
+        {
+            if (_logger.IsVerboseLevelEnabled())
+            {
+                if (_protectToLocalMachine)
+                {
+                    _logger.LogVerbose("Encrypting to Windows DPAPI for local machine account.");
+                }
+                else
+                {
+                    _logger.LogVerbose("Encrypting to Windows DPAPI for current user account ({0}).", WindowsIdentity.GetCurrent().Name);
+                }
+            }
+
+            // Convert the XML element to a binary secret so that it can be run through DPAPI
+            byte[] dpapiEncryptedData;
+            try
+            {
+                using (Secret plaintextElementAsSecret = plaintextElement.ToSecret())
+                {
+                    dpapiEncryptedData = DpapiSecretSerializerHelper.ProtectWithDpapi(plaintextElementAsSecret, protectToLocalMachine: _protectToLocalMachine);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_logger.IsErrorLevelEnabled())
+                {
+                    _logger.LogError(ex, "An error occurred while encrypting to Windows DPAPI.");
+                }
+                throw;
+            }
+
+            // <encryptedKey>
+            //   <!-- This key is encrypted with {provider}. -->
+            //   <value>{base64}</value>
+            // </encryptedKey>
+
+            var element = new XElement("encryptedKey",
+                new XComment(" This key is encrypted with Windows DPAPI. "),
+                new XElement("value",
+                    Convert.ToBase64String(dpapiEncryptedData)));
+
+            return new EncryptedXmlInfo(element, typeof(DpapiXmlDecryptor));
+        }
+    }
+}

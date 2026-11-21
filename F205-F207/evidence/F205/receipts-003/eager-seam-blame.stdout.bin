@@ -1,0 +1,43 @@
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 135)                     _finallyConventions,
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 136)                     configuredRenderModesMetadata);
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 137)             }
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 138) 
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 139)             // Extract the endpoint collection from any of the endpoints
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 140)             var resourceCollection = endpoints.Count > 0 ? endpoints[^1].Metadata.GetMetadata<ResourceAssetCollection>() : null;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 141) 
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 142)             ICollection<IComponentRenderMode> renderModes = Options.ConfiguredRenderModes;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 143)             foreach (var renderMode in renderModes)
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 144)             {
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 145)                 var found = false;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 146)                 foreach (var provider in _renderModeEndpointProviders)
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 147)                 {
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 148)                     var builder = _endpointRouteBuilder.CreateApplicationBuilder();
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 149)                     builder.Properties[ResourceCollectionKey] = resourceCollection;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 150)                     if (provider.Supports(renderMode))
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 151)                     {
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 152)                         found = true;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 153)                         RenderModeEndpointProvider.AddEndpoints(
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 154)                             endpoints,
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 155)                             typeof(TRootComponent),
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 156)                             provider.GetEndpointBuilders(renderMode, builder),
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 157)                             renderMode,
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 158)                             _conventions,
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 159)                             _finallyConventions);
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 160)                     }
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 161)                 }
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 162) 
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 163)                 if (!found)
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 164)                 {
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 165)                     throw new InvalidOperationException($"Unable to find a provider for the render mode: {renderMode.GetType().FullName}. This generally " +
+8ef19340c0 (Steve Sanderson        2023-09-15 15:28:14 +0100 166)                         "means that a call to 'AddInteractiveWebAssemblyComponents' or 'AddInteractiveServerComponents' is missing. " +
+8ef19340c0 (Steve Sanderson        2023-09-15 15:28:14 +0100 167)                         "For example, change builder.Services.AddRazorComponents() to builder.Services.AddRazorComponents().AddInteractiveServerComponents().");
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 168)                 }
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 169)             }
+d6229213d3 (Javier Calvarro Nelson 2023-05-24 01:27:05 +0200 170) 
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 171)             var oldCancellationTokenSource = _cancellationTokenSource;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 172)             _endpoints = endpoints;
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 173)             _cancellationTokenSource = new CancellationTokenSource();
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 174)             _changeToken = new CancellationChangeToken(_cancellationTokenSource.Token);
+03e7512893 (Safia Abdalla          2023-08-23 17:26:37 -0700 175)             oldCancellationTokenSource?.Cancel();
+29f59f5d93 (jacdavis               2024-02-01 13:49:04 -0800 176)             oldCancellationTokenSource?.Dispose();
+c283d05ce0 (Javier Calvarro Nelson 2024-06-15 22:58:52 +0200 177)             if (_hotReloadService is { MetadataUpdateSupported: true })
