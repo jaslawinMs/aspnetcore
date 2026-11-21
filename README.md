@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 272/358 finalized**: 78 drafts, 31 no-gain, 113 rejected and 50 duplicates;
-86 findings remain unfinished.
+**Progress: 279/358 finalized**: 78 drafts, 31 no-gain, 120 rejected and 50 duplicates;
+79 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,13 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F234 | Rejected, real role fixture lacks material candidate | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): six-user/four-role producer and explicit shared-store source lifetime, not a global population. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F235 | Rejected, global passkey workload remains materially unqualified | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): global caller and per-user fixtures kept distinct; no fabricated population or alias. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F242 | Rejected, actual action-name membership has one item | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): other rule bypasses Contains; descriptor/DI/runtime limits explicit. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F243 | Rejected, method XML parameter join lacks material workload | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): real emitted registration/dispatch, not a snapshot-only dismissal. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F244 | Rejected, distinct body-source fallback lacks material candidate | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): unmatched-name and binding-source gates preserved. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F245 | Rejected, response-code uniqueness join materially unqualified | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): three source metadata calls are not three executed response entries. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
+| F246 | Rejected, separate property metadata join lacks material candidate | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): constructor/setter producer and reflection/cache gates, not an F243 alias. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
 | F231 | Rejected, two-item user-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): actual real-factory/Moq producer and twelve declared rows, not inflated claim lists. [Evidence](F231-F232-F233-F239/README.md) |
 | F232 | Rejected, two-item Admin-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): separate Admin setup and support branches, no measured whole-test cost. [Evidence](F231-F232-F233-F239/README.md) |
 | F233 | Rejected, two-item Local-claim scan materially unqualified | [jaslawinMs/aspnetcore#223](https://github.com/jaslawinMs/aspnetcore/issues/223): separate Local setup/site; later insertion alone is not materiality. [Evidence](F231-F232-F233-F239/README.md) |
