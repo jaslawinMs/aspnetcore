@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 279/358 finalized**: 78 drafts, 31 no-gain, 120 rejected and 50 duplicates;
-79 findings remain unfinished.
+**Progress: 287/358 finalized**: 78 drafts, 31 no-gain, 128 rejected and 50 duplicates;
+71 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,14 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F255 | Rejected, prefix predicate is not equality membership | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): 21 ordered prefixes and real initialization cache; package-candidate scale unqualified. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F256 | Rejected, per-row oracle lacks a material candidate | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): 75 source rows, median17/max136 expected entries, real duplicate and actual generator-call owner. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F257 | Rejected, real reload selection lacks a material profile | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): Shutdown bypasses the scan; transport multiplicity and mutable endpoint value/hash contracts preserved. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F258 | Rejected, finite table initialization materially unqualified | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): Generator and Core.Tests ownership, actual1..7-element sources; not per-request membership. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F259 | Rejected, distinct API complement remains unqualified | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): 90 API fields and50/39/3 real tables; stateful producer, no padded or repeated workload. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F260 | Rejected, visited-symbol traversal materially unqualified | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): Per-endpoint/attributed transform collections and real cyclic/shared source fixtures, not runtime growth. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F261 | Rejected, constructor/property join lacks a material candidate | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): 12-parameter record and ordinary primary-constructor class; inherited eligibility differs from current-only join. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
+| F262 | Rejected, matched-property index materially unqualified | [jaslawinMs/aspnetcore#225](https://github.com/jaslawinMs/aspnetcore/issues/225): Explicit symbol equality and pre-skip suppression seed/order remain distinct from F260/F261. [Evidence](F255-F256-F257-F258-F259-F260-F261-F262/README.md) |
 | F234 | Rejected, real role fixture lacks material candidate | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): six-user/four-role producer and explicit shared-store source lifetime, not a global population. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
 | F235 | Rejected, global passkey workload remains materially unqualified | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): global caller and per-user fixtures kept distinct; no fabricated population or alias. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
 | F242 | Rejected, actual action-name membership has one item | [jaslawinMs/aspnetcore#224](https://github.com/jaslawinMs/aspnetcore/issues/224): other rule bypasses Contains; descriptor/DI/runtime limits explicit. [Evidence](F234-F235-F242-F243-F244-F245-F246/README.md) |
