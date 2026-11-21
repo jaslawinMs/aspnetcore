@@ -10,8 +10,8 @@ findings and their original IDs. Eleven exact overlaps with existing work from
 dotnet/aspnetcore#70219 were excluded. Pending findings are not confirmed defects
 or measured regressions.
 
-**Progress: 260/358 finalized**: 78 drafts, 31 no-gain, 101 rejected and 50 duplicates;
-98 findings remain unfinished.
+**Progress: 265/358 finalized**: 78 drafts, 31 no-gain, 106 rejected and 50 duplicates;
+93 findings remain unfinished.
 
 **Start here:** [Classified findings report and linked artifact map](REPORT.md)
 connects measured proposals to their code PRs, tracking issues, benchmark projects,
@@ -47,6 +47,11 @@ does not change the immutable capsule, measurements, no-gain outcome, or campaig
 
 | Candidate | Disposition | Evaluation |
 |---|---|---|
+| F225 | Rejected, registration-test membership materially unqualified | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual deferred DI producer and assertion cost boundary, no invented service collection. [Evidence](F225-F226-F227-F229-F230/README.md) |
+| F226 | Rejected, repeated-registration materiality unestablished | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual same-collection second registration and allowed-multiple contracts; not F225 duplicate. [Evidence](F225-F226-F227-F229-F230/README.md) |
+| F227 | Rejected, startup culture-membership materiality unestablished | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): actual current/UI hierarchy and ordered first-common-ancestor break, no fabricated deep cultures. [Evidence](F225-F226-F227-F229-F230/README.md) |
+| F229 | Rejected, part-removal materiality unestablished | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): real deferred one-part construction and live-list removal contract, actual sizes unobserved. [Evidence](F225-F226-F227-F229-F230/README.md) |
+| F230 | Rejected, one-part addition scan materially unqualified | [jaslawinMs/aspnetcore#221](https://github.com/jaslawinMs/aspnetcore/issues/221): real producer cardinality and type-plus-name contract distinct from removal. [Evidence](F225-F226-F227-F229-F230/README.md) |
 | F150 | Rejected, console-renderer materiality unestablished | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): actual CLI/renderer producers, exact raw-source correction, no material equivalent async replacement. [Evidence](F150-F206-F215-F220/README.md) |
 | F206 | Rejected, eager browser-log join materially unqualified | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): real startup/log snapshot source, actual browser log cardinality and whole-Fact benefit unobserved. [Evidence](F150-F206-F215-F220/README.md) |
 | F215 | Rejected, generator hash workload materially unqualified | [jaslawinMs/aspnetcore#220](https://github.com/jaslawinMs/aspnetcore/issues/220): actual multiply/XOR hash and compiler deduplication consumer, no synthetic collision benchmark. [Evidence](F150-F206-F215-F220/README.md) |
